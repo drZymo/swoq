@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package PlayerInterface;
+
+// The greeting service definition.
+service PlayerHost {
+	rpc Register (RegisterRequest) returns (GameSettings) {};
+	rpc Subscribe (SubsribeRequest) returns (stream GameUpdateMessage) {};
+	rpc GetGameState (EmptyRequest) returns (GameStateMessage) {};
+	rpc MakeMove (Move) returns (EmptyRequest) {};
+	rpc SplitSnake (SplitRequest) returns (EmptyRequest) {};
+	rpc SubscribeToServerEvents (EmptyRequest) returns (stream ServerUpdateMessage) {};
+}
+
+message GameSettings {
+	repeated int32 dimensions = 1;
+	repeated int32 startAddress = 2;
+	string playerIdentifier = 3;
+	bool gameStarted = 4;
+}
+
+message Move {
+	string playerIdentifier = 1;
+	string snakeName = 2;
+	repeated int32 nextLocation = 3;
+}
+
+message SplitRequest {
+	string playerIdentifier = 1;
+	string oldSnakeName = 2;
+	string newSnakeName = 3;
+	int32 snakeSegment = 4;
+	repeated int32 nextLocation = 5;
+}
+
+message GameUpdateMessage {
+	repeated UpdatedCell updatedCells = 1;
+	repeated string removedSnakes = 2;
+	repeated PlayerScore playerScores = 3;
+}
+
+message GameStateMessage {
+	repeated UpdatedCell updatedCells = 1;
+}
+
+message UpdatedCell {
+	repeated int32 address = 1;
+	string player = 2;
+	int32 foodValue = 3;
+}
+
+message PlayerScore {
+	string playerName = 1;
+	int64 score = 2;
+	int32 snakes = 3;
+}
+
+message RegisterRequest {
+	string playerName = 1;
+}
+
+message SubsribeRequest {
+	string playerIdentifier = 1; 
+}
+
+enum MessageType{
+	gameStateChange = 0;
+	playerJoined = 1;
+}
+
+message ServerUpdateMessage{
+	MessageType messageType = 1;
+	string message = 2;
+}
+
+message EmptyRequest { }

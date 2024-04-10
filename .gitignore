@@ -1,0 +1,10 @@
+**/__pycache__/
+**/generated/
+**/*_pb2*.py
+**/*_pb2*.pyi
+**/*.pth
+**/obj/
+**/bin/
+**/.vs/
+**/*.user
+examples/
