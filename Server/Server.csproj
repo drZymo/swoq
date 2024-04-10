@@ -4,14 +4,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Swoq.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\player.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\swoq.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
   </ItemGroup>
 
 </Project>

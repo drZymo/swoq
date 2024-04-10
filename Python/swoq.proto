@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package Swoq.Interface;
+
+service Player {
+	rpc Register(RegisterRequest) returns (RegisterResponse) {};
+}
+
+service Training {
+	rpc StartGame(StartRequest) returns (StartResponse) {};
+}
+
+enum Result {
+	OK = 0;
+	FAIL = 1;
+	
+	PLAYER_ALREADY_REGISTERED = 2;
+}
+
+
+message RegisterRequest {
+	string playerName = 1;
+}
+
+message RegisterResponse {
+	Result result = 1;
+	optional string playerId = 2;
+}
+
+message StartRequest {
+	string playerId = 1;
+}
+
+message StartResponse {
+	Result result = 1;
+}

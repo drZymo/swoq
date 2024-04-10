@@ -1,4 +1,6 @@
-﻿namespace Swoc2024Server;
+﻿using Swoc2024Server;
+
+namespace Swoq.Server;
 
 public record CellUpdate(Position Position, string? PlayerName = null, int? FoodValue = null);
 
