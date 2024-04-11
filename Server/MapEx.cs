@@ -13,4 +13,9 @@ internal static class MapEx
     {
         map[pos.y, pos.x] = map[pos.y, pos.x] with { Type = type };
     }
+
+    public static void ClearCell(this Cell[,] map, Position pos)
+    {
+        map[pos.y, pos.x] = map[pos.y, pos.x] with { Type = CellType.Empty };
+    }
 }

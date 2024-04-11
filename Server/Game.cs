@@ -6,7 +6,7 @@ using Position = (int y, int x);
 
 internal class Game
 {
-    private const int VisibilityRange = 30;
+    private const int VisibilityRange = 5;
 
     private const int Width = 20;
     private const int Height = 20;
@@ -67,6 +67,65 @@ internal class Game
             }
         }
         return state;
+    }
+
+    public void Move(Direction direction)
+    {
+        // TODO: Return move succeeded yes/no
+
+        Position nextPos;
+        switch (direction)
+        {
+            case Direction.North:
+                nextPos = (playerPos.y - 1, playerPos.x);
+                break;
+            case Direction.East:
+                nextPos = (playerPos.y, playerPos.x + 1);
+                break;
+            case Direction.South:
+                nextPos = (playerPos.y + 1, playerPos.x);
+                break;
+            case Direction.West:
+                nextPos = (playerPos.y, playerPos.x - 1);
+                break;
+            default:
+                return;
+        }
+
+        if (CanMoveTo(nextPos))
+        {
+            playerPos = nextPos;
+
+            switch (map[playerPos.y, playerPos.x].Type)
+            {
+                case CellType.Empty:
+                    // Nothing to do
+                    break;
+                
+                case CellType.Exit:
+                    // TODO: game finished
+                    map.ClearCell(playerPos);
+                    break;
+
+                case CellType.Wall:
+                    Debug.Fail("Cannot move to wall");
+                    return;
+            }
+
+            UpdateVisibility();
+            Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
+        }
+    }
+
+    private bool CanMoveTo(Position position)
+    {
+        if (position.x < 0 || position.x >= Width) return false;
+        if (position.y < 0 || position.y >= Height) return false;
+
+        var cell = map[position.y, position.x];
+        if (cell.Type == CellType.Wall) return false;
+
+        return true;
     }
 
     private int GetCellState(Position pos)

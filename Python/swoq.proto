@@ -8,6 +8,7 @@ service Player {
 
 service Training {
 	rpc StartGame(StartRequest) returns (StartResponse) {};
+	rpc Move(MoveRequest) returns (MoveResponse) {};
 }
 
 enum Result {
@@ -15,6 +16,13 @@ enum Result {
 	FAIL = 1;
 	
 	PLAYER_ALREADY_REGISTERED = 2;
+}
+
+enum Direction {
+	NORTH = 0;
+	EAST = 1;
+	SOUTH = 2;
+	WEST = 3;
 }
 
 
@@ -34,5 +42,15 @@ message StartRequest {
 message StartResponse {
 	Result result = 1;
 	string gameId = 2;
+	repeated int32 state = 3;
+}
+
+message MoveRequest {
+	string gameId = 1;
+	Direction direction = 2;
+}
+
+message MoveResponse {
+	Result result = 1;
 	repeated int32 state = 3;
 }

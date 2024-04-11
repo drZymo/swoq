@@ -7,7 +7,7 @@ public class TrainingServer
     private readonly object gamesLock = new();
     private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
 
-    public Guid StartGame()
+    public (Guid gameId, int[] state) StartGame()
     {
         var game = new Game();
 
@@ -16,10 +16,22 @@ public class TrainingServer
             games = games.Add(game.Id, game);
         }
 
-        return game.Id;
+        var state = game.GetState();
+
+        return (game.Id, state);
     }
 
-    public int[] GetGameState(Guid gameId)
+    public int[] Move(Guid gameId, Direction direction)
+    {
+        var game = TryGetGame(gameId);
+        if (game == null) return [];
+
+        game.Move(direction);
+        return game.GetState();
+    }
+
+
+    private Game? TryGetGame(Guid gameId)
     {
         Game? game = null;
         lock (gamesLock)
@@ -29,8 +41,7 @@ public class TrainingServer
                 game = null;
             }
         }
-        if (game == null) return [];
 
-        return game.GetState();
+        return game;
     }
 }
