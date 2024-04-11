@@ -9,7 +9,7 @@ public class TrainingServer
 
     public Guid StartGame()
     {
-        var game = new Game(Guid.NewGuid());
+        var game = new Game();
 
         lock (gamesLock)
         {

@@ -1,5 +1,6 @@
-using Swoq.Server.Models;
+﻿using Swoq.Server.Models;
 using Swoq.Server.Services;
+using System.Text;
 
 namespace Swoq.Server;
 
@@ -7,6 +8,28 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        //var game = new Game();
+        //var state = game.GetState();
+
+        //for (int y = 0; y < 20; y++)
+        //{
+        //    var line = new StringBuilder();
+        //    for (int x = 0; x < 20; x++)
+        //    {
+        //        char c = state[y * 20 + x] switch
+        //        {
+        //            0 => '·',
+        //            1 => 'O',
+        //            2 => ' ',
+        //            3 => '#',
+        //            4 => 'X',
+        //            _ => '·',
+        //        };
+        //        line.Append(c);
+        //    }
+        //    Console.WriteLine(line.ToString());
+        //}
+
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddGrpc();
 
