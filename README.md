@@ -19,4 +19,4 @@ Game history is not maintained by the server. Once a game is finished a replay i
 
 Generate python code with
 
-    python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. services.proto
+    python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. swoq.proto
