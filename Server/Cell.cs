@@ -1,7 +1,10 @@
-﻿namespace Swoc2024Server;
+﻿namespace Swoq.Server;
 
-internal abstract record Cell;
+enum CellType
+{
+    Empty,
+    Wall,
+    Exit,
+}
 
-internal record EmptyCell(): Cell;
-internal record FoodCell(int Value) : Cell;
-internal record SnakeRefCell(Guid PlayerId, string SnakeName) : Cell;
+record Cell(CellType Type, bool IsVisible);

@@ -33,4 +33,6 @@ message StartRequest {
 
 message StartResponse {
 	Result result = 1;
+	string gameId = 2;
+	repeated int32 state = 3;
 }

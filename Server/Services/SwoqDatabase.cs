@@ -4,11 +4,11 @@ using MongoDB.Driver;
 
 namespace Swoq.Server.Services;
 
-public class PlayersService
+public class SwoqDatabase
 {
     private readonly IMongoCollection<Player> playersCollection;
 
-    public PlayersService(
+    public SwoqDatabase(
         IOptions<SwoqDatabaseSettings> swoqDatabaseSettings)
     {
         var mongoClient = new MongoClient(

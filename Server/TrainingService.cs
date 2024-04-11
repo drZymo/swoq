@@ -1,11 +1,9 @@
 ﻿using Grpc.Core;
-using Swoc2024Server;
 using Swoq.Interface;
-using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
-public class TrainingService : Swoq.Interface.Training.TrainingBase
+public class TrainingService : Training.TrainingBase
 {
     private readonly TrainingServer server;
 
@@ -16,7 +14,16 @@ public class TrainingService : Swoq.Interface.Training.TrainingBase
 
     public override Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
     {
-        server.StartGame();
-        return base.StartGame(request, context);
+        return Task.Run(() =>
+        {
+            var gameId = server.StartGame();
+
+            var state = server.GetGameState(gameId);
+            var response = new StartResponse();
+            response.Result = Result.Ok;
+            response.GameId = gameId.ToString();
+            response.State.AddRange(state);
+            return response;
+        });
     }
 }
