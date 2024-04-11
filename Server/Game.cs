@@ -7,7 +7,7 @@ using Position = (int y, int x);
 
 internal class Game
 {
-    private const int VisibilityRange = 4;
+    private const int VisibilityRange = 6;
 
     private const int Width = 20;
     private const int Height = 20;
@@ -37,6 +37,12 @@ internal class Game
             map.ChangeCellType((y, 0), CellType.Wall);
             map.ChangeCellType((y, Width - 1), CellType.Wall);
         }
+
+        // Some obstacles
+        map.ChangeCellType((3, 3), CellType.Wall);
+        map.ChangeCellType((4, 3), CellType.Wall);
+        map.ChangeCellType((5, 3), CellType.Wall);
+        map.ChangeCellType((3, 4), CellType.Wall);
 
         // Exit bottom right
         map.ChangeCellType((Height - 2, Width - 2), CellType.Exit);
@@ -88,6 +94,38 @@ internal class Game
 
     private void UpdateVisibility()
     {
+        //var todo = new Queue<Position>();
+        //var done = new HashSet<Position>();
+
+        //void CheckAndAdd(Position pos)
+        //{
+        //    //if (pos.DistanceTo(playerPos) < VisibilityRange)
+        //    {
+        //        if (IsVisible(pos))
+        //        {
+        //            //map.MakeVisible(pos);
+        //            todo.Enqueue(pos);
+        //        }
+        //    }
+        //}
+
+        //todo.Enqueue(playerPos);
+        //while (todo.Count > 0)
+        //{
+        //    var pos = todo.Dequeue();
+        //    if (done.Contains(pos)) continue;
+        //    map.MakeVisible(pos);
+
+        //    if (pos.x > 0) CheckAndAdd((pos.y, pos.x - 1));
+        //    if (pos.x < Width - 1) CheckAndAdd((pos.y, pos.x + 1));
+        //    if (pos.y > 0) CheckAndAdd((pos.y - 1, pos.x));
+        //    if (pos.y < Height - 1) CheckAndAdd((pos.y + 1, pos.x));
+
+        //    done.Add(pos);
+        //}
+
+
+
         var minY = Math.Clamp(playerPos.y - VisibilityRange, 0, Height - 1);
         var maxY = Math.Clamp(playerPos.y + VisibilityRange, 0, Height - 1);
         var minX = Math.Clamp(playerPos.x - VisibilityRange, 0, Width - 1);
@@ -98,12 +136,72 @@ internal class Game
             for (var x = minX; x <= maxX; x++)
             {
                 var pos = (y, x);
-                if (pos.DistanceTo(playerPos) < VisibilityRange)
+                if (IsVisible(pos))
                 {
                     map.MakeVisible(pos);
                 }
             }
         }
+    }
+
+    private bool IsVisible(Position pos)
+    {
+        if (pos.DistanceTo(playerPos) >= VisibilityRange) return false;
+
+        var srcX = playerPos.x + 0.5;
+        var srcY = playerPos.y + 0.5;
+        var dstX = pos.x + 0.5;
+        var dstY = pos.y + 0.5;
+
+        var dx = dstX - srcX;
+        var dy = dstY - srcY;
+
+        var stepX = Math.Sign(dx);
+        var stepY = Math.Sign(dy);
+
+        var length = Math.Sqrt(dx * dx + dy * dy);
+
+        if (Math.Abs(dx) > 1e-6) // prevent division by small amount
+        {
+            var x = stepX > 0 ? Math.Ceiling(srcX) : Math.Floor(srcX);
+
+            while (0 <= x && x < Width)
+            {
+                var y = srcY + (x - srcX) * dy / dx;
+                var l = Math.Sqrt((x - srcX) * (x - srcX) + (y - srcY) * (y - srcY));
+                if (l > length) break;
+
+                var mapX = (int)(x + stepX * 0.5);
+                var mapY = (int)y;
+                if (mapX == pos.x && mapY == pos.y) break; // skip target cell
+
+                if (map[mapY, mapX].Type == CellType.Wall) return false; // Blocked by wall
+
+                x += stepX;
+            }
+        }
+
+        if (Math.Abs(dy) > 1e-6) // prevent division by small amount
+        {
+            var y = stepY > 0 ? Math.Ceiling(srcY) : Math.Floor(srcY);
+
+            while (0 <= y && y < Height)
+            {
+                var x = srcX + (y - srcY) * dx / dy;
+                var l = Math.Sqrt((x - srcX) * (x - srcX) + (y - srcY) * (y - srcY));
+                if (l > length) break;
+
+                var mapY = (int)(y + stepY * 0.5);
+                var mapX = (int)x;
+                if (mapX == pos.x && mapY == pos.y) break; // skip target cell
+
+                if (map[mapY, mapX].Type == CellType.Wall) return false; // Blocked by wall
+
+                y += stepY;
+            }
+        }
+
+        return true;
     }
 
 }
