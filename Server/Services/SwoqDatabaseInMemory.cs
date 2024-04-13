@@ -17,10 +17,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     public async Task CreatePlayerAsync(Player newPlayer) =>
         await Task.Run(() =>
         {
-            if (newPlayer.Id == null)
-            {
-                newPlayer.Id = Guid.NewGuid().ToString();
-            }
+            newPlayer.Id ??= Guid.NewGuid().ToString();
             lock (playersWriteMutex)
             {
                 players = players.Add(newPlayer.Id, newPlayer);

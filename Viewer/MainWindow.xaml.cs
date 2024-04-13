@@ -1,5 +1,4 @@
-﻿using System.Windows;
-using Viewer.ViewModels;
+﻿using Viewer.ViewModels;
 
 namespace Viewer;
 
@@ -14,7 +13,7 @@ public partial class MainWindow : Window
         DataContext = new MainViewModel();
     }
 
-    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    private void Window_Closing(object _, System.ComponentModel.CancelEventArgs _)
     {
         if (DataContext is MainViewModel vm)
         {

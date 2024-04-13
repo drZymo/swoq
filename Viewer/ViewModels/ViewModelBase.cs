@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-
-namespace Viewer.ViewModels;
+﻿namespace Viewer.ViewModels;
 
 internal abstract class ViewModelBase : INotifyPropertyChanged
 {

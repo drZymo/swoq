@@ -1,6 +1,4 @@
-﻿using System.Windows.Media;
-
-namespace Viewer.ViewModels;
+﻿namespace Viewer.ViewModels;
 
 class CellViewModel : ViewModelBase
 {

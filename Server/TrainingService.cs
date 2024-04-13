@@ -3,15 +3,8 @@ using Swoq.Interface;
 
 namespace Swoq.Server;
 
-public class TrainingService : Training.TrainingBase
+public class TrainingService(TrainingServer server) : Training.TrainingBase
 {
-    private readonly TrainingServer server;
-
-    public TrainingService(TrainingServer server)
-    {
-        this.server = server;
-    }
-
     public override Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
     {
         return Task.Run(() =>

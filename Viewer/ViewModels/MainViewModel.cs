@@ -1,13 +1,4 @@
-﻿using Grpc.Net.Client;
-using PlayerInterface;
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Threading;
-
-namespace Viewer.ViewModels;
+﻿namespace Viewer.ViewModels;
 
 class MainViewModel : ViewModelBase, IDisposable
 {

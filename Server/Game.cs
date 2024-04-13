@@ -11,7 +11,7 @@ internal class Game
     public int Width { get; } = 20;
     public int Height { get; } = 20;
 
-    private Cell[,] map;
+    private readonly Cell[,] map;
 
     private Position playerPos;
 
