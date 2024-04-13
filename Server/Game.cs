@@ -27,47 +27,45 @@ internal class Game
         {
             for (var x = 0; x < Width; x++)
             {
-                map[y, x] = new Cell(CellType.Empty, false);
+                map[y, x] = Cell.Empty;
             }
         }
         for (var x = 0; x < Width; x++)
         {
-            map.ChangeCellType((0, x), CellType.Wall);
-            map.ChangeCellType((Height - 1, x), CellType.Wall);
+            map[0, x] = Cell.Wall;
+            map[Height - 1, x] = Cell.Wall;
         }
         for (var y = 1; y < Height - 1; y++)
         {
-            map.ChangeCellType((y, 0), CellType.Wall);
-            map.ChangeCellType((y, Width - 1), CellType.Wall);
+            map[y, 0] = Cell.Wall;
+            map[y, Width - 1] = Cell.Wall;
         }
 
         // Some obstacles
-        map.ChangeCellType((3, 3), CellType.Wall);
-        map.ChangeCellType((4, 3), CellType.Wall);
-        map.ChangeCellType((5, 3), CellType.Wall);
-        map.ChangeCellType((3, 4), CellType.Wall);
+        map[3, 3] = Cell.Wall;
+        map[4, 3] = Cell.Wall;
+        map[5, 3] = Cell.Wall;
+        map[3, 4] = Cell.Wall;
 
         // Exit bottom right (in the wall)
-        map.ChangeCellType((Height - 2, Width - 1), CellType.Exit);
+        map[Height - 2, Width - 1] = Cell.Exit;
 
         // box around exit with red door
-        map.ChangeCellType((Height - 4, Width - 2), CellType.Wall);
-        map.ChangeCellType((Height - 4, Width - 3), CellType.Wall);
-        map.ChangeCellType((Height - 4, Width - 4), CellType.Wall);
-        map.ChangeCellType((Height - 4, Width - 5), CellType.Wall);
-        map.ChangeCellType((Height - 3, Width - 5), CellType.DoorRed);
-        map.ChangeCellType((Height - 2, Width - 5), CellType.Wall);
+        map[Height - 4, Width - 2] = Cell.Wall;
+        map[Height - 4, Width - 3] = Cell.Wall;
+        map[Height - 4, Width - 4] = Cell.Wall;
+        map[Height - 4, Width - 5] = Cell.Wall;
+        map[Height - 3, Width - 5] = Cell.DoorRed;
+        map[Height - 2, Width - 5] = Cell.Wall;
 
         // key
-        map.ChangeCellType((4, 4), CellType.KeyRed);
+        map[4, 4] = Cell.KeyRed;
 
 
         // Start top left
         playerPos = (1, 1);
 
-        UpdateVisibility();
-
-        Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
+        Debug.Assert(map[playerPos.y, playerPos.x] == Cell.Empty);
     }
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -102,26 +100,26 @@ internal class Game
 
         var processed = false;
 
-        switch (map[nextPos.y, nextPos.x].Type)
+        switch (map[nextPos.y, nextPos.x])
         {
-            case CellType.Empty:
+            case Cell.Empty:
                 // Nothing to do
                 processed = true;
                 break;
 
-            case CellType.Exit:
+            case Cell.Exit:
                 // TODO: game finished
-                map.ClearCell(nextPos);
+                map[nextPos.y, nextPos.x] = Cell.Empty;
                 processed = true;
                 isFinished = true;
                 break;
 
-            case CellType.KeyRed:
+            case Cell.KeyRed:
                 if (inventory == Inventory.None)
                 {
                     // Put key in inventory and remove from map
                     inventory = Inventory.KeyRed;
-                    map.ClearCell(nextPos);
+                    map[nextPos.y, nextPos.x] = Cell.Empty;
                     processed = true;
                 }
                 break;
@@ -133,10 +131,8 @@ internal class Game
         if (processed)
         {
             playerPos = nextPos;
-
-            UpdateVisibility();
         }
-        Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
+        Debug.Assert(map[playerPos.y, playerPos.x] == Cell.Empty);
 
         return processed;
     }
@@ -158,21 +154,21 @@ internal class Game
 
         var processed = false;
 
-        switch (map[usePos.y, usePos.x].Type)
+        switch (map[usePos.y, usePos.x])
         {
-            case CellType.Empty:
-            case CellType.Exit:
-            case CellType.Wall:
-            case CellType.KeyRed:
+            case Cell.Empty:
+            case Cell.Exit:
+            case Cell.Wall:
+            case Cell.KeyRed:
                 // Cannot use on this
                 break;
 
-            case CellType.DoorRed:
+            case Cell.DoorRed:
                 if (inventory == Inventory.KeyRed)
                 {
                     // Remove key from inventory and open door (by making the cell empty)
                     inventory = Inventory.None;
-                    map.ClearCell(usePos);
+                    map[usePos.y, usePos.x] = Cell.Empty;
                     processed = true;
                 }
                 break;
@@ -180,12 +176,6 @@ internal class Game
             default:
                 throw new NotImplementedException(); // Should not be possible
         }
-
-        if (processed)
-        {
-            UpdateVisibility();
-        }
-        Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
 
         return processed;
     }
@@ -197,14 +187,14 @@ internal class Game
 
         var cell = map[position.y, position.x];
 
-        return CanWalkOn(cell.Type);
+        return CanWalkOn(cell);
     }
 
-    private static bool CanWalkOn(CellType cellType) => cellType switch
+    private static bool CanWalkOn(Cell cell) => cell switch
     {
-        CellType.Empty => true,
-        CellType.Exit => true,
-        CellType.KeyRed => true,
+        Cell.Empty => true,
+        Cell.Exit => true,
+        Cell.KeyRed => true,
         _ => false,
     };
 
@@ -224,16 +214,16 @@ internal class Game
             return PLAYER;
         }
 
-        var cell = map[pos.y, pos.x];
-        if (cell.IsVisible)
+        if (IsVisible(pos))
         {
-            switch (cell.Type)
+            var cell = map[pos.y, pos.x];
+            switch (cell)
             {
-                case CellType.Empty: return EMPTY;
-                case CellType.Wall: return WALL;
-                case CellType.Exit: return EXIT;
-                case CellType.DoorRed: return DOOR_RED;
-                case CellType.KeyRed: return KEY_RED;
+                case Cell.Empty: return EMPTY;
+                case Cell.Wall: return WALL;
+                case Cell.Exit: return EXIT;
+                case Cell.DoorRed: return DOOR_RED;
+                case Cell.KeyRed: return KEY_RED;
             }
         }
 
@@ -246,18 +236,6 @@ internal class Game
         Inventory.KeyRed => 1,
         _ => throw new NotImplementedException(),
     };
-
-    private void UpdateVisibility()
-    {
-        for (var y = 0; y < Height; y++)
-        {
-            for (var x = 0; x < Width; x++)
-            {
-                var pos = (y, x);
-                map.SetIsVisible(pos, IsVisible(pos));
-            }
-        }
-    }
 
     private bool IsVisible(Position pos)
     {
@@ -275,7 +253,6 @@ internal class Game
     {
         var dx = dstX - srcX;
         var dy = dstY - srcY;
-        var length = Math.Sqrt(dx * dx + dy * dy);
 
         if (Math.Abs(dx) > 1e-6) // prevent division by small amount
         {
@@ -289,7 +266,7 @@ internal class Game
                 var mapX = (int)(x + stepX * 0.5);
                 var mapY = (int)y;
                 if (mapX < 0 || mapX >= Width || mapY < 0 || mapY >= Height) break;
-                if (map[mapY, mapX].Type == CellType.Wall) return false; // Blocked by wall
+                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
 
                 x += stepX;
                 y += stepY;
@@ -308,7 +285,7 @@ internal class Game
                 var mapY = (int)(y + stepY * 0.5);
                 var mapX = (int)x;
                 if (mapX < 0 || mapX >= Width || mapY < 0 || mapY >= Height) break;
-                if (map[mapY, mapX].Type == CellType.Wall) return false; // Blocked by wall
+                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
 
                 y += stepY;
                 x += stepX;

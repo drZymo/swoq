@@ -1,6 +1,6 @@
 ﻿namespace Swoq.Server;
 
-enum CellType
+enum Cell
 {
     Empty,
     Wall,
@@ -9,5 +9,3 @@ enum CellType
     DoorRed,
     KeyRed,
 }
-
-record Cell(CellType Type, bool IsVisible);
