@@ -6,8 +6,15 @@ internal class Map
 {
     private readonly Cell[,] data;
 
+    public int Height { get; }
+    public int Width { get; }
+
     public Map(int height, int width)
     {
+        Height = height;
+        Width = width;
+
+        // Create empty map
         data = new Cell[height, width];
         for (var y = 0; y < height; y++)
         {
@@ -16,6 +23,8 @@ internal class Map
                 data[y, x] = Cell.Empty;
             }
         }
+
+        // Add edges
         for (var x = 0; x < width; x++)
         {
             data[0, x] = Cell.Wall;

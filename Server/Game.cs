@@ -32,15 +32,15 @@ internal class Game
         map[3, 4] = Cell.Wall;
 
         // Exit bottom right (in the wall)
-        map[Height - 2, Width - 1] = Cell.Exit;
+        map[map.Height - 2, map.Width - 1] = Cell.Exit;
 
         // box around exit with red door
-        map[Height - 4, Width - 2] = Cell.Wall;
-        map[Height - 4, Width - 3] = Cell.Wall;
-        map[Height - 4, Width - 4] = Cell.Wall;
-        map[Height - 4, Width - 5] = Cell.Wall;
-        map[Height - 3, Width - 5] = Cell.DoorRed;
-        map[Height - 2, Width - 5] = Cell.Wall;
+        map[map.Height - 4, map.Width - 2] = Cell.Wall;
+        map[map.Height - 4, map.Width - 3] = Cell.Wall;
+        map[map.Height - 4, map.Width - 4] = Cell.Wall;
+        map[map.Height - 4, map.Width - 5] = Cell.Wall;
+        map[map.Height - 3, map.Width - 5] = Cell.DoorRed;
+        map[map.Height - 2, map.Width - 5] = Cell.Wall;
 
         // key
         map[4, 4] = Cell.KeyRed;
@@ -55,12 +55,12 @@ internal class Game
 
     public GameState GetState()
     {
-        var state = new int[Height * Width];
-        for (var y = 0; y < Height; y++)
+        var state = new int[map.Height * map.Width];
+        for (var y = 0; y < map.Height; y++)
         {
-            for (var x = 0; x < Width; x++)
+            for (var x = 0; x < map.Width; x++)
             {
-                state[y * Width + x] = GetCellState((y, x));
+                state[y * map.Width + x] = GetCellState((y, x));
             }
         }
         return new GameState(state, isFinished, GetInventoryState());
@@ -120,7 +120,6 @@ internal class Game
         return processed;
     }
 
-
     public bool Use(Direction direction)
     {
         if (isFinished) return false;
@@ -165,8 +164,8 @@ internal class Game
 
     private bool CanMoveTo(Position position)
     {
-        if (position.x < 0 || position.x >= Width) return false;
-        if (position.y < 0 || position.y >= Height) return false;
+        if (position.x < 0 || position.x >= map.Width) return false;
+        if (position.y < 0 || position.y >= map.Height) return false;
 
         var cell = map[position];
 
@@ -180,6 +179,67 @@ internal class Game
         Cell.KeyRed => true,
         _ => false,
     };
+
+    private bool IsVisible(Position pos)
+    {
+        if (pos.DistanceTo(playerPos) >= VisibilityRange) return false;
+
+        if (playerPos.x < pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x, pos.y + 0.5)) return true;
+        if (playerPos.x > pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;
+        if (playerPos.y < pos.y && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 0.5, pos.y)) return true;
+        if (playerPos.y > pos.y && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 0.5, pos.y + 1)) return true;
+
+        return false;
+    }
+
+    private bool IsVisible(double srcX, double srcY, double dstX, double dstY)
+    {
+        var dx = dstX - srcX;
+        var dy = dstY - srcY;
+
+        if (Math.Abs(dx) > 1e-6) // prevent division by small amount
+        {
+            var stepX = Math.Sign(dx);
+            var x = stepX > 0 ? Math.Ceiling(srcX) : Math.Floor(srcX);
+            var stepY = stepX * dy / dx;
+            var y = srcY + (x - srcX) * dy / dx;
+
+            while (!(srcX < dstX && x >= dstX) && !(srcX > dstX && x <= dstX))
+            {
+                var mapX = (int)(x + stepX * 0.5);
+                var mapY = (int)y;
+                if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
+                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
+
+                x += stepX;
+                y += stepY;
+            }
+        }
+
+        if (Math.Abs(dy) > 1e-6) // prevent division by small amount
+        {
+            var stepY = Math.Sign(dy);
+            var y = stepY > 0 ? Math.Ceiling(srcY) : Math.Floor(srcY);
+            var stepX = stepY * dx / dy;
+            var x = srcX + (y - srcY) * dx / dy;
+
+            while (!(srcY < dstY && y >= dstY) && !(srcY > dstY && y <= dstY))
+            {
+                var mapY = (int)(y + stepY * 0.5);
+                var mapX = (int)x;
+                if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
+                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
+
+                y += stepY;
+                x += stepX;
+            }
+        }
+
+        return true;
+    }
+
+
+    #region State
 
     private int GetCellState(Position pos)
     {
@@ -220,61 +280,5 @@ internal class Game
         _ => throw new NotImplementedException(),
     };
 
-    private bool IsVisible(Position pos)
-    {
-        if (pos.DistanceTo(playerPos) >= VisibilityRange) return false;
-
-        if (playerPos.x < pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x, pos.y + 0.5)) return true;
-        if (playerPos.x > pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;
-        if (playerPos.y < pos.y && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 0.5, pos.y)) return true;
-        if (playerPos.y > pos.y && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 0.5, pos.y + 1)) return true;
-
-        return false;
-    }
-
-    private bool IsVisible(double srcX, double srcY, double dstX, double dstY)
-    {
-        var dx = dstX - srcX;
-        var dy = dstY - srcY;
-
-        if (Math.Abs(dx) > 1e-6) // prevent division by small amount
-        {
-            var stepX = Math.Sign(dx);
-            var x = stepX > 0 ? Math.Ceiling(srcX) : Math.Floor(srcX);
-            var stepY = stepX * dy / dx;
-            var y = srcY + (x - srcX) * dy / dx;
-
-            while (!(srcX < dstX && x >= dstX) && !(srcX > dstX && x <= dstX))
-            {
-                var mapX = (int)(x + stepX * 0.5);
-                var mapY = (int)y;
-                if (mapX < 0 || mapX >= Width || mapY < 0 || mapY >= Height) break;
-                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
-
-                x += stepX;
-                y += stepY;
-            }
-        }
-
-        if (Math.Abs(dy) > 1e-6) // prevent division by small amount
-        {
-            var stepY = Math.Sign(dy);
-            var y = stepY > 0 ? Math.Ceiling(srcY) : Math.Floor(srcY);
-            var stepX = stepY * dx / dy;
-            var x = srcX + (y - srcY) * dx / dy;
-
-            while (!(srcY < dstY && y >= dstY) && !(srcY > dstY && y <= dstY))
-            {
-                var mapY = (int)(y + stepY * 0.5);
-                var mapX = (int)x;
-                if (mapX < 0 || mapX >= Width || mapY < 0 || mapY >= Height) break;
-                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
-
-                y += stepY;
-                x += stepX;
-            }
-        }
-
-        return true;
-    }
+    #endregion
 }
