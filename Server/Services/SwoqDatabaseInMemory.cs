@@ -11,9 +11,6 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     public SwoqDatabaseInMemory()
     { }
 
-    public async Task<Player?> FindPlayerByNameAsync(string name) =>
-        await Task.Run(() => players.Values.Where(p => p.Name.Equals(name)).FirstOrDefault());
-
     public async Task CreatePlayerAsync(Player newPlayer) =>
         await Task.Run(() =>
         {
@@ -23,4 +20,10 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
                 players = players.Add(newPlayer.Id, newPlayer);
             }
         });
+
+    public async Task<Player?> FindPlayerByIdAsync(string id) =>
+        await Task.FromResult(players.TryGetValue(id, out var p) ? p : null);
+
+    public async Task<Player?> FindPlayerByNameAsync(string name) =>
+        await Task.Run(() => players.Values.Where(p => p.Name.Equals(name)).FirstOrDefault());
 }

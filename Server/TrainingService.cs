@@ -1,33 +1,39 @@
 ﻿using Grpc.Core;
 using Swoq.Interface;
+using Swoq.Server.Models;
+using Swoq.Server.Services;
 
 namespace Swoq.Server;
 
-public class TrainingService(TrainingServer server) : Training.TrainingBase
+internal class TrainingService(TrainingServer server) : Training.TrainingBase
 {
-    public override Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
+    public override async Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
     {
-        return Task.Run(() =>
+        var response = new StartResponse();
+        try
         {
-            var response = new StartResponse();
+            var (gameId, height, width, state) = server.StartGame(request.PlayerId, request.Level);
 
-            try
-            {
-                var (gameId, height, width, state) = server.StartGame();
+            response.Result = Result.Ok;
+            response.GameId = gameId.ToString();
+            response.Height = height;
+            response.Width = width;
+            response.State = CreateState(state);
+        }
+        catch (PlayerUnknownException)
+        {
+            response.Result = Result.PlayerUnknown;
+        }
+        catch (LevelNotAvailableException)
+        {
+            response.Result = Result.LevelNotAvailable;
+        }
+        catch
+        {
+            response.Result = Result.InternalError;
+        }
 
-                response.Result = Result.Ok;
-                response.GameId = gameId.ToString();
-                response.Height = height;
-                response.Width = width;
-                response.State = CreateState(state);
-            }
-            catch
-            {
-                response.Result = Result.InternalError;
-            }
-
-            return response;
-        });
+        return response;
     }
 
     public override Task<ActionResponse> Move(ActionRequest request, ServerCallContext context)

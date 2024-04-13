@@ -8,21 +8,22 @@ internal class Game
 {
     private const int VisibilityRange = 5;
 
-    public int Width { get; } = 20;
-    public int Height { get; } = 20;
+    public const int Width = 20;
+    public const int Height = 20;
 
     private readonly Map map;
-
+    private readonly int level;
     private Position playerPos;
 
     private bool isFinished = false;
 
     private Inventory inventory = Inventory.None;
 
-    public Game()
+    public Game(int level)
     {
         // Created walled square
         map = new Map(Height, Width);
+        this.level = level;
 
         // Some obstacles
         map[3, 3] = Cell.Wall;

@@ -10,4 +10,6 @@ public class Player
     public string? Id { get; set; }
 
     public string Name { get; set; } = null!;
+
+    public int Level { get; set; } = 0;
 }

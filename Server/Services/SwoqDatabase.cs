@@ -21,9 +21,12 @@ public class SwoqDatabase : ISwoqDatabase
             swoqDatabaseSettings.Value.PlayersCollectionName);
     }
 
-    public async Task<Player?> FindPlayerByNameAsync(string name) =>
-        await playersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
-
     public async Task CreatePlayerAsync(Player newPlayer) =>
         await playersCollection.InsertOneAsync(newPlayer);
+
+    public async Task<Player?> FindPlayerByIdAsync(string id) =>
+        await playersCollection.Find(p => p.Id == id).FirstOrDefaultAsync();
+
+    public async Task<Player?> FindPlayerByNameAsync(string name) =>
+        await playersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
 }

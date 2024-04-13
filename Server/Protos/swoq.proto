@@ -17,8 +17,10 @@ enum Result {
 	
 	INTERNAL_ERROR = 1;
 	PLAYER_ALREADY_REGISTERED = 2;
-	MOVE_NOT_ALLOWED = 3;
-	USE_NOT_ALLOWED = 4;
+	PLAYER_UNKNOWN = 3;
+	LEVEL_NOT_AVAILABLE = 4;
+	MOVE_NOT_ALLOWED = 5;
+	USE_NOT_ALLOWED = 6;
 }
 
 enum Direction {
@@ -48,6 +50,7 @@ message RegisterResponse {
 
 message StartRequest {
 	string playerId = 1;
+	int32 level = 2;
 }
 
 message StartResponse {
