@@ -11,7 +11,7 @@ internal class Game
     public int Width { get; } = 20;
     public int Height { get; } = 20;
 
-    private readonly Cell[,] map;
+    private readonly Map map;
 
     private Position playerPos;
 
@@ -22,24 +22,7 @@ internal class Game
     public Game()
     {
         // Created walled square
-        map = new Cell[Height, Width];
-        for (var y = 0; y < Height; y++)
-        {
-            for (var x = 0; x < Width; x++)
-            {
-                map[y, x] = Cell.Empty;
-            }
-        }
-        for (var x = 0; x < Width; x++)
-        {
-            map[0, x] = Cell.Wall;
-            map[Height - 1, x] = Cell.Wall;
-        }
-        for (var y = 1; y < Height - 1; y++)
-        {
-            map[y, 0] = Cell.Wall;
-            map[y, Width - 1] = Cell.Wall;
-        }
+        map = new Map(Height, Width);
 
         // Some obstacles
         map[3, 3] = Cell.Wall;
@@ -61,11 +44,10 @@ internal class Game
         // key
         map[4, 4] = Cell.KeyRed;
 
-
         // Start top left
         playerPos = (1, 1);
 
-        Debug.Assert(map[playerPos.y, playerPos.x] == Cell.Empty);
+        Debug.Assert(map[playerPos] == Cell.Empty);
     }
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -100,7 +82,7 @@ internal class Game
 
         var processed = false;
 
-        switch (map[nextPos.y, nextPos.x])
+        switch (map[nextPos])
         {
             case Cell.Empty:
                 // Nothing to do
@@ -109,7 +91,7 @@ internal class Game
 
             case Cell.Exit:
                 // TODO: game finished
-                map[nextPos.y, nextPos.x] = Cell.Empty;
+                map[nextPos] = Cell.Empty;
                 processed = true;
                 isFinished = true;
                 break;
@@ -119,7 +101,7 @@ internal class Game
                 {
                     // Put key in inventory and remove from map
                     inventory = Inventory.KeyRed;
-                    map[nextPos.y, nextPos.x] = Cell.Empty;
+                    map[nextPos] = Cell.Empty;
                     processed = true;
                 }
                 break;
@@ -132,7 +114,7 @@ internal class Game
         {
             playerPos = nextPos;
         }
-        Debug.Assert(map[playerPos.y, playerPos.x] == Cell.Empty);
+        Debug.Assert(map[playerPos] == Cell.Empty);
 
         return processed;
     }
@@ -154,7 +136,7 @@ internal class Game
 
         var processed = false;
 
-        switch (map[usePos.y, usePos.x])
+        switch (map[usePos])
         {
             case Cell.Empty:
             case Cell.Exit:
@@ -168,7 +150,7 @@ internal class Game
                 {
                     // Remove key from inventory and open door (by making the cell empty)
                     inventory = Inventory.None;
-                    map[usePos.y, usePos.x] = Cell.Empty;
+                    map[usePos] = Cell.Empty;
                     processed = true;
                 }
                 break;
@@ -185,7 +167,7 @@ internal class Game
         if (position.x < 0 || position.x >= Width) return false;
         if (position.y < 0 || position.y >= Height) return false;
 
-        var cell = map[position.y, position.x];
+        var cell = map[position];
 
         return CanWalkOn(cell);
     }
@@ -216,7 +198,7 @@ internal class Game
 
         if (IsVisible(pos))
         {
-            var cell = map[pos.y, pos.x];
+            var cell = map[pos];
             switch (cell)
             {
                 case Cell.Empty: return EMPTY;
