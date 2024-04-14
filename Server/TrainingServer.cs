@@ -3,12 +3,15 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
+
 internal class TrainingServer(ISwoqDatabase database)
 {
+    public record StartResult(Guid GameId, int Height, int Width, int VisibilityRange, GameState State);
+
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
 
-    public (Guid gameId, int height, int width, GameState state) StartGame(string playerId, int level)
+    public StartResult StartGame(string playerId, int level)
     {
         var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new PlayerUnknownException();
 
@@ -23,14 +26,14 @@ internal class TrainingServer(ISwoqDatabase database)
 
         var state = game.GetState();
 
-        return (game.Id, Game.Height, Game.Width, state);
+        return new StartResult(game.Id, Game.Height, Game.Width, Game.VisibilityRange, state);
     }
 
     public (bool success, GameState state) Move(Guid gameId, Direction direction)
     {
         if (!games.TryGetValue(gameId, out var game))
         {
-            return (false, new GameState([], false, 0));
+            return (false, GameState.Empty);
         }
 
         var success = game.Move(direction);
@@ -42,7 +45,7 @@ internal class TrainingServer(ISwoqDatabase database)
     {
         if (!games.TryGetValue(gameId, out var game))
         {
-            return (false, new GameState([], false, 0));
+            return (false, GameState.Empty);
         }
 
         var success = game.Use(direction);

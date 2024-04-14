@@ -31,13 +31,17 @@ enum Direction {
 }
 
 
-
-message State {
-	repeated int32 map = 1;
-	bool finished = 2;
-	int32 inventory = 3;
+message Position {
+	int32 x = 1;
+	int32 y = 2;
 }
 
+message State {
+	Position playerPos = 1;
+	repeated int32 surroundings = 2;
+	int32 inventory = 3;
+	bool finished = 4;
+}
 
 message RegisterRequest {
 	string playerName = 1;
@@ -56,9 +60,10 @@ message StartRequest {
 message StartResponse {
 	Result result = 1;
 	optional string gameId = 2;
-	optional int32 height = 3;
-	optional int32 width = 4;
-	optional State state = 5;
+	optional int32 width = 3;
+	optional int32 height = 4;
+	optional int32 visibilityRange = 5;
+	optional State state = 6;
 }
 
 message ActionRequest {

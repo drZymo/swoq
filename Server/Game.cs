@@ -6,8 +6,7 @@ using Position = (int y, int x);
 
 internal class Game
 {
-    private const int VisibilityRange = 5;
-
+    public const int VisibilityRange = 5;
     public const int Width = 20;
     public const int Height = 20;
 
@@ -55,15 +54,20 @@ internal class Game
 
     public GameState GetState()
     {
-        var state = new int[map.Height * map.Width];
-        for (var y = 0; y < map.Height; y++)
+        var width = VisibilityRange * 2 + 1;
+        var height = VisibilityRange * 2 + 1;
+        var state = new int[height * width];
+
+        var top = playerPos.y - VisibilityRange;
+        var left = playerPos.x - VisibilityRange;
+        for (var y = 0; y < height; y++)
         {
-            for (var x = 0; x < map.Width; x++)
+            for (var x = 0; x < width; x++)
             {
-                state[y * map.Width + x] = GetCellState((y, x));
+                state[y * width + x] = GetCellState((top + y, left + x));
             }
         }
-        return new GameState(state, isFinished, GetInventoryState());
+        return new GameState(playerPos.x, playerPos.y, state, isFinished, GetInventoryState());
     }
 
     public bool Move(Direction direction)
@@ -182,6 +186,8 @@ internal class Game
 
     private bool IsVisible(Position pos)
     {
+        if (pos.y < 0 || pos.y >= map.Height) return false;
+        if (pos.x < 0 || pos.x >= map.Width) return false;
         if (pos.DistanceTo(playerPos) >= VisibilityRange) return false;
 
         if (playerPos.x < pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x, pos.y + 0.5)) return true;
@@ -248,9 +254,12 @@ internal class Game
         const int PLAYER = 2;
         const int WALL = 3;
         const int EXIT = 4;
-
         const int DOOR_RED = 5;
         const int KEY_RED = 6;
+        const int DOOR_GREEN = 7;
+        const int KEY_GREEN = 8;
+        const int DOOR_BLUE = 9;
+        const int KEY_BLUE = 10;
 
         if (pos.Equals(playerPos))
         {
@@ -267,6 +276,10 @@ internal class Game
                 case Cell.Exit: return EXIT;
                 case Cell.DoorRed: return DOOR_RED;
                 case Cell.KeyRed: return KEY_RED;
+                case Cell.DoorGreen: return DOOR_GREEN;
+                case Cell.KeyGreen: return KEY_GREEN;
+                case Cell.DoorBlue: return DOOR_BLUE;
+                case Cell.KeyBlue: return KEY_BLUE;
             }
         }
 

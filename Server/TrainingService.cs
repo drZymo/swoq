@@ -1,39 +1,33 @@
 ﻿using Grpc.Core;
 using Swoq.Interface;
-using Swoq.Server.Models;
-using Swoq.Server.Services;
 
 namespace Swoq.Server;
 
-internal class TrainingService(TrainingServer server) : Training.TrainingBase
+internal class TrainingService(ILogger<TrainingService> logger, TrainingServer server) : Training.TrainingBase
 {
-    public override async Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
+    public override Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
     {
-        var response = new StartResponse();
-        try
+        return Task.Run(() =>
         {
-            var (gameId, height, width, state) = server.StartGame(request.PlayerId, request.Level);
+            var response = new StartResponse();
+            try
+            {
+                var startResult = server.StartGame(request.PlayerId, request.Level);
 
-            response.Result = Result.Ok;
-            response.GameId = gameId.ToString();
-            response.Height = height;
-            response.Width = width;
-            response.State = CreateState(state);
-        }
-        catch (PlayerUnknownException)
-        {
-            response.Result = Result.PlayerUnknown;
-        }
-        catch (LevelNotAvailableException)
-        {
-            response.Result = Result.LevelNotAvailable;
-        }
-        catch
-        {
-            response.Result = Result.InternalError;
-        }
+                response.Result = Result.Ok;
+                response.GameId = startResult.GameId.ToString();
+                response.Height = startResult.Height;
+                response.Width = startResult.Width;
+                response.VisibilityRange = startResult.VisibilityRange;
+                response.State = CreateState(startResult.State);
+            }
+            catch (Exception ex)
+            {
+                response.Result = ResultFromException(ex);
+            }
 
-        return response;
+            return response;
+        });
     }
 
     public override Task<ActionResponse> Move(ActionRequest request, ServerCallContext context)
@@ -49,9 +43,9 @@ internal class TrainingService(TrainingServer server) : Training.TrainingBase
                 response.Result = success ? Result.Ok : Result.MoveNotAllowed;
                 response.State = CreateState(state);
             }
-            catch
+            catch (Exception ex)
             {
-                response.Result = Result.InternalError;
+                response.Result = ResultFromException(ex);
             }
             return response;
         });
@@ -70,9 +64,9 @@ internal class TrainingService(TrainingServer server) : Training.TrainingBase
                 response.Result = success ? Result.Ok : Result.UseNotAllowed;
                 response.State = CreateState(state);
             }
-            catch
+            catch (Exception ex)
             {
-                response.Result = Result.InternalError;
+                response.Result = ResultFromException(ex);
             }
             return response;
         });
@@ -82,7 +76,8 @@ internal class TrainingService(TrainingServer server) : Training.TrainingBase
     private static State CreateState(GameState gameState)
     {
         var state = new State();
-        state.Map.AddRange(gameState.Map);
+        state.PlayerPos = new Position() { X = gameState.playerX, Y = gameState.playerY };
+        state.Surroundings.AddRange(gameState.Surroundings);
         state.Finished = gameState.Finished;
         state.Inventory = gameState.Inventory;
         return state;
@@ -96,4 +91,15 @@ internal class TrainingService(TrainingServer server) : Training.TrainingBase
         Interface.Direction.West => Direction.West,
         _ => throw new NotImplementedException(),
     };
+
+    private Result ResultFromException(Exception ex)
+    {
+        switch (ex)
+        {
+            case PlayerUnknownException: return Result.PlayerUnknown;
+            case LevelNotAvailableException: return Result.LevelNotAvailable;
+        }
+        logger.LogError(ex, "Internal error");
+        return Result.InternalError;
+    }
 }

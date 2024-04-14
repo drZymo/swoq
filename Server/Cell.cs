@@ -8,4 +8,8 @@ enum Cell
 
     DoorRed,
     KeyRed,
+    DoorGreen,
+    KeyGreen,
+    DoorBlue,
+    KeyBlue,
 }
