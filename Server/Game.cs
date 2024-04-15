@@ -290,6 +290,8 @@ internal class Game
     {
         Inventory.None => 0,
         Inventory.KeyRed => 1,
+        Inventory.KeyGreen => 2,
+        Inventory.KeyBlue => 3,
         _ => throw new NotImplementedException(),
     };
 

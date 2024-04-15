@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Return surroundings instead of whole map
+- [X] Return surroundings instead of whole map
 - [ ] Map generator
 - [ ] Quest game
 - [ ] Combat
