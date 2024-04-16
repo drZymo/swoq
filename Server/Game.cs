@@ -7,8 +7,6 @@ using Position = (int y, int x);
 internal class Game
 {
     public const int VisibilityRange = 5;
-    public const int Width = 20;
-    public const int Height = 20;
 
     private readonly Map map;
     private readonly int level;
@@ -20,37 +18,17 @@ internal class Game
 
     public Game(int level)
     {
-        // Created walled square
-        map = new Map(Height, Width);
+        //map = new Map(32, 32);
+        map = Map.LoadFromFile($"../level{level}.bin");
+        playerPos = map.InitialPlayerPosition;
         this.level = level;
-
-        // Some obstacles
-        map[3, 3] = Cell.Wall;
-        map[4, 3] = Cell.Wall;
-        map[5, 3] = Cell.Wall;
-        map[3, 4] = Cell.Wall;
-
-        // Exit bottom right (in the wall)
-        map[map.Height - 2, map.Width - 1] = Cell.Exit;
-
-        // box around exit with red door
-        map[map.Height - 4, map.Width - 2] = Cell.Wall;
-        map[map.Height - 4, map.Width - 3] = Cell.Wall;
-        map[map.Height - 4, map.Width - 4] = Cell.Wall;
-        map[map.Height - 4, map.Width - 5] = Cell.Wall;
-        map[map.Height - 3, map.Width - 5] = Cell.DoorRed;
-        map[map.Height - 2, map.Width - 5] = Cell.Wall;
-
-        // key
-        map[4, 4] = Cell.KeyRed;
-
-        // Start top left
-        playerPos = (1, 1);
 
         Debug.Assert(map[playerPos] == Cell.Empty);
     }
 
     public Guid Id { get; } = Guid.NewGuid();
+    public int Width => map.Width;
+    public int Height => map.Height;
 
     public GameState GetState()
     {
@@ -95,20 +73,16 @@ internal class Game
                 break;
 
             case Cell.Exit:
-                // TODO: game finished
+                // Game finished
                 map[nextPos] = Cell.Empty;
-                processed = true;
                 isFinished = true;
+                processed = true;
                 break;
 
             case Cell.KeyRed:
-                if (inventory == Inventory.None)
-                {
-                    // Put key in inventory and remove from map
-                    inventory = Inventory.KeyRed;
-                    map[nextPos] = Cell.Empty;
-                    processed = true;
-                }
+            case Cell.KeyGreen:
+            case Cell.KeyBlue:
+                processed = TryPickup(nextPos);
                 break;
 
             default:
@@ -146,17 +120,19 @@ internal class Game
             case Cell.Exit:
             case Cell.Wall:
             case Cell.KeyRed:
+            case Cell.KeyGreen:
+            case Cell.KeyBlue:
                 // Cannot use on this
                 break;
 
             case Cell.DoorRed:
-                if (inventory == Inventory.KeyRed)
-                {
-                    // Remove key from inventory and open door (by making the cell empty)
-                    inventory = Inventory.None;
-                    map[usePos] = Cell.Empty;
-                    processed = true;
-                }
+                processed = TryUseItemOnPosition(usePos, Inventory.KeyRed);
+                break;
+            case Cell.DoorGreen:
+                processed = TryUseItemOnPosition(usePos, Inventory.KeyGreen);
+                break;
+            case Cell.DoorBlue:
+                processed = TryUseItemOnPosition(usePos, Inventory.KeyBlue);
                 break;
 
             default:
@@ -164,6 +140,35 @@ internal class Game
         }
 
         return processed;
+    }
+
+    private bool TryPickup(Position position)
+    {
+        // Cannot pickup if inventory is full
+        if (inventory != Inventory.None) return false;
+
+        // Is it an item that can be picked up?
+        var item = ToInventory(map[position]);
+        if (item == Inventory.None) return false;
+
+        // Put in inventory and clear on map
+        inventory = item;
+        map[position] = Cell.Empty;
+        return true;
+    }
+
+    private bool TryUseItemOnPosition(Position position, Inventory item)
+    {
+        // Cannot use if inventory is empty
+        if (inventory == Inventory.None) return false;
+
+        // Cannot use if item is not in inventory
+        if (inventory != item) return false;
+
+        // Remove from inventory and clear used position
+        inventory = Inventory.None;
+        map[position] = Cell.Empty;
+        return true;
     }
 
     private bool CanMoveTo(Position position)
@@ -181,6 +186,8 @@ internal class Game
         Cell.Empty => true,
         Cell.Exit => true,
         Cell.KeyRed => true,
+        Cell.KeyGreen => true,
+        Cell.KeyBlue => true,
         _ => false,
     };
 
@@ -215,7 +222,7 @@ internal class Game
                 var mapX = (int)(x + stepX * 0.5);
                 var mapY = (int)y;
                 if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
-                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
+                if (!CanWalkOn(map[mapY, mapX])) return false; // Blocked by wall
 
                 x += stepX;
                 y += stepY;
@@ -234,7 +241,7 @@ internal class Game
                 var mapY = (int)(y + stepY * 0.5);
                 var mapX = (int)x;
                 if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
-                if (map[mapY, mapX] == Cell.Wall) return false; // Blocked by wall
+                if (!CanWalkOn(map[mapY, mapX])) return false; // Blocked by wall
 
                 y += stepY;
                 x += stepX;
@@ -296,4 +303,12 @@ internal class Game
     };
 
     #endregion
+
+    private static Inventory ToInventory(Cell cell) => cell switch
+    {
+        Cell.KeyRed => Inventory.KeyRed,
+        Cell.KeyGreen => Inventory.KeyGreen,
+        Cell.KeyBlue => Inventory.KeyBlue,
+        _ => Inventory.None,
+    };
 }
