@@ -68,6 +68,9 @@ internal class Game
         switch (map[nextPos])
         {
             case Cell.Empty:
+            case Cell.DoorRedOpen:
+            case Cell.DoorGreenOpen:
+            case Cell.DoorBlueOpen:
                 // Nothing to do
                 processed = true;
                 break;
@@ -119,20 +122,23 @@ internal class Game
             case Cell.Empty:
             case Cell.Exit:
             case Cell.Wall:
+            case Cell.DoorRedOpen:
             case Cell.KeyRed:
+            case Cell.DoorGreenOpen:
             case Cell.KeyGreen:
+            case Cell.DoorBlueOpen:
             case Cell.KeyBlue:
                 // Cannot use on this
                 break;
 
-            case Cell.DoorRed:
-                processed = TryUseItemOnPosition(usePos, Inventory.KeyRed);
+            case Cell.DoorRedClosed:
+                processed = TryUseItemOnClosedDoor(usePos, Inventory.KeyRed);
                 break;
-            case Cell.DoorGreen:
-                processed = TryUseItemOnPosition(usePos, Inventory.KeyGreen);
+            case Cell.DoorGreenClosed:
+                processed = TryUseItemOnClosedDoor(usePos, Inventory.KeyGreen);
                 break;
-            case Cell.DoorBlue:
-                processed = TryUseItemOnPosition(usePos, Inventory.KeyBlue);
+            case Cell.DoorBlueClosed:
+                processed = TryUseItemOnClosedDoor(usePos, Inventory.KeyBlue);
                 break;
 
             default:
@@ -151,13 +157,13 @@ internal class Game
         var item = ToInventory(map[position]);
         if (item == Inventory.None) return false;
 
-        // Put in inventory and clear on map
+        // Put in inventory and remove from map
         inventory = item;
         map[position] = Cell.Empty;
         return true;
     }
 
-    private bool TryUseItemOnPosition(Position position, Inventory item)
+    private bool TryUseItemOnClosedDoor(Position position, Inventory item)
     {
         // Cannot use if inventory is empty
         if (inventory == Inventory.None) return false;
@@ -165,9 +171,9 @@ internal class Game
         // Cannot use if item is not in inventory
         if (inventory != item) return false;
 
-        // Remove from inventory and clear used position
+        // Remove from inventory and change to open
         inventory = Inventory.None;
-        map[position] = Cell.Empty;
+        map[position] = ToOpenDoor(map[position]);
         return true;
     }
 
@@ -185,9 +191,17 @@ internal class Game
     {
         Cell.Empty => true,
         Cell.Exit => true,
+        Cell.DoorRedOpen => true,
         Cell.KeyRed => true,
+        Cell.DoorGreenOpen => true,
         Cell.KeyGreen => true,
+        Cell.DoorBlueOpen => true,
         Cell.KeyBlue => true,
+
+        Cell.Wall => false,
+        Cell.DoorRedClosed => false,
+        Cell.DoorGreenClosed => false,
+        Cell.DoorBlueClosed => false,
         _ => false,
     };
 
@@ -251,7 +265,6 @@ internal class Game
         return true;
     }
 
-
     #region State
 
     private int GetCellState(Position pos)
@@ -281,12 +294,18 @@ internal class Game
                 case Cell.Empty: return EMPTY;
                 case Cell.Wall: return WALL;
                 case Cell.Exit: return EXIT;
-                case Cell.DoorRed: return DOOR_RED;
+                case Cell.DoorRedClosed: return DOOR_RED;
                 case Cell.KeyRed: return KEY_RED;
-                case Cell.DoorGreen: return DOOR_GREEN;
+                case Cell.DoorGreenClosed: return DOOR_GREEN;
                 case Cell.KeyGreen: return KEY_GREEN;
-                case Cell.DoorBlue: return DOOR_BLUE;
+                case Cell.DoorBlueClosed: return DOOR_BLUE;
                 case Cell.KeyBlue: return KEY_BLUE;
+
+                // don't show open doors
+                case Cell.DoorRedOpen:
+                case Cell.DoorGreenOpen:
+                case Cell.DoorBlueOpen:
+                    return EMPTY;
             }
         }
 
@@ -310,5 +329,13 @@ internal class Game
         Cell.KeyGreen => Inventory.KeyGreen,
         Cell.KeyBlue => Inventory.KeyBlue,
         _ => Inventory.None,
+    };
+
+    private static Cell ToOpenDoor(Cell closedDoor) => closedDoor switch
+    {
+        Cell.DoorRedClosed => Cell.DoorRedOpen,
+        Cell.DoorGreenClosed => Cell.DoorGreenOpen,
+        Cell.DoorBlueClosed => Cell.DoorBlueOpen,
+        _ => throw new NotImplementedException("Not a closed door"),
     };
 }

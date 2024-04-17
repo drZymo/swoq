@@ -6,10 +6,13 @@ enum Cell
     Wall,
     Exit,
 
-    DoorRed,
+    DoorRedClosed,
+    DoorRedOpen,
     KeyRed,
-    DoorGreen,
+    DoorGreenClosed,
+    DoorGreenOpen,
     KeyGreen,
-    DoorBlue,
+    DoorBlueClosed,
+    DoorBlueOpen,
     KeyBlue,
 }

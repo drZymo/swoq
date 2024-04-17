@@ -52,7 +52,7 @@ internal class Map
         data[height - 4, width - 3] = Cell.Wall;
         data[height - 4, width - 4] = Cell.Wall;
         data[height - 4, width - 5] = Cell.Wall;
-        data[height - 3, width - 5] = Cell.DoorRed;
+        data[height - 3, width - 5] = Cell.DoorRedClosed;
         data[height - 2, width - 5] = Cell.Wall;
 
         // key
@@ -128,11 +128,11 @@ internal class Map
         //2 => Cell.PLAYER,
         3 => Cell.Wall,
         4 => Cell.Exit,
-        5 => Cell.DoorRed,
+        5 => Cell.DoorRedClosed,
         6 => Cell.KeyRed,
-        7 => Cell.DoorGreen,
+        7 => Cell.DoorGreenClosed,
         8 => Cell.KeyGreen,
-        9 => Cell.DoorBlue,
+        9 => Cell.DoorBlueClosed,
         10 => Cell.KeyBlue,
         _ => throw new NotImplementedException("Unknown cell type"),
     };
