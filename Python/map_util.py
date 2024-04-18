@@ -68,7 +68,7 @@ def is_wall(map: np.ndarray[np.int8], pos: tuple[int,int]) -> bool:
     cell = map[pos[0], pos[1]]
     return cell == WALL or cell == DOOR_RED or cell == DOOR_GREEN or cell == DOOR_BLUE or cell == UNKNOWN
 
-def compute_distances(map: np.ndarray[np.int8], from_pos: tuple[int,int]) -> tuple[dict, dict]:
+def compute_distances(map: np.ndarray[np.int8], from_pos: tuple[int,int], exclude_cells: set[int]=None) -> tuple[dict, dict]:
     height, width = map.shape
     
     todo = []
@@ -77,10 +77,15 @@ def compute_distances(map: np.ndarray[np.int8], from_pos: tuple[int,int]) -> tup
 
     todo.append(from_pos)
     distances[from_pos] = 0
+    
+    def is_excluded(pos):
+        nonlocal map, exclude_cells
+        if exclude_cells is None: return False
+        return map[pos[0],pos[1]] in exclude_cells
 
     def enqueue(cur_pos, cur_dist, next_pos):
         nonlocal map, distances, todo, paths
-        if not is_wall(map, next_pos):
+        if not is_wall(map, next_pos) and not is_excluded(next_pos):
             next_dist = distances[next_pos] if next_pos in distances else np.inf
             if cur_dist + 1 < next_dist:
                 distances[next_pos] = cur_dist + 1
@@ -123,7 +128,14 @@ def get_direction_towards(paths: dict, from_pos: tuple[int,int], to_pos: tuple[i
 
 def get_direction_from_towards(map: np.ndarray[np.int8], from_pos: tuple[int,int], to_pos: tuple[int,int]) -> str:
     if from_pos == to_pos: return None
-    _, paths = compute_distances(map, from_pos)
+    
+    # prevent picking up keys accidentally unless it is the target key
+    excluded_cells = {KEY_RED, KEY_GREEN, KEY_BLUE}
+    target_type = map[to_pos[0], to_pos[1]]
+    if target_type in excluded_cells:
+        excluded_cells.remove(target_type)
+        
+    _, paths = compute_distances(map, from_pos, exclude_cells=excluded_cells)
     return get_direction_towards(paths, from_pos, to_pos)
 
 
