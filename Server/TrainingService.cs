@@ -72,11 +72,13 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
 
     private static State Convert(GameState gameState)
     {
-        var state = new State();
-        state.PlayerPos = new Position() { X = gameState.playerX, Y = gameState.playerY };
+        var state = new State
+        {
+            PlayerPos = new Position { X = gameState.PlayerX, Y = gameState.PlayerY },
+            Finished = gameState.Finished,
+            Inventory = gameState.Inventory
+        };
         state.Surroundings.AddRange(gameState.Surroundings);
-        state.Finished = gameState.Finished;
-        state.Inventory = gameState.Inventory;
         return state;
     }
 

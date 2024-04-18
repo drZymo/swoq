@@ -24,7 +24,6 @@ internal class Game
     public Guid Id { get; } = Guid.NewGuid();
     public int Width => map.Width;
     public int Height => map.Height;
-    public int VisibilityRange => Parameters.VisibilityRange;
 
     public GameState GetState()
     {
