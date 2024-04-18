@@ -14,9 +14,3 @@ There are training levels available.
 A game can be started with the 
 
 Game history is not maintained by the server. Once a game is finished a replay is written to disk and the game process is stopped.
-
-## Tips
-
-Generate python code with
-
-    python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. swoq.proto

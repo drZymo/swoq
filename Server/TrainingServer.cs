@@ -11,9 +11,9 @@ internal class TrainingServer(ISwoqDatabase database)
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
 
-    public StartResult StartGame(string playerId, int level)
+    public StartResult Start(string playerId, int level)
     {
-        var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new PlayerUnknownException();
+        var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
 
         if (level < 0 && level > player.Level) throw new LevelNotAvailableException();
 
@@ -33,7 +33,7 @@ internal class TrainingServer(ISwoqDatabase database)
     {
         if (!games.TryGetValue(gameId, out var game))
         {
-            return (false, GameState.Empty);
+            throw new UnknownGameIdException();
         }
 
         var success = game.Move(direction);
@@ -45,7 +45,7 @@ internal class TrainingServer(ISwoqDatabase database)
     {
         if (!games.TryGetValue(gameId, out var game))
         {
-            return (false, GameState.Empty);
+            throw new UnknownGameIdException();
         }
 
         var success = game.Use(direction);

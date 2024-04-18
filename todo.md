@@ -1,7 +1,7 @@
 # TODO
 
-- [ ] Act vs Move/Use
-- [ ] Door open/closed states
+- [X] Act vs Move/Use
+- [X] Door open/closed states
 - [ ] Map generator
 - [ ] Two players
 - [ ] Pressure plates

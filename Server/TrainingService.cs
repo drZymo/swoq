@@ -5,32 +5,31 @@ namespace Swoq.Server;
 
 internal class TrainingService(ILogger<TrainingService> logger, TrainingServer server) : Training.TrainingBase
 {
-    public override Task<StartResponse> StartGame(StartRequest request, ServerCallContext context)
+    public override Task<StartResponse> Start(StartRequest request, ServerCallContext context)
     {
         return Task.Run(() =>
         {
             var response = new StartResponse();
             try
             {
-                var startResult = server.StartGame(request.PlayerId, request.Level);
+                var startResult = server.Start(request.PlayerId, request.Level);
 
                 response.Result = Result.Ok;
                 response.GameId = startResult.GameId.ToString();
                 response.Height = startResult.Height;
                 response.Width = startResult.Width;
                 response.VisibilityRange = startResult.VisibilityRange;
-                response.State = CreateState(startResult.State);
+                response.State = Convert(startResult.State);
             }
             catch (Exception ex)
             {
                 response.Result = ResultFromException(ex);
             }
-
             return response;
         });
     }
 
-    public override Task<ActionResponse> Move(ActionRequest request, ServerCallContext context)
+    public override Task<ActionResponse> Act(ActionRequest request, ServerCallContext context)
     {
         return Task.Run(() =>
         {
@@ -38,10 +37,30 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             try
             {
                 var gameId = Guid.Parse(request.GameId);
-                var (success, state) = server.Move(gameId, Convert(request.Direction));
 
-                response.Result = success ? Result.Ok : Result.MoveNotAllowed;
-                response.State = CreateState(state);
+                switch (request.Action)
+                {
+                    case Interface.Action.Move:
+                        {
+                            var (success, state) = server.Move(gameId, Convert(request.Direction));
+                            response.Result = success ? Result.Ok : Result.MoveNotAllowed;
+                            response.State = Convert(state);
+                        }
+                        break;
+
+                    case Interface.Action.Use:
+                        {
+                            var (success, state) = server.Use(gameId, Convert(request.Direction));
+                            response.Result = success ? Result.Ok : Result.UseNotAllowed;
+                            response.State = Convert(state);
+                        }
+                        break;
+
+                    default:
+                        response.Result = Result.UnknownAction;
+                        break;
+                }
+
             }
             catch (Exception ex)
             {
@@ -51,29 +70,7 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
         });
     }
 
-    public override Task<ActionResponse> Use(ActionRequest request, ServerCallContext context)
-    {
-        return Task.Run(() =>
-        {
-            var response = new ActionResponse();
-            try
-            {
-                var gameId = Guid.Parse(request.GameId);
-                var (success, state) = server.Use(gameId, Convert(request.Direction));
-
-                response.Result = success ? Result.Ok : Result.UseNotAllowed;
-                response.State = CreateState(state);
-            }
-            catch (Exception ex)
-            {
-                response.Result = ResultFromException(ex);
-            }
-            return response;
-        });
-    }
-
-
-    private static State CreateState(GameState gameState)
+    private static State Convert(GameState gameState)
     {
         var state = new State();
         state.PlayerPos = new Position() { X = gameState.playerX, Y = gameState.playerY };
@@ -96,7 +93,8 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
     {
         switch (ex)
         {
-            case PlayerUnknownException: return Result.PlayerUnknown;
+            case UnknownPlayerException: return Result.UnknownPlayer;
+            case UnknownGameIdException: return Result.UnknownGameId;
             case LevelNotAvailableException: return Result.LevelNotAvailable;
         }
         logger.LogError(ex, "Internal error");

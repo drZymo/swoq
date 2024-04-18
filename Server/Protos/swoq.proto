@@ -2,25 +2,37 @@ syntax = "proto3";
 
 package Swoq.Interface;
 
-service Player {
-	rpc Register(RegisterRequest) returns (RegisterResponse) {};
-}
-
-service Training {
-	rpc StartGame(StartRequest) returns (StartResponse) {};
-	rpc Move(ActionRequest) returns (ActionResponse) {};
-	rpc Use(ActionRequest) returns (ActionResponse) {};
-}
-
 enum Result {
 	OK = 0;
 	
 	INTERNAL_ERROR = 1;
 	PLAYER_ALREADY_REGISTERED = 2;
-	PLAYER_UNKNOWN = 3;
-	LEVEL_NOT_AVAILABLE = 4;
-	MOVE_NOT_ALLOWED = 5;
-	USE_NOT_ALLOWED = 6;
+	UNKNOWN_PLAYER = 3;
+	UNKNOWN_GAME_ID = 4;
+	LEVEL_NOT_AVAILABLE = 5;
+	MOVE_NOT_ALLOWED = 6;
+	USE_NOT_ALLOWED = 7;
+	UNKNOWN_ACTION = 8;
+}
+
+
+service Player {
+	rpc Register(RegisterRequest) returns (RegisterResponse) {};
+}
+
+message RegisterRequest {
+	string playerName = 1;
+}
+
+message RegisterResponse {
+	Result result = 1;
+	optional string playerId = 2;
+}
+
+
+service Training {
+	rpc Start(StartRequest) returns (StartResponse) {};
+	rpc Act(ActionRequest) returns (ActionResponse) {};
 }
 
 enum Direction {
@@ -29,7 +41,6 @@ enum Direction {
 	SOUTH = 2;
 	WEST = 3;
 }
-
 
 message Position {
 	int32 x = 1;
@@ -41,15 +52,6 @@ message State {
 	repeated int32 surroundings = 2;
 	int32 inventory = 3;
 	bool finished = 4;
-}
-
-message RegisterRequest {
-	string playerName = 1;
-}
-
-message RegisterResponse {
-	Result result = 1;
-	optional string playerId = 2;
 }
 
 message StartRequest {
@@ -66,9 +68,17 @@ message StartResponse {
 	optional State state = 6;
 }
 
+enum Action {
+	MOVE = 0;
+	USE = 1;
+}
+
 message ActionRequest {
 	string gameId = 1;
-	Direction direction = 2;
+	Action action = 2;
+	Direction direction = 3;
+	optional Action action2 = 4;
+	optional Direction direction2 = 5;
 }
 
 message ActionResponse {
