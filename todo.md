@@ -4,7 +4,7 @@
 - [X] Door open/closed states
 - [ ] Map generator
 - [ ] Two players
-- [ ] Pressure plates
+- [X] Pressure plates
 - [ ] Quest game
 - [ ] Combat
 - [ ] Replay storage

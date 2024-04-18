@@ -6,99 +6,58 @@ using Position = (int y, int x);
 
 internal class Game
 {
-    public const int VisibilityRange = 5;
-
     private readonly Map map;
-    private readonly int level;
     private Position playerPos;
 
-    private bool isFinished = false;
-
     private Inventory inventory = Inventory.None;
+    private bool isFinished = false;
 
     public Game(int level)
     {
-        //map = new Map(32, 32);
+        //map = new Map(Parameters.MapHeight, Parameters.MapWidth);
         map = Map.LoadFromFile($"../level{level}.bin");
         playerPos = map.InitialPlayerPosition;
-        this.level = level;
 
-        Debug.Assert(map[playerPos] == Cell.Empty);
+        Debug.Assert(CanWalkOn(map[playerPos]));
     }
 
     public Guid Id { get; } = Guid.NewGuid();
     public int Width => map.Width;
     public int Height => map.Height;
+    public int VisibilityRange => Parameters.VisibilityRange;
 
     public GameState GetState()
     {
-        var width = VisibilityRange * 2 + 1;
-        var height = VisibilityRange * 2 + 1;
+        var width = Parameters.VisibilityRange * 2 + 1;
+        var height = Parameters.VisibilityRange * 2 + 1;
         var state = new int[height * width];
 
-        var top = playerPos.y - VisibilityRange;
-        var left = playerPos.x - VisibilityRange;
+        var top = playerPos.y - Parameters.VisibilityRange;
+        var left = playerPos.x - Parameters.VisibilityRange;
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
-                state[y * width + x] = GetCellState((top + y, left + x));
+                state[y * width + x] = ToCellState((top + y, left + x));
             }
         }
-        return new GameState(playerPos.x, playerPos.y, state, isFinished, GetInventoryState());
+        return new GameState(playerPos.x, playerPos.y, state, isFinished, ToInventoryState());
     }
 
     public bool Move(Direction direction)
     {
         if (isFinished) return false;
 
-        Position nextPos = direction switch
+        var nextPos = GetDirectionPosition(direction);
+
+        if (!CanMoveTo(nextPos) || !TryLeaveCell(playerPos) || !TryEnterCell(nextPos))
         {
-            Direction.North => (playerPos.y - 1, playerPos.x),
-            Direction.East => (playerPos.y, playerPos.x + 1),
-            Direction.South => (playerPos.y + 1, playerPos.x),
-            Direction.West => (playerPos.y, playerPos.x - 1),
-            _ => throw new NotImplementedException(), // Should not be possible
-        };
-
-        if (!CanMoveTo(nextPos)) return false;
-
-        var processed = false;
-
-        switch (map[nextPos])
-        {
-            case Cell.Empty:
-            case Cell.DoorRedOpen:
-            case Cell.DoorGreenOpen:
-            case Cell.DoorBlueOpen:
-                // Nothing to do
-                processed = true;
-                break;
-
-            case Cell.Exit:
-                // Game finished
-                map[nextPos] = Cell.Empty;
-                isFinished = true;
-                processed = true;
-                break;
-
-            case Cell.KeyRed:
-            case Cell.KeyGreen:
-            case Cell.KeyBlue:
-                processed = TryPickup(nextPos);
-                break;
-
-            default:
-                throw new NotImplementedException(); // Should not be possible
+            return false;
         }
 
-        if (processed)
-        {
-            playerPos = nextPos;
-        }
-        Debug.Assert(map[playerPos] == Cell.Empty);
-
-        return processed;
+        playerPos = nextPos;
+        Debug.Assert(CanWalkOn(map[playerPos]));
+        return true;
     }
 
     public bool Use(Direction direction)
@@ -106,14 +65,7 @@ internal class Game
         if (isFinished) return false;
         if (inventory == Inventory.None) return false;
 
-        Position usePos = direction switch
-        {
-            Direction.North => (playerPos.y - 1, playerPos.x),
-            Direction.East => (playerPos.y, playerPos.x + 1),
-            Direction.South => (playerPos.y + 1, playerPos.x),
-            Direction.West => (playerPos.y, playerPos.x - 1),
-            _ => throw new NotImplementedException(), // Should not be possible
-        };
+        var usePos = GetDirectionPosition(direction);
 
         var processed = false;
 
@@ -148,6 +100,79 @@ internal class Game
         return processed;
     }
 
+    private Position GetDirectionPosition(Direction direction) => direction switch
+    {
+        Direction.North => (playerPos.y - 1, playerPos.x),
+        Direction.East => (playerPos.y, playerPos.x + 1),
+        Direction.South => (playerPos.y + 1, playerPos.x),
+        Direction.West => (playerPos.y, playerPos.x - 1),
+        _ => throw new UnknownDirectionException(),
+    };
+
+    private bool TryLeaveCell(Position position)
+    {
+        bool left;
+        switch (map[position])
+        {
+            case Cell.Empty:
+            case Cell.DoorRedOpen:
+            case Cell.DoorGreenOpen:
+            case Cell.DoorBlueOpen:
+            case Cell.DoorBlackOpen:
+                // Nothing special, just leave
+                left = true;
+                break;
+
+            case Cell.PressurePlate:
+                CloseBlackDoors();
+                left = true;
+                break;
+
+            default:
+                throw new NotImplementedException(); // Should not be possible
+        }
+        return left;
+    }
+
+    private bool TryEnterCell(Position position)
+    {
+        bool entered;
+        switch (map[position])
+        {
+            case Cell.Empty:
+            case Cell.DoorRedOpen:
+            case Cell.DoorGreenOpen:
+            case Cell.DoorBlueOpen:
+            case Cell.DoorBlackOpen:
+                // Nothing special, just enter
+                entered = true;
+                break;
+
+            case Cell.PressurePlate:
+                OpenBlackDoors();
+                entered = true;
+                break;
+
+            case Cell.Exit:
+                // Game finished
+                map[position] = Cell.Empty;
+                isFinished = true;
+                entered = true;
+                break;
+
+            case Cell.KeyRed:
+            case Cell.KeyGreen:
+            case Cell.KeyBlue:
+                entered = TryPickup(position);
+                break;
+
+            default:
+                throw new NotImplementedException(); // Should not be possible
+        }
+
+        return entered;
+    }
+
     private bool TryPickup(Position position)
     {
         // Cannot pickup if inventory is full
@@ -177,6 +202,34 @@ internal class Game
         return true;
     }
 
+    private void OpenBlackDoors()
+    {
+        for (var y = 0; y < map.Height; y++)
+        {
+            for (var x = 0; x < map.Width; x++)
+            {
+                if (map[y, x] == Cell.DoorBlackClosed)
+                {
+                    map[y, x] = Cell.DoorBlackOpen;
+                }
+            }
+        }
+    }
+
+    private void CloseBlackDoors()
+    {
+        for (var y = 0; y < map.Height; y++)
+        {
+            for (var x = 0; x < map.Width; x++)
+            {
+                if (map[y, x] == Cell.DoorBlackOpen)
+                {
+                    map[y, x] = Cell.DoorBlackClosed;
+                }
+            }
+        }
+    }
+
     private bool CanMoveTo(Position position)
     {
         if (position.x < 0 || position.x >= map.Width) return false;
@@ -187,29 +240,11 @@ internal class Game
         return CanWalkOn(cell);
     }
 
-    private static bool CanWalkOn(Cell cell) => cell switch
-    {
-        Cell.Empty => true,
-        Cell.Exit => true,
-        Cell.DoorRedOpen => true,
-        Cell.KeyRed => true,
-        Cell.DoorGreenOpen => true,
-        Cell.KeyGreen => true,
-        Cell.DoorBlueOpen => true,
-        Cell.KeyBlue => true,
-
-        Cell.Wall => false,
-        Cell.DoorRedClosed => false,
-        Cell.DoorGreenClosed => false,
-        Cell.DoorBlueClosed => false,
-        _ => false,
-    };
-
     private bool IsVisible(Position pos)
     {
         if (pos.y < 0 || pos.y >= map.Height) return false;
         if (pos.x < 0 || pos.x >= map.Width) return false;
-        if (pos.DistanceTo(playerPos) >= VisibilityRange) return false;
+        if (pos.DistanceTo(playerPos) >= Parameters.VisibilityRange) return false;
 
         if (playerPos.x < pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x, pos.y + 0.5)) return true;
         if (playerPos.x > pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;
@@ -267,7 +302,7 @@ internal class Game
 
     #region State
 
-    private int GetCellState(Position pos)
+    private int ToCellState(Position pos)
     {
         const int UNKNOWN = 0;
         const int EMPTY = 1;
@@ -280,6 +315,8 @@ internal class Game
         const int KEY_GREEN = 8;
         const int DOOR_BLUE = 9;
         const int KEY_BLUE = 10;
+        const int DOOR_BLACK = 11;
+        const int PRESSURE_PLATE = 12;
 
         if (pos.Equals(playerPos))
         {
@@ -300,11 +337,14 @@ internal class Game
                 case Cell.KeyGreen: return KEY_GREEN;
                 case Cell.DoorBlueClosed: return DOOR_BLUE;
                 case Cell.KeyBlue: return KEY_BLUE;
+                case Cell.DoorBlackClosed: return DOOR_BLACK;
+                case Cell.PressurePlate: return PRESSURE_PLATE;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:
                 case Cell.DoorGreenOpen:
                 case Cell.DoorBlueOpen:
+                case Cell.DoorBlackOpen:
                     return EMPTY;
             }
         }
@@ -312,7 +352,33 @@ internal class Game
         return UNKNOWN;
     }
 
-    private int GetInventoryState() => inventory switch
+    private static bool CanWalkOn(Cell cell)
+    {
+        switch (cell)
+        {
+            case Cell.Empty:
+            case Cell.Exit:
+            case Cell.DoorRedOpen:
+            case Cell.KeyRed:
+            case Cell.DoorGreenOpen:
+            case Cell.KeyGreen:
+            case Cell.DoorBlueOpen:
+            case Cell.KeyBlue:
+            case Cell.DoorBlackOpen:
+            case Cell.PressurePlate:
+                return true;
+
+            case Cell.Wall:
+            case Cell.DoorRedClosed:
+            case Cell.DoorGreenClosed:
+            case Cell.DoorBlueClosed:
+            case Cell.DoorBlackClosed:
+                return false;
+        };
+        return false;
+    }
+
+    private int ToInventoryState() => inventory switch
     {
         Inventory.None => 0,
         Inventory.KeyRed => 1,
@@ -336,6 +402,7 @@ internal class Game
         Cell.DoorRedClosed => Cell.DoorRedOpen,
         Cell.DoorGreenClosed => Cell.DoorGreenOpen,
         Cell.DoorBlueClosed => Cell.DoorBlueOpen,
+        Cell.DoorBlackClosed => Cell.DoorBlackOpen,
         _ => throw new NotImplementedException("Not a closed door"),
     };
 }

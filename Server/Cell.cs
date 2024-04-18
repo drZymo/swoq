@@ -15,4 +15,8 @@ enum Cell
     DoorBlueClosed,
     DoorBlueOpen,
     KeyBlue,
+
+    DoorBlackClosed,
+    DoorBlackOpen,
+    PressurePlate,
 }

@@ -134,6 +134,8 @@ internal class Map
         8 => Cell.KeyGreen,
         9 => Cell.DoorBlueClosed,
         10 => Cell.KeyBlue,
+        11 => Cell.DoorBlackClosed,
+        12 => Cell.PressurePlate,
         _ => throw new NotImplementedException("Unknown cell type"),
     };
 }

@@ -96,6 +96,7 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             case UnknownPlayerException: return Result.UnknownPlayer;
             case UnknownGameIdException: return Result.UnknownGameId;
             case LevelNotAvailableException: return Result.LevelNotAvailable;
+            case UnknownDirectionException: return Result.UnknownDirection;
         }
         logger.LogError(ex, "Internal error");
         return Result.InternalError;
