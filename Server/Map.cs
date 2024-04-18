@@ -11,6 +11,14 @@ internal class Map
 
     public Position InitialPlayerPosition { get; }
 
+    public Map(Cell[,] data, int height, int width, Position initialPlayerPosition)
+    {
+        this.data = data;
+        Height = height;
+        Width = width;
+        InitialPlayerPosition = initialPlayerPosition;
+    }
+
     public Map(int height, int width)
     {
         Height = height;
@@ -60,14 +68,6 @@ internal class Map
 
         // Start top left
         InitialPlayerPosition = (1, 1);
-    }
-
-    private Map(Cell[,] data, int height, int width, Position initialPlayerPosition)
-    {
-        this.data = data;
-        Height = height;
-        Width = width;
-        InitialPlayerPosition = initialPlayerPosition;
     }
 
     public static Map LoadFromFile(string path)

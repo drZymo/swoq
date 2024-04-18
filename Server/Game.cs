@@ -15,7 +15,8 @@ internal class Game
     public Game(int level)
     {
         //map = new Map(Parameters.MapHeight, Parameters.MapWidth);
-        map = Map.LoadFromFile($"../level{level}.bin");
+        //map = Map.LoadFromFile($"../level{level}.bin");
+        map = MapGenerator.Generate(level);
         playerPos = map.InitialPlayerPosition;
 
         Debug.Assert(CanWalkOn(map[playerPos]));
