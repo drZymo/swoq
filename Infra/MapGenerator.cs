@@ -2,6 +2,7 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+
 using Position = (int y, int x);
 
 public class MapGenerator
@@ -12,6 +13,7 @@ public class MapGenerator
     private readonly int width;
     private readonly Cell[,] data;
     private Position initialPlayerPosition;
+    private Position exitPosition;
 
     private record Room(int Y, int X, int Height, int Width)
     {
@@ -24,6 +26,10 @@ public class MapGenerator
 
     private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
     private readonly IImmutableSet<Position> allPosition = ImmutableHashSet<Position>.Empty;
+
+    private enum KeyColor { Red, Green, Blue }
+
+    private IImmutableSet<KeyColor> availableKeys = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
 
     public static Map Generate(int level, int height = 64, int width = 64)
     {
@@ -53,6 +59,7 @@ public class MapGenerator
         if (level == 0) GenerateLevel0();
         if (level == 1) GenerateLevel1();
         if (level == 2) GenerateLevel2();
+        if (level == 3) GenerateLevel3();
         return new Map(data, height, width, initialPlayerPosition);
     }
 
@@ -72,13 +79,21 @@ public class MapGenerator
         PlacePlayerTopLeftAndExitBottomRight();
     }
 
-
     private void GenerateLevel2()
     {
         CreateRandomRooms(30, 15, 1);
         ConnectRoomsRandomly();
 
         PlacePlayerTopLeftAndExitBottomRight();
+    }
+
+    private void GenerateLevel3()
+    {
+        CreateRandomRooms(30, 15, 1);
+        ConnectRoomsRandomly();
+
+        PlacePlayerTopLeftAndExitBottomRight();
+        var keyColor = AddLockAroundExit();
     }
 
     private Room CreateRoom(int y, int x, int height, int width)
@@ -195,7 +210,8 @@ public class MapGenerator
         var exitRoom = roomsOrdered.Last();
 
         initialPlayerPosition = playerRoom.Center;
-        data[exitRoom.Bottom - 1, exitRoom.Right] = Cell.Exit;
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
+        data[exitPosition.y, exitPosition.x] = Cell.Exit;
     }
 
 
@@ -239,4 +255,54 @@ public class MapGenerator
             DrawHLine(room2.Y, room1.X, room2.X, Math.Sign(dx));
         }
     }
+
+    private KeyColor AddLockAroundExit()
+    {
+        for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
+        {
+            for (var x = exitPosition.x - 1; x <= exitPosition.x + 1; x++)
+            {
+                if (data[y, x] == Cell.Empty)
+                {
+                    data[y, x] = Cell.Wall;
+                }
+            }
+        }
+
+        var posibleDoorPositions = new List<Position>();
+        if (exitPosition.y < height - 2 && data[exitPosition.y + 2, exitPosition.x] == Cell.Empty)
+        {
+            posibleDoorPositions.Add((exitPosition.y + 1, exitPosition.x));
+        }
+        if (exitPosition.y > 2 && data[exitPosition.y - 2, exitPosition.x] == Cell.Empty)
+        {
+            posibleDoorPositions.Add((exitPosition.y - 1, exitPosition.x));
+        }
+        if (exitPosition.x < width - 2 && data[exitPosition.y, exitPosition.x + 2] == Cell.Empty)
+        {
+            posibleDoorPositions.Add((exitPosition.y, exitPosition.x + 1));
+        }
+        if (exitPosition.x > 2 && data[exitPosition.y, exitPosition.x - 2] == Cell.Empty)
+        {
+            posibleDoorPositions.Add((exitPosition.y, exitPosition.x - 1));
+        }
+
+        var doorPos = posibleDoorPositions.PickOne();
+
+        // pick a random key
+        var key = availableKeys.PickOne();
+        availableKeys = availableKeys.Remove(key);
+
+        data[doorPos.y, doorPos.x] = ToDoor(key);
+
+        return key;
+    }
+
+    private static Cell ToDoor(KeyColor color) => color switch
+    {
+        KeyColor.Red => Cell.DoorRedClosed,
+        KeyColor.Green => Cell.DoorGreenClosed,
+        KeyColor.Blue => Cell.DoorBlueClosed,
+        _ => throw new NotImplementedException(),
+    };
 }
