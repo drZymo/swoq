@@ -1,16 +1,17 @@
 ﻿namespace Viewer.ViewModels;
 
+using System.Windows.Media;
+using Position = (int y, int x);
+
 class CellViewModel : ViewModelBase
 {
-    public CellViewModel(int[] address, double x, double y, Color color)
+    public CellViewModel(Position position, Color color)
     {
-        Address = address;
-        X = x;
-        Y = y;
+        X = position.x;
+        Y = position.y;
         Color = color;
     }
 
-    public int[] Address { get; }
     public double X { get; }
     public double Y { get; }
 

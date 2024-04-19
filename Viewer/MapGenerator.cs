@@ -1,6 +1,7 @@
 ﻿namespace Swoq.Server;
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using Position = (int y, int x);
 
 internal class MapGenerator
@@ -22,7 +23,7 @@ internal class MapGenerator
     }
 
     private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
-    private IImmutableSet<Position> allPosition = ImmutableHashSet<Position>.Empty;
+    private readonly IImmutableSet<Position> allPosition = ImmutableHashSet<Position>.Empty;
 
     public static Map Generate(int level, int height = 64, int width = 64)
     {
@@ -151,6 +152,7 @@ internal class MapGenerator
     private void ConnectRoomsRandomly()
     {
         var remaining = rooms;
+        Debug.WriteLine($"ConnectRoomsRandomly: remaining = {remaining.Count}");
 
         // start with top left room
         var current = remaining.OrderBy(r => r.Center.DistanceTo((0, 0))).First();
@@ -158,10 +160,13 @@ internal class MapGenerator
         while (remaining.Count > 1)
         {
             remaining = remaining.Remove(current);
+            Debug.WriteLine($"ConnectRoomsRandomly: current {current.Center}, remaining = {remaining.Count}");
 
             // pick one of the two closest rooms
             var closestRooms = remaining.OrderBy(r => r.Center.DistanceTo(current.Center)).Take(2);
             var next = closestRooms.OrderBy(_ => random.Next()).First();
+
+            Debug.WriteLine($"ConnectRoomsRandomly: connect {current.Center} with {next.Center}");
 
             ConnectRooms(current, next);
             current = next;
@@ -193,6 +198,30 @@ internal class MapGenerator
         return room;
     }
 
+    private void DrawHLine(int y, int x1, int x2, int dir, Cell value = Cell.Empty)
+    {
+        if (x1 == x2) return;
+        var start = Math.Min(x1, x2);
+        var end = Math.Max(x1, x2);
+        for (var x = start; x <= end; x++)
+        {
+            data[y, x] = value;
+            data[y - dir, x] = value;
+        }
+    }
+
+    private void DrawVLine(int y1, int y2, int x, int dir, Cell value = Cell.Empty)
+    {
+        if (y1 == y2) return;
+        var start = Math.Min(y1, y2);
+        var end = Math.Max(y1, y2);
+        for (var y = start; y <= end; y++)
+        {
+            data[y, x] = value;
+            data[y, x - dir] = value;
+        }
+    }
+
     private void ConnectRooms(Room room1, Room room2)
     {
         var dx = room2.X - room1.X;
@@ -200,45 +229,13 @@ internal class MapGenerator
 
         if (Math.Abs(dx) > Math.Abs(dy))
         {
-            if (room2.X != room1.X)
-            {
-                var dir = Math.Sign(dx);
-                for (var x = room1.X; x <= room2.X; x += dir)
-                {
-                    data[room1.Y, x] = Cell.Empty;
-                    data[room1.Y - dir, x] = Cell.Empty;
-                }
-            }
-            if (room2.Y != room1.Y)
-            {
-                var dir = Math.Sign(dy);
-                for (var y = room1.Y; y <= room2.Y; y += dir)
-                {
-                    data[y, room2.X] = Cell.Empty;
-                    data[y, room2.X - dir] = Cell.Empty;
-                }
-            }
+            DrawHLine(room1.Y, room1.X, room2.X, Math.Sign(dx));
+            DrawVLine(room1.Y, room2.Y, room2.X, Math.Sign(dy));
         }
         else
         {
-            if (room2.Y != room1.Y)
-            {
-                var dir = Math.Sign(dy);
-                for (var y = room1.Y; y <= room2.Y; y += dir)
-                {
-                    data[y, room1.X] = Cell.Empty;
-                    data[y, room1.X - dir] = Cell.Empty;
-                }
-            }
-            if (room2.X != room1.X)
-            {
-                var dir = Math.Sign(dx);
-                for (var x = room1.X; x <= room2.X; x += dir)
-                {
-                    data[room2.Y, x] = Cell.Empty;
-                    data[room2.Y - dir, x] = Cell.Empty;
-                }
-            }
+            DrawVLine(room1.Y, room2.Y, room1.X, Math.Sign(dy));
+            DrawHLine(room2.Y, room1.X, room2.X, Math.Sign(dx));
         }
     }
 }

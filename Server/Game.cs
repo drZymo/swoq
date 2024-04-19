@@ -16,7 +16,7 @@ internal class Game
     {
         //map = new Map(Parameters.MapHeight, Parameters.MapWidth);
         //map = Map.LoadFromFile($"../level{level}.bin");
-        map = MapGenerator.Generate(level);
+        map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
         playerPos = map.InitialPlayerPosition;
 
         Debug.Assert(CanWalkOn(map[playerPos]));
@@ -256,6 +256,7 @@ internal class Game
 
     private bool IsVisible(double srcX, double srcY, double dstX, double dstY)
     {
+        return true;
         var dx = dstX - srcX;
         var dy = dstY - srcY;
 
