@@ -10,7 +10,7 @@
 - [ ] Replay storage
 - [ ] Replay viewer
 - [ ] Order: width/height, x/y
-
+- [ ] Levels
 
 ## Act vs Move/Use
 
@@ -35,7 +35,9 @@ A generator for maps.
 
 First one player. Then a level with a second player in a prison that player 1 needs to open first. Both players need to reach exit before level is finished.
 
-Combine the actions
+The Act request contains action1/direction1 and action2/direction2.
+In the state is the position and inventory of both players as well.
+
 
 ## Pressure plates
 
@@ -50,6 +52,20 @@ In two player game: a red door without a key, the key is in the room behind the 
 - Health
 - Armor
 
+Need two players to attack simultanously to defeat enemy. One player dies is end of game. One-on-one enemy will win.
+
+E.g. hit is 1 health. Both players have 100 health. Enemy has 120 health.
+Need sword to be able to hit. So two swords per level.
+Each turn players get hit by enemy if in adjacent cell. Every use will hit enemy.
+Enemy walks 1 cell every two ticks. Players can walk 1 cell per tick. So easy to outrun.
+
+Pickup armor to add 50 health. Makes it possible for one player to kill enemy.
+
+Enemy has visibility range of 5. Will not follow (remain stationary) if out of this range.
+
+Enemies can have inventory which will drop when it dies. Like keys, health or armor.
+
+1 Player with armor is 150 health, so it can defeat one enemy and have 30 health left. Extra armor not enough to be strong enough for another fight. So one player can defeat one enemy.
 
 ## Replay storage
 
@@ -75,3 +91,37 @@ Whole map of each time step is stored as well.
 Show replays step by step. Allows scrolling.
 Can watch folder.
 Auto play mode: auto plays latest game. When finished plays next latest or loops the same again.
+
+
+
+## Levels
+
+1. Simple one room map. One player, no doors.
+2. More difficult map with maze. One player, no doors.
+3. Maze with door in front of exit. Key is placed far away from player and door.
+4. One locker room. Key to exit door is placed in a room with another door. That key is in the open.
+5. Two locker rooms. Repeat. 3 doors in total.
+6. Double-door locker room. Two doors to enter room with exit key. Both keys are in the open. Key for inner door is close to the player at startup, so it can accidentally pick it up. Outer door key is far away from room and player.
+7. First combat. Key in left side for door to enter right side. One sword and armor in left side. One enemy in right side. Open exit in right side, so evading can also be a strategy.
+8. Loot combat. Same setup, but exit is locked. Enemy has key.
+9. Prison. One room with a door that holds the second player. Key is somewhere on the map. Player1 must free Player2.
+10. Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
+11. Double-door locker room with two players.
+12. Single locker room for right side of map. One enemy on right side. One sword on the left, one sword on the right. No armor. So fighting together. Enemy has key for exit door.
+13. Pressure plate locker room. Single locker room with a pressure plate door. One exit door, one key in locker room.
+14. Double pressure plate wall. Level split in two. Pressure plate in left part for one door, plate in right part for other door. Exit in the open, so it is tempting to enter without helping other.
+16. Double pressure plate wall with second pressure plate in locked room.
+17. Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
+18.  Double pressure plate with two lockers. First pressure plate to enter right part of map. Second plate to let second player enter right part. Then a locker room with a key for a locker on the left part of the map that contains the exit door key.
+19. Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
+20. Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword.
+21. Lure. One enemy (120 health) but no swords, so players cannot attack. Pressure plate room with two doors opposite to each other. Plate controls both doors. Enemy must be lured by one player into the room while other player controls the pressure plate. Leave room in time to lock the enemy. Entire room is pressure plate for exit door.
+
+
+### Pressure plate locker
+
+A locker room with the exit key. Door to the locker room can only be opened with a pressure plate. One player has to move to the plate while the other gets the key.
+
+### Double pressure plate
+
+Level is split in two. In left half there is a pressure plate that opens the door to the right half. Then one of the two players can enter. In the right half there is another pressure plate to open another door on the other side of the map where the other player can enter.
