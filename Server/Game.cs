@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Swoq.Infra;
+using System.Diagnostics;
 
 namespace Swoq.Server;
 
@@ -256,7 +257,6 @@ internal class Game
 
     private bool IsVisible(double srcX, double srcY, double dstX, double dstY)
     {
-        return true;
         var dx = dstX - srcX;
         var dy = dstY - srcY;
 

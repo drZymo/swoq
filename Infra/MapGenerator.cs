@@ -1,10 +1,10 @@
-﻿namespace Swoq.Server;
+﻿namespace Swoq.Infra;
 
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Position = (int y, int x);
 
-internal class MapGenerator
+public class MapGenerator
 {
     private static readonly Random random = new();
 
@@ -79,6 +79,19 @@ internal class MapGenerator
         ConnectRoomsRandomly();
 
         PlacePlayerTopLeftAndExitBottomRight();
+    }
+
+    private Room CreateRoom(int y, int x, int height, int width)
+    {
+        var room = new Room(y, x, height, width);
+
+        // Make empty
+        for (var my = room.Top; my < room.Bottom; my++)
+            for (var mx = room.Left; mx < room.Right; mx++)
+                data[my, mx] = Cell.Empty;
+
+        rooms = rooms.Add(room);
+        return room;
     }
 
     private void CreateRandomRooms(int maxRooms, int maxRoomSize, int margin)
@@ -185,18 +198,6 @@ internal class MapGenerator
         data[exitRoom.Bottom - 1, exitRoom.Right] = Cell.Exit;
     }
 
-    private Room CreateRoom(int y, int x, int height, int width)
-    {
-        var room = new Room(y, x, height, width);
-
-        // Make empty
-        for (var my = room.Top; my < room.Bottom; my++)
-            for (var mx = room.Left; mx < room.Right; mx++)
-                data[my, mx] = Cell.Empty;
-
-        rooms = rooms.Add(room);
-        return room;
-    }
 
     private void DrawHLine(int y, int x1, int x2, int dir, Cell value = Cell.Empty)
     {

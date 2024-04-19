@@ -1,9 +1,9 @@
-﻿namespace Swoq.Server;
+﻿namespace Swoq.Infra;
 
 using System.IO;
 using Position = (int y, int x);
 
-internal class Map
+public class Map
 {
     public static readonly Map Empty = new(new Cell[0, 0], 0, 0, (0, 0));
 

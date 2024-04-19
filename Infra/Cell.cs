@@ -1,6 +1,6 @@
-﻿namespace Swoq.Server;
+﻿namespace Swoq.Infra;
 
-enum Cell
+public enum Cell
 {
     Empty,
     Wall,

@@ -1,8 +1,8 @@
-﻿namespace Swoq.Server;
+﻿namespace Swoq.Infra;
 
 using Position = (int y, int x);
 
-internal static class PositionEx
+public static class PositionEx
 {
     public static double DistanceTo(this Position position, Position other)
     {

@@ -9,7 +9,7 @@ internal class RelayCommand(Action<object?>? execute = null, Func<object?, bool>
 
     public bool CanExecute(object? parameter)
     {
-        return canExecute != null ? canExecute.Invoke(parameter) : true;
+        return canExecute == null || canExecute.Invoke(parameter);
     }
 
     public void Execute(object? parameter)

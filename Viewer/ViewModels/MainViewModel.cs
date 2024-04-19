@@ -1,4 +1,4 @@
-﻿using Swoq.Server;
+﻿using Swoq.Infra;
 using System.Windows.Input;
 
 namespace Viewer.ViewModels;
