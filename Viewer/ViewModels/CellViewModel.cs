@@ -1,4 +1,4 @@
-﻿namespace Viewer.ViewModels;
+﻿namespace MapGeneratorTester.ViewModels;
 
 using System.Windows.Media;
 using Position = (int y, int x);

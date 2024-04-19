@@ -1,7 +1,7 @@
-﻿using System.Windows;
-using Viewer.ViewModels;
+﻿using MapGeneratorTester.ViewModels;
+using System.Windows;
 
-namespace Viewer;
+namespace MapGeneratorTester;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml

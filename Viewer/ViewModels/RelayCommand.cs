@@ -1,6 +1,6 @@
 ﻿using System.Windows.Input;
 
-namespace Viewer.ViewModels;
+namespace MapGeneratorTester.ViewModels;
 
 internal class RelayCommand(Action<object?>? execute = null, Func<object?, bool>? canExecute = null) : ICommand
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Viewer.ViewModels;
+namespace MapGeneratorTester.ViewModels;
 
 internal abstract class ViewModelBase : INotifyPropertyChanged
 {

@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 
-namespace Viewer.ViewModels;
+namespace MapGeneratorTester.ViewModels;
 
 class MapViewModel : ViewModelBase
 {
@@ -11,8 +11,14 @@ class MapViewModel : ViewModelBase
     {
         { Cell.Empty, Colors.LightGray },
         { Cell.Wall, Colors.DimGray },
-        { Cell.Exit, Colors.Blue },
+        { Cell.Exit, Colors.Yellow },
+        { Cell.DoorRedClosed, Colors.Red },
+        { Cell.DoorGreenClosed, Colors.Green },
+        { Cell.DoorBlueClosed, Colors.Blue },
+        { Cell.DoorBlackClosed, Colors.Black },
     }.ToImmutableDictionary();
+
+    private static readonly Color PlayerColor = Colors.Magenta;
 
     private readonly Map map;
 
@@ -34,7 +40,7 @@ class MapViewModel : ViewModelBase
                 var color = CellColors.TryGetValue(map[y, x], out var c) ? c : Colors.Black;
                 if (y == map.InitialPlayerPosition.y && x == map.InitialPlayerPosition.x)
                 {
-                    color = Colors.DarkOrange;
+                    color = PlayerColor;
                 }
                 cells.Add(new CellViewModel((y, x), color));
             }

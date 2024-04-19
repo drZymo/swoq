@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Viewer;
+namespace MapGeneratorTester;
 
 /// <summary>
 /// Interaction logic for App.xaml

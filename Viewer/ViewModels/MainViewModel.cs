@@ -1,7 +1,7 @@
 ﻿using Swoq.Infra;
 using System.Windows.Input;
 
-namespace Viewer.ViewModels;
+namespace MapGeneratorTester.ViewModels;
 
 class MainViewModel : ViewModelBase
 {
@@ -22,7 +22,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    private int level = 0;
+    private int level = 3;
     public int Level
     {
         get => level;
