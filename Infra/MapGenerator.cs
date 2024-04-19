@@ -1,12 +1,13 @@
 ﻿namespace Swoq.Infra;
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 using Position = (int y, int x);
 
 public class MapGenerator
 {
+    private class MapGeneratorException(string message) : Exception(message) { }
+
     private static readonly Random random = new();
 
     private readonly int height;
@@ -15,14 +16,6 @@ public class MapGenerator
     private Position initialPlayerPosition;
     private Position exitPosition;
 
-    private record Room(int Y, int X, int Height, int Width)
-    {
-        public Position Center => (Y, X);
-        public int Top => Y - Height / 2;
-        public int Bottom => Top + Height;
-        public int Left => X - Width / 2;
-        public int Right => Left + Width;
-    }
 
     private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
     private readonly IImmutableSet<Position> allPosition = ImmutableHashSet<Position>.Empty;
@@ -33,8 +26,15 @@ public class MapGenerator
 
     public static Map Generate(int level, int height = 64, int width = 64)
     {
-        var generator = new MapGenerator(height, width);
-        return generator.Generate(level);
+        try
+        {
+            var generator = new MapGenerator(height, width);
+            return generator.Generate(level);
+        }
+        catch (MapGeneratorException) // TODO: report
+        {
+            return Map.Empty;
+        }
     }
 
     private MapGenerator(int height, int width)
@@ -81,7 +81,7 @@ public class MapGenerator
 
     private void GenerateLevel2()
     {
-        CreateRandomRooms(30, 15, 1);
+        CreateRandomRooms(30, 8, 3);
         ConnectRoomsRandomly();
 
         PlacePlayerTopLeftAndExitBottomRight();
@@ -93,8 +93,19 @@ public class MapGenerator
         ConnectRoomsRandomly();
 
         PlacePlayerTopLeftAndExitBottomRight();
-        var keyColor = AddLockAroundExit();
+        var (keyColor, doorPos) = AddLockAroundExit();
+
+        var infrontDoorPos = GetEmptyPositionInFront(doorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
+
+        var keyPosition = GetFarthestPositionFromTwo(initialPlayerPosition, infrontDoorPos);
+        var keyRoom = FindRoomContainingPosition(keyPosition) ?? throw new MapGeneratorException("Exit key not in a room");
+
+        keyPosition = keyRoom.RandomPosition(1);
+
+        data[keyPosition.y, keyPosition.x] = ToKey(keyColor);
     }
+
+
 
     private Room CreateRoom(int y, int x, int height, int width)
     {
@@ -127,7 +138,7 @@ public class MapGenerator
                     choices = choices.Remove((y, x));
                 }
             }
-            for (var y = height - 1 - (rh - rh / 2); y < height; y++)
+            for (var y = height - (rh - rh / 2); y < height; y++)
             {
                 for (var x = 0; x < width; x++)
                 {
@@ -141,7 +152,7 @@ public class MapGenerator
                     choices = choices.Remove((y, x));
                 }
             }
-            for (var x = width - 1 - (rw - rw / 2); x < width; x++)
+            for (var x = width - (rw - rw / 2); x < width; x++)
             {
                 for (var y = 0; y < height; y++)
                 {
@@ -180,7 +191,6 @@ public class MapGenerator
     private void ConnectRoomsRandomly()
     {
         var remaining = rooms;
-        Debug.WriteLine($"ConnectRoomsRandomly: remaining = {remaining.Count}");
 
         // start with top left room
         var current = remaining.OrderBy(r => r.Center.DistanceTo((0, 0))).First();
@@ -188,13 +198,10 @@ public class MapGenerator
         while (remaining.Count > 1)
         {
             remaining = remaining.Remove(current);
-            Debug.WriteLine($"ConnectRoomsRandomly: current {current.Center}, remaining = {remaining.Count}");
 
             // pick one of the two closest rooms
             var closestRooms = remaining.OrderBy(r => r.Center.DistanceTo(current.Center)).Take(2);
             var next = closestRooms.OrderBy(_ => random.Next()).First();
-
-            Debug.WriteLine($"ConnectRoomsRandomly: connect {current.Center} with {next.Center}");
 
             ConnectRooms(current, next);
             current = next;
@@ -256,15 +263,18 @@ public class MapGenerator
         }
     }
 
-    private KeyColor AddLockAroundExit()
+    private (KeyColor keyColor, Position doorPos) AddLockAroundExit()
     {
         for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
         {
             for (var x = exitPosition.x - 1; x <= exitPosition.x + 1; x++)
             {
-                if (data[y, x] == Cell.Empty)
+                if (0 <= y && y < height && 0 <= x && x < width)
                 {
-                    data[y, x] = Cell.Wall;
+                    if (data[y, x] == Cell.Empty)
+                    {
+                        data[y, x] = Cell.Wall;
+                    }
                 }
             }
         }
@@ -295,7 +305,7 @@ public class MapGenerator
 
         data[doorPos.y, doorPos.x] = ToDoor(key);
 
-        return key;
+        return (key, doorPos);
     }
 
     private static Cell ToDoor(KeyColor color) => color switch
@@ -305,4 +315,98 @@ public class MapGenerator
         KeyColor.Blue => Cell.DoorBlueClosed,
         _ => throw new NotImplementedException(),
     };
+
+    private static Cell ToKey(KeyColor color) => color switch
+    {
+        KeyColor.Red => Cell.KeyRed,
+        KeyColor.Green => Cell.KeyGreen,
+        KeyColor.Blue => Cell.KeyBlue,
+        _ => throw new NotImplementedException(),
+    };
+
+    private (IImmutableDictionary<Position, int> distances, IImmutableDictionary<Position, Position> paths) ComputeDistancesFrom(Position fromPos)
+    {
+        var distances = ImmutableDictionary<Position, int>.Empty;
+        var paths = ImmutableDictionary<Position, Position>.Empty;
+        var todo = ImmutableQueue<Position>.Empty;
+
+        void CheckAndAdd(Position currentPos, int currentDist, Position nextPos)
+        {
+            if (!data[nextPos.y, nextPos.x].CanWalkOn()) return;
+
+            var nextDist = distances.TryGetValue(nextPos, out var d) ? d : int.MaxValue;
+            if (currentDist + 1 < nextDist)
+            {
+                distances = distances.SetItem(nextPos, currentDist + 1);
+                paths = paths.SetItem(nextPos, currentPos);
+                todo = todo.Enqueue(nextPos);
+            }
+        }
+
+        distances = distances.Add(fromPos, 0);
+        todo = todo.Enqueue(fromPos);
+
+        while (!todo.IsEmpty)
+        {
+            todo = todo.Dequeue(out var currentPos);
+            var currentDist = distances[currentPos];
+
+            if (currentPos.y > 0) CheckAndAdd(currentPos, currentDist, (currentPos.y - 1, currentPos.x));
+            if (currentPos.y < height - 1) CheckAndAdd(currentPos, currentDist, (currentPos.y + 1, currentPos.x));
+            if (currentPos.x > 0) CheckAndAdd(currentPos, currentDist, (currentPos.y, currentPos.x - 1));
+            if (currentPos.x < width - 1) CheckAndAdd(currentPos, currentDist, (currentPos.y, currentPos.x + 1));
+        }
+
+        return (distances, paths);
+    }
+
+    private Position GetFarthestPositionFromTwo(Position a, Position b)
+    {
+        var (distancesA, _) = ComputeDistancesFrom(a);
+        var (distancesB, _) = ComputeDistancesFrom(b);
+
+        int? maxDistance = null;
+        var maxPositions = ImmutableHashSet<Position>.Empty;
+        foreach (var (pos, distA) in distancesA)
+        {
+            if (distancesB.TryGetValue(pos, out var distB))
+            {
+                var dist = distA + distB;
+                if (maxDistance == null || dist > maxDistance)
+                {
+                    maxDistance = dist;
+                    maxPositions = [pos];
+                }
+                else if (maxDistance != null && dist == maxDistance)
+                {
+                    maxPositions = maxPositions.Add(pos);
+                }
+            }
+        }
+
+        return maxPositions.PickOne();
+    }
+
+    private Position? GetEmptyPositionInFront(Position pos)
+    {
+        if (pos.y > 0 && data[pos.y - 1, pos.x] == Cell.Empty) return (pos.y - 1, pos.x);
+        if (pos.y < height && data[pos.y + 1, pos.x] == Cell.Empty) return (pos.y + 1, pos.x);
+        if (pos.x > 0 && data[pos.y, pos.x - 1] == Cell.Empty) return (pos.y, pos.x - 1);
+        if (pos.x < width && data[pos.y, pos.x + 1] == Cell.Empty) return (pos.y, pos.x + 1);
+
+        return null;
+    }
+
+    private Room? FindRoomContainingPosition(Position pos)
+    {
+        foreach (var room in rooms)
+        {
+            if (room.Top <= pos.y && pos.y < room.Bottom &&
+                room.Left <= pos.x && pos.x < room.Right)
+            {
+                return room;
+            }
+        }
+        return null;
+    }
 }

@@ -7,7 +7,7 @@ namespace MapGeneratorTester.ViewModels;
 
 class MapViewModel : ViewModelBase
 {
-    private static readonly IImmutableDictionary<Cell, Color> CellColors = new Dictionary<Cell, Color>
+    private static readonly ImmutableDictionary<Cell, Color> CellColors = new Dictionary<Cell, Color>
     {
         { Cell.Empty, Colors.LightGray },
         { Cell.Wall, Colors.DimGray },
@@ -16,6 +16,9 @@ class MapViewModel : ViewModelBase
         { Cell.DoorGreenClosed, Colors.Green },
         { Cell.DoorBlueClosed, Colors.Blue },
         { Cell.DoorBlackClosed, Colors.Black },
+        { Cell.KeyRed, Colors.DarkRed },
+        { Cell.KeyGreen, Colors.DarkGreen },
+        { Cell.KeyBlue, Colors.DarkBlue },
     }.ToImmutableDictionary();
 
     private static readonly Color PlayerColor = Colors.Magenta;

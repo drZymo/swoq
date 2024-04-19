@@ -20,7 +20,7 @@ internal class Game
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
         playerPos = map.InitialPlayerPosition;
 
-        Debug.Assert(CanWalkOn(map[playerPos]));
+        Debug.Assert(map[playerPos].CanWalkOn());
     }
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -57,7 +57,7 @@ internal class Game
         }
 
         playerPos = nextPos;
-        Debug.Assert(CanWalkOn(map[playerPos]));
+        Debug.Assert(map[playerPos].CanWalkOn());
         return true;
     }
 
@@ -238,7 +238,7 @@ internal class Game
 
         var cell = map[position];
 
-        return CanWalkOn(cell);
+        return cell.CanWalkOn();
     }
 
     private bool IsVisible(Position pos)
@@ -272,7 +272,7 @@ internal class Game
                 var mapX = (int)(x + stepX * 0.5);
                 var mapY = (int)y;
                 if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
-                if (!CanWalkOn(map[mapY, mapX])) return false; // Blocked by wall
+                if (!map[mapY, mapX].CanWalkOn()) return false; // Blocked by wall
 
                 x += stepX;
                 y += stepY;
@@ -291,7 +291,7 @@ internal class Game
                 var mapY = (int)(y + stepY * 0.5);
                 var mapX = (int)x;
                 if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
-                if (!CanWalkOn(map[mapY, mapX])) return false; // Blocked by wall
+                if (!map[mapY, mapX].CanWalkOn()) return false; // Blocked by wall
 
                 y += stepY;
                 x += stepX;
@@ -351,32 +351,6 @@ internal class Game
         }
 
         return UNKNOWN;
-    }
-
-    private static bool CanWalkOn(Cell cell)
-    {
-        switch (cell)
-        {
-            case Cell.Empty:
-            case Cell.Exit:
-            case Cell.DoorRedOpen:
-            case Cell.KeyRed:
-            case Cell.DoorGreenOpen:
-            case Cell.KeyGreen:
-            case Cell.DoorBlueOpen:
-            case Cell.KeyBlue:
-            case Cell.DoorBlackOpen:
-            case Cell.PressurePlate:
-                return true;
-
-            case Cell.Wall:
-            case Cell.DoorRedClosed:
-            case Cell.DoorGreenClosed:
-            case Cell.DoorBlueClosed:
-            case Cell.DoorBlackClosed:
-                return false;
-        };
-        return false;
     }
 
     private int ToInventoryState() => inventory switch
