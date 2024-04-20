@@ -22,7 +22,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    private int level = 4;
+    private int level = 7;
     public int Level
     {
         get => level;

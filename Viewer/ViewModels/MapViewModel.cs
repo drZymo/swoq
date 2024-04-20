@@ -41,7 +41,7 @@ class MapViewModel : ViewModelBase
             for (var x = 0; x < map.Width; x++)
             {
                 var color = CellColors.TryGetValue(map[y, x], out var c) ? c : Colors.Black;
-                if (y == map.InitialPlayerPosition.y && x == map.InitialPlayerPosition.x)
+                if (y == map.InitialPlayer1Position.y && x == map.InitialPlayer1Position.x)
                 {
                     color = PlayerColor;
                 }

@@ -26,7 +26,7 @@ internal class TrainingServer(ISwoqDatabase database)
 
         var state = game.GetState();
 
-        return new StartResult(game.Id, game.Height, game.Width, Parameters.VisibilityRange, state);
+        return new StartResult(game.Id, game.Height, game.Width, Parameters.PlayerVisibilityRange, state);
     }
 
     public (bool success, GameState state) Move(Guid gameId, Direction direction)

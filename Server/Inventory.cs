@@ -6,4 +6,5 @@ internal enum Inventory
     KeyRed,
     KeyGreen,
     KeyBlue,
+    Sword,
 }

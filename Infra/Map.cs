@@ -11,14 +11,27 @@ public class Map
     public int Height { get; }
     public int Width { get; }
 
-    public Position InitialPlayerPosition { get; }
+    public Position InitialPlayer1Position { get; }
+    public Position? InitialPlayer2Position { get; } = null;
+    public Position? InitialEnemy1Position { get; } = null;
+    public Position? InitialEnemy2Position { get; } = null;
 
-    public Map(Cell[,] data, int height, int width, Position initialPlayerPosition)
+    public Map(
+        Cell[,] data,
+        int height,
+        int width,
+        Position initialPlayer1Position,
+        Position? initialPlayer2Position = null,
+        Position? initialEnemy1Position = null,
+        Position? initialEnemy2Position = null)
     {
         this.data = data;
         Height = height;
         Width = width;
-        InitialPlayerPosition = initialPlayerPosition;
+        InitialPlayer1Position = initialPlayer1Position;
+        InitialPlayer2Position = initialPlayer2Position;
+        InitialEnemy1Position = initialEnemy1Position;
+        InitialEnemy2Position = initialEnemy2Position;
     }
 
     public Cell this[int y, int x]

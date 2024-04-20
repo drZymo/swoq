@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Swoq.Server;
@@ -10,15 +11,18 @@ internal class Game
     private readonly Map map;
 
     private record Player(Position Position, Inventory Inventory, int Health);
+    private record Enemy(Position Position, Inventory Inventory, int Health); // TODO: merge with Player ?
 
     private Player player1;
+    private Enemy? enemy;
 
     private bool isFinished = false;
 
     public Game(int level)
     {
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
-        player1 = new Player(map.InitialPlayerPosition, Inventory.None, 100);
+        player1 = new Player(map.InitialPlayer1Position, Inventory.None, 100);
+
 
         Debug.Assert(map[player1.Position].CanWalkOn());
     }
@@ -29,12 +33,12 @@ internal class Game
 
     public GameState GetState()
     {
-        var width = Parameters.VisibilityRange * 2 + 1;
-        var height = Parameters.VisibilityRange * 2 + 1;
+        var width = Parameters.PlayerVisibilityRange * 2 + 1;
+        var height = Parameters.PlayerVisibilityRange * 2 + 1;
         var state = new int[height * width];
 
-        var top = player1.Position.y - Parameters.VisibilityRange;
-        var left = player1.Position.x - Parameters.VisibilityRange;
+        var top = player1.Position.y - Parameters.PlayerVisibilityRange;
+        var left = player1.Position.x - Parameters.PlayerVisibilityRange;
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -199,7 +203,21 @@ internal class Game
 
         // Remove from player1.Inventory and change to open
         player1 = player1 with { Inventory = Inventory.None };
-        map[position] = ToOpenDoor(map[position]);
+
+        // Open this and all adjacent door cells
+        ImmutableQueue<Position> todo = [position];
+        while (!todo.IsEmpty)
+        {
+            todo = todo.Dequeue(out var current);
+            var doorType = map[current];
+            map[current] = ToOpenDoor(doorType);
+
+            if (map[current.y - 1, current.x] == doorType) todo.Enqueue((current.y - 1, current.x));
+            if (map[current.y + 1, current.x] == doorType) todo.Enqueue((current.y + 1, current.x));
+            if (map[current.y, current.x - 1] == doorType) todo.Enqueue((current.y, current.x - 1));
+            if (map[current.y, current.x + 1] == doorType) todo.Enqueue((current.y, current.x + 1));
+        }
+
         return true;
     }
 
@@ -245,7 +263,7 @@ internal class Game
     {
         if (pos.y < 0 || pos.y >= map.Height) return false;
         if (pos.x < 0 || pos.x >= map.Width) return false;
-        if (pos.DistanceTo(player1.Position) >= Parameters.VisibilityRange) return false;
+        if (pos.DistanceTo(player1.Position) >= Parameters.PlayerVisibilityRange) return false;
 
         if (player1.Position.x < pos.x && IsVisible(player1.Position.x + 0.5, player1.Position.y + 0.5, pos.x, pos.y + 0.5)) return true;
         if (player1.Position.x > pos.x && IsVisible(player1.Position.x + 0.5, player1.Position.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;

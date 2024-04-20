@@ -13,9 +13,11 @@ public class MapGenerator
     private readonly int height;
     private readonly int width;
     private readonly Cell[,] data;
-    private Position initialPlayerPosition;
+    private Position initialPlayer1Position;
+    private Position? initialPlayer2Position = null;
+    private Position? initialEnemy1Position = null;
+    private Position? initialEnemy2Position = null;
     private Position exitPosition;
-
 
     private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
     private readonly IImmutableSet<Position> allPosition = ImmutableHashSet<Position>.Empty;
@@ -63,14 +65,16 @@ public class MapGenerator
         if (level == 3) GenerateLevel3();
         if (level == 4) GenerateLevel4();
         if (level == 5) GenerateLevel5();
-        return new Map(data, height, width, initialPlayerPosition);
+        if (level == 6) GenerateLevel6();
+        if (level == 7) GenerateLevel7();
+        return new Map(data, height, width, initialPlayer1Position, initialPlayer2Position, initialEnemy1Position, initialEnemy2Position);
     }
 
     private void GenerateLevel0()
     {
         // TODO: subclasses per level?
         CreateRoom(32, 32, 10, 10);
-        initialPlayerPosition = (32 - 5, 32 - 5);
+        initialPlayer1Position = (32 - 5, 32 - 5);
         data[32 + 4, 32 + 5] = Cell.Exit;
     }
 
@@ -101,7 +105,7 @@ public class MapGenerator
         var infrontDoorPos = GetEmptyPositionInFront(doorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
 
         // Place key in far away room
-        var keyRoom = GetFarthestRoomFromTwo(initialPlayerPosition, infrontDoorPos);
+        var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, infrontDoorPos);
         var keyPosition = keyRoom.RandomPosition(1);
         data[keyPosition.y, keyPosition.x] = ToKey(keyColor);
     }
@@ -117,12 +121,12 @@ public class MapGenerator
         var infrontExitDoorPos = GetEmptyPositionInFront(exitDoorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
 
         // Find room farthest away from player and exit large enough for locker room.
-        var lockerRoom = GetFarthestRoomFromTwo(initialPlayerPosition, infrontExitDoorPos, 5, 5);
+        var lockerRoom = GetFarthestRoomFromTwo(initialPlayer1Position, infrontExitDoorPos, 5, 5);
         availableRooms = availableRooms.Remove(lockerRoom);
         var (lockerKeyColor, infrontLockerDoorPos) = AddLockerToRoom(lockerRoom, exitKeyColor);
 
         // Place key farthest away from player and locker room
-        var lockerKeyRoom = GetFarthestRoomFromTwo(initialPlayerPosition, infrontLockerDoorPos);
+        var lockerKeyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, infrontLockerDoorPos);
         availableRooms = availableRooms.Remove(lockerKeyRoom);
         var lockerKeyPos = lockerKeyRoom.RandomPosition(1);
         data[lockerKeyPos.y, lockerKeyPos.x] = ToKey(lockerKeyColor);
@@ -139,7 +143,7 @@ public class MapGenerator
         var infrontExitDoorPos = GetEmptyPositionInFront(exitDoorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
 
         // Find room farthest away from player and exit large enough for locker room.
-        var locker1Room = GetFarthestRoomFromTwo(initialPlayerPosition, infrontExitDoorPos, 5, 5);
+        var locker1Room = GetFarthestRoomFromTwo(initialPlayer1Position, infrontExitDoorPos, 5, 5);
         availableRooms = availableRooms.Remove(locker1Room);
         var (locker1KeyColor, infrontLocker1DoorPos) = AddLockerToRoom(locker1Room, exitKeyColor);
 
@@ -153,6 +157,89 @@ public class MapGenerator
         availableRooms = availableRooms.Remove(locker2KeyRoom);
         var locker2KeyPos = locker2KeyRoom.RandomPosition(1);
         data[locker2KeyPos.y, locker2KeyPos.x] = ToKey(locker2KeyColor);
+    }
+
+    private void GenerateLevel6()
+    { }
+
+    private void GenerateLevel7()
+    {
+        // First combat.
+        // Key in left side for door to enter right side.
+        // One sword and armor in left side.
+        // One enemy in right side.
+        // Open exit in right side, so evading can also be a strategy.
+
+        var middle = width / 2;
+
+        rooms = [];
+        CreateRandomRooms(15, 12, 2, maxX: middle);
+        ConnectRoomsRandomly();
+        var roomsLeft = rooms;
+
+        rooms = [];
+        CreateRandomRooms(15, 12, 2, minX: middle + 1);
+        ConnectRoomsRandomly();
+        var roomsRight = rooms;
+
+        rooms = roomsLeft.AddRange(roomsRight);
+        PlacePlayerTopLeftAndExitBottomRight();
+
+        var minDist = double.PositiveInfinity;
+        Room? minLeft = null;
+        Room? minRight = null;
+        foreach (var left in roomsLeft)
+        {
+            foreach (var right in roomsRight)
+            {
+                var dist = left.Center.DistanceTo(right.Center);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    minLeft = left;
+                    minRight = right;
+                }
+            }
+        }
+        Debug.Assert(minLeft != null && minRight != null);
+
+        ConnectRooms(minLeft, minRight);
+
+
+        var keyColor = availableKeys.PickOne();
+        availableKeys = availableKeys.Remove(keyColor);
+
+        var doorPositions = ImmutableList<int>.Empty;
+        for (var y = 0; y < height; y++)
+        {
+            if (data[y, middle] == Cell.Empty)
+            {
+                data[y, middle] = ToDoor(keyColor);
+                doorPositions = doorPositions.Add(y);
+            }
+        }
+
+        Position farthestInfrontDoor = (0, 0);
+        {
+            var maxDist = 0;
+            var (distances, _) = ComputeDistancesFrom(initialPlayer1Position);
+            foreach (var doorPos in doorPositions)
+            {
+                var doorLeft = (doorPos, middle - 1);
+                if (distances.TryGetValue(doorLeft, out var dist))
+                {
+                    if (dist > maxDist)
+                    {
+                        maxDist = dist;
+                        farthestInfrontDoor = doorLeft;
+                    }
+                }
+            }
+        }
+
+        var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
+        var keyPos = keyRoom.RandomPosition(1);
+        data[keyPos.y, keyPos.x] = ToKey(keyColor);
     }
 
     private Room CreateRoom(int y, int x, int height, int width)
@@ -169,41 +256,51 @@ public class MapGenerator
         return room;
     }
 
-    private void CreateRandomRooms(int maxRooms, int maxRoomSize, int margin)
+    private void CreateRandomRooms(int maxRooms, int maxRoomSize, int margin,
+        int? minY = null, int? maxY = null, int? minX = null, int? maxX = null)
     {
+        var _minY = minY ?? 0;
+        var _maxY = maxY ?? height;
+        var _minX = minX ?? 0;
+        var _maxX = maxX ?? width;
+
+        var availablePositions = allPosition.Where(p => _minY <= p.y && p.y < _maxY && _minX <= p.x && p.x < _maxX).ToImmutableHashSet();
+
         var maxSize = maxRoomSize;
         while (maxSize > 4 && rooms.Count < maxRooms)
         {
             var rw = random.Next(3, maxSize);
             var rh = random.Next(3, maxSize);
 
-            var choices = allPosition;
+            var choices = availablePositions;
 
             // clear out edges
-            for (var y = 0; y < 1 + rh / 2; y++)
+            Debug.Assert(_minY + 1 + rh / 2 <= _maxY);
+            for (var y = _minY; y < _minY + 1 + rh / 2; y++)
             {
-                for (var x = 0; x < width; x++)
+                for (var x = _minX; x < _maxX; x++)
                 {
                     choices = choices.Remove((y, x));
                 }
             }
-            for (var y = height - (rh - rh / 2); y < height; y++)
+            for (var y = _maxY - (rh - rh / 2); y < _maxY; y++)
             {
-                for (var x = 0; x < width; x++)
+                for (var x = _minX; x < _maxX; x++)
                 {
                     choices = choices.Remove((y, x));
                 }
             }
-            for (var x = 0; x < 1 + rw / 2; x++)
+            Debug.Assert(_minX + 1 + rw / 2 <= _maxX);
+            for (var x = _minX; x < _minX + 1 + rw / 2; x++)
             {
-                for (var y = 0; y < height; y++)
+                for (var y = _minY; y < _maxY; y++)
                 {
                     choices = choices.Remove((y, x));
                 }
             }
-            for (var x = width - (rw - rw / 2); x < width; x++)
+            for (var x = _maxX - (rw - rw / 2); x < _maxX; x++)
             {
-                for (var y = 0; y < height; y++)
+                for (var y = _minY; y < _maxY; y++)
                 {
                     choices = choices.Remove((y, x));
                 }
@@ -261,11 +358,11 @@ public class MapGenerator
     {
         // place player in top left room
         // and exit in bottom right
-        var roomsOrdered = rooms.OrderBy(r => r.Center.DistanceTo((0, 0)));
+        var roomsOrdered = availableRooms.OrderBy(r => r.Center.DistanceTo((0, 0)));
         var playerRoom = roomsOrdered.First();
         var exitRoom = roomsOrdered.Last();
 
-        initialPlayerPosition = playerRoom.Center;
+        initialPlayer1Position = playerRoom.Center;
         exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
         data[exitPosition.y, exitPosition.x] = Cell.Exit;
 
@@ -440,6 +537,32 @@ public class MapGenerator
         }
 
         return maxPositions.PickOne();
+    }
+
+    private Room GetFarthestRoomFrom(Position pos, int minRoomHeight = 1, int minRoomWidth = 1)
+    {
+        var (distances, _) = ComputeDistancesFrom(pos);
+
+        int? maxDistance = null;
+        var maxRooms = ImmutableHashSet<Room>.Empty;
+
+        foreach (var room in availableRooms.Where(r => r.Height >= minRoomHeight && r.Width >= minRoomWidth))
+        {
+            if (distances.TryGetValue(room.Center, out var dist))
+            {
+                if (maxDistance == null || dist > maxDistance)
+                {
+                    maxDistance = dist;
+                    maxRooms = [room];
+                }
+                else if (maxDistance != null && dist == maxDistance)
+                {
+                    maxRooms = maxRooms.Add(room);
+                }
+            }
+        }
+
+        return maxRooms.PickOne();
     }
 
     private Room GetFarthestRoomFromTwo(Position a, Position b, int minRoomHeight = 1, int minRoomWidth = 1)
