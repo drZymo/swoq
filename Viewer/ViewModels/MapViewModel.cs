@@ -11,7 +11,7 @@ class MapViewModel : ViewModelBase
     {
         { Cell.Empty, Color.FromRgb(64, 64, 64) },
         { Cell.Wall, Color.FromRgb(147, 124, 93) },
-        { Cell.Exit, Colors.Yellow },
+        { Cell.Exit, Colors.LightYellow },
         { Cell.DoorRedClosed, Colors.DarkRed },
         { Cell.DoorGreenClosed, Colors.DarkGreen },
         { Cell.DoorBlueClosed, Colors.DarkBlue },
@@ -19,6 +19,7 @@ class MapViewModel : ViewModelBase
         { Cell.KeyRed, Colors.Red },
         { Cell.KeyGreen, Colors.Green },
         { Cell.KeyBlue, Colors.Blue },
+        { Cell.Sword, Colors.Gold },
     }.ToImmutableDictionary();
 
     private static readonly Color PlayerColor = Colors.Magenta;

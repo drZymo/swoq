@@ -3,8 +3,8 @@
 internal enum Inventory
 {
     None,
+
     KeyRed,
     KeyGreen,
     KeyBlue,
-    Sword,
 }

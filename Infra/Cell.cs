@@ -19,4 +19,6 @@ public enum Cell
     DoorBlackClosed,
     DoorBlackOpen,
     PressurePlate,
+
+    Sword,
 }

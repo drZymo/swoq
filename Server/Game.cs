@@ -10,8 +10,8 @@ internal class Game
 {
     private readonly Map map;
 
-    private record Player(Position Position, Inventory Inventory, int Health);
-    private record Enemy(Position Position, Inventory Inventory, int Health); // TODO: merge with Player ?
+    private record Player(Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false);
+    private record Enemy(Position Position, Inventory Inventory = Inventory.None, int Health = 6); // TODO: merge with Player ?
 
     private Player player1;
     private Enemy? enemy;
@@ -21,7 +21,7 @@ internal class Game
     public Game(int level)
     {
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
-        player1 = new Player(map.InitialPlayer1Position, Inventory.None, 100);
+        player1 = new Player(map.InitialPlayer1Position);
 
 
         Debug.Assert(map[player1.Position].CanWalkOn());
@@ -85,6 +85,7 @@ internal class Game
             case Cell.KeyGreen:
             case Cell.DoorBlueOpen:
             case Cell.KeyBlue:
+            case Cell.Sword:
                 // Cannot use on this
                 break;
 
@@ -168,7 +169,11 @@ internal class Game
             case Cell.KeyRed:
             case Cell.KeyGreen:
             case Cell.KeyBlue:
-                entered = TryPickup(position);
+                entered = TryPickupKey(position);
+                break;
+
+            case Cell.Sword:
+                entered = TryPickupSword(position);
                 break;
 
             default:
@@ -178,30 +183,41 @@ internal class Game
         return entered;
     }
 
-    private bool TryPickup(Position position)
+    private bool TryPickupKey(Position position)
     {
-        // Cannot pickup if player1.Inventory is full
+        // Cannot pickup if inventory is full
         if (player1.Inventory != Inventory.None) return false;
 
         // Is it an item that can be picked up?
         var item = ToInventory(map[position]);
         if (item == Inventory.None) return false;
 
-        // Put in player1.Inventory and remove from map
+        // Put in inventory and remove from map
         player1 = player1 with { Inventory = item };
+        map[position] = Cell.Empty;
+        return true;
+    }
+
+    private bool TryPickupSword(Position position)
+    {
+        // Cannot pickup if player already has sword
+        if (player1.HasSword) return false;
+
+        // Add to player and remove from map
+        player1 = player1 with { HasSword = true };
         map[position] = Cell.Empty;
         return true;
     }
 
     private bool TryUseItemOnClosedDoor(Position position, Inventory item)
     {
-        // Cannot use if player1.Inventory is empty
+        // Cannot use if inventory is empty
         if (player1.Inventory == Inventory.None) return false;
 
-        // Cannot use if item is not in player1.Inventory
+        // Cannot use if item is not in inventory
         if (player1.Inventory != item) return false;
 
-        // Remove from player1.Inventory and change to open
+        // Remove from inventory and change to open
         player1 = player1 with { Inventory = Inventory.None };
 
         // Open this and all adjacent door cells
@@ -336,6 +352,7 @@ internal class Game
         const int KEY_BLUE = 10;
         const int DOOR_BLACK = 11;
         const int PRESSURE_PLATE = 12;
+        const int SWORD = 13;
 
         if (pos.Equals(player1.Position))
         {
@@ -358,6 +375,7 @@ internal class Game
                 case Cell.KeyBlue: return KEY_BLUE;
                 case Cell.DoorBlackClosed: return DOOR_BLACK;
                 case Cell.PressurePlate: return PRESSURE_PLATE;
+                case Cell.Sword: return SWORD;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:

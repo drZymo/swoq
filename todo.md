@@ -11,6 +11,7 @@
 - [ ] Replay viewer
 - [ ] Order: width/height, x/y
 - [ ] Levels
+- [ ] Sword separate inventory
 
 ## Act vs Move/Use
 
@@ -66,6 +67,12 @@ Enemy has visibility range of 5. Will not follow (remain stationary) if out of t
 Enemies can have inventory which will drop when it dies. Like keys, health or armor.
 
 1 Player with armor is 150 health, so it can defeat one enemy and have 30 health left. Extra armor not enough to be strong enough for another fight. So one player can defeat one enemy.
+
+TODO: picking up sword will block inventory for picking up keys. So if enemy is killed and drops a key, then you cannot pick it up. Should the sword break/disappear when enemy is killed?
+
+Simpler score? Player health = 5, Enemy health = 6. With armor Player health = 8
+
+Or always a sword present? So you can always use on an enemy to attack?
 
 ## Replay storage
 

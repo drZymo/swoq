@@ -240,6 +240,12 @@ public class MapGenerator
         var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
         var keyPos = keyRoom.RandomPosition(1);
         data[keyPos.y, keyPos.x] = ToKey(keyColor);
+
+        var swordRoom = availableRooms.PickOne();
+        availableRooms = availableRooms.Remove(swordRoom);
+
+        var swordPos = swordRoom.RandomPosition(1);
+        data[swordPos.y, swordPos.x] = Cell.Sword;
     }
 
     private Room CreateRoom(int y, int x, int height, int width)
