@@ -36,7 +36,7 @@ _cell_colors = {
     KEY_BLUE:       [  0,   0, 255],
     DOOR_BLACK:     [ 32,  32,  32],
     PRESSURE_PLATE: [ 48,  48,  48],
-    SWORD:          [255, 128,   0],
+    SWORD:          [255, 255,   0],
 }
 
 def get_map_image(map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:

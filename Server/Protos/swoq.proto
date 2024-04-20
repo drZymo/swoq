@@ -52,7 +52,8 @@ message State {
 	Position playerPos = 1;
 	repeated int32 surroundings = 2;
 	int32 inventory = 3;
-	bool finished = 4;
+	bool hasSword = 4;
+	bool finished = 5;
 }
 
 message StartRequest {

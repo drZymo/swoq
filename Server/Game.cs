@@ -46,7 +46,7 @@ internal class Game
                 state[y * width + x] = ToCellState((top + y, left + x));
             }
         }
-        return new GameState(player1.Position.x, player1.Position.y, state, isFinished, ToInventoryState());
+        return new GameState(player1.Position.x, player1.Position.y, state, isFinished, ToInventoryState(), player1.HasSword);
     }
 
     public bool Move(Direction direction)
