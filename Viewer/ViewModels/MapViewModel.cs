@@ -9,16 +9,16 @@ class MapViewModel : ViewModelBase
 {
     private static readonly ImmutableDictionary<Cell, Color> CellColors = new Dictionary<Cell, Color>
     {
-        { Cell.Empty, Colors.LightGray },
-        { Cell.Wall, Colors.DimGray },
+        { Cell.Empty, Color.FromRgb(64, 64, 64) },
+        { Cell.Wall, Color.FromRgb(147, 124, 93) },
         { Cell.Exit, Colors.Yellow },
-        { Cell.DoorRedClosed, Colors.Red },
-        { Cell.DoorGreenClosed, Colors.Green },
-        { Cell.DoorBlueClosed, Colors.Blue },
+        { Cell.DoorRedClosed, Colors.DarkRed },
+        { Cell.DoorGreenClosed, Colors.DarkGreen },
+        { Cell.DoorBlueClosed, Colors.DarkBlue },
         { Cell.DoorBlackClosed, Colors.Black },
-        { Cell.KeyRed, Colors.DarkRed },
-        { Cell.KeyGreen, Colors.DarkGreen },
-        { Cell.KeyBlue, Colors.DarkBlue },
+        { Cell.KeyRed, Colors.Red },
+        { Cell.KeyGreen, Colors.Green },
+        { Cell.KeyBlue, Colors.Blue },
     }.ToImmutableDictionary();
 
     private static readonly Color PlayerColor = Colors.Magenta;

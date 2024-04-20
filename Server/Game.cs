@@ -212,10 +212,10 @@ internal class Game
             var doorType = map[current];
             map[current] = ToOpenDoor(doorType);
 
-            if (map[current.y - 1, current.x] == doorType) todo.Enqueue((current.y - 1, current.x));
-            if (map[current.y + 1, current.x] == doorType) todo.Enqueue((current.y + 1, current.x));
-            if (map[current.y, current.x - 1] == doorType) todo.Enqueue((current.y, current.x - 1));
-            if (map[current.y, current.x + 1] == doorType) todo.Enqueue((current.y, current.x + 1));
+            if (map[current.y - 1, current.x] == doorType) todo = todo.Enqueue((current.y - 1, current.x));
+            if (map[current.y + 1, current.x] == doorType) todo = todo.Enqueue((current.y + 1, current.x));
+            if (map[current.y, current.x - 1] == doorType) todo = todo.Enqueue((current.y, current.x - 1));
+            if (map[current.y, current.x + 1] == doorType) todo = todo.Enqueue((current.y, current.x + 1));
         }
 
         return true;
