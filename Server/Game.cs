@@ -8,19 +8,19 @@ using Position = (int y, int x);
 internal class Game
 {
     private readonly Map map;
-    private Position playerPos;
 
-    private Inventory inventory = Inventory.None;
+    private record Player(Position Position, Inventory Inventory, int Health);
+
+    private Player player1;
+
     private bool isFinished = false;
 
     public Game(int level)
     {
-        //map = new Map(Parameters.MapHeight, Parameters.MapWidth);
-        //map = Map.LoadFromFile($"../level{level}.bin");
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
-        playerPos = map.InitialPlayerPosition;
+        player1 = new Player(map.InitialPlayerPosition, Inventory.None, 100);
 
-        Debug.Assert(map[playerPos].CanWalkOn());
+        Debug.Assert(map[player1.Position].CanWalkOn());
     }
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -33,8 +33,8 @@ internal class Game
         var height = Parameters.VisibilityRange * 2 + 1;
         var state = new int[height * width];
 
-        var top = playerPos.y - Parameters.VisibilityRange;
-        var left = playerPos.x - Parameters.VisibilityRange;
+        var top = player1.Position.y - Parameters.VisibilityRange;
+        var left = player1.Position.x - Parameters.VisibilityRange;
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -42,7 +42,7 @@ internal class Game
                 state[y * width + x] = ToCellState((top + y, left + x));
             }
         }
-        return new GameState(playerPos.x, playerPos.y, state, isFinished, ToInventoryState());
+        return new GameState(player1.Position.x, player1.Position.y, state, isFinished, ToInventoryState());
     }
 
     public bool Move(Direction direction)
@@ -51,20 +51,20 @@ internal class Game
 
         var nextPos = GetDirectionPosition(direction);
 
-        if (!CanMoveTo(nextPos) || !TryLeaveCell(playerPos) || !TryEnterCell(nextPos))
+        if (!CanMoveTo(nextPos) || !TryLeaveCell(player1.Position) || !TryEnterCell(nextPos))
         {
             return false;
         }
 
-        playerPos = nextPos;
-        Debug.Assert(map[playerPos].CanWalkOn());
+        player1 = player1 with { Position = nextPos };
+        Debug.Assert(map[player1.Position].CanWalkOn());
         return true;
     }
 
     public bool Use(Direction direction)
     {
         if (isFinished) return false;
-        if (inventory == Inventory.None) return false;
+        if (player1.Inventory == Inventory.None) return false;
 
         var usePos = GetDirectionPosition(direction);
 
@@ -103,10 +103,10 @@ internal class Game
 
     private Position GetDirectionPosition(Direction direction) => direction switch
     {
-        Direction.North => (playerPos.y - 1, playerPos.x),
-        Direction.East => (playerPos.y, playerPos.x + 1),
-        Direction.South => (playerPos.y + 1, playerPos.x),
-        Direction.West => (playerPos.y, playerPos.x - 1),
+        Direction.North => (player1.Position.y - 1, player1.Position.x),
+        Direction.East => (player1.Position.y, player1.Position.x + 1),
+        Direction.South => (player1.Position.y + 1, player1.Position.x),
+        Direction.West => (player1.Position.y, player1.Position.x - 1),
         _ => throw new UnknownDirectionException(),
     };
 
@@ -176,29 +176,29 @@ internal class Game
 
     private bool TryPickup(Position position)
     {
-        // Cannot pickup if inventory is full
-        if (inventory != Inventory.None) return false;
+        // Cannot pickup if player1.Inventory is full
+        if (player1.Inventory != Inventory.None) return false;
 
         // Is it an item that can be picked up?
         var item = ToInventory(map[position]);
         if (item == Inventory.None) return false;
 
-        // Put in inventory and remove from map
-        inventory = item;
+        // Put in player1.Inventory and remove from map
+        player1 = player1 with { Inventory = item };
         map[position] = Cell.Empty;
         return true;
     }
 
     private bool TryUseItemOnClosedDoor(Position position, Inventory item)
     {
-        // Cannot use if inventory is empty
-        if (inventory == Inventory.None) return false;
+        // Cannot use if player1.Inventory is empty
+        if (player1.Inventory == Inventory.None) return false;
 
-        // Cannot use if item is not in inventory
-        if (inventory != item) return false;
+        // Cannot use if item is not in player1.Inventory
+        if (player1.Inventory != item) return false;
 
-        // Remove from inventory and change to open
-        inventory = Inventory.None;
+        // Remove from player1.Inventory and change to open
+        player1 = player1 with { Inventory = Inventory.None };
         map[position] = ToOpenDoor(map[position]);
         return true;
     }
@@ -245,12 +245,12 @@ internal class Game
     {
         if (pos.y < 0 || pos.y >= map.Height) return false;
         if (pos.x < 0 || pos.x >= map.Width) return false;
-        if (pos.DistanceTo(playerPos) >= Parameters.VisibilityRange) return false;
+        if (pos.DistanceTo(player1.Position) >= Parameters.VisibilityRange) return false;
 
-        if (playerPos.x < pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x, pos.y + 0.5)) return true;
-        if (playerPos.x > pos.x && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;
-        if (playerPos.y < pos.y && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 0.5, pos.y)) return true;
-        if (playerPos.y > pos.y && IsVisible(playerPos.x + 0.5, playerPos.y + 0.5, pos.x + 0.5, pos.y + 1)) return true;
+        if (player1.Position.x < pos.x && IsVisible(player1.Position.x + 0.5, player1.Position.y + 0.5, pos.x, pos.y + 0.5)) return true;
+        if (player1.Position.x > pos.x && IsVisible(player1.Position.x + 0.5, player1.Position.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;
+        if (player1.Position.y < pos.y && IsVisible(player1.Position.x + 0.5, player1.Position.y + 0.5, pos.x + 0.5, pos.y)) return true;
+        if (player1.Position.y > pos.y && IsVisible(player1.Position.x + 0.5, player1.Position.y + 0.5, pos.x + 0.5, pos.y + 1)) return true;
 
         return false;
     }
@@ -319,7 +319,7 @@ internal class Game
         const int DOOR_BLACK = 11;
         const int PRESSURE_PLATE = 12;
 
-        if (pos.Equals(playerPos))
+        if (pos.Equals(player1.Position))
         {
             return PLAYER;
         }
@@ -353,7 +353,7 @@ internal class Game
         return UNKNOWN;
     }
 
-    private int ToInventoryState() => inventory switch
+    private int ToInventoryState() => player1.Inventory switch
     {
         Inventory.None => 0,
         Inventory.KeyRed => 1,

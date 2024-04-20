@@ -7,7 +7,7 @@ class MainViewModel : ViewModelBase
 {
     public MainViewModel()
     {
-        Map = new MapViewModel(MapGenerator.Generate(Level, Width, Height));
+        Map = new MapViewModel(MapGenerator.Generate(Level, Height, Width));
         Generate = new RelayCommand(HandleGenerate);
     }
 
@@ -68,6 +68,6 @@ class MainViewModel : ViewModelBase
 
     private void HandleGenerate(object? parameter)
     {
-        Map = new MapViewModel(MapGenerator.Generate(Level, Width, Height));
+        Map = new MapViewModel(MapGenerator.Generate(Level, Height, Width));
     }
 }
