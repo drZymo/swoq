@@ -16,7 +16,9 @@ public class MapGenerator
     private Position initialPlayer1Position;
     private Position? initialPlayer2Position = null;
     private Position? initialEnemy1Position = null;
+    private Inventory initialEnemy1Inventory = Inventory.None;
     private Position? initialEnemy2Position = null;
+    private Inventory initialEnemy2Inventory = Inventory.None;
     private Position exitPosition;
 
     private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
@@ -67,7 +69,11 @@ public class MapGenerator
         if (level == 5) GenerateLevel5();
         if (level == 6) GenerateLevel6();
         if (level == 7) GenerateLevel7();
-        return new Map(data, height, width, initialPlayer1Position, initialPlayer2Position, initialEnemy1Position, initialEnemy2Position);
+        return new Map(data, height, width,
+            initialPlayer1Position,
+            initialPlayer2Position,
+            initialEnemy1Position, initialEnemy1Inventory,
+            initialEnemy2Position, initialEnemy2Inventory);
     }
 
     private void GenerateLevel0()
@@ -160,7 +166,23 @@ public class MapGenerator
     }
 
     private void GenerateLevel6()
-    { }
+    {
+        var room1 = CreateRoom(20, 20, 12, 10);
+        var room2 = CreateRoom(40, 40, 8, 10);
+        ConnectRooms(room1, room2);
+
+        PlacePlayerTopLeftAndExitBottomRight();
+            
+        var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
+
+        initialEnemy1Position = (room2.Top + 1, room2.Right - 2);
+        initialEnemy1Inventory = ToInventory(exitKeyColor);
+
+        Position swordPos = (room1.Top + 1, room1.Left + 1);
+        data[swordPos.y, swordPos.x] = Cell.Sword;
+
+        availableRooms = availableRooms.Remove(room1).Remove(room2);
+    }
 
     private void GenerateLevel7()
     {
@@ -484,6 +506,14 @@ public class MapGenerator
         KeyColor.Red => Cell.KeyRed,
         KeyColor.Green => Cell.KeyGreen,
         KeyColor.Blue => Cell.KeyBlue,
+        _ => throw new NotImplementedException(),
+    };
+
+    private static Inventory ToInventory(KeyColor color) => color switch
+    {
+        KeyColor.Red => Inventory.KeyRed,
+        KeyColor.Green => Inventory.KeyGreen,
+        KeyColor.Blue => Inventory.KeyBlue,
         _ => throw new NotImplementedException(),
     };
 

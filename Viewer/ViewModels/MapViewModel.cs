@@ -23,6 +23,7 @@ class MapViewModel : ViewModelBase
     }.ToImmutableDictionary();
 
     private static readonly Color PlayerColor = Colors.Magenta;
+    private static readonly Color EnemyColor = Colors.Cyan;
 
     private readonly Map map;
 
@@ -42,9 +43,13 @@ class MapViewModel : ViewModelBase
             for (var x = 0; x < map.Width; x++)
             {
                 var color = CellColors.TryGetValue(map[y, x], out var c) ? c : Colors.Black;
-                if (y == map.InitialPlayer1Position.y && x == map.InitialPlayer1Position.x)
+                if (map.InitialPlayer1Position.Equals((y, x)))
                 {
                     color = PlayerColor;
+                }
+                if (map.InitialEnemy1Position != null && map.InitialEnemy1Position.Value.Equals((y, x)))
+                {
+                    color = EnemyColor;
                 }
                 cells.Add(new CellViewModel((y, x), color));
             }

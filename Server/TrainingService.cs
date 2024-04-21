@@ -38,29 +38,18 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             {
                 var gameId = Guid.Parse(request.GameId);
 
-                switch (request.Action)
+                var action1 = new DirectedAction(Convert(request.Action1), Convert(request.Direction1));
+
+                DirectedAction? action2 = null;
+                if (request.HasAction2 && request.HasDirection2)
                 {
-                    case Interface.Action.Move:
-                        {
-                            var (success, state) = server.Move(gameId, Convert(request.Direction));
-                            response.Result = success ? Result.Ok : Result.MoveNotAllowed;
-                            response.State = Convert(state);
-                        }
-                        break;
-
-                    case Interface.Action.Use:
-                        {
-                            var (success, state) = server.Use(gameId, Convert(request.Direction));
-                            response.Result = success ? Result.Ok : Result.UseNotAllowed;
-                            response.State = Convert(state);
-                        }
-                        break;
-
-                    default:
-                        response.Result = Result.UnknownAction;
-                        break;
+                    action2 = new DirectedAction(Convert(request.Action2), Convert(request.Direction2));
                 }
 
+                var state = server.Act(gameId, action1, action2);
+
+                response.Result = Result.Ok;
+                response.State = Convert(state);
             }
             catch (Exception ex)
             {
@@ -75,7 +64,8 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
         var state = new State
         {
             Finished = gameState.Finished,
-            Player = Convert(gameState.Player1),
+            Player1 = Convert(gameState.Player1),
+            Player2 = gameState.Player2 != null ? Convert(gameState.Player2) : null,
         };
         return state;
     }
@@ -85,12 +75,20 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
         var state = new Interface.PlayerState
         {
             Position = new Position { X = playerState.Position.x, Y = playerState.Position.y },
+            Health = playerState.Health,
             Inventory = playerState.Inventory,
             HasSword = playerState.HasSword,
         };
         state.Surroundings.AddRange(playerState.Surroundings);
         return state;
     }
+
+    private static Action Convert(Interface.Action action) => action switch
+    {
+        Interface.Action.Move => Action.Move,
+        Interface.Action.Use => Action.Use,
+        _ => throw new NotImplementedException(),
+    };
 
     private static Direction Convert(Interface.Direction direction) => direction switch
     {
@@ -105,10 +103,16 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
     {
         switch (ex)
         {
+            case PlayerAlreadyRegisteredException: return Result.PlayerAlreadyRegistered;
             case UnknownPlayerException: return Result.UnknownPlayer;
             case UnknownGameIdException: return Result.UnknownGameId;
             case LevelNotAvailableException: return Result.LevelNotAvailable;
+            case MoveNotAllowedException: return Result.MoveNotAllowed;
+            case UseNotAllowedException: return Result.UseNotAllowed;
+            case UnknownActionException: return Result.UnknownAction;
             case UnknownDirectionException: return Result.UnknownDirection;
+            case GameFinishedException: return Result.GameFinished;
+            case Player2NotPresentException: return Result.Player2NotPresent;
         }
         logger.LogError(ex, "Internal error");
         return Result.InternalError;

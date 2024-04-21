@@ -1,6 +1,6 @@
-﻿namespace Swoq.Server;
+﻿namespace Swoq.Infra;
 
-internal enum Inventory
+public enum Inventory
 {
     None,
 

@@ -16,6 +16,7 @@ KEY_BLUE = 10
 DOOR_BLACK = 11
 PRESSURE_PLATE = 12
 SWORD = 13
+ENEMY = 14
 
 INVENTORY_NONE = 0
 INVENTORY_KEY_RED = 1
@@ -25,18 +26,19 @@ INVENTORY_KEY_BLUE = 3
 _cell_colors = {
     UNKNOWN:        [  0,   0,   0],
     EMPTY:          [ 64,  64,  64],
-    PLAYER:         [255, 255, 255],
+    PLAYER:         [255,   0, 255],
     WALL:           [147, 124,  93],
     EXIT:           [230, 217, 177],
     DOOR_RED:       [128,   0,   0],
     KEY_RED:        [255,   0,   0],
-    DOOR_GREEN:     [  0, 128,  0],
+    DOOR_GREEN:     [  0, 128,   0],
     KEY_GREEN:      [  0, 255,   0],
     DOOR_BLUE:      [  0,   0, 128],
     KEY_BLUE:       [  0,   0, 255],
     DOOR_BLACK:     [ 32,  32,  32],
     PRESSURE_PLATE: [ 48,  48,  48],
     SWORD:          [255, 255,   0],
+    ENEMY:          [  0, 255,  255],
 }
 
 def get_map_image(map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:

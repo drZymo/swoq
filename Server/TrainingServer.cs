@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
-
 internal class TrainingServer(ISwoqDatabase database)
 {
     public record StartResult(Guid GameId, int Height, int Width, int VisibilityRange, GameState State);
@@ -29,27 +28,14 @@ internal class TrainingServer(ISwoqDatabase database)
         return new StartResult(game.Id, game.Height, game.Width, Parameters.PlayerVisibilityRange, state);
     }
 
-    public (bool success, GameState state) Move(Guid gameId, Direction direction)
+    public GameState Act(Guid gameId, DirectedAction action1, DirectedAction? action2 = null)
     {
         if (!games.TryGetValue(gameId, out var game))
         {
             throw new UnknownGameIdException();
         }
 
-        var success = game.Move(direction);
-        var state = game.GetState();
-        return (success, state);
-    }
-
-    public (bool success, GameState state) Use(Guid gameId, Direction direction)
-    {
-        if (!games.TryGetValue(gameId, out var game))
-        {
-            throw new UnknownGameIdException();
-        }
-
-        var success = game.Use(direction);
-        var state = game.GetState();
-        return (success, state);
+        game.Act(action1, action2);
+        return game.GetState();
     }
 }

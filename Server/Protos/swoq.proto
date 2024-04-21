@@ -14,6 +14,8 @@ enum Result {
 	USE_NOT_ALLOWED = 7;
 	UNKNOWN_ACTION = 8;
 	UNKNOWN_DIRECTION = 9;
+	GAME_FINISHED = 10;
+	PLAYER2_NOT_PRESENT = 11;
 }
 
 
@@ -50,14 +52,16 @@ message Position {
 
 message PlayerState {
 	Position position = 1;
-	repeated int32 surroundings = 2;
+	int32 health = 2;
 	int32 inventory = 3;
 	bool hasSword = 4;
+	repeated int32 surroundings = 5;
 }
 
 message State {
-	PlayerState player = 1;
-	bool finished = 2;
+	PlayerState player1 = 1;
+	optional PlayerState player2 = 2;
+	bool finished = 3;
 }
 
 message StartRequest {
@@ -81,8 +85,8 @@ enum Action {
 
 message ActionRequest {
 	string gameId = 1;
-	Action action = 2;
-	Direction direction = 3;
+	Action action1 = 2;
+	Direction direction1 = 3;
 	optional Action action2 = 4;
 	optional Direction direction2 = 5;
 }

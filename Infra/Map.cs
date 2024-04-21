@@ -14,8 +14,9 @@ public class Map
     public Position InitialPlayer1Position { get; }
     public Position? InitialPlayer2Position { get; } = null;
     public Position? InitialEnemy1Position { get; } = null;
+    public Inventory InitialEnemy1Inventory { get; } = Inventory.None;
     public Position? InitialEnemy2Position { get; } = null;
-
+    public Inventory InitialEnemy2Inventory { get; } = Inventory.None;
     public Map(
         Cell[,] data,
         int height,
@@ -23,7 +24,9 @@ public class Map
         Position initialPlayer1Position,
         Position? initialPlayer2Position = null,
         Position? initialEnemy1Position = null,
-        Position? initialEnemy2Position = null)
+        Inventory initialEnemy1Inventory = Inventory.None,
+        Position? initialEnemy2Position = null,
+        Inventory initialEnemy2Inventory = Inventory.None)
     {
         this.data = data;
         Height = height;
@@ -31,7 +34,9 @@ public class Map
         InitialPlayer1Position = initialPlayer1Position;
         InitialPlayer2Position = initialPlayer2Position;
         InitialEnemy1Position = initialEnemy1Position;
+        InitialEnemy1Inventory = initialEnemy1Inventory;
         InitialEnemy2Position = initialEnemy2Position;
+        InitialEnemy2Inventory = initialEnemy2Inventory;
     }
 
     public Cell this[int y, int x]
