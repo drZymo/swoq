@@ -246,6 +246,11 @@ public class MapGenerator
 
         var swordPos = swordRoom.RandomPosition(1);
         data[swordPos.y, swordPos.x] = Cell.Sword;
+
+
+        var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();
+        var enemyPos = enemyRoom.RandomPosition(0);
+        initialEnemy1Position = enemyPos;
     }
 
     private Room CreateRoom(int y, int x, int height, int width)

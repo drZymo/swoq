@@ -33,20 +33,8 @@ internal class Game
 
     public GameState GetState()
     {
-        var width = Parameters.PlayerVisibilityRange * 2 + 1;
-        var height = Parameters.PlayerVisibilityRange * 2 + 1;
-        var state = new int[height * width];
-
-        var top = player1.Position.y - Parameters.PlayerVisibilityRange;
-        var left = player1.Position.x - Parameters.PlayerVisibilityRange;
-        for (var y = 0; y < height; y++)
-        {
-            for (var x = 0; x < width; x++)
-            {
-                state[y * width + x] = ToCellState((top + y, left + x));
-            }
-        }
-        return new GameState(player1.Position.x, player1.Position.y, state, isFinished, ToInventoryState(), player1.HasSword);
+        PlayerState player1State = GetPlayerState(player1);
+        return new GameState(player1State, isFinished);
     }
 
     public bool Move(Direction direction)
@@ -337,6 +325,28 @@ internal class Game
 
     #region State
 
+    // TODO: Move to separate class?
+
+    private PlayerState GetPlayerState(Player player)
+    {
+        var width = Parameters.PlayerVisibilityRange * 2 + 1;
+        var height = Parameters.PlayerVisibilityRange * 2 + 1;
+
+        var surroundings = new int[height * width];
+
+        var top = player.Position.y - Parameters.PlayerVisibilityRange;
+        var left = player.Position.x - Parameters.PlayerVisibilityRange;
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                surroundings[y * width + x] = ToCellState((top + y, left + x));
+            }
+        }
+
+        return new PlayerState(player.Position, surroundings, ToInventoryState(player.Inventory), player.HasSword);
+    }
+
     private int ToCellState(Position pos)
     {
         const int UNKNOWN = 0;
@@ -389,7 +399,7 @@ internal class Game
         return UNKNOWN;
     }
 
-    private int ToInventoryState() => player1.Inventory switch
+    private int ToInventoryState(Inventory inventory) => inventory switch
     {
         Inventory.None => 0,
         Inventory.KeyRed => 1,

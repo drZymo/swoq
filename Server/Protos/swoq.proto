@@ -48,12 +48,16 @@ message Position {
 	int32 y = 2;
 }
 
-message State {
-	Position playerPos = 1;
+message PlayerState {
+	Position position = 1;
 	repeated int32 surroundings = 2;
 	int32 inventory = 3;
 	bool hasSword = 4;
-	bool finished = 5;
+}
+
+message State {
+	PlayerState player = 1;
+	bool finished = 2;
 }
 
 message StartRequest {

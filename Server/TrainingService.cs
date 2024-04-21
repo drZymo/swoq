@@ -74,11 +74,21 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
     {
         var state = new State
         {
-            PlayerPos = new Position { X = gameState.PlayerX, Y = gameState.PlayerY },
             Finished = gameState.Finished,
-            Inventory = gameState.Inventory
+            Player = Convert(gameState.Player1),
         };
-        state.Surroundings.AddRange(gameState.Surroundings);
+        return state;
+    }
+
+    private static Interface.PlayerState Convert(PlayerState playerState)
+    {
+        var state = new Interface.PlayerState
+        {
+            Position = new Position { X = playerState.Position.x, Y = playerState.Position.y },
+            Inventory = playerState.Inventory,
+            HasSword = playerState.HasSword,
+        };
+        state.Surroundings.AddRange(playerState.Surroundings);
         return state;
     }
 
