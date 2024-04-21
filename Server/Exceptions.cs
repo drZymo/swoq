@@ -11,3 +11,6 @@ internal class UnknownActionException : Exception;
 internal class UnknownDirectionException : Exception;
 internal class GameFinishedException : Exception;
 internal class Player2NotPresentException : Exception;
+internal class InventoryEmptyException : Exception;
+internal class InventoryFullException : Exception;
+internal class NoSwordException : Exception;
