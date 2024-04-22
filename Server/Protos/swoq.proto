@@ -15,10 +15,13 @@ enum Result {
 	UNKNOWN_ACTION = 8;
 	UNKNOWN_DIRECTION = 9;
 	GAME_FINISHED = 10;
-	PLAYER2_NOT_PRESENT = 11;
-	INVENTORY_FULL = 12;
-	INVENTORY_EMPTY = 13;
-	NO_SWORD = 14;
+	PLAYER1_NOT_PRESENT = 11;
+	PLAYER2_NOT_PRESENT = 12;
+	INVENTORY_FULL = 13;
+	INVENTORY_EMPTY = 14;
+	NO_SWORD = 15;
+	PLAYER1_DIED = 16;
+	PLAYER2_DIED = 17;
 }
 
 
@@ -62,7 +65,7 @@ message PlayerState {
 }
 
 message State {
-	PlayerState player1 = 1;
+	optional PlayerState player1 = 1;
 	optional PlayerState player2 = 2;
 	bool finished = 3;
 }
@@ -88,8 +91,8 @@ enum Action {
 
 message ActionRequest {
 	string gameId = 1;
-	Action action1 = 2;
-	Direction direction1 = 3;
+	optional Action action1 = 2;
+	optional Direction direction1 = 3;
 	optional Action action2 = 4;
 	optional Direction direction2 = 5;
 }

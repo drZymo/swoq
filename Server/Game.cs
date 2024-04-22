@@ -12,9 +12,9 @@ internal class Game
     private readonly Map map;
 
     private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false);
-    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 6); // TODO: merge with Player ?
+    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 3); // TODO: merge with Player ?
 
-    private Player player1;
+    private Player? player1 = null;
     private Player? player2 = null;
     private Enemy? enemy1 = null;
     private Enemy? enemy2 = null;
@@ -45,25 +45,38 @@ internal class Game
 
     public GameState GetState()
     {
-        PlayerState player1State = GetPlayerState(player1);
+        PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
         return new GameState(player1State, player2State, isFinished);
     }
 
     public void Act(DirectedAction action1, DirectedAction? action2 = null)
     {
-        if (action2 != null && player2 == null) throw new Player2NotPresentException();
-
-        switch (action1.Action)
+        // Pre conditions
+        if (action1 != null)
         {
-            case Action.Move:
-                Move(ref player1, action1.Direction);
-                break;
-            case Action.Use:
-                Use(ref player1, action1.Direction);
-                break;
-            default:
-                throw new UnknownActionException();
+            if (player1 == null) throw new Player1NotPresentException();
+            if (player1.Health <= 0) throw new Player1DiedException();
+        }
+        if (action2 != null)
+        {
+            if (player2 == null) throw new Player2NotPresentException();
+            if (player2.Health <= 0) throw new Player2DiedException();
+        }
+
+        if (action1 != null && player1 != null)
+        {
+            switch (action1.Action)
+            {
+                case Action.Move:
+                    Move(ref player1, action1.Direction);
+                    break;
+                case Action.Use:
+                    Use(ref player1, action1.Direction);
+                    break;
+                default:
+                    throw new UnknownActionException();
+            }
         }
 
         if (action2 != null && player2 != null)
@@ -93,13 +106,13 @@ internal class Game
             if (!attackables.IsEmpty)
             {
                 var attackable = attackables.PickOne();
-                if (attackable == 0) EnemyAttacksPlayer(ref player1);
-                if (attackable == 1 && player2 != null) EnemyAttacksPlayer(ref player2);
+                if (attackable == 1 && player1 != null) EnemyAttacksPlayer(ref player1);
+                if (attackable == 2 && player2 != null) EnemyAttacksPlayer(ref player2);
             }
         }
     }
 
-    private void EnemyAttacksPlayer(ref Player player)
+    private static void EnemyAttacksPlayer(ref Player player)
     {
         Debug.Assert(player.Health > 0);
 
@@ -114,15 +127,15 @@ internal class Game
 
     private bool TryGetPlayerIndex(Position position, out int index)
     {
-        if (position.Equals(player1.Position))
+        if (player1 != null && position.Equals(player1.Position))
         {
-            index = 0;
+            index = 1;
             return true;
         }
 
         if (player2 != null && position.Equals(player2.Position))
         {
-            index = 1;
+            index = 2;
             return true;
         }
 
@@ -163,7 +176,10 @@ internal class Game
             if (enemy1.Health <= 0)
             {
                 Console.WriteLine($"Enemy {enemy1.Index} dies");
-                // TODO: die
+                // Drop loot
+                map[enemy1.Position] = ToDroppedLoot(enemy1.Inventory);
+                // Remove enemy from game
+                enemy1 = null;
             }
         }
         else if (enemy2 != null && usePos.Equals(enemy2.Position))
@@ -175,7 +191,10 @@ internal class Game
             if (enemy2.Health <= 0)
             {
                 Console.WriteLine($"Enemy {enemy2.Index} dies");
-                // TODO: die
+                // Drop loot
+                map[enemy2.Position] = ToDroppedLoot(enemy2.Inventory);
+                // Remove enemy from game
+                enemy2 = null;
             }
         }
         else
@@ -261,7 +280,9 @@ internal class Game
 
             case Cell.Exit:
                 // Game finished
+                // TODO: Remove player from game.
                 map[position] = Cell.Empty;
+                // TODO: Only finished when both players are gone
                 isFinished = true;
                 break;
 
@@ -538,5 +559,14 @@ internal class Game
         Cell.DoorBlueClosed => Cell.DoorBlueOpen,
         Cell.DoorBlackClosed => Cell.DoorBlackOpen,
         _ => throw new NotImplementedException("Not a closed door"),
+    };
+
+    private static Cell ToDroppedLoot(Inventory inventory) => inventory switch
+    {
+        Inventory.None => Cell.Empty,
+        Inventory.KeyRed => Cell.KeyRed,
+        Inventory.KeyGreen => Cell.KeyGreen,
+        Inventory.KeyBlue => Cell.KeyBlue,
+        _ => throw new NotImplementedException(),
     };
 }

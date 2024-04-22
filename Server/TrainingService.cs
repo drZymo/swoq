@@ -64,7 +64,7 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
         var state = new State
         {
             Finished = gameState.Finished,
-            Player1 = Convert(gameState.Player1),
+            Player1 = gameState.Player1 != null ? Convert(gameState.Player1) : null,
             Player2 = gameState.Player2 != null ? Convert(gameState.Player2) : null,
         };
         return state;
@@ -112,7 +112,13 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             case UnknownActionException: return Result.UnknownAction;
             case UnknownDirectionException: return Result.UnknownDirection;
             case GameFinishedException: return Result.GameFinished;
+            case Player1NotPresentException: return Result.Player1NotPresent;
             case Player2NotPresentException: return Result.Player2NotPresent;
+            case InventoryEmptyException: return Result.InventoryEmpty;
+            case InventoryFullException: return Result.InventoryFull;
+            case NoSwordException: return Result.NoSword;
+            case Player1DiedException: return Result.Player1Died;
+            case Player2DiedException: return Result.Player2Died;
         }
         logger.LogError(ex, "Internal error");
         return Result.InternalError;
