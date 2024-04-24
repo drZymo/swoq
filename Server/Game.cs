@@ -1,7 +1,6 @@
 ﻿using Swoq.Infra;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Swoq.Server;
 
@@ -12,9 +11,9 @@ internal class Game
     private readonly Map map;
 
     private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false);
-    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 3); // TODO: merge with Player ?
+    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 6); // TODO: merge with Player ?
 
-    private Player? player1 = null;
+    private Player player1;
     private Player? player2 = null;
     private Enemy? enemy1 = null;
     private Enemy? enemy2 = null;
@@ -45,26 +44,27 @@ internal class Game
 
     public GameState GetState()
     {
-        PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
+        PlayerState? player1State = GetPlayerState(player1);
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
         return new GameState(player1State, player2State, isFinished);
     }
 
-    public void Act(DirectedAction action1, DirectedAction? action2 = null)
+    public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
         // Pre conditions
         if (action1 != null)
         {
-            if (player1 == null) throw new Player1NotPresentException();
+            if (!player1.Position.IsValid()) throw new Player1NotPresentException();
             if (player1.Health <= 0) throw new Player1DiedException();
         }
         if (action2 != null)
         {
             if (player2 == null) throw new Player2NotPresentException();
+            if (!player2.Position.IsValid()) throw new Player2NotPresentException();
             if (player2.Health <= 0) throw new Player2DiedException();
         }
 
-        if (action1 != null && player1 != null)
+        if (action1 != null)
         {
             switch (action1.Action)
             {
@@ -106,28 +106,41 @@ internal class Game
             if (!attackables.IsEmpty)
             {
                 var attackable = attackables.PickOne();
-                if (attackable == 1 && player1 != null) EnemyAttacksPlayer(ref player1);
+                if (attackable == 1) EnemyAttacksPlayer(ref player1);
                 if (attackable == 2 && player2 != null) EnemyAttacksPlayer(ref player2);
             }
         }
+
+        // Check fnished
+        if (!player1.Position.IsValid() && (player2 == null || !player2.Position.IsValid()))
+        {
+            isFinished = true;
+        }
     }
 
-    private static void EnemyAttacksPlayer(ref Player player)
+    private void EnemyAttacksPlayer(ref Player player)
     {
         Debug.Assert(player.Health > 0);
 
+        // Reduce health
         player = player with { Health = player.Health - 1 };
         Console.WriteLine($"Player {player.Index} was attacked, health = {player.Health}");
+
+        // Is it dead?
         if (player.Health <= 0)
         {
             Console.WriteLine($"Player {player.Index} dies");
-            // TODO: die
+            // Drop loot
+            map[player.Position] = ToDroppedLoot(player.Inventory);
+            player = player with { Inventory = Inventory.None };
+            // Remove from game
+            player = player with { Position = PositionEx.Invalid };
         }
     }
 
     private bool TryGetPlayerIndex(Position position, out int index)
     {
-        if (player1 != null && position.Equals(player1.Position))
+        if (position.Equals(player1.Position))
         {
             index = 1;
             return true;
@@ -279,11 +292,8 @@ internal class Game
                 break;
 
             case Cell.Exit:
-                // Game finished
-                // TODO: Remove player from game.
-                map[position] = Cell.Empty;
-                // TODO: Only finished when both players are gone
-                isFinished = true;
+                // Reomve player from game
+                player = player with { Position = PositionEx.Invalid };
                 break;
 
             case Cell.KeyRed:
@@ -452,18 +462,23 @@ internal class Game
 
     private PlayerState GetPlayerState(Player player)
     {
-        var width = Parameters.PlayerVisibilityRange * 2 + 1;
-        var height = Parameters.PlayerVisibilityRange * 2 + 1;
+        int[] surroundings = [];
 
-        var surroundings = new int[height * width];
-
-        var top = player.Position.y - Parameters.PlayerVisibilityRange;
-        var left = player.Position.x - Parameters.PlayerVisibilityRange;
-        for (var y = 0; y < height; y++)
+        if (player.Position.IsValid())
         {
-            for (var x = 0; x < width; x++)
+            var width = Parameters.PlayerVisibilityRange * 2 + 1;
+            var height = Parameters.PlayerVisibilityRange * 2 + 1;
+
+            surroundings = new int[height * width];
+
+            var top = player.Position.y - Parameters.PlayerVisibilityRange;
+            var left = player.Position.x - Parameters.PlayerVisibilityRange;
+            for (var y = 0; y < height; y++)
             {
-                surroundings[y * width + x] = ToCellState(player, (top + y, left + x));
+                for (var x = 0; x < width; x++)
+                {
+                    surroundings[y * width + x] = ToCellState(player, (top + y, left + x));
+                }
             }
         }
 
