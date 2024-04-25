@@ -28,7 +28,7 @@ internal class TrainingServer(ISwoqDatabase database)
         return new StartResult(game.Id, game.Height, game.Width, Parameters.PlayerVisibilityRange, state);
     }
 
-    public GameState Act(Guid gameId, DirectedAction action1, DirectedAction? action2 = null)
+    public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
         if (!games.TryGetValue(gameId, out var game))
         {

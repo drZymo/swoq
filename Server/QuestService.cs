@@ -3,16 +3,16 @@ using Swoq.Interface;
 
 namespace Swoq.Server;
 
-internal class TrainingService(ILogger<TrainingService> logger, TrainingServer server) : Training.TrainingBase
+internal class QuestService(ILogger<QuestService> logger, QuestServer server) : Interface.Quest.QuestBase
 {
-    public override Task<StartResponse> Start(StartTrainingRequest request, ServerCallContext context)
+    public override Task<StartResponse> Start(StartQuestRequest request, ServerCallContext context)
     {
         return Task.Run(() =>
         {
             var response = new StartResponse();
             try
             {
-                var startResult = server.Start(request.PlayerId, request.Level);
+                var startResult = server.Start(request.PlayerId);
 
                 response.Result = Result.Ok;
                 response.GameId = startResult.GameId.ToString();
@@ -36,7 +36,7 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             var response = new ActionResponse();
             try
             {
-                var gameId = Guid.Parse(request.GameId);
+                var questId = Guid.Parse(request.GameId);
 
                 DirectedAction? action1 = null;
                 if (request.HasAction1 && request.HasDirection1)
@@ -50,7 +50,7 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
                     action2 = new DirectedAction(request.Action2.Convert(), request.Direction2.Convert());
                 }
 
-                var state = server.Act(gameId, action1, action2);
+                var state = server.Act(questId, action1, action2);
 
                 response.Result = Result.Ok;
                 response.State = state.Convert();

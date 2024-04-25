@@ -22,6 +22,7 @@ enum Result {
 	NO_SWORD = 15;
 	PLAYER1_DIED = 16;
 	PLAYER2_DIED = 17;
+	UNKNOWN_QUEST_ID = 18;
 }
 
 
@@ -40,9 +41,15 @@ message RegisterResponse {
 
 
 service Training {
-	rpc Start(StartRequest) returns (StartResponse) {};
+	rpc Start(StartTrainingRequest) returns (StartResponse) {};
 	rpc Act(ActionRequest) returns (ActionResponse) {};
 }
+
+service Quest {
+	rpc Start(StartQuestRequest) returns (StartResponse) {};
+	rpc Act(ActionRequest) returns (ActionResponse) {};
+}
+
 
 enum Direction {
 	NORTH = 0;
@@ -66,13 +73,18 @@ message PlayerState {
 
 message State {
 	bool finished = 1;
-	optional PlayerState player1 = 2;
-	optional PlayerState player2 = 3;
+	int32 level = 2;
+	optional PlayerState player1 = 3;
+	optional PlayerState player2 = 4;
 }
 
-message StartRequest {
+message StartTrainingRequest {
 	string playerId = 1;
 	int32 level = 2;
+}
+
+message StartQuestRequest {
+	string playerId = 1;
 }
 
 message StartResponse {

@@ -17,3 +17,5 @@ internal class InventoryFullException : Exception;
 internal class NoSwordException : Exception;
 internal class Player1DiedException : Exception;
 internal class Player2DiedException : Exception;
+internal class UnknownQuestIdException : Exception;
+

@@ -3,10 +3,11 @@
 - [X] Act vs Move/Use
 - [X] Door open/closed states
 - [ ] Map generator
-- [ ] Two players
+- [X] Two players
 - [X] Pressure plates
 - [ ] Quest game
-- [ ] Combat
+- [X] Combat
+- [ ] Armor
 - [ ] Replay storage
 - [ ] Replay viewer
 - [ ] Order: width/height, x/y
