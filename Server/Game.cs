@@ -14,10 +14,9 @@ internal class Game
     private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false) : Character(Position, Inventory, Health);
     private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 4) : Character(Position, Inventory, Health);
 
-    private Player player1;
+    private Player? player1 = null;
     private Player? player2 = null;
-    private Enemy? enemy1 = null;
-    private Enemy? enemy2 = null;
+    private IImmutableList<Enemy> enemies = ImmutableList<Enemy>.Empty;
 
     private bool isFinished = false;
 
@@ -29,13 +28,14 @@ internal class Game
         {
             player2 = new Player(2, map.InitialPlayer2Position.Value);
         }
+
         if (map.InitialEnemy1Position.HasValue)
         {
-            enemy1 = new Enemy(1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory);
+            enemies = enemies.Add(new Enemy(1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
         }
         if (map.InitialEnemy2Position.HasValue)
         {
-            enemy2 = new Enemy(2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory);
+            enemies = enemies.Add(new Enemy(2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
         }
     }
 
@@ -45,7 +45,7 @@ internal class Game
 
     public GameState GetState()
     {
-        PlayerState? player1State = GetPlayerState(player1);
+        PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
         return new GameState(isFinished, player1State, player2State);
     }
@@ -57,6 +57,7 @@ internal class Game
         // Pre conditions
         if (action1 != null)
         {
+            if (player1 == null) throw new Player1NotPresentException();
             if (!player1.Position.IsValid()) throw new Player1NotPresentException();
             if (player1.Health <= 0) throw new Player1DiedException();
         }
@@ -67,7 +68,7 @@ internal class Game
             if (player2.Health <= 0) throw new Player2DiedException();
         }
 
-        if (action1 != null)
+        if (action1 != null && player1 != null)
         {
             switch (action1.Action)
             {
@@ -97,46 +98,17 @@ internal class Game
             }
         }
 
-        if (enemy1 != null)
+        foreach (var enemy in enemies)
         {
-            ImmutableHashSet<int> attackables = [];
-
-            if (TryGetPlayerIndex((enemy1.Position.y - 1, enemy1.Position.x), out var playerNorth)) attackables = attackables.Add(playerNorth);
-            if (TryGetPlayerIndex((enemy1.Position.y + 1, enemy1.Position.x), out var playerSouth)) attackables = attackables.Add(playerSouth);
-            if (TryGetPlayerIndex((enemy1.Position.y, enemy1.Position.x - 1), out var playerWest)) attackables = attackables.Add(playerWest);
-            if (TryGetPlayerIndex((enemy1.Position.y, enemy1.Position.x + 1), out var playerEast)) attackables = attackables.Add(playerEast);
-
-            if (!attackables.IsEmpty)
-            {
-                var attackable = attackables.PickOne();
-                if (attackable == 1) DealDamage(ref player1, 1);
-                if (attackable == 2 && player2 != null) DealDamage(ref player2, 1);
-            }
+            HandleEnemy(enemy);
         }
 
         // Check fnished
-        if (!player1.Position.IsValid() && (player2 == null || !player2.Position.IsValid()))
+        if ((player1 == null || !player1.Position.IsValid()) &&
+            (player2 == null || !player2.Position.IsValid()))
         {
             isFinished = true;
         }
-    }
-
-    private bool TryGetPlayerIndex(Position position, out int index)
-    {
-        if (position.Equals(player1.Position))
-        {
-            index = 1;
-            return true;
-        }
-
-        if (player2 != null && position.Equals(player2.Position))
-        {
-            index = 2;
-            return true;
-        }
-
-        index = default;
-        return false;
     }
 
     private void Move(ref Player player, Direction direction)
@@ -159,17 +131,9 @@ internal class Game
     {
         var usePos = GetDirectionPosition(player, direction);
 
-        if (enemy1 != null && usePos.Equals(enemy1.Position))
+        if (TryUseOnEnemy(player, usePos))
         {
-            if (!player.HasSword) throw new NoSwordException();
-
-            DealDamage(ref enemy1, 1);
-        }
-        else if (enemy2 != null && usePos.Equals(enemy2.Position))
-        {
-            if (!player.HasSword) throw new NoSwordException();
-
-            DealDamage(ref enemy2, 1);
+            // It was an enemy, do nothing more.
         }
         else
         {
@@ -191,18 +155,39 @@ internal class Game
                     throw new UseNotAllowedException();
 
                 case Cell.DoorRedClosed:
-                    UseItemOnClosedDoor(ref player, usePos, Inventory.KeyRed);
+                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
                     break;
                 case Cell.DoorGreenClosed:
-                    UseItemOnClosedDoor(ref player, usePos, Inventory.KeyGreen);
+                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyGreen);
                     break;
                 case Cell.DoorBlueClosed:
-                    UseItemOnClosedDoor(ref player, usePos, Inventory.KeyBlue);
+                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyBlue);
                     break;
 
                 default:
                     throw new NotImplementedException(); // Should not be possible
             }
+        }
+    }
+
+    private void HandleEnemy(Enemy enemy)
+    {
+        if (!enemy.Position.IsValid()) return;
+        if (enemy.Health <= 0) return;
+
+        // Find all players that are adjacent to this enemy
+        ImmutableHashSet<int> attackables = [];
+        if (TryGetPlayerIndexAtPosition((enemy.Position.y - 1, enemy.Position.x), out var playerNorth)) attackables = attackables.Add(playerNorth);
+        if (TryGetPlayerIndexAtPosition((enemy.Position.y + 1, enemy.Position.x), out var playerSouth)) attackables = attackables.Add(playerSouth);
+        if (TryGetPlayerIndexAtPosition((enemy.Position.y, enemy.Position.x - 1), out var playerWest)) attackables = attackables.Add(playerWest);
+        if (TryGetPlayerIndexAtPosition((enemy.Position.y, enemy.Position.x + 1), out var playerEast)) attackables = attackables.Add(playerEast);
+
+        if (!attackables.IsEmpty)
+        {
+            // Attack one randomly
+            var attackable = attackables.PickOne();
+            if (attackable == 1 && player1 != null) DealDamage(ref player1, 1);
+            if (attackable == 2 && player2 != null) DealDamage(ref player2, 1);
         }
     }
 
@@ -228,7 +213,7 @@ internal class Game
                 break;
 
             case Cell.PressurePlate:
-                CloseBlackDoors();
+                CloseAllDoors(Cell.DoorBlackOpen);
                 break;
 
             default:
@@ -249,7 +234,7 @@ internal class Game
                 break;
 
             case Cell.PressurePlate:
-                OpenBlackDoors();
+                OpenAllDoors(Cell.DoorBlackClosed);
                 break;
 
             case Cell.Exit:
@@ -278,7 +263,7 @@ internal class Game
         if (player.Inventory != Inventory.None) throw new InventoryFullException();
 
         // Is it an item that can be picked up?
-        var item = ToInventory(map[position]);
+        var item = map[position].ToInventory();
         if (item == Inventory.None) throw new NotImplementedException(); // developer error
 
         // Put in inventory and remove from map
@@ -296,52 +281,62 @@ internal class Game
         map[position] = Cell.Empty;
     }
 
-    private void UseItemOnClosedDoor(ref Player player, Position position, Inventory item)
+    private bool TryUseOnEnemy(Player player, Position usePos)
+    {
+        foreach (var enemy in enemies)
+        {
+            if (usePos.Equals(enemy.Position))
+            {
+                if (!player.HasSword) throw new NoSwordException();
+
+                var newEnemy = enemy;
+                DealDamage(ref newEnemy, 1);
+                enemies = enemies.Replace(enemy, newEnemy);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
         if (player.Inventory != item) throw new UseNotAllowedException();
 
-        // Remove from inventory and change to open
+        // Oopen all the doors of the same type
+        var closedDoor = map[usePosition];
+        OpenAllDoors(closedDoor);
+
+        // Remove key from inventory
         player = player with { Inventory = Inventory.None };
-
-        // Open this and all adjacent door cells
-        ImmutableQueue<Position> todo = [position];
-        while (!todo.IsEmpty)
-        {
-            todo = todo.Dequeue(out var current);
-            var doorType = map[current];
-            map[current] = ToOpenDoor(doorType);
-
-            if (map[current.y - 1, current.x] == doorType) todo = todo.Enqueue((current.y - 1, current.x));
-            if (map[current.y + 1, current.x] == doorType) todo = todo.Enqueue((current.y + 1, current.x));
-            if (map[current.y, current.x - 1] == doorType) todo = todo.Enqueue((current.y, current.x - 1));
-            if (map[current.y, current.x + 1] == doorType) todo = todo.Enqueue((current.y, current.x + 1));
-        }
     }
 
-    private void OpenBlackDoors()
+    private void OpenAllDoors(Cell closedDoor)
     {
+        var openDoor = closedDoor.ToOpenDoor();
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (map[y, x] == Cell.DoorBlackClosed)
+                if (map[y, x] == closedDoor)
                 {
-                    map[y, x] = Cell.DoorBlackOpen;
+                    map[y, x] = openDoor;
                 }
             }
         }
     }
 
-    private void CloseBlackDoors()
+    private void CloseAllDoors(Cell openDoor)
     {
+        var closedDoor = openDoor.ToClosedDoor();
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (map[y, x] == Cell.DoorBlackOpen)
+                if (map[y, x] == openDoor)
                 {
-                    map[y, x] = Cell.DoorBlackClosed;
+                    map[y, x] = closedDoor;
                 }
             }
         }
@@ -353,13 +348,30 @@ internal class Game
         if (character.Health <= 0)
         {
             // Drop loot
-            map[character.Position] = ToDroppedLoot(character.Inventory);
+            map[character.Position] = character.Inventory.ToDroppedLoot();
             character = character with { Inventory = Inventory.None };
             // Remove from game
             character = character with { Position = PositionEx.Invalid };
         }
     }
 
+    private bool TryGetPlayerIndexAtPosition(Position position, out int index)
+    {
+        if (player1 != null && position.Equals(player1.Position))
+        {
+            index = 1;
+            return true;
+        }
+
+        if (player2 != null && position.Equals(player2.Position))
+        {
+            index = 2;
+            return true;
+        }
+
+        index = default;
+        return false;
+    }
 
     private bool CanMoveTo(Position position)
     {
@@ -368,10 +380,13 @@ internal class Game
         if (position.y < 0 || position.y >= map.Height) return false;
 
         // Check collisions with players and enemies.
-        if (player1.Position.IsValid() && position.Equals(player1.Position)) return false;
+        if (player1 != null && player1.Position.IsValid() && position.Equals(player1.Position)) return false;
         if (player2 != null && player2.Position.IsValid() && position.Equals(player2.Position)) return false;
-        if (enemy1 != null && enemy1.Position.IsValid() && position.Equals(enemy1.Position)) return false;
-        if (enemy2 != null && enemy2.Position.IsValid() && position.Equals(enemy2.Position)) return false;
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy.Position.IsValid() && position.Equals(enemy.Position)) return false;
+        }
 
         // Check if cell is walkable
         var cell = map[position];
@@ -492,14 +507,18 @@ internal class Game
 
         if (IsVisible(player, pos))
         {
-            if (pos.Equals(player1.Position) || (player2 != null && pos.Equals(player2.Position)))
+            if ((player1 != null && pos.Equals(player1.Position)) ||
+                (player2 != null && pos.Equals(player2.Position)))
             {
                 return PLAYER;
             }
 
-            if ((enemy1 != null && pos.Equals(enemy1.Position)) || (enemy2 != null && pos.Equals(enemy2.Position)))
+            foreach (var enemy in enemies)
             {
-                return ENEMY;
+                if (pos.Equals(enemy.Position))
+                {
+                    return ENEMY;
+                }
             }
 
             var cell = map[pos];
@@ -540,30 +559,4 @@ internal class Game
     };
 
     #endregion
-
-    private static Inventory ToInventory(Cell cell) => cell switch
-    {
-        Cell.KeyRed => Inventory.KeyRed,
-        Cell.KeyGreen => Inventory.KeyGreen,
-        Cell.KeyBlue => Inventory.KeyBlue,
-        _ => Inventory.None,
-    };
-
-    private static Cell ToOpenDoor(Cell closedDoor) => closedDoor switch
-    {
-        Cell.DoorRedClosed => Cell.DoorRedOpen,
-        Cell.DoorGreenClosed => Cell.DoorGreenOpen,
-        Cell.DoorBlueClosed => Cell.DoorBlueOpen,
-        Cell.DoorBlackClosed => Cell.DoorBlackOpen,
-        _ => throw new NotImplementedException("Not a closed door"),
-    };
-
-    private static Cell ToDroppedLoot(Inventory inventory) => inventory switch
-    {
-        Inventory.None => Cell.Empty,
-        Inventory.KeyRed => Cell.KeyRed,
-        Inventory.KeyGreen => Cell.KeyGreen,
-        Inventory.KeyBlue => Cell.KeyBlue,
-        _ => throw new NotImplementedException(),
-    };
 }
