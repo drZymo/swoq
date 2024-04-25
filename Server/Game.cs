@@ -11,8 +11,8 @@ internal class Game
     private readonly Map map;
 
     private abstract record Character(Position Position, Inventory Inventory, int Health);
-    private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false) : Character(Position, Inventory, Health);
-    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 4) : Character(Position, Inventory, Health);
+    private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false) : Character(Position, Inventory, Health);
+    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth) : Character(Position, Inventory, Health);
 
     private Player? player1 = null;
     private Player? player2 = null;
@@ -100,7 +100,9 @@ internal class Game
 
         foreach (var enemy in enemies)
         {
-            HandleEnemy(enemy);
+            var newEnemy = enemy;
+            ProcessEnemy(ref newEnemy);
+            enemies = enemies.Replace(enemy, newEnemy);
         }
 
         // Check fnished
@@ -168,27 +170,6 @@ internal class Game
                 default:
                     throw new NotImplementedException(); // Should not be possible
             }
-        }
-    }
-
-    private void HandleEnemy(Enemy enemy)
-    {
-        if (!enemy.Position.IsValid()) return;
-        if (enemy.Health <= 0) return;
-
-        // Find all players that are adjacent to this enemy
-        ImmutableHashSet<int> attackables = [];
-        if (TryGetPlayerIndexAtPosition((enemy.Position.y - 1, enemy.Position.x), out var playerNorth)) attackables = attackables.Add(playerNorth);
-        if (TryGetPlayerIndexAtPosition((enemy.Position.y + 1, enemy.Position.x), out var playerSouth)) attackables = attackables.Add(playerSouth);
-        if (TryGetPlayerIndexAtPosition((enemy.Position.y, enemy.Position.x - 1), out var playerWest)) attackables = attackables.Add(playerWest);
-        if (TryGetPlayerIndexAtPosition((enemy.Position.y, enemy.Position.x + 1), out var playerEast)) attackables = attackables.Add(playerEast);
-
-        if (!attackables.IsEmpty)
-        {
-            // Attack one randomly
-            var attackable = attackables.PickOne();
-            if (attackable == 1 && player1 != null) DealDamage(ref player1, 1);
-            if (attackable == 2 && player2 != null) DealDamage(ref player2, 1);
         }
     }
 
@@ -343,6 +324,61 @@ internal class Game
         }
     }
 
+    private void ProcessEnemy(ref Enemy enemy)
+    {
+        if (!enemy.Position.IsValid()) return;
+        if (enemy.Health <= 0) return;
+
+        // Find closest visible player
+        double minDist = double.PositiveInfinity;
+        Player? closestPlayer = null;
+
+        if (player1 != null)
+        {
+            var dist = player1.Position.DistanceTo(enemy.Position);
+            if (dist <= Parameters.EnemyVisibilityRange &&
+                IsVisible(enemy.Position, player1.Position) &&
+                dist < minDist)
+            {
+                minDist = dist;
+                closestPlayer = player1;
+            }
+        }
+        if (player2 != null)
+        {
+            var dist = player2.Position.DistanceTo(enemy.Position);
+            if (dist <= Parameters.EnemyVisibilityRange &&
+                IsVisible(enemy.Position, player2.Position) &&
+                dist < minDist)
+            {
+                minDist = dist;
+                closestPlayer = player1;
+            }
+        }
+
+        if (closestPlayer != null)
+        {
+            // Attack if adjacent, chase otherwise
+            var dy = closestPlayer.Position.y - enemy.Position.y;
+            var dx = closestPlayer.Position.x - enemy.Position.x;
+            if ((Math.Abs(dy) == 1 && dx == 0) || (dy == 0 && Math.Abs(dx) == 1))
+            {
+                if (ReferenceEquals(closestPlayer, player1)) DealDamage(ref player1, 1);
+                if (ReferenceEquals(closestPlayer, player2)) DealDamage(ref player2, 1);
+            }
+            else
+            {
+                var nextPos = Math.Abs(dy) > Math.Abs(dx)
+                    ? (enemy.Position.y + Math.Sign(dy), enemy.Position.x)
+                    : (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
+                if (CanMoveTo(nextPos))
+                {
+                    enemy = enemy with { Position = nextPos };
+                }
+            }
+        }
+    }
+
     private void DealDamage<T>(ref T character, int damage) where T : Character
     {
         character = character with { Health = character.Health - damage };
@@ -354,24 +390,6 @@ internal class Game
             // Remove from game
             character = character with { Position = PositionEx.Invalid };
         }
-    }
-
-    private bool TryGetPlayerIndexAtPosition(Position position, out int index)
-    {
-        if (player1 != null && position.Equals(player1.Position))
-        {
-            index = 1;
-            return true;
-        }
-
-        if (player2 != null && position.Equals(player2.Position))
-        {
-            index = 2;
-            return true;
-        }
-
-        index = default;
-        return false;
     }
 
     private bool CanMoveTo(Position position)
@@ -394,16 +412,16 @@ internal class Game
         return cell.CanWalkOn();
     }
 
-    private bool IsVisible(Player player, Position pos)
+    private bool IsVisible(Position from, Position to)
     {
-        if (pos.y < 0 || pos.y >= map.Height) return false;
-        if (pos.x < 0 || pos.x >= map.Width) return false;
-        if (pos.DistanceTo(player.Position) >= Parameters.PlayerVisibilityRange) return false;
+        if (to.y < 0 || to.y >= map.Height) return false;
+        if (to.x < 0 || to.x >= map.Width) return false;
+        if (to.DistanceTo(from) >= Parameters.PlayerVisibilityRange) return false;
 
-        if (player.Position.x < pos.x && IsVisible(player.Position.x + 0.5, player.Position.y + 0.5, pos.x, pos.y + 0.5)) return true;
-        if (player.Position.x > pos.x && IsVisible(player.Position.x + 0.5, player.Position.y + 0.5, pos.x + 1, pos.y + 0.5)) return true;
-        if (player.Position.y < pos.y && IsVisible(player.Position.x + 0.5, player.Position.y + 0.5, pos.x + 0.5, pos.y)) return true;
-        if (player.Position.y > pos.y && IsVisible(player.Position.x + 0.5, player.Position.y + 0.5, pos.x + 0.5, pos.y + 1)) return true;
+        if (from.x < to.x && IsVisible(from.x + 0.5, from.y + 0.5, to.x, to.y + 0.5)) return true;
+        if (from.x > to.x && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 1, to.y + 0.5)) return true;
+        if (from.y < to.y && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 0.5, to.y)) return true;
+        if (from.y > to.y && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 0.5, to.y + 1)) return true;
 
         return false;
     }
@@ -506,7 +524,7 @@ internal class Game
             return PLAYER;
         }
 
-        if (IsVisible(player, pos))
+        if (IsVisible(player.Position, pos))
         {
             if ((player1 != null && pos.Equals(player1.Position)) ||
                 (player2 != null && pos.Equals(player2.Position)))
