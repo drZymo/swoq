@@ -172,8 +172,8 @@ public class MapGenerator
         ConnectRooms(room1, room2);
 
         PlacePlayerTopLeftAndExitBottomRight();
-            
-        var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
+
+        var (exitKeyColor, _) = AddLockAroundExit();
 
         initialEnemy1Position = (room2.Top + 1, room2.Right - 2);
         initialEnemy1Inventory = ToInventory(exitKeyColor);

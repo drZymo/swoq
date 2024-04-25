@@ -10,8 +10,9 @@ internal class Game
 {
     private readonly Map map;
 
-    private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false);
-    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 6); // TODO: merge with Player ?
+    private abstract record Character(Position Position, Inventory Inventory, int Health);
+    private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 5, bool HasSword = false) : Character(Position, Inventory, Health);
+    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = 4) : Character(Position, Inventory, Health);
 
     private Player player1;
     private Player? player2 = null;
@@ -68,7 +69,6 @@ internal class Game
 
         if (action1 != null)
         {
-            Console.WriteLine($"action1 {action1.Action}, {action1.Direction}");
             switch (action1.Action)
             {
                 case Action.Move:
@@ -84,7 +84,6 @@ internal class Game
 
         if (action2 != null && player2 != null)
         {
-            Console.WriteLine($"action2 {action2.Action}, {action2.Direction}");
             switch (action2.Action)
             {
                 case Action.Move:
@@ -100,7 +99,7 @@ internal class Game
 
         if (enemy1 != null)
         {
-            ImmutableHashSet<int> attackables = ImmutableHashSet<int>.Empty;
+            ImmutableHashSet<int> attackables = [];
 
             if (TryGetPlayerIndex((enemy1.Position.y - 1, enemy1.Position.x), out var playerNorth)) attackables = attackables.Add(playerNorth);
             if (TryGetPlayerIndex((enemy1.Position.y + 1, enemy1.Position.x), out var playerSouth)) attackables = attackables.Add(playerSouth);
@@ -110,8 +109,8 @@ internal class Game
             if (!attackables.IsEmpty)
             {
                 var attackable = attackables.PickOne();
-                if (attackable == 1) EnemyAttacksPlayer(ref player1);
-                if (attackable == 2 && player2 != null) EnemyAttacksPlayer(ref player2);
+                if (attackable == 1) DealDamage(ref player1, 1);
+                if (attackable == 2 && player2 != null) DealDamage(ref player2, 1);
             }
         }
 
@@ -119,26 +118,6 @@ internal class Game
         if (!player1.Position.IsValid() && (player2 == null || !player2.Position.IsValid()))
         {
             isFinished = true;
-        }
-    }
-
-    private void EnemyAttacksPlayer(ref Player player)
-    {
-        Debug.Assert(player.Health > 0);
-
-        // Reduce health
-        player = player with { Health = player.Health - 1 };
-        Console.WriteLine($"Player {player.Index} was attacked, health = {player.Health}");
-
-        // Is it dead?
-        if (player.Health <= 0)
-        {
-            Console.WriteLine($"Player {player.Index} dies");
-            // Drop loot
-            map[player.Position] = ToDroppedLoot(player.Inventory);
-            player = player with { Inventory = Inventory.None };
-            // Remove from game
-            player = player with { Position = PositionEx.Invalid };
         }
     }
 
@@ -184,31 +163,13 @@ internal class Game
         {
             if (!player.HasSword) throw new NoSwordException();
 
-            enemy1 = enemy1 with { Health = enemy1.Health - 1 };
-            Console.WriteLine($"Enemy {enemy1.Index} was attacked, health = {enemy1.Health}");
-            if (enemy1.Health <= 0)
-            {
-                Console.WriteLine($"Enemy {enemy1.Index} dies");
-                // Drop loot
-                map[enemy1.Position] = ToDroppedLoot(enemy1.Inventory);
-                // Remove enemy from game
-                enemy1 = null;
-            }
+            DealDamage(ref enemy1, 1);
         }
         else if (enemy2 != null && usePos.Equals(enemy2.Position))
         {
             if (!player.HasSword) throw new NoSwordException();
 
-            enemy2 = enemy2 with { Health = enemy2.Health - 1 };
-            Console.WriteLine($"Enemy {enemy2.Index} was attacked, health = {enemy2.Health}");
-            if (enemy2.Health <= 0)
-            {
-                Console.WriteLine($"Enemy {enemy2.Index} dies");
-                // Drop loot
-                map[enemy2.Position] = ToDroppedLoot(enemy2.Inventory);
-                // Remove enemy from game
-                enemy2 = null;
-            }
+            DealDamage(ref enemy2, 1);
         }
         else
         {
@@ -245,7 +206,7 @@ internal class Game
         }
     }
 
-    private Position GetDirectionPosition(Player player, Direction direction) => direction switch
+    private static Position GetDirectionPosition(Player player, Direction direction) => direction switch
     {
         Direction.North => (player.Position.y - 1, player.Position.x),
         Direction.East => (player.Position.y, player.Position.x + 1),
@@ -386,6 +347,20 @@ internal class Game
         }
     }
 
+    private void DealDamage<T>(ref T character, int damage) where T : Character
+    {
+        character = character with { Health = character.Health - damage };
+        if (character.Health <= 0)
+        {
+            // Drop loot
+            map[character.Position] = ToDroppedLoot(character.Inventory);
+            character = character with { Inventory = Inventory.None };
+            // Remove from game
+            character = character with { Position = PositionEx.Invalid };
+        }
+    }
+
+
     private bool CanMoveTo(Position position)
     {
         // Move within map bounds
@@ -471,7 +446,6 @@ internal class Game
     {
         int[] surroundings = [];
 
-        Console.WriteLine($"player {player.Index}: position = {player.Position}");
         if (player.Position.IsValid())
         {
             var width = Parameters.PlayerVisibilityRange * 2 + 1;
@@ -556,7 +530,7 @@ internal class Game
         return UNKNOWN;
     }
 
-    private int ToInventoryState(Inventory inventory) => inventory switch
+    private static int ToInventoryState(Inventory inventory) => inventory switch
     {
         Inventory.None => 0,
         Inventory.KeyRed => 1,

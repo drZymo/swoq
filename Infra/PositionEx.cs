@@ -4,7 +4,7 @@ using Position = (int y, int x);
 
 public static class PositionEx
 {
-    public static readonly Position Invalid = new Position(-1, -1);
+    public static readonly Position Invalid = (-1, -1);
 
     public static double DistanceTo(this Position position, Position other)
     {
