@@ -121,10 +121,11 @@ internal class Game
         }
 
         LeaveCell(player.Position);
-        EnterCell(ref player, nextPos);
 
         player = player with { Position = nextPos };
         Debug.Assert(map[player.Position].CanWalkOn());
+
+        EnterCell(ref player, player.Position);
     }
 
     private void Use(ref Player player, Direction direction)
