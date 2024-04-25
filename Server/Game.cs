@@ -6,36 +6,41 @@ namespace Swoq.Server;
 
 using Position = (int y, int x);
 
+internal enum GameStatus { Active, Completed, Failed }
+
 internal class Game
 {
-    private readonly Map map;
+    private abstract record Character(string Name, Position Position, Inventory Inventory, int Health);
+    private record Player(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false)
+        : Character(Name, Position, Inventory, Health);
+    private record Enemy(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth)
+        : Character(Name, Position, Inventory, Health);
 
-    private abstract record Character(Position Position, Inventory Inventory, int Health);
-    private record Player(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false) : Character(Position, Inventory, Health);
-    private record Enemy(int Index, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth) : Character(Position, Inventory, Health);
+    private readonly int level;
+    private readonly Map map;
 
     private Player? player1 = null;
     private Player? player2 = null;
     private IImmutableList<Enemy> enemies = ImmutableList<Enemy>.Empty;
 
-    private bool isFinished = false;
-
     public Game(int level)
     {
+        this.level = level;
+
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
-        player1 = new Player(1, map.InitialPlayer1Position);
+        player1 = new Player("Player1", map.InitialPlayer1Position);
         if (map.InitialPlayer2Position.HasValue)
         {
-            player2 = new Player(2, map.InitialPlayer2Position.Value);
+            player2 = new Player("Player2", map.InitialPlayer2Position.Value);
         }
 
         if (map.InitialEnemy1Position.HasValue)
         {
-            enemies = enemies.Add(new Enemy(1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
+            enemies = enemies.Add(new Enemy("Enemy1", map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
         }
         if (map.InitialEnemy2Position.HasValue)
         {
-            enemies = enemies.Add(new Enemy(2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
+            enemies = enemies.Add(new Enemy("Enemy2", map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
         }
     }
 
@@ -43,16 +48,21 @@ internal class Game
     public int Width => map.Width;
     public int Height => map.Height;
 
+    public GameStatus Status { get; private set; } = GameStatus.Active;
+
     public GameState GetState()
     {
+        Debug.Assert(player1 != null || player2 != null);
         PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
-        return new GameState(isFinished, player1State, player2State);
+        return new GameState(level, Status != GameStatus.Active, player1State, player2State);
     }
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (isFinished) throw new GameFinishedException();
+        if (Status != GameStatus.Active) throw new GameFinishedException();
+
+        Debug.Assert(player1 != null || player2 != null);
 
         // Pre conditions
         if (action1 != null)
@@ -109,7 +119,11 @@ internal class Game
         if ((player1 == null || !player1.Position.IsValid()) &&
             (player2 == null || !player2.Position.IsValid()))
         {
-            isFinished = true;
+            var aPlayerDied = false;
+            if (player1 != null && player1.Health <= 0) aPlayerDied = true;
+            if (player2 != null && player2.Health <= 0) aPlayerDied = true;
+
+            Status = aPlayerDied ? GameStatus.Failed : GameStatus.Completed;
         }
     }
 
@@ -382,6 +396,7 @@ internal class Game
     private void DealDamage<T>(ref T character, int damage) where T : Character
     {
         character = character with { Health = character.Health - damage };
+        //Console.WriteLine($"{character.Name} received {damage} damage, health = {character.Health}");
         if (character.Health <= 0)
         {
             // Drop loot
@@ -389,6 +404,7 @@ internal class Game
             character = character with { Inventory = Inventory.None };
             // Remove from game
             character = character with { Position = PositionEx.Invalid };
+            //Console.WriteLine($"{character.Name} died");
         }
     }
 

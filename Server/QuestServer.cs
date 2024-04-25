@@ -19,7 +19,7 @@ internal class QuestServer(ISwoqDatabase database)
             quests = quests.Add(quest.Id, quest);
         }
 
-        return new StartResult(quest.Id, quest.Height, quest.Width, Parameters.PlayerVisibilityRange, quest.CurrentState);
+        return new StartResult(quest.Id, quest.Height, quest.Width, Parameters.PlayerVisibilityRange, quest.State);
     }
 
     public GameState Act(Guid questId, DirectedAction? action1 = null, DirectedAction? action2 = null)
@@ -30,6 +30,7 @@ internal class QuestServer(ISwoqDatabase database)
         }
 
         quest.Act(action1, action2);
-        return quest.CurrentState;
+        // TODO: update player level
+        return quest.State;
     }
 }

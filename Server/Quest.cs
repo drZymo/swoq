@@ -7,26 +7,33 @@ class Quest
     public Quest()
     {
         Id = Guid.NewGuid();
-        currentGame = new Game(0);
-        CurrentState = currentGame.GetState();
+        currentGame = new Game(Level);
+        State = currentGame.GetState();
     }
 
     public Guid Id { get; }
     public int Height => currentGame.Height;
     public int Width => currentGame.Width;
 
-    public GameState CurrentState { get; private set; }
+    public int Level { get; private set; } = 0;
+    public GameState State { get; private set; }
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        if (State.Finished) { return; }
+
+        // Play current game
         currentGame.Act(action1, action2);
         var state = currentGame.GetState();
 
-        if (state.Finished)
+        // If game is completed successfully, then move to next level.
+        if (currentGame.Status == GameStatus.Completed)
         {
-            // TODO: next level is success
+            Level++;
+            currentGame = new Game(Level);
+            state = currentGame.GetState();
         }
 
-        CurrentState = state;
+        State = state;
     }
 }

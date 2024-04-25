@@ -72,8 +72,8 @@ message PlayerState {
 }
 
 message State {
-	bool finished = 1;
-	int32 level = 2;
+	int32 level = 1;
+	bool finished = 2;
 	optional PlayerState player1 = 3;
 	optional PlayerState player2 = 4;
 }

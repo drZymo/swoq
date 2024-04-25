@@ -32,13 +32,13 @@ internal static class ServiceUtil
 
     public static State Convert(this GameState gameState)
     {
-        var state = new State
+        return new State
         {
+            Level = gameState.Level,
             Finished = gameState.Finished,
             Player1 = gameState.Player1 != null ? Convert(gameState.Player1) : null,
             Player2 = gameState.Player2 != null ? Convert(gameState.Player2) : null,
         };
-        return state;
     }
 
     public static Interface.PlayerState Convert(this PlayerState playerState)
