@@ -65,9 +65,9 @@ message PlayerState {
 }
 
 message State {
-	optional PlayerState player1 = 1;
-	optional PlayerState player2 = 2;
-	bool finished = 3;
+	bool finished = 1;
+	optional PlayerState player1 = 2;
+	optional PlayerState player2 = 3;
 }
 
 message StartRequest {

@@ -46,11 +46,13 @@ internal class Game
     {
         PlayerState? player1State = GetPlayerState(player1);
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
-        return new GameState(player1State, player2State, isFinished);
+        return new GameState(isFinished, player1State, player2State);
     }
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        if (isFinished) throw new GameFinishedException();
+
         // Pre conditions
         if (action1 != null)
         {
@@ -66,6 +68,7 @@ internal class Game
 
         if (action1 != null)
         {
+            Console.WriteLine($"action1 {action1.Action}, {action1.Direction}");
             switch (action1.Action)
             {
                 case Action.Move:
@@ -81,6 +84,7 @@ internal class Game
 
         if (action2 != null && player2 != null)
         {
+            Console.WriteLine($"action2 {action2.Action}, {action2.Direction}");
             switch (action2.Action)
             {
                 case Action.Move:
@@ -158,8 +162,6 @@ internal class Game
 
     private void Move(ref Player player, Direction direction)
     {
-        if (isFinished) throw new GameFinishedException();
-
         var nextPos = GetDirectionPosition(player, direction);
 
         if (!CanMoveTo(nextPos))
@@ -176,8 +178,6 @@ internal class Game
 
     private void Use(ref Player player, Direction direction)
     {
-        if (isFinished) throw new GameFinishedException();
-
         var usePos = GetDirectionPosition(player, direction);
 
         if (enemy1 != null && usePos.Equals(enemy1.Position))
@@ -388,11 +388,18 @@ internal class Game
 
     private bool CanMoveTo(Position position)
     {
+        // Move within map bounds
         if (position.x < 0 || position.x >= map.Width) return false;
         if (position.y < 0 || position.y >= map.Height) return false;
 
-        var cell = map[position];
+        // Check collisions with players and enemies.
+        if (player1.Position.IsValid() && position.Equals(player1.Position)) return false;
+        if (player2 != null && player2.Position.IsValid() && position.Equals(player2.Position)) return false;
+        if (enemy1 != null && enemy1.Position.IsValid() && position.Equals(enemy1.Position)) return false;
+        if (enemy2 != null && enemy2.Position.IsValid() && position.Equals(enemy2.Position)) return false;
 
+        // Check if cell is walkable
+        var cell = map[position];
         return cell.CanWalkOn();
     }
 
@@ -464,6 +471,7 @@ internal class Game
     {
         int[] surroundings = [];
 
+        Console.WriteLine($"player {player.Index}: position = {player.Position}");
         if (player.Position.IsValid())
         {
             var width = Parameters.PlayerVisibilityRange * 2 + 1;
