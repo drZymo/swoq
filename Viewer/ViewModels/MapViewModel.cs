@@ -20,6 +20,7 @@ class MapViewModel : ViewModelBase
         { Cell.KeyGreen, Colors.Green },
         { Cell.KeyBlue, Colors.Blue },
         { Cell.Sword, Colors.Gold },
+        { Cell.Health, Colors.Goldenrod },
     }.ToImmutableDictionary();
 
     private static readonly Color PlayerColor = Colors.Magenta;

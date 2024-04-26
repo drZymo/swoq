@@ -8,5 +8,7 @@ internal static class Parameters
     public const int EnemyVisibilityRange = 5;
 
     public const int PlayerHealth = 5;
-    public const int EnemyHealth = 4;
+    public const int EnemyHealth = 6;
+
+    public const int ExtraHealth = 3;
 }

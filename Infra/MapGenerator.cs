@@ -181,8 +181,12 @@ public class MapGenerator
         Position swordPos = (room1.Top + 1, room1.Left + 1);
         data[swordPos.y, swordPos.x] = Cell.Sword;
 
+        Position healthPos = (room1.Top + 1, room1.Right - 2);
+        data[healthPos.y, healthPos.x] = Cell.Health;
+
         availableRooms = availableRooms.Remove(room1).Remove(room2);
     }
+
 
     private void GenerateLevel7()
     {
@@ -263,11 +267,20 @@ public class MapGenerator
         var keyPos = keyRoom.RandomPosition(1);
         data[keyPos.y, keyPos.x] = ToKey(keyColor);
 
+        
+        // Place sword and health in any room
         var swordRoom = availableRooms.PickOne();
         availableRooms = availableRooms.Remove(swordRoom);
 
-        var swordPos = swordRoom.RandomPosition(1);
+        var swordRoomPositions = swordRoom.AllPositions.ToImmutableHashSet().Remove(initialPlayer1Position);
+
+        var swordPos = swordRoomPositions.PickOne();
         data[swordPos.y, swordPos.x] = Cell.Sword;
+        swordRoomPositions = swordRoomPositions.Remove(swordPos);
+
+        var healthPos = swordRoomPositions.PickOne();
+        data[healthPos.y, healthPos.x] = Cell.Health;
+
 
 
         var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();

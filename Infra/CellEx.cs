@@ -17,6 +17,7 @@ public static class CellEx
             case Cell.DoorBlackOpen:
             case Cell.PressurePlate:
             case Cell.Sword:
+            case Cell.Health:
                 return true;
 
             case Cell.Wall:

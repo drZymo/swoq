@@ -21,4 +21,5 @@ public enum Cell
     PressurePlate,
 
     Sword,
+    Health,
 }

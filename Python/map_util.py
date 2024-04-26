@@ -17,6 +17,7 @@ DOOR_BLACK = 11
 PRESSURE_PLATE = 12
 SWORD = 13
 ENEMY = 14
+HEALTH = 15
 
 INVENTORY_NONE = 0
 INVENTORY_KEY_RED = 1
@@ -39,6 +40,7 @@ _cell_colors = {
     PRESSURE_PLATE: [ 48,  48,  48],
     SWORD:          [255, 255,   0],
     ENEMY:          [  0, 255,  255],
+    HEALTH:         [128, 128,   0],
 }
 
 def get_map_image(game_map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:

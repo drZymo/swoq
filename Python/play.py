@@ -143,8 +143,15 @@ class GamePlayer:
     def explore(self) -> None:
         while True:
             # stop immediately when exit is visible
-            exit_pos = np.argwhere(self.map == EXIT)
-            if np.any(exit_pos): break
+            if np.any(self.map == EXIT): break
+            
+            # stop immediately if sword is found
+            if not self.has_sword and np.any(self.map == SWORD): break
+
+            # stop immediately if matching key and door have been found
+            if np.any(self.map == KEY_RED) and np.any(self.map == DOOR_RED): break
+            if np.any(self.map == KEY_GREEN) and np.any(self.map == DOOR_GREEN): break
+            if np.any(self.map == KEY_BLUE) and np.any(self.map == DOOR_BLUE): break
 
             direction = self.get_direction_towards_closest_unknown()
             if direction is None: break
@@ -202,6 +209,17 @@ class GamePlayer:
         swords = np.argwhere(self.map == SWORD)
         if np.any(swords):
             target_pos = tuple(swords[0])
+
+        if target_pos is not None:
+            self.move_to_target(target_pos)
+
+
+    def try_get_health(self) -> None:
+        target_pos = None
+        
+        healths = np.argwhere(self.map == HEALTH)
+        if np.any(healths):
+            target_pos = tuple(healths[0])
 
         if target_pos is not None:
             self.move_to_target(target_pos)

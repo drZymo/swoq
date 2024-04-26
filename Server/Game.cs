@@ -248,6 +248,10 @@ internal class Game
                 PickupSword(ref player, position);
                 break;
 
+            case Cell.Health:
+                PickupHealth(ref player, position);
+                break;
+
             default:
                 throw new NotImplementedException(); // Should not be possible
         }
@@ -275,6 +279,15 @@ internal class Game
         // Add to player and remove from map
         player = player with { HasSword = true };
         map[position] = Cell.Empty;
+    }
+
+    private void PickupHealth(ref Player player, Position position)
+    {
+        // Add to player's health and remove from map
+        player = player with { Health = player.Health + Parameters.ExtraHealth };
+        map[position] = Cell.Empty;
+
+        Console.WriteLine($"{player.Name} picked up health. Health = {player.Health}");
     }
 
     private bool TryUseOnEnemy(Player player, Position usePos)
@@ -395,7 +408,9 @@ internal class Game
 
     private void DealDamage<T>(ref T character, int damage) where T : Character
     {
+
         character = character with { Health = character.Health - damage };
+        Console.WriteLine($"{character.Name} received damage. Health = {character.Health}");
         //Console.WriteLine($"{character.Name} received {damage} damage, health = {character.Health}");
         if (character.Health <= 0)
         {
@@ -405,6 +420,7 @@ internal class Game
             // Remove from game
             character = character with { Position = PositionEx.Invalid };
             //Console.WriteLine($"{character.Name} died");
+            Console.WriteLine($"{character.Name} died");
         }
     }
 
@@ -534,6 +550,7 @@ internal class Game
         const int PRESSURE_PLATE = 12;
         const int SWORD = 13;
         const int ENEMY = 14;
+        const int HEALTH = 15;
 
         if (pos.Equals(player.Position))
         {
@@ -571,6 +588,7 @@ internal class Game
                 case Cell.DoorBlackClosed: return DOOR_BLACK;
                 case Cell.PressurePlate: return PRESSURE_PLATE;
                 case Cell.Sword: return SWORD;
+                case Cell.Health: return HEALTH;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:

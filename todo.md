@@ -7,7 +7,7 @@
 - [X] Pressure plates
 - [ ] Quest game
 - [X] Combat
-- [ ] Armor
+- [ ] Extra health
 - [ ] Replay storage
 - [ ] Replay viewer
 - [ ] Order: width/height, x/y
