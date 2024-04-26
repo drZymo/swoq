@@ -14,7 +14,8 @@
 - [ ] Levels
 - [X] Sword separate inventory
 - [X] Health in state
-- [ ] Map editor writeablebitmap
+- [X] Map editor writeablebitmap
+- [ ] Two player bot
 
 ## Act vs Move/Use
 
