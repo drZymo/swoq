@@ -15,10 +15,35 @@ to_swoq_pb2_direction = {
     None: None,
 }
 
+
+_result_strings  = {
+    swoq_pb2.OK: 'OK',
+    swoq_pb2.INTERNAL_ERROR: 'INTERNAL_ERROR',
+    swoq_pb2.PLAYER_ALREADY_REGISTERED: 'PLAYER_ALREADY_REGISTERED',
+    swoq_pb2.UNKNOWN_PLAYER: 'UNKNOWN_PLAYER',
+    swoq_pb2.UNKNOWN_GAME_ID: 'UNKNOWN_GAME_ID',
+    swoq_pb2.LEVEL_NOT_AVAILABLE: 'LEVEL_NOT_AVAILABLE',
+    swoq_pb2.MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
+    swoq_pb2.USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
+    swoq_pb2.UNKNOWN_ACTION: 'UNKNOWN_ACTION',
+    swoq_pb2.UNKNOWN_DIRECTION: 'UNKNOWN_DIRECTION',
+    swoq_pb2.GAME_FINISHED: 'GAME_FINISHED',
+    swoq_pb2.PLAYER1_NOT_PRESENT: 'PLAYER1_NOT_PRESENT',
+    swoq_pb2.PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
+    swoq_pb2.INVENTORY_FULL: 'INVENTORY_FULL',
+    swoq_pb2.INVENTORY_EMPTY: 'INVENTORY_EMPTY',
+    swoq_pb2.NO_SWORD: 'NO_SWORD',
+    swoq_pb2.PLAYER1_DIED: 'PLAYER1_DIED',
+    swoq_pb2.PLAYER2_DIED: 'PLAYER2_DIED',
+    swoq_pb2.UNKNOWN_QUEST_ID: 'UNKNOWN_QUEST_ID',
+}
+
 class GamePlayer:
     
-    def __init__(self, quest:bool=False):
+    def __init__(self, quest:bool=False, plot:bool=True, print:bool=True):
         self.quest = quest
+        self.plot = plot
+        self.print = print
         
         self.channel = grpc.insecure_channel('localhost:5009')
         if quest:
@@ -47,32 +72,38 @@ class GamePlayer:
         else:
             startResponse = self.stub.Start(swoq_pb2.StartTrainingRequest(playerId=player_id, level=level))
 
-        print(f'{startResponse.result=}')
+        if self.print:
+            result = _result_strings[startResponse.result]
+            print(f'{result=}')
 
         self.game_id = startResponse.gameId
         self.height = startResponse.height
         self.width = startResponse.width
         self.visibility_range = startResponse.visibilityRange
 
-        self.level = level
+        self.prev_level = -1
         self.map = np.zeros((self.height, self.width), dtype=np.int8)
 
         self.update_global_state(startResponse.state)
         
-        self._frame = plot_map(self.map)
+        if self.plot:
+            self._frame = plot_map(self.map)
     
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
+        self.level = state.level
+        self.finished = state.finished
         self.player_pos = (state.player1.position.y, state.player1.position.x)
         self.inventory = state.player1.inventory
         self.has_sword = state.player1.hasSword
-        self.finished = state.finished
-        print(f'{self.player_pos=}, {self.inventory=}, {self.finished=}')
+        if self.print:
+            print(f'finished={self.finished} level={self.level}, player_pos={self.player_pos}, inventory={self.inventory}, has_sword={self.has_sword}')
         
         # Clear map for every new level
-        if state.level != self.level:
-            self.level = state.level
+        if self.prev_level != self.level:
+            self.prev_level = self.level
             self.map = np.zeros_like(self.map)
+            print(f'Entered level {self.level}')
 
         if len(state.player1.surroundings) > 0:
             top = self.player_pos[0] - self.visibility_range
@@ -98,10 +129,14 @@ class GamePlayer:
         if response.result == 0:
             self.update_global_state(response.state)
 
-        update_map(self._frame, self.map)
-        print(f'{response.result=}')
-        if response.result == 0:
-            print(f' finished={response.state.finished}')
+        if self.plot:
+            update_map(self._frame, self.map)
+            
+        if self.print:
+            result = _result_strings[response.result]
+            print(f'{result=}')
+            print(f' finished={self.finished}')
+            
         return response.result == 0
 
 
@@ -168,6 +203,9 @@ class GamePlayer:
             if np.any(self.map == KEY_RED) and np.any(self.map == DOOR_RED): break
             if np.any(self.map == KEY_GREEN) and np.any(self.map == DOOR_GREEN): break
             if np.any(self.map == KEY_BLUE) and np.any(self.map == DOOR_BLUE): break
+            if self.inventory == INVENTORY_KEY_RED and np.any(self.map == DOOR_RED): break
+            if self.inventory == INVENTORY_KEY_GREEN and np.any(self.map == DOOR_GREEN): break
+            if self.inventory == INVENTORY_KEY_BLUE and np.any(self.map == DOOR_BLUE): break
 
             direction = self.get_direction_towards_closest_unknown()
             if direction is None: break

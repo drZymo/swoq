@@ -13,6 +13,7 @@
 - [ ] Order: width/height, x/y
 - [ ] Levels
 - [X] Sword separate inventory
+- [ ] Health in state
 
 ## Act vs Move/Use
 
