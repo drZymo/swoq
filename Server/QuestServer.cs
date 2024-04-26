@@ -12,8 +12,9 @@ internal class QuestServer(ISwoqDatabase database)
 
     public StartResult Start(string playerId)
     {
-        var quest = new Quest();
+        var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
 
+        var quest = new Quest(player, database);
         lock (questsWriteMutex)
         {
             quests = quests.Add(quest.Id, quest);
@@ -24,13 +25,9 @@ internal class QuestServer(ISwoqDatabase database)
 
     public GameState Act(Guid questId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (!quests.TryGetValue(questId, out var quest))
-        {
-            throw new UnknownGameIdException();
-        }
+        if (!quests.TryGetValue(questId, out var quest)) throw new UnknownGameIdException();
 
         quest.Act(action1, action2);
-        // TODO: update player level
         return quest.State;
     }
 }

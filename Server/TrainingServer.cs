@@ -12,29 +12,29 @@ internal class TrainingServer(ISwoqDatabase database)
 
     public StartResult Start(string playerId, int level)
     {
+        // Check if player can play this level
+        if (level < 0) throw new LevelNotAvailableException();
         var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
+        if (level > player.Level) throw new LevelNotAvailableException();
 
-        if (level < 0 && level > player.Level) throw new LevelNotAvailableException();
-
+        // Create a new game
         var game = new Game(level);
-
         lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
         }
 
+        // Return initial state of game
         var state = game.GetState();
-
         return new StartResult(game.Id, game.Height, game.Width, Parameters.PlayerVisibilityRange, state);
     }
 
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (!games.TryGetValue(gameId, out var game))
-        {
-            throw new UnknownGameIdException();
-        }
+        // Does game exist?
+        if (!games.TryGetValue(gameId, out var game)) throw new UnknownGameIdException();
 
+        // Play game
         game.Act(action1, action2);
         return game.GetState();
     }
