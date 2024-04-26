@@ -356,26 +356,43 @@ internal class Game
         if (!enemy.Position.IsValid()) return;
         if (enemy.Health <= 0) return;
 
+        // Is there a player near by?
+        var closestPlayer = FindClosestVisiblePlayer(enemy.Position, Parameters.EnemyVisibilityRange);
+        if (closestPlayer == null) return;
+
+        // Attack if adjacent, chase otherwise
+        var dy = closestPlayer.Position.y - enemy.Position.y;
+        var dx = closestPlayer.Position.x - enemy.Position.x;
+        if ((Math.Abs(dy) == 1 && dx == 0) || (dy == 0 && Math.Abs(dx) == 1))
+        {
+            // Attack
+            if (ReferenceEquals(closestPlayer, player1)) DealDamage(ref player1, 1);
+            if (ReferenceEquals(closestPlayer, player2)) DealDamage(ref player2, 1);
+        }
+        else
+        {
+            // Chase
+            var nextPos = Math.Abs(dy) > Math.Abs(dx)
+                ? (enemy.Position.y + Math.Sign(dy), enemy.Position.x)
+                : (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
+            if (CanMoveTo(nextPos))
+            {
+                enemy = enemy with { Position = nextPos };
+            }
+        }
+    }
+
+    private Player? FindClosestVisiblePlayer(Position fromPos, int visibilityRange)
+    {
         // Find closest visible player
         double minDist = double.PositiveInfinity;
         Player? closestPlayer = null;
 
         if (player1 != null)
         {
-            var dist = player1.Position.DistanceTo(enemy.Position);
-            if (dist <= Parameters.EnemyVisibilityRange &&
-                IsVisible(enemy.Position, player1.Position) &&
-                dist < minDist)
-            {
-                minDist = dist;
-                closestPlayer = player1;
-            }
-        }
-        if (player2 != null)
-        {
-            var dist = player2.Position.DistanceTo(enemy.Position);
-            if (dist <= Parameters.EnemyVisibilityRange &&
-                IsVisible(enemy.Position, player2.Position) &&
+            var dist = player1.Position.DistanceTo(fromPos);
+            if (dist <= visibilityRange &&
+                IsVisible(fromPos, player1.Position) &&
                 dist < minDist)
             {
                 minDist = dist;
@@ -383,27 +400,18 @@ internal class Game
             }
         }
 
-        if (closestPlayer != null)
+        if (player2 != null)
         {
-            // Attack if adjacent, chase otherwise
-            var dy = closestPlayer.Position.y - enemy.Position.y;
-            var dx = closestPlayer.Position.x - enemy.Position.x;
-            if ((Math.Abs(dy) == 1 && dx == 0) || (dy == 0 && Math.Abs(dx) == 1))
+            var dist = player2.Position.DistanceTo(fromPos);
+            if (dist <= visibilityRange &&
+                IsVisible(fromPos, player2.Position) &&
+                dist < minDist)
             {
-                if (ReferenceEquals(closestPlayer, player1)) DealDamage(ref player1, 1);
-                if (ReferenceEquals(closestPlayer, player2)) DealDamage(ref player2, 1);
-            }
-            else
-            {
-                var nextPos = Math.Abs(dy) > Math.Abs(dx)
-                    ? (enemy.Position.y + Math.Sign(dy), enemy.Position.x)
-                    : (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
-                if (CanMoveTo(nextPos))
-                {
-                    enemy = enemy with { Position = nextPos };
-                }
+                closestPlayer = player2;
             }
         }
+
+        return closestPlayer;
     }
 
     private void DealDamage<T>(ref T character, int damage) where T : Character

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Swoq.Server.Models;
+﻿using Swoq.Server.Models;
 using Swoq.Server.Services;
 
 namespace Swoq.Server;

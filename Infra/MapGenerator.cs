@@ -69,6 +69,8 @@ public class MapGenerator
         if (level == 5) GenerateLevel5();
         if (level == 6) GenerateLevel6();
         if (level == 7) GenerateLevel7();
+        if (level == 8) GenerateLevel8();
+        if (level == 9) GenerateLevel9();
         return new Map(data, height, width,
             initialPlayer1Position,
             initialPlayer2Position,
@@ -285,6 +287,125 @@ public class MapGenerator
         availableRooms = availableRooms.Remove(healthRoom);
         var healthPos = healthRoom.RandomPosition(0);
         data[healthPos.y, healthPos.x] = Cell.Health;
+
+        // Place enemy in any room on the right with key to exit
+        var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();
+        var enemyPos = enemyRoom.RandomPosition(0);
+        initialEnemy1Position = enemyPos;
+        initialEnemy1Inventory = ToInventory(exitKeyColor);
+    }
+
+    private void GenerateLevel8()
+    {
+        // Two player exit
+        var room = CreateRoom(10, 10, 8, 16);
+
+        initialPlayer1Position = (room.Top + 1, room.Left + 1);
+        initialPlayer2Position = (room.Top + 3, room.Left + 1);
+
+        exitPosition = (room.Bottom - 1, room.Right);
+        data[exitPosition.y, exitPosition.x] = Cell.Exit;
+    }
+
+    private void GenerateLevel9()
+    {
+        // Create left and right rooms
+        var middle = width / 2;
+
+        rooms = [];
+        CreateRandomRooms(15, 12, 2, maxX: middle);
+        ConnectRoomsRandomly();
+        var roomsLeft = rooms;
+
+        rooms = [];
+        CreateRandomRooms(15, 12, 2, minX: middle + 1);
+        ConnectRoomsRandomly();
+        var roomsRight = rooms;
+
+        rooms = roomsLeft.AddRange(roomsRight);
+
+        // Add players and exit
+        var playerRoom = availableRooms.Where(r => r.Width >= 3 && r.Height >= 3).OrderBy(r => r.Center.DistanceTo((0, 0))).First();
+        var exitRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((0, 0))).Last();
+
+        initialPlayer1Position = (playerRoom.Top, playerRoom.Left);
+        initialPlayer2Position = (playerRoom.Bottom - 1, playerRoom.Right - 1);
+
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
+        data[exitPosition.y, exitPosition.x] = Cell.Exit;
+        availableRooms = availableRooms.Remove(playerRoom).Remove(exitRoom);
+
+        var (exitKeyColor, _) = AddLockAroundExit();
+
+        // Connect left and right rooms closest to each other
+        var minDist = double.PositiveInfinity;
+        Room? minLeft = null;
+        Room? minRight = null;
+        foreach (var left in roomsLeft)
+        {
+            foreach (var right in roomsRight)
+            {
+                var dist = left.Center.DistanceTo(right.Center);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    minLeft = left;
+                    minRight = right;
+                }
+            }
+        }
+        Debug.Assert(minLeft != null && minRight != null);
+
+        ConnectRooms(minLeft, minRight);
+
+        // Create door in tunnel between left and right
+        var keyColor = availableKeys.PickOne();
+        availableKeys = availableKeys.Remove(keyColor);
+
+        var doorPositions = ImmutableList<int>.Empty;
+        for (var y = 0; y < height; y++)
+        {
+            if (data[y, middle] == Cell.Empty)
+            {
+                data[y, middle] = ToDoor(keyColor);
+                doorPositions = doorPositions.Add(y);
+            }
+        }
+
+        // Place key left, far from player
+        Position farthestInfrontDoor = (0, 0);
+        {
+            var maxDist = 0;
+            var (distances, _) = ComputeDistancesFrom(initialPlayer1Position);
+            foreach (var doorPos in doorPositions)
+            {
+                var doorLeft = (doorPos, middle - 1);
+                if (distances.TryGetValue(doorLeft, out var dist))
+                {
+                    if (dist > maxDist)
+                    {
+                        maxDist = dist;
+                        farthestInfrontDoor = doorLeft;
+                    }
+                }
+            }
+        }
+
+        var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
+        var keyPos = keyRoom.RandomPosition(1);
+        data[keyPos.y, keyPos.x] = ToKey(keyColor);
+
+        // Place sword in any room on the left
+        var swordRoom1 = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
+        availableRooms = availableRooms.Remove(swordRoom1);
+        var swordPos1 = swordRoom1.RandomPosition(0);
+        data[swordPos1.y, swordPos1.x] = Cell.Sword;
+
+        // Place another sword in any room on the left
+        var swordRoom2 = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
+        availableRooms = availableRooms.Remove(swordRoom2);
+        var swordPos2 = swordRoom2.RandomPosition(0);
+        data[swordPos2.y, swordPos2.x] = Cell.Sword;
 
         // Place enemy in any room on the right with key to exit
         var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();

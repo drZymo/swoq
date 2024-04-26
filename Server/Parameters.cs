@@ -12,5 +12,5 @@ internal static class Parameters
 
     public const int ExtraHealth = 3;
 
-    public const int FinalLevel = 7;
+    public const int FinalLevel = 9;
 }
