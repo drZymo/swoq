@@ -111,8 +111,8 @@ class GamePlayer:
 
         if self.print:
             print(f'finished={self.finished} level={self.level}')
-            print(f'player1: pos={self.player1_pos}, healt={self.player1_health}, inventory={self.player1_inventory}, has_sword={self.player1_has_sword}')
-            print(f'player2: pos={self.player2_pos}, healt={self.player2_health}, inventory={self.player2_inventory}, has_sword={self.player2_has_sword}')
+            print(f'player1: pos={self.player1_pos}, health={self.player1_health}, inventory={self.player1_inventory}, has_sword={self.player1_has_sword}')
+            print(f'player2: pos={self.player2_pos}, health={self.player2_health}, inventory={self.player2_inventory}, has_sword={self.player2_has_sword}')
         
         # Clear map for every new level
         if self.prev_level != self.level:
