@@ -132,20 +132,6 @@ def get_direction_towards(paths: dict, from_pos: tuple[int,int], to_pos: tuple[i
     
     return None
 
-def get_direction_from_towards(game_map: np.ndarray[np.int8], from_pos: tuple[int,int], to_pos: tuple[int,int]) -> str:
-    if from_pos == to_pos: return None
-    
-    # prevent picking up keys accidentally unless it is the target key
-    excluded_cells = {KEY_RED, KEY_GREEN, KEY_BLUE}
-    target_type = game_map[to_pos[0], to_pos[1]]
-    if target_type in excluded_cells:
-        excluded_cells.remove(target_type)
-        
-    _, paths = compute_distances(game_map, from_pos, exclude_cells=excluded_cells)
-    return get_direction_towards(paths, from_pos, to_pos)
-
-
-
 
 def plot_distances(distances: dict[tuple,int], height: int, width: int) -> None:
     D = np.zeros((height, width), np.float32)

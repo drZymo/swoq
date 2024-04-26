@@ -88,6 +88,9 @@ class GamePlayer:
                             self.map[map_y, map_x] = s
                     i += 1
 
+        self.player_distances, self.player_paths = compute_distances(self.map, self.player_pos)
+        self.player_distances_nokeys, self.player_paths_nokeys = compute_distances(self.map, self.player_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
+
 
     def act(self, action:swoq_pb2.Action, direction:swoq_pb2.Direction) -> bool:
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=action, direction1=direction))
@@ -114,9 +117,21 @@ class GamePlayer:
         return self.act(swoq_pb2.USE, dir)
 
 
-    def get_direction_towards_closest_unknown(self) -> str:
-        distances, paths = compute_distances(self.map, self.player_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
+    def get_direction_from_player_towards(self, to_pos: tuple[int,int]) -> str:
+        if self.player_pos == to_pos: return None
+        
+        paths = self.player_paths_nokeys
+        
+        # prevent picking up keys accidentally unless it is the target key
+        excluded_cells = {KEY_RED, KEY_GREEN, KEY_BLUE}
+        target_type = self.map[to_pos[0], to_pos[1]]
+        if target_type in excluded_cells:
+            paths = self.player_paths
 
+        return get_direction_towards(paths, self.player_pos, to_pos)
+
+
+    def get_direction_towards_closest_unknown(self) -> str:
         closest_empty = None
         closest_dist = None
 
@@ -128,8 +143,8 @@ class GamePlayer:
                     self.map[pos_y, pos_x+1] == UNKNOWN or \
                     self.map[pos_y+1, pos_x] == UNKNOWN or \
                     self.map[pos_y-1, pos_x] == UNKNOWN:
-                if pos in distances:
-                    dist = distances[pos]
+                if pos in self.player_distances_nokeys:
+                    dist = self.player_distances_nokeys[pos]
                     if closest_dist is None or dist < closest_dist:
                         closest_dist = dist
                         closest_empty = pos
@@ -137,16 +152,17 @@ class GamePlayer:
         if closest_empty is None:
             return None
 
-        return get_direction_towards(paths, self.player_pos, closest_empty)
+        return get_direction_towards(self.player_paths_nokeys, self.player_pos, closest_empty)
 
 
     def explore(self) -> None:
         while True:
             # stop immediately when exit is visible
             if np.any(self.map == EXIT): break
-            
-            # stop immediately if sword is found
+            # stop immediately to pickup sword
             if not self.has_sword and np.any(self.map == SWORD): break
+            # stop immediately to pickup health
+            if np.any(self.map == HEALTH): break
 
             # stop immediately if matching key and door have been found
             if np.any(self.map == KEY_RED) and np.any(self.map == DOOR_RED): break
@@ -165,14 +181,14 @@ class GamePlayer:
         
         exit_pos = exit_pos[0]
         while True:
-            direction = get_direction_from_towards(self.map, self.player_pos, tuple(exit_pos))
+            direction = self.get_direction_from_player_towards(tuple(exit_pos))
             if direction is None: break
             if not self.move(direction): break
 
 
     def move_to_target(self, target_pos:tuple[int,int]) -> None:
         while True:
-            direction = get_direction_from_towards(self.map, self.player_pos, target_pos)
+            direction = self.get_direction_from_player_towards(target_pos)
             if direction is None: break
             if not self.move(direction): break
 

@@ -196,6 +196,8 @@ public class MapGenerator
         // One enemy in right side.
         // Open exit in right side, so evading can also be a strategy.
 
+
+        // Create left and right rooms
         var middle = width / 2;
 
         rooms = [];
@@ -209,8 +211,12 @@ public class MapGenerator
         var roomsRight = rooms;
 
         rooms = roomsLeft.AddRange(roomsRight);
-        PlacePlayerTopLeftAndExitBottomRight();
 
+        // Add player and exit
+        PlacePlayerTopLeftAndExitBottomRight();
+        var (exitKeyColor, _) = AddLockAroundExit();
+
+        // Connect left and right rooms closest to each other
         var minDist = double.PositiveInfinity;
         Room? minLeft = null;
         Room? minRight = null;
@@ -231,7 +237,7 @@ public class MapGenerator
 
         ConnectRooms(minLeft, minRight);
 
-
+        // Create door in tunnel between left and right
         var keyColor = availableKeys.PickOne();
         availableKeys = availableKeys.Remove(keyColor);
 
@@ -245,6 +251,7 @@ public class MapGenerator
             }
         }
 
+        // Place key left, far from player
         Position farthestInfrontDoor = (0, 0);
         {
             var maxDist = 0;
@@ -267,25 +274,23 @@ public class MapGenerator
         var keyPos = keyRoom.RandomPosition(1);
         data[keyPos.y, keyPos.x] = ToKey(keyColor);
 
-        
-        // Place sword and health in any room
-        var swordRoom = availableRooms.PickOne();
+        // Place sword in any room on the left
+        var swordRoom = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(swordRoom);
-
-        var swordRoomPositions = swordRoom.AllPositions.ToImmutableHashSet().Remove(initialPlayer1Position);
-
-        var swordPos = swordRoomPositions.PickOne();
+        var swordPos = swordRoom.RandomPosition(0);
         data[swordPos.y, swordPos.x] = Cell.Sword;
-        swordRoomPositions = swordRoomPositions.Remove(swordPos);
 
-        var healthPos = swordRoomPositions.PickOne();
+        // Place health in any room on the left
+        var healthRoom = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
+        availableRooms = availableRooms.Remove(healthRoom);
+        var healthPos = healthRoom.RandomPosition(0);
         data[healthPos.y, healthPos.x] = Cell.Health;
 
-
-
+        // Place enemy in any room on the right with key to exit
         var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();
         var enemyPos = enemyRoom.RandomPosition(0);
         initialEnemy1Position = enemyPos;
+        initialEnemy1Inventory = ToInventory(exitKeyColor);
     }
 
     private Room CreateRoom(int y, int x, int height, int width)

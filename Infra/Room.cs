@@ -19,18 +19,4 @@ internal record Room(int Y, int X, int Height, int Width)
         var x = random.Next(Left + margin, Right - margin);
         return (y, x);
     }
-
-    public IEnumerable<Position> AllPositions
-    {
-        get
-        {
-            for (var y = 0; y < Height; y++)
-            {
-                for (var x = 0; x < Width; x++)
-                {
-                    yield return new Position(Top + y, Left + x);
-                }
-            }
-        }
-    }
 }
