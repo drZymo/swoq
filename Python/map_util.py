@@ -41,17 +41,17 @@ _cell_colors = {
     ENEMY:          [  0, 255,  255],
 }
 
-def get_map_image(map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:
-    height, width = map.shape
+def get_map_image(game_map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:
+    height, width = game_map.shape
     map_img = np.zeros((height, width, 3), dtype=np.float32)
     for y in range(height):
         for x in range(width):
-            map_img[y, x] = (np.array(_cell_colors[map[y, x]]) / 255).astype(np.float32)
+            map_img[y, x] = (np.array(_cell_colors[game_map[y, x]]) / 255).astype(np.float32)
     return map_img
 
 
-def plot_map(map):
-    map_img = get_map_image(map)
+def plot_map(game_map):
+    map_img = get_map_image(game_map)
     fig = plt.figure()
     plt.gca().set_axis_off()
     plt.tight_layout(pad=0)
@@ -59,8 +59,8 @@ def plot_map(map):
     plt.show()
     return (fig, img)
 
-def update_map(frame, map):
-    map_img = get_map_image(map)
+def update_map(frame, game_map):
+    map_img = get_map_image(game_map)
 
     fig, img = frame
     img.set_data(map_img)
@@ -68,12 +68,12 @@ def update_map(frame, map):
     display(fig)
     
     
-def is_wall(map: np.ndarray[np.int8], pos: tuple[int,int]) -> bool:
-    cell = map[pos[0], pos[1]]
+def is_wall(game_map: np.ndarray[np.int8], pos: tuple[int,int]) -> bool:
+    cell = game_map[pos[0], pos[1]]
     return cell == WALL or cell == DOOR_RED or cell == DOOR_GREEN or cell == DOOR_BLUE or cell == UNKNOWN
 
-def compute_distances(map: np.ndarray[np.int8], from_pos: tuple[int,int], exclude_cells: set[int]=None) -> tuple[dict, dict]:
-    height, width = map.shape
+def compute_distances(game_map: np.ndarray[np.int8], from_pos: tuple[int,int], exclude_cells: set[int]=None) -> tuple[dict, dict]:
+    height, width = game_map.shape
     
     todo = []
     distances = {}
@@ -83,13 +83,13 @@ def compute_distances(map: np.ndarray[np.int8], from_pos: tuple[int,int], exclud
     distances[from_pos] = 0
     
     def is_excluded(pos):
-        nonlocal map, exclude_cells
+        nonlocal game_map, exclude_cells
         if exclude_cells is None: return False
-        return map[pos[0],pos[1]] in exclude_cells
+        return game_map[pos[0],pos[1]] in exclude_cells
 
     def enqueue(cur_pos, cur_dist, next_pos):
-        nonlocal map, distances, todo, paths
-        if not is_wall(map, next_pos) and not is_excluded(next_pos):
+        nonlocal game_map, distances, todo, paths
+        if not is_wall(game_map, next_pos) and not is_excluded(next_pos):
             next_dist = distances[next_pos] if next_pos in distances else np.inf
             if cur_dist + 1 < next_dist:
                 distances[next_pos] = cur_dist + 1
@@ -130,16 +130,16 @@ def get_direction_towards(paths: dict, from_pos: tuple[int,int], to_pos: tuple[i
     
     return None
 
-def get_direction_from_towards(map: np.ndarray[np.int8], from_pos: tuple[int,int], to_pos: tuple[int,int]) -> str:
+def get_direction_from_towards(game_map: np.ndarray[np.int8], from_pos: tuple[int,int], to_pos: tuple[int,int]) -> str:
     if from_pos == to_pos: return None
     
     # prevent picking up keys accidentally unless it is the target key
     excluded_cells = {KEY_RED, KEY_GREEN, KEY_BLUE}
-    target_type = map[to_pos[0], to_pos[1]]
+    target_type = game_map[to_pos[0], to_pos[1]]
     if target_type in excluded_cells:
         excluded_cells.remove(target_type)
         
-    _, paths = compute_distances(map, from_pos, exclude_cells=excluded_cells)
+    _, paths = compute_distances(game_map, from_pos, exclude_cells=excluded_cells)
     return get_direction_towards(paths, from_pos, to_pos)
 
 
