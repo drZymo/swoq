@@ -2,17 +2,17 @@
 
 - [X] Act vs Move/Use
 - [X] Door open/closed states
-- [ ] Map generator
+- [X] Map generator
 - [X] Two players
 - [X] Pressure plates
-- [ ] Quest game
+- [X] Quest game
 - [X] Combat
-- [ ] Extra health
+- [X] Extra health
 - [ ] Replay storage
 - [ ] Replay viewer
 - [ ] Order: width/height, x/y
 - [ ] Levels
-- [ ] Sword separate inventory
+- [X] Sword separate inventory
 
 ## Act vs Move/Use
 
