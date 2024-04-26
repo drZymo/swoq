@@ -13,7 +13,8 @@
 - [ ] Order: width/height, x/y
 - [ ] Levels
 - [X] Sword separate inventory
-- [ ] Health in state
+- [X] Health in state
+- [ ] Map editor writeablebitmap
 
 ## Act vs Move/Use
 

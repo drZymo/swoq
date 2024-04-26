@@ -37,15 +37,23 @@ class Quest
         // If game is completed successfully, then move to next level.
         if (currentGame.Status == GameStatus.Completed)
         {
-            Level++;
-            currentGame = new Game(Level);
-            state = currentGame.GetState();
-
-            if (player.Id != null && player.Level < Level)
+            if (Level < Parameters.FinalLevel)
             {
-                database.UpdatePlayerLevelAsync(player.Id, Level);
-                Console.WriteLine($"Player {player.Name} unlocked level {Level}");
-                player.Level = Level;
+                Level++;
+                currentGame = new Game(Level);
+                state = currentGame.GetState();
+
+                if (player.Id != null && player.Level < Level)
+                {
+                    database.UpdatePlayerLevelAsync(player.Id, Level);
+                    Console.WriteLine($"{player.Name} unlocked level {Level}");
+                    player.Level = Level;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"{player.Name} finished the quest");
+                state = new GameState(Level, true);
             }
         }
 

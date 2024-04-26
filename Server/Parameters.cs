@@ -11,4 +11,6 @@ internal static class Parameters
     public const int EnemyHealth = 6;
 
     public const int ExtraHealth = 3;
+
+    public const int FinalLevel = 7;
 }
