@@ -111,6 +111,36 @@ def compute_distances(game_map: np.ndarray[np.int8], from_pos: tuple[int,int], e
     return distances, paths
 
 
+def compute_distances_quick(game_map: np.ndarray[np.int8], from_pos: tuple[int,int]) -> tuple[dict, dict]:
+    height, width = game_map.shape
+    
+    todo = []
+    distances = {}
+    paths = {}
+
+    todo.append(from_pos)
+    distances[from_pos] = 0
+    
+    def enqueue(cur_pos, cur_dist, next_pos):
+        nonlocal game_map, distances, todo, paths
+        if next_pos not in distances and game_map[next_pos[0], next_pos[1]] == EMPTY:
+            distances[next_pos] = cur_dist + 1
+            paths[next_pos] = cur_pos
+            todo.append(next_pos)
+
+    while todo:
+        cur_y, cur_x = cur_pos = todo[0]
+        cur_dist = distances[cur_pos]
+        del todo[0]
+        
+        if cur_y > 0: enqueue(cur_pos, cur_dist, (cur_y-1, cur_x))
+        if cur_y < height-1: enqueue(cur_pos, cur_dist, (cur_y+1, cur_x))
+        if cur_x > 0: enqueue(cur_pos, cur_dist, (cur_y, cur_x-1))
+        if cur_x < width-1: enqueue(cur_pos, cur_dist, (cur_y, cur_x+1))
+    
+    return distances, paths
+
+
 def get_direction_towards(paths: dict, from_pos: tuple[int,int], to_pos: tuple[int,int]) -> str:
     if to_pos not in paths: return None
     

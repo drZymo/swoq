@@ -149,12 +149,14 @@ class GamePlayer:
                     i += 1
 
         if self.player1_pos is not None:
-            self.player1_distances, self.player1_paths = compute_distances(self.map, self.player1_pos)
-            self.player1_distances_nokeys, self.player1_paths_nokeys = compute_distances(self.map, self.player1_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
+            self.player1_distances, self.player1_paths = compute_distances_quick(self.map, self.player1_pos)
+            # self.player1_distances, self.player1_paths = compute_distances(self.map, self.player1_pos)
+            # self.player1_distances_nokeys, self.player1_paths_nokeys = compute_distances(self.map, self.player1_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
         
         if self.player2_pos is not None:
-            self.player2_distances, self.player2_paths = compute_distances(self.map, self.player2_pos)
-            self.player2_distances_nokeys, self.player2_paths_nokeys = compute_distances(self.map, self.player2_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
+            self.player2_distances, self.player2_paths = compute_distances_quick(self.map, self.player2_pos)
+            # self.player2_distances, self.player2_paths = compute_distances(self.map, self.player2_pos)
+            # self.player2_distances_nokeys, self.player2_paths_nokeys = compute_distances(self.map, self.player2_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
 
     def act(self):
         print(f'{self.action1=}, {self.action2=}')
