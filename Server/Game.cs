@@ -118,15 +118,17 @@ internal class Game
         // Cleanup dead characters
         CleanupDeadCharacters();
 
-        // Check fnished
-        if ((player1 == null || !player1.Position.IsValid()) &&
-            (player2 == null || !player2.Position.IsValid()))
+        if ((player1 != null && player1.Health <= 0) ||
+            (player2 != null && player2.Health <= 0))
         {
-            var aPlayerDied = false;
-            if (player1 != null && player1.Health <= 0) aPlayerDied = true;
-            if (player2 != null && player2.Health <= 0) aPlayerDied = true;
-
-            Status = aPlayerDied ? GameStatus.Failed : GameStatus.Completed;
+            // One of the players died
+            Status = GameStatus.Failed;
+        }
+        else if ((player1 == null || (!player1.Position.IsValid() && player1.Health > 0)) &&
+            (player2 == null || (!player2.Position.IsValid() && player2.Health > 0)))
+        {
+            // Both players exited the map alive
+            Status = GameStatus.Completed;
         }
     }
 

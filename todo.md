@@ -15,9 +15,9 @@
 - [X] Sword separate inventory
 - [X] Health in state
 - [X] Map editor writeablebitmap
-- [ ] Two player bot
-- [ ] Always send state, even on failures
-- [ ] Stop game when one of two players dies
+- [X] Two player bot
+- [X] Always send state, even on failures
+- [X] Stop game when one of two players dies
 
 
 ## Act vs Move/Use
