@@ -346,10 +346,33 @@ internal class Game
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (map[y, x] == openDoor)
+                Position pos = (y, x);
+                if (map[pos] == openDoor)
                 {
-                    map[y, x] = closedDoor;
+                    map[pos] = closedDoor;
+                    KillCharacterAtPosition(pos);
                 }
+            }
+        }
+    }
+
+    private void KillCharacterAtPosition(Position pos)
+    {
+        if (player1 != null && player1.Position.IsValid() && pos.Equals(player1.Position))
+        {
+            DealDamage(ref player1, player1.Health);
+        }
+        if (player2 != null && player2.Position.IsValid() && pos.Equals(player2.Position))
+        {
+            DealDamage(ref player2, player2.Health);
+        }
+        foreach (var enemy in enemies)
+        {
+            var newEnemy = enemy;
+            if (newEnemy.Position.IsValid() && pos.Equals(newEnemy.Position))
+            {
+                DealDamage(ref newEnemy, newEnemy.Health);
+                enemies = enemies.Replace(enemy, newEnemy);
             }
         }
     }
@@ -419,9 +442,8 @@ internal class Game
 
     private void DealDamage<T>(ref T character, int damage) where T : Character
     {
-
         character = character with { Health = character.Health - damage };
-        Console.WriteLine($"{character.Name} received damage. Health = {character.Health}");
+        Console.WriteLine($"{character.Name} received {damage} damage. Health = {character.Health}");
         character = CleanupDeadCharacter(ref character);
     }
 

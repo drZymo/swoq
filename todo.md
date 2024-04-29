@@ -17,6 +17,7 @@
 - [X] Map editor writeablebitmap
 - [ ] Two player bot
 - [ ] Always send state, even on failures
+- [ ] Stop game when one of two players dies
 
 
 ## Act vs Move/Use

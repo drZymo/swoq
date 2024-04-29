@@ -148,6 +148,15 @@ class GamePlayer:
                             self.map[map_y, map_x] = s
                     i += 1
 
+        # Remove all players from map
+        self.map[self.map == PLAYER] = EMPTY
+        if self.player1_pos is not None:
+            y,x = self.player1_pos
+            if y >= 0 and x >=0: self.map[y,x] = PLAYER
+        if self.player2_pos is not None:
+            y,x = self.player2_pos
+            if y >= 0 and x >=0: self.map[y,x] = PLAYER
+
         if self.player1_pos is not None:
             self.player1_distances, self.player1_paths = compute_distances_quick(self.map, self.player1_pos)
             # self.player1_distances, self.player1_paths = compute_distances(self.map, self.player1_pos)

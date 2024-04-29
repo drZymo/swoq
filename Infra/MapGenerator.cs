@@ -26,7 +26,7 @@ public class MapGenerator
 
     private enum KeyColor { Red, Green, Blue }
 
-    private IImmutableSet<KeyColor> availableKeys = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
+    private IImmutableSet<KeyColor> availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
     private IImmutableSet<Room> availableRooms = ImmutableHashSet<Room>.Empty;
 
     public static Map Generate(int level, int height = 64, int width = 64)
@@ -71,6 +71,7 @@ public class MapGenerator
         if (level == 7) GenerateLevel7();
         if (level == 8) GenerateLevel8();
         if (level == 9) GenerateLevel9();
+        if (level == 10) GenerateLevel10();
         return new Map(data, height, width,
             initialPlayer1Position,
             initialPlayer2Position,
@@ -240,8 +241,8 @@ public class MapGenerator
         ConnectRooms(minLeft, minRight);
 
         // Create door in tunnel between left and right
-        var keyColor = availableKeys.PickOne();
-        availableKeys = availableKeys.Remove(keyColor);
+        var keyColor = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(keyColor);
 
         var doorPositions = ImmutableList<int>.Empty;
         for (var y = 0; y < height; y++)
@@ -309,68 +310,14 @@ public class MapGenerator
 
     private void GenerateLevel9()
     {
-        // Create left and right rooms
-        var middle = width / 2;
-
-        rooms = [];
-        CreateRandomRooms(15, 12, 2, maxX: middle);
-        ConnectRoomsRandomly();
-        var roomsLeft = rooms;
-
-        rooms = [];
-        CreateRandomRooms(15, 12, 2, minX: middle + 1);
-        ConnectRoomsRandomly();
-        var roomsRight = rooms;
-
-        rooms = roomsLeft.AddRange(roomsRight);
-
-        // Add players and exit
-        var playerRoom = availableRooms.Where(r => r.Width >= 3 && r.Height >= 3).OrderBy(r => r.Center.DistanceTo((0, 0))).First();
-        var exitRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((0, 0))).Last();
-
-        initialPlayer1Position = (playerRoom.Top, playerRoom.Left);
-        initialPlayer2Position = (playerRoom.Bottom - 1, playerRoom.Right - 1);
-
-        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
-        data[exitPosition.y, exitPosition.x] = Cell.Exit;
-        availableRooms = availableRooms.Remove(playerRoom).Remove(exitRoom);
+        CreateSplitWorldWithPlayersLeftAndExitRight(out var middle, out var roomsLeft, out var roomsRight);
 
         var (exitKeyColor, _) = AddLockAroundExit();
 
-        // Connect left and right rooms closest to each other
-        var minDist = double.PositiveInfinity;
-        Room? minLeft = null;
-        Room? minRight = null;
-        foreach (var left in roomsLeft)
-        {
-            foreach (var right in roomsRight)
-            {
-                var dist = left.Center.DistanceTo(right.Center);
-                if (dist < minDist)
-                {
-                    minDist = dist;
-                    minLeft = left;
-                    minRight = right;
-                }
-            }
-        }
-        Debug.Assert(minLeft != null && minRight != null);
-
-        ConnectRooms(minLeft, minRight);
-
         // Create door in tunnel between left and right
-        var keyColor = availableKeys.PickOne();
-        availableKeys = availableKeys.Remove(keyColor);
-
-        var doorPositions = ImmutableList<int>.Empty;
-        for (var y = 0; y < height; y++)
-        {
-            if (data[y, middle] == Cell.Empty)
-            {
-                data[y, middle] = ToDoor(keyColor);
-                doorPositions = doorPositions.Add(y);
-            }
-        }
+        var keyColor = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(keyColor);
+        var doorPositions = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(keyColor));
 
         // Place key left, far from player
         Position farthestInfrontDoor = (0, 0);
@@ -409,9 +356,74 @@ public class MapGenerator
 
         // Place enemy in any room on the right with key to exit
         var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();
+        availableRooms = availableRooms.Remove(enemyRoom);
         var enemyPos = enemyRoom.RandomPosition(0);
         initialEnemy1Position = enemyPos;
         initialEnemy1Inventory = ToInventory(exitKeyColor);
+    }
+
+    private void GenerateLevel10()
+    {
+        CreateSplitWorldWithPlayersLeftAndExitRight(out var middle, out var roomsLeft, out var roomsRight);
+
+        var (exitKeyColor, _) = AddLockAroundExit();
+
+        var doorPositionsBlack = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, Cell.DoorBlackClosed);
+
+        // Place pressure plate left, far from player
+        Position farthestInfrontDoor = (0, 0);
+        {
+            var maxDist = 0;
+            var (distances, _) = ComputeDistancesFrom(initialPlayer1Position);
+            foreach (var doorPos in doorPositionsBlack)
+            {
+                var doorLeft = (doorPos, middle - 1);
+                if (distances.TryGetValue(doorLeft, out var dist))
+                {
+                    if (dist > maxDist)
+                    {
+                        maxDist = dist;
+                        farthestInfrontDoor = doorLeft;
+                    }
+                }
+            }
+        }
+
+        var plateRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
+        var platePos = plateRoom.RandomPosition(1);
+        data[platePos.y, platePos.x] = Cell.PressurePlate;
+
+        
+        // Create another tunnel with a door
+        var doorKeyColor = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(doorKeyColor);
+        var doorPositionsColored = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(doorKeyColor));
+
+        // Place key in a room on the right farthest from black doors
+        Position? infrontDoor = null;
+        {
+            foreach (var doorPos in doorPositionsBlack)
+            {
+                Position doorRight = (doorPos, middle + 1);
+                if (data[doorRight.y, doorRight.x] == Cell.Empty)
+                {
+                    infrontDoor = doorRight;
+                    break;
+                }
+            }
+        }
+        Debug.Assert(infrontDoor != null);
+
+        var keyRoom = GetFarthestRoomFrom(roomsRight.Where(r => availableRooms.Contains(r)), infrontDoor.Value);
+        availableRooms = availableRooms.Remove(keyRoom);
+        var keyPos = keyRoom.RandomPosition(0);
+        data[keyPos.y, keyPos.x] = ToKey(doorKeyColor);
+
+        // Put exit key on random room in the left
+        var exitKeyRoom = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
+        availableRooms = availableRooms.Remove(exitKeyRoom);
+        var exitKeyPos = exitKeyRoom.RandomPosition(1);
+        data[exitKeyPos.y, exitKeyPos.x] = ToKey(exitKeyColor);
     }
 
     private Room CreateRoom(int y, int x, int height, int width)
@@ -602,8 +614,8 @@ public class MapGenerator
         var doorPos = PickRandomDoorPosForSmallRoom(exitPosition);
 
         // pick a random key
-        var key = availableKeys.PickOne();
-        availableKeys = availableKeys.Remove(key);
+        var key = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(key);
 
         data[doorPos.y, doorPos.x] = ToDoor(key);
 
@@ -719,14 +731,14 @@ public class MapGenerator
         return maxPositions.PickOne();
     }
 
-    private Room GetFarthestRoomFrom(Position pos, int minRoomHeight = 1, int minRoomWidth = 1)
+    private Room GetFarthestRoomFrom(IEnumerable<Room> rooms, Position pos, int minRoomHeight = 1, int minRoomWidth = 1)
     {
         var (distances, _) = ComputeDistancesFrom(pos);
 
         int? maxDistance = null;
         var maxRooms = ImmutableHashSet<Room>.Empty;
 
-        foreach (var room in availableRooms.Where(r => r.Height >= minRoomHeight && r.Width >= minRoomWidth))
+        foreach (var room in rooms.Where(r => r.Height >= minRoomHeight && r.Width >= minRoomWidth))
         {
             if (distances.TryGetValue(room.Center, out var dist))
             {
@@ -815,11 +827,79 @@ public class MapGenerator
 
         // Add a door to the locker room
         var lockerDoorPos = PickRandomDoorPosForSmallRoom(lockerCenter);
-        var lockerKeyColor = availableKeys.PickOne();
-        availableKeys = availableKeys.Remove(lockerKeyColor);
+        var lockerKeyColor = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(lockerKeyColor);
         data[lockerDoorPos.y, lockerDoorPos.x] = ToDoor(lockerKeyColor);
         var infrontLockerDoorPos = GetEmptyPositionInFront(lockerDoorPos) ?? throw new MapGeneratorException("Locker door not placed correctly");
         Debug.Assert(data[infrontLockerDoorPos.y, infrontLockerDoorPos.x] == Cell.Empty);
         return (lockerKeyColor, infrontLockerDoorPos);
+    }
+
+    private void CreateSplitWorldWithPlayersLeftAndExitRight(out int middle, out IImmutableList<Room> roomsLeft, out IImmutableList<Room> roomsRight)
+    {
+        // Create left and right rooms
+        middle = width / 2;
+        rooms = [];
+        CreateRandomRooms(15, 12, 2, maxX: middle);
+        ConnectRoomsRandomly();
+        roomsLeft = rooms;
+        rooms = [];
+        CreateRandomRooms(15, 12, 2, minX: middle + 1);
+        ConnectRoomsRandomly();
+        roomsRight = rooms;
+        rooms = roomsLeft.AddRange(roomsRight);
+
+        // Add players and exit
+        var playerRoom = roomsLeft.Where(r => availableRooms.Contains(r)).Where(r => r.Width >= 3 && r.Height >= 3).OrderBy(r => r.Center.DistanceTo((0, 0))).First();
+        var exitRoom = roomsRight.Where(r => availableRooms.Contains(r)).OrderBy(r => r.Center.DistanceTo((0, 0))).Last();
+
+        initialPlayer1Position = (playerRoom.Top, playerRoom.Left);
+        initialPlayer2Position = (playerRoom.Bottom - 1, playerRoom.Right - 1);
+
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
+        data[exitPosition.y, exitPosition.x] = Cell.Exit;
+        availableRooms = availableRooms.Remove(playerRoom).Remove(exitRoom);
+    }
+
+    private ImmutableList<int> ConnectLeftAndRightWithDoor(int middle, IImmutableList<Room> roomsLeft, IImmutableList<Room> roomsRight, Cell door)
+    {
+        // Connect left and right rooms closest to each other
+        var minDist = double.PositiveInfinity;
+        Room? minLeft = null;
+        Room? minRight = null;
+        foreach (var left in roomsLeft.Where(r => availableRooms.Contains(r)))
+        {
+            foreach (var right in roomsRight.Where(r => availableRooms.Contains(r)))
+            {
+                var dist = left.Center.DistanceTo(right.Center);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    minLeft = left;
+                    minRight = right;
+                }
+            }
+        }
+        Debug.Assert(minLeft != null && minRight != null);
+
+        ConnectRooms(minLeft, minRight);
+
+        // Don't use them for enemy or keys
+        availableRooms = availableRooms.Remove(minLeft).Remove(minRight);
+
+        // Create pressure plate door in tunnel between left and right
+        var doorPositions = ImmutableList<int>.Empty;
+        var top = Math.Min(minLeft.Top, minRight.Top);
+        var bottom = Math.Max(minLeft.Bottom, minRight.Bottom);
+        for (var y = top; y < bottom; y++)
+        {
+            if (data[y, middle] == Cell.Empty)
+            {
+                data[y, middle] = door;
+                doorPositions = doorPositions.Add(y);
+            }
+        }
+
+        return doorPositions;
     }
 }
