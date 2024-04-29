@@ -4,30 +4,30 @@ namespace Swoq.Server;
 
 internal static class ServiceUtil
 {
-    public static Result ResultFromException(Exception ex, ILogger logger)
+    public static (Result result, GameState? state) ResultFromException(Exception ex, ILogger logger)
     {
         switch (ex)
         {
-            case PlayerAlreadyRegisteredException: return Result.PlayerAlreadyRegistered;
-            case UnknownPlayerException: return Result.UnknownPlayer;
-            case UnknownGameIdException: return Result.UnknownGameId;
-            case LevelNotAvailableException: return Result.LevelNotAvailable;
-            case MoveNotAllowedException: return Result.MoveNotAllowed;
-            case UseNotAllowedException: return Result.UseNotAllowed;
-            case UnknownActionException: return Result.UnknownAction;
-            case UnknownDirectionException: return Result.UnknownDirection;
-            case GameFinishedException: return Result.GameFinished;
-            case Player1NotPresentException: return Result.Player1NotPresent;
-            case Player2NotPresentException: return Result.Player2NotPresent;
-            case InventoryEmptyException: return Result.InventoryEmpty;
-            case InventoryFullException: return Result.InventoryFull;
-            case NoSwordException: return Result.NoSword;
-            case Player1DiedException: return Result.Player1Died;
-            case Player2DiedException: return Result.Player2Died;
-            case UnknownQuestIdException: return Result.UnknownQuestId;
+            case PlayerAlreadyRegisteredException: return (Result.PlayerAlreadyRegistered, null);
+            case UnknownPlayerException: return (Result.UnknownPlayer, null);
+            case UnknownGameIdException: return (Result.UnknownGameId, null);
+            case LevelNotAvailableException: return (Result.LevelNotAvailable, null);
+            case MoveNotAllowedException e: return (Result.MoveNotAllowed, e.State);
+            case UseNotAllowedException e: return (Result.UseNotAllowed, e.State);
+            case UnknownActionException e: return (Result.UnknownAction, e.State);
+            case UnknownDirectionException e: return (Result.UnknownDirection, e.State);
+            case GameFinishedException e: return (Result.GameFinished, e.State);
+            case Player1NotPresentException e: return (Result.Player1NotPresent, e.State);
+            case Player2NotPresentException e: return (Result.Player2NotPresent, e.State);
+            case InventoryEmptyException e: return (Result.InventoryEmpty, e.State);
+            case InventoryFullException e: return (Result.InventoryFull, e.State);
+            case NoSwordException e: return (Result.NoSword, e.State);
+            case Player1DiedException e: return (Result.Player1Died, e.State);
+            case Player2DiedException e: return (Result.Player2Died, e.State);
+            case UnknownQuestIdException e: return (Result.UnknownQuestId, e.State);
         }
         logger.LogError(ex, "Internal error");
-        return Result.InternalError;
+        return (Result.InternalError, null);
     }
 
     public static State Convert(this GameState gameState)

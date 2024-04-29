@@ -162,8 +162,7 @@ class GamePlayer:
         print(f'{self.action1=}, {self.action2=}')
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, direction1=self.direction1, action2=self.action2, direction2=self.direction2))
 
-        if response.result == 0:
-            self.update_global_state(response.state)
+        self.update_global_state(response.state)
 
         if self.plot:
             update_map(self._frame, self.map)

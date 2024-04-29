@@ -23,7 +23,9 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             }
             catch (Exception ex)
             {
-                response.Result = ServiceUtil.ResultFromException(ex, logger);
+                var (result, state) = ServiceUtil.ResultFromException(ex, logger);
+                response.Result = result;
+                response.State = state?.Convert();
             }
             return response;
         });
@@ -57,7 +59,9 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
             }
             catch (Exception ex)
             {
-                response.Result = ServiceUtil.ResultFromException(ex, logger);
+                var (result, state) = ServiceUtil.ResultFromException(ex, logger);
+                response.Result = result;
+                response.State = state?.Convert();
             }
             return response;
         });
