@@ -60,22 +60,22 @@ internal class Game
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (Status != GameStatus.Active) throw new GameFinishedException();
+        if (Status != GameStatus.Active) throw new GameFinishedException(GetState());
 
         Debug.Assert(player1 != null || player2 != null);
 
         // Pre conditions
         if (action1 != null)
         {
-            if (player1 == null) throw new Player1NotPresentException();
-            if (!player1.Position.IsValid()) throw new Player1NotPresentException();
-            if (player1.Health <= 0) throw new Player1DiedException();
+            if (player1 == null) throw new Player1NotPresentException(GetState());
+            if (!player1.Position.IsValid()) throw new Player1NotPresentException(GetState());
+            if (player1.Health <= 0) throw new Player1DiedException(GetState());
         }
         if (action2 != null)
         {
-            if (player2 == null) throw new Player2NotPresentException();
-            if (!player2.Position.IsValid()) throw new Player2NotPresentException();
-            if (player2.Health <= 0) throw new Player2DiedException();
+            if (player2 == null) throw new Player2NotPresentException(GetState());
+            if (!player2.Position.IsValid()) throw new Player2NotPresentException(GetState());
+            if (player2.Health <= 0) throw new Player2DiedException(GetState());
         }
 
         if (action1 != null && player1 != null)
@@ -89,7 +89,7 @@ internal class Game
                     Use(ref player1, action1.Direction);
                     break;
                 default:
-                    throw new UnknownActionException();
+                    throw new UnknownActionException(GetState());
             }
         }
 
@@ -104,7 +104,7 @@ internal class Game
                     Use(ref player2, action2.Direction);
                     break;
                 default:
-                    throw new UnknownActionException();
+                    throw new UnknownActionException(GetState());
             }
         }
 
@@ -114,6 +114,9 @@ internal class Game
             ProcessEnemy(ref newEnemy);
             enemies = enemies.Replace(enemy, newEnemy);
         }
+
+        // Cleanup dead characters
+        CleanupDeadCharacters();
 
         // Check fnished
         if ((player1 == null || !player1.Position.IsValid()) &&
@@ -133,7 +136,7 @@ internal class Game
 
         if (!CanMoveTo(nextPos))
         {
-            throw new MoveNotAllowedException();
+            throw new MoveNotAllowedException(GetState());
         }
 
         LeaveCell(player.Position);
@@ -154,7 +157,7 @@ internal class Game
         }
         else
         {
-            if (player.Inventory == Inventory.None) throw new InventoryEmptyException();
+            if (player.Inventory == Inventory.None) throw new InventoryEmptyException(GetState());
 
             switch (map[usePos])
             {
@@ -169,7 +172,7 @@ internal class Game
                 case Cell.KeyBlue:
                 case Cell.Sword:
                     // Cannot use on this
-                    throw new UseNotAllowedException();
+                    throw new UseNotAllowedException(GetState());
 
                 case Cell.DoorRedClosed:
                     UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
@@ -187,13 +190,13 @@ internal class Game
         }
     }
 
-    private static Position GetDirectionPosition(Player player, Direction direction) => direction switch
+    private Position GetDirectionPosition(Player player, Direction direction) => direction switch
     {
         Direction.North => (player.Position.y - 1, player.Position.x),
         Direction.East => (player.Position.y, player.Position.x + 1),
         Direction.South => (player.Position.y + 1, player.Position.x),
         Direction.West => (player.Position.y, player.Position.x - 1),
-        _ => throw new UnknownDirectionException(),
+        _ => throw new UnknownDirectionException(GetState()),
     };
 
     private void LeaveCell(Position position)
@@ -260,7 +263,7 @@ internal class Game
     private void PickupKey(ref Player player, Position position)
     {
         // Cannot pickup if inventory is full
-        if (player.Inventory != Inventory.None) throw new InventoryFullException();
+        if (player.Inventory != Inventory.None) throw new InventoryFullException(GetState());
 
         // Is it an item that can be picked up?
         var item = map[position].ToInventory();
@@ -274,7 +277,7 @@ internal class Game
     private void PickupSword(ref Player player, Position position)
     {
         // Cannot pickup if player already has sword
-        if (player.HasSword) throw new InventoryFullException();
+        if (player.HasSword) throw new InventoryFullException(GetState());
 
         // Add to player and remove from map
         player = player with { HasSword = true };
@@ -296,7 +299,7 @@ internal class Game
         {
             if (usePos.Equals(enemy.Position))
             {
-                if (!player.HasSword) throw new NoSwordException();
+                if (!player.HasSword) throw new NoSwordException(GetState());
 
                 var newEnemy = enemy;
                 DealDamage(ref newEnemy, 1);
@@ -311,7 +314,7 @@ internal class Game
     private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
-        if (player.Inventory != item) throw new UseNotAllowedException();
+        if (player.Inventory != item) throw new UseNotAllowedException(GetState());
 
         // Oopen all the doors of the same type
         var closedDoor = map[usePosition];
@@ -419,17 +422,7 @@ internal class Game
 
         character = character with { Health = character.Health - damage };
         Console.WriteLine($"{character.Name} received damage. Health = {character.Health}");
-        //Console.WriteLine($"{character.Name} received {damage} damage, health = {character.Health}");
-        if (character.Health <= 0)
-        {
-            // Drop loot
-            map[character.Position] = character.Inventory.ToDroppedLoot();
-            character = character with { Inventory = Inventory.None };
-            // Remove from game
-            character = character with { Position = PositionEx.Invalid };
-            //Console.WriteLine($"{character.Name} died");
-            Console.WriteLine($"{character.Name} died");
-        }
+        character = CleanupDeadCharacter(ref character);
     }
 
     private bool CanMoveTo(Position position)
@@ -510,6 +503,41 @@ internal class Game
         }
 
         return true;
+    }
+
+    private void CleanupDeadCharacters()
+    {
+        if (player1 != null)
+        {
+            CleanupDeadCharacter(ref player1);
+        }
+        if (player2 != null)
+        {
+            CleanupDeadCharacter(ref player2);
+        }
+
+        foreach (var enemy in enemies)
+        {
+            var newEnemy = enemy;
+            CleanupDeadCharacter(ref newEnemy);
+            enemies = enemies.Replace(enemy, newEnemy);
+        }
+    }
+
+    private T CleanupDeadCharacter<T>(ref T character) where T : Character
+    {
+        if (character.Health <= 0 && character.Position.IsValid())
+        {
+            // Drop loot
+            map[character.Position] = character.Inventory.ToDroppedLoot();
+            character = character with { Inventory = Inventory.None };
+            // Remove from game
+            character = character with { Position = PositionEx.Invalid };
+            //Console.WriteLine($"{character.Name} died");
+            Console.WriteLine($"{character.Name} died");
+        }
+
+        return character;
     }
 
     #region State

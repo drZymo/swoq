@@ -16,6 +16,8 @@
 - [X] Health in state
 - [X] Map editor writeablebitmap
 - [ ] Two player bot
+- [ ] Always send state, even on failures
+
 
 ## Act vs Move/Use
 
