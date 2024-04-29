@@ -47,6 +47,7 @@ internal class Game
     public Guid Id { get; } = Guid.NewGuid();
     public int Width => map.Width;
     public int Height => map.Height;
+    public DateTime LastAction { get; private set; } = DateTime.MinValue;
 
     public GameStatus Status { get; private set; } = GameStatus.Active;
 

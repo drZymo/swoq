@@ -12,6 +12,8 @@ internal class TrainingServer(ISwoqDatabase database)
 
     public StartResult Start(string playerId, int level)
     {
+        // Cleanip old games
+
         // Check if player can play this level
         if (level < 0) throw new LevelNotAvailableException();
         var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
