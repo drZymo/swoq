@@ -28,6 +28,7 @@
                     <Button Margin="0,4" Command="{Binding Generate}">Generate</Button>
                 </StackPanel>
             </GroupBox>
+            <TextBlock Margin="8" Text="{Binding Status}"/>
         </StackPanel>
     </Grid>
 </Window>

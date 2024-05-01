@@ -50,7 +50,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    private int height = 64;
+    private int height = 32;
     public int Height
     {
         get => height;
@@ -64,10 +64,34 @@ class MainViewModel : ViewModelBase
         }
     }
 
+    private string status = "";
+    public string Status
+    {
+        get => status;
+        private set
+        {
+            if (status != value)
+            {
+                status = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public ICommand Generate { get; }
 
     private void HandleGenerate(object? parameter)
     {
-        Map = new MapViewModel(MapGenerator.Generate(Level, Height, Width));
+        try
+        {
+            Status = "Generating ...";
+            Map = new MapViewModel(MapGenerator.Generate(Level, Height, Width));
+            Status = "";
+        }
+        catch
+        {
+            Map = new MapViewModel();
+            Status = "Generation failed";
+        }
     }
 }

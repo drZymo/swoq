@@ -89,7 +89,7 @@ public class MapGenerator
 
     private void GenerateLevel1()
     {
-        CreateRandomRooms(2, 10, 8);
+        CreateRandomRooms(2, 3, 10, 8);
         ConnectRoomsRandomly();
 
         PlacePlayerTopLeftAndExitBottomRight();
@@ -97,7 +97,7 @@ public class MapGenerator
 
     private void GenerateLevel2()
     {
-        CreateRandomRooms(30, 8, 3);
+        CreateRandomRooms(30, 3, 8, 3);
         ConnectRoomsRandomly();
 
         PlacePlayerTopLeftAndExitBottomRight();
@@ -105,7 +105,7 @@ public class MapGenerator
 
     private void GenerateLevel3()
     {
-        CreateRandomRooms(30, 15, 1);
+        CreateRandomRooms(30, 3, 15, 1);
         ConnectRoomsRandomly();
         PlacePlayerTopLeftAndExitBottomRight();
 
@@ -121,7 +121,7 @@ public class MapGenerator
 
     private void GenerateLevel4()
     {
-        CreateRandomRooms(30, 15, 1);
+        CreateRandomRooms(30, 3, 15, 1);
         ConnectRoomsRandomly();
         PlacePlayerTopLeftAndExitBottomRight();
 
@@ -143,7 +143,7 @@ public class MapGenerator
 
     private void GenerateLevel5()
     {
-        CreateRandomRooms(30, 15, 1);
+        CreateRandomRooms(30, 3, 15, 1);
         ConnectRoomsRandomly();
         PlacePlayerTopLeftAndExitBottomRight();
 
@@ -170,8 +170,11 @@ public class MapGenerator
 
     private void GenerateLevel6()
     {
-        var room1 = CreateRoom(20, 20, 12, 10);
-        var room2 = CreateRoom(40, 40, 8, 10);
+        // TODO: create one left and one right of proper size, connect them, add items without overlap player or enemy
+        CreateRandomRooms(1, 3, 15, 5);
+        Debug.Assert(rooms.Count == 2);
+        var room1 = rooms[0];
+        var room2 = rooms[1];
         ConnectRooms(room1, room2);
 
         PlacePlayerTopLeftAndExitBottomRight();
@@ -204,12 +207,12 @@ public class MapGenerator
         var middle = width / 2;
 
         rooms = [];
-        CreateRandomRooms(15, 12, 2, maxX: middle);
+        CreateRandomRooms(15, 3, 12, 2, maxX: middle);
         ConnectRoomsRandomly();
         var roomsLeft = rooms;
 
         rooms = [];
-        CreateRandomRooms(15, 12, 2, minX: middle + 1);
+        CreateRandomRooms(15, 3, 12, 2, minX: middle + 1);
         ConnectRoomsRandomly();
         var roomsRight = rooms;
 
@@ -393,7 +396,7 @@ public class MapGenerator
         var platePos = plateRoom.RandomPosition(1);
         data[platePos.y, platePos.x] = Cell.PressurePlate;
 
-        
+
         // Create another tunnel with a door
         var doorKeyColor = availableKeyColors.PickOne();
         availableKeyColors = availableKeyColors.Remove(doorKeyColor);
@@ -440,7 +443,7 @@ public class MapGenerator
         return room;
     }
 
-    private void CreateRandomRooms(int maxRooms, int maxRoomSize, int margin,
+    private void CreateRandomRooms(int maxRooms, int minSize, int maxSize, int margin,
         int? minY = null, int? maxY = null, int? minX = null, int? maxX = null)
     {
         var _minY = minY ?? 0;
@@ -448,74 +451,84 @@ public class MapGenerator
         var _minX = minX ?? 0;
         var _maxX = maxX ?? width;
 
-        var availablePositions = allPosition.Where(p => _minY <= p.y && p.y < _maxY && _minX <= p.x && p.x < _maxX).ToImmutableHashSet();
-
-        var maxSize = maxRoomSize;
-        while (maxSize > 4 && rooms.Count < maxRooms)
+        var currentMaxSize = maxSize;
+        while (currentMaxSize > minSize && rooms.Count < maxRooms)
         {
-            var rw = random.Next(3, maxSize);
-            var rh = random.Next(3, maxSize);
+            Room? newRoom = CreateRandomRoom(minSize, currentMaxSize, margin, _minY, _maxY, _minX, _maxX);
 
-            var choices = availablePositions;
-
-            // clear out edges
-            Debug.Assert(_minY + 1 + rh / 2 <= _maxY);
-            for (var y = _minY; y < _minY + 1 + rh / 2; y++)
+            if (newRoom == null)
             {
-                for (var x = _minX; x < _maxX; x++)
-                {
-                    choices = choices.Remove((y, x));
-                }
-            }
-            for (var y = _maxY - (rh - rh / 2); y < _maxY; y++)
-            {
-                for (var x = _minX; x < _maxX; x++)
-                {
-                    choices = choices.Remove((y, x));
-                }
-            }
-            Debug.Assert(_minX + 1 + rw / 2 <= _maxX);
-            for (var x = _minX; x < _minX + 1 + rw / 2; x++)
-            {
-                for (var y = _minY; y < _maxY; y++)
-                {
-                    choices = choices.Remove((y, x));
-                }
-            }
-            for (var x = _maxX - (rw - rw / 2); x < _maxX; x++)
-            {
-                for (var y = _minY; y < _maxY; y++)
-                {
-                    choices = choices.Remove((y, x));
-                }
-            }
-
-            // clear out other rooms
-            foreach (var room in rooms)
-            {
-                var top = room.Top - margin - (rh - rh / 2);
-                var bottom = room.Bottom + margin + rh / 2;
-                var left = room.Left - margin - (rw - rw / 2);
-                var right = room.Right + margin + rw / 2;
-
-                for (var y = top; y < bottom; y++)
-                {
-                    for (var x = left; x < right; x++)
-                    {
-                        choices = choices.Remove((y, x));
-                    }
-                }
-            }
-
-            if (choices.Count == 0)
-            {
-                maxSize--;
+                currentMaxSize--;
                 continue;
             }
-
-            var (ry, rx) = choices.OrderBy(_ => random.Next()).First();
-            CreateRoom(ry, rx, rh, rw);
         }
+    }
+
+    private Room? CreateRandomRoom(int minSize, int maxSize, int margin, int minY, int maxY, int minX, int maxX)
+    {
+        var rw = random.Next(minSize, maxSize);
+        var rh = random.Next(minSize, maxSize);
+
+        var choices = allPosition.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToImmutableHashSet();
+
+        // clear out edges
+        Debug.Assert(minY + 1 + rh / 2 <= maxY);
+        for (var y = minY; y < minY + 1 + rh / 2; y++)
+        {
+            for (var x = minX; x < maxX; x++)
+            {
+                choices = choices.Remove((y, x));
+            }
+        }
+        for (var y = maxY - (rh - rh / 2); y < maxY; y++)
+        {
+            for (var x = minX; x < maxX; x++)
+            {
+                choices = choices.Remove((y, x));
+            }
+        }
+        Debug.Assert(minX + 1 + rw / 2 <= maxX);
+        for (var x = minX; x < minX + 1 + rw / 2; x++)
+        {
+            for (var y = minY; y < maxY; y++)
+            {
+                choices = choices.Remove((y, x));
+            }
+        }
+        for (var x = maxX - (rw - rw / 2); x < maxX; x++)
+        {
+            for (var y = minY; y < maxY; y++)
+            {
+                choices = choices.Remove((y, x));
+            }
+        }
+
+        // clear out other rooms
+        foreach (var room in rooms)
+        {
+            var top = room.Top - margin - (rh - rh / 2);
+            var bottom = room.Bottom + margin + rh / 2;
+            var left = room.Left - margin - (rw - rw / 2);
+            var right = room.Right + margin + rw / 2;
+
+            for (var y = top; y < bottom; y++)
+            {
+                for (var x = left; x < right; x++)
+                {
+                    choices = choices.Remove((y, x));
+                }
+            }
+        }
+
+        Room? newRoom = null;
+
+        if (choices.Count > 0)
+        {
+            var (ry, rx) = choices.OrderBy(_ => random.Next()).First();
+            newRoom = CreateRoom(ry, rx, rh, rw);
+        }
+
+        return newRoom;
     }
 
     private void ConnectRoomsRandomly()
@@ -840,11 +853,11 @@ public class MapGenerator
         // Create left and right rooms
         middle = width / 2;
         rooms = [];
-        CreateRandomRooms(15, 12, 2, maxX: middle);
+        CreateRandomRooms(15, 3, 12, 2, maxX: middle);
         ConnectRoomsRandomly();
         roomsLeft = rooms;
         rooms = [];
-        CreateRandomRooms(15, 12, 2, minX: middle + 1);
+        CreateRandomRooms(15, 3, 12, 2, minX: middle + 1);
         ConnectRoomsRandomly();
         roomsRight = rooms;
         rooms = roomsLeft.AddRange(roomsRight);
