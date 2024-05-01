@@ -3,7 +3,7 @@ using Swoq.Interface;
 
 namespace Swoq.Server;
 
-internal class TrainingService(ILogger<TrainingService> logger, TrainingServer server) : Training.TrainingBase
+internal class TrainingService(ILogger<TrainingService> logger, TrainingServer server, ITrainingObserver observer) : Training.TrainingBase
 {
     public override Task<StartResponse> Start(StartTrainingRequest request, ServerCallContext context)
     {
@@ -20,6 +20,9 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
                 response.Width = startResult.Width;
                 response.VisibilityRange = startResult.VisibilityRange;
                 response.State = startResult.State.Convert();
+
+                // Report
+                observer.Started(startResult.PlayerName, startResult.GameId, request, response);
             }
             catch (Exception ex)
             {
@@ -27,6 +30,7 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
                 response.Result = result;
                 response.State = state?.Convert();
             }
+
             return response;
         });
     }
@@ -35,24 +39,22 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
     {
         return Task.Run(() =>
         {
+            Guid? gameId = null;
             var response = new ActionResponse();
+
             try
             {
-                var gameId = Guid.Parse(request.GameId);
+                gameId = Guid.Parse(request.GameId);
 
-                DirectedAction? action1 = null;
-                if (request.HasAction1 && request.HasDirection1)
-                {
-                    action1 = new DirectedAction(request.Action1.Convert(), request.Direction1.Convert());
-                }
+                DirectedAction? action1 = (request.HasAction1 && request.HasDirection1)
+                    ? new DirectedAction(request.Action1.Convert(), request.Direction1.Convert())
+                    : null;
 
-                DirectedAction? action2 = null;
-                if (request.HasAction2 && request.HasDirection2)
-                {
-                    action2 = new DirectedAction(request.Action2.Convert(), request.Direction2.Convert());
-                }
+                DirectedAction? action2 = (request.HasAction2 && request.HasDirection2)
+                    ? new DirectedAction(request.Action2.Convert(), request.Direction2.Convert())
+                    : null;
 
-                var state = server.Act(gameId, action1, action2);
+                var state = server.Act(gameId.Value, action1, action2);
 
                 response.Result = Result.Ok;
                 response.State = state.Convert();
@@ -63,6 +65,13 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
                 response.Result = result;
                 response.State = state?.Convert();
             }
+
+            // Report
+            if (gameId.HasValue)
+            {
+                observer.Acted(gameId.Value, request, response);
+            }
+
             return response;
         });
     }

@@ -13,6 +13,7 @@ public class Program
         builder.Services.Configure<SwoqDatabaseSettings>(builder.Configuration.GetSection("SwoqDatabase"));
         builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabase>();
         //builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabaseInMemory>();
+        builder.Services.AddSingleton<ITrainingObserver, ReplaySaver>();
         builder.Services.AddSingleton<TrainingServer>();
         builder.Services.AddSingleton<QuestServer>();
 

@@ -22,7 +22,7 @@ internal class QuestServer(ISwoqDatabase database)
 
         CleanupOldQuests();
 
-        return new StartResult(quest.Id, quest.Height, quest.Width, Parameters.PlayerVisibilityRange, quest.State);
+        return new StartResult(quest.Id, Parameters.MapHeight, Parameters.MapWidth, Parameters.PlayerVisibilityRange, quest.State);
     }
 
     public GameState Act(Guid questId, DirectedAction? action1 = null, DirectedAction? action2 = null)

@@ -5,7 +5,7 @@ namespace Swoq.Server;
 
 internal class TrainingServer(ISwoqDatabase database)
 {
-    public record StartResult(Guid GameId, int Height, int Width, int VisibilityRange, GameState State);
+    public record StartResult(string PlayerName, Guid GameId, int Height, int Width, int VisibilityRange, GameState State);
 
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
@@ -28,7 +28,7 @@ internal class TrainingServer(ISwoqDatabase database)
 
         // Return initial state of game
         var state = game.GetState();
-        return new StartResult(game.Id, game.Height, game.Width, Parameters.PlayerVisibilityRange, state);
+        return new StartResult(player.Name, game.Id, Parameters.MapHeight, Parameters.MapWidth, Parameters.PlayerVisibilityRange, state);
     }
 
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
