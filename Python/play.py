@@ -99,15 +99,15 @@ class GamePlayer:
         self.level = state.level
         self.finished = state.finished
 
-        self.player1_pos = (state.player1.position.y, state.player1.position.x) if state.player1 is not None else None
-        self.player1_health = state.player1.health if state.player1 is not None else None
-        self.player1_inventory = state.player1.inventory if state.player1 is not None else None
-        self.player1_has_sword = state.player1.hasSword if state.player1 is not None else None
+        self.player1_pos = (state.player1.position.y, state.player1.position.x) if state.HasField("player1") else None
+        self.player1_health = state.player1.health if state.HasField("player1") else None
+        self.player1_inventory = state.player1.inventory if state.HasField("player1") else None
+        self.player1_has_sword = state.player1.hasSword if state.HasField("player1") else None
 
-        self.player2_pos = (state.player2.position.y, state.player2.position.x) if state.player2 is not None else None
-        self.player2_health = state.player2.health if state.player2 is not None else None
-        self.player2_inventory = state.player2.inventory if state.player2 is not None else None
-        self.player2_has_sword = state.player2.hasSword if state.player2 is not None else None
+        self.player2_pos = (state.player2.position.y, state.player2.position.x) if state.HasField("player2") else None
+        self.player2_health = state.player2.health if state.HasField("player2") else None
+        self.player2_inventory = state.player2.inventory if state.HasField("player2") else None
+        self.player2_has_sword = state.player2.hasSword if state.HasField("player2") else None
 
         if self.print:
             print(f'finished={self.finished} level={self.level}')

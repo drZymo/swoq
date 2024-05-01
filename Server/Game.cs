@@ -47,7 +47,7 @@ internal class Game
     public Guid Id { get; } = Guid.NewGuid();
     public int Width => map.Width;
     public int Height => map.Height;
-    public DateTime LastAction { get; private set; } = DateTime.MinValue;
+    public DateTime LastAction { get; private set; } = DateTime.Now;
 
     public GameStatus Status { get; private set; } = GameStatus.Active;
 
@@ -61,6 +61,8 @@ internal class Game
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        LastAction = DateTime.Now;
+
         if (Status != GameStatus.Active) throw new GameFinishedException(GetState());
 
         Debug.Assert(player1 != null || player2 != null);
@@ -118,6 +120,13 @@ internal class Game
 
         // Cleanup dead characters
         CleanupDeadCharacters();
+
+        UpdateGameStatus();
+    }
+
+    private void UpdateGameStatus()
+    {
+        Debug.Assert(Status == GameStatus.Active);
 
         if ((player1 != null && player1.Health <= 0) ||
             (player2 != null && player2.Health <= 0))

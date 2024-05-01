@@ -13,4 +13,6 @@ internal static class Parameters
     public const int ExtraHealth = 3;
 
     public const int FinalLevel = 10;
+
+    public static readonly TimeSpan MaxGameIdleTime = TimeSpan.FromMinutes(5);
 }

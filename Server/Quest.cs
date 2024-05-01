@@ -22,12 +22,15 @@ class Quest
     public Guid Id { get; }
     public int Height => currentGame.Height;
     public int Width => currentGame.Width;
+    public DateTime LastAction { get; private set; } = DateTime.Now;
 
     public int Level { get; private set; } = 0;
     public GameState State { get; private set; }
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        LastAction = DateTime.Now;
+
         if (State.Finished) { return; }
 
         // Play current game

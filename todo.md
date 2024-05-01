@@ -18,7 +18,7 @@
 - [X] Two player bot
 - [X] Always send state, even on failures
 - [X] Stop game when one of two players dies
-- [ ] Game Time-To-Live (TTL) for cleanup
+- [X] Game Time-To-Live (TTL) for cleanup
 - [ ] Dashboard with player stats
 
 

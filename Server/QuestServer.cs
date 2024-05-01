@@ -20,6 +20,8 @@ internal class QuestServer(ISwoqDatabase database)
             quests = quests.Add(quest.Id, quest);
         }
 
+        CleanupOldQuests();
+
         return new StartResult(quest.Id, quest.Height, quest.Width, Parameters.PlayerVisibilityRange, quest.State);
     }
 
@@ -29,5 +31,29 @@ internal class QuestServer(ISwoqDatabase database)
 
         quest.Act(action1, action2);
         return quest.State;
+    }
+
+    private void CleanupOldQuests()
+    {
+        // Gather ids to remove
+        var idsToRemove = ImmutableList<Guid>.Empty;
+        var now = DateTime.Now;
+        foreach (var quest in quests.Values)
+        {
+            var age = now - quest.LastAction;
+            if (age > Parameters.MaxGameIdleTime)
+            {
+                idsToRemove = idsToRemove.Add(quest.Id);
+            }
+        }
+
+        // Remove all at once
+        if (idsToRemove.Count > 0)
+        {
+            lock (questsWriteMutex)
+            {
+                quests = quests.RemoveRange(idsToRemove);
+            }
+        }
     }
 }

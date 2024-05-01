@@ -12,8 +12,6 @@ internal class TrainingServer(ISwoqDatabase database)
 
     public StartResult Start(string playerId, int level)
     {
-        // Cleanip old games
-
         // Check if player can play this level
         if (level < 0) throw new LevelNotAvailableException();
         var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
@@ -25,6 +23,8 @@ internal class TrainingServer(ISwoqDatabase database)
         {
             games = games.Add(game.Id, game);
         }
+
+        CleanupOldGames();
 
         // Return initial state of game
         var state = game.GetState();
@@ -39,5 +39,29 @@ internal class TrainingServer(ISwoqDatabase database)
         // Play game
         game.Act(action1, action2);
         return game.GetState();
+    }
+
+    private void CleanupOldGames()
+    {
+        // Gather ids to remove
+        var idsToRemove = ImmutableList<Guid>.Empty;
+        var now = DateTime.Now;
+        foreach (var game in games.Values)
+        {
+            var age = now - game.LastAction;
+            if (age > Parameters.MaxGameIdleTime)
+            {
+                idsToRemove = idsToRemove.Add(game.Id);
+            }
+        }
+
+        // Remove all at once
+        if (idsToRemove.Count > 0)
+        {
+            lock (gamesWriteMutex)
+            {
+                games = games.RemoveRange(idsToRemove);
+            }
+        }
     }
 }
