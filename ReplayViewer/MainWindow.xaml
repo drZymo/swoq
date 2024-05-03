@@ -8,7 +8,25 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="MainWindow" Height="800" Width="1000">
-    <Grid Background="Black">
-        <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="200"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Grid.Column="0" Background="Black">
+            <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+        </Grid>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical">
+            <GroupBox Header="Player1" Margin="8" Padding="8">
+            </GroupBox>
+        </StackPanel>
+
+        <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Replay" Margin="8" Padding="8">
+            <Slider Value="{Binding Tick}" Minimum="0" Maximum="{Binding MaxTick}"/>
+        </GroupBox>
     </Grid>
 </Window>

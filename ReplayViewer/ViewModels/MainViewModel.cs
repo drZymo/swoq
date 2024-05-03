@@ -1,4 +1,6 @@
-﻿using Swoq.Interface;
+﻿using Swoq.Infra;
+using Swoq.Interface;
+using System.Collections.Immutable;
 using System.IO;
 
 namespace ReplayViewer.ViewModels;
@@ -22,7 +24,9 @@ class MainViewModel : ViewModelBase
         mapBuilder.AddPlayerState(state.Player1, 1);
         mapBuilder.AddPlayerState(state.Player2, 2);
 
-        int i = 0;
+        var startMap = mapBuilder.CreateMap();
+        maps = maps.Add(startMap);
+
         while (file.Position < file.Length)
         {
             var request = ActionRequest.Parser.ParseDelimitedFrom(file);
@@ -32,14 +36,31 @@ class MainViewModel : ViewModelBase
             mapBuilder.AddPlayerState(response.State.Player1, 1);
             mapBuilder.AddPlayerState(response.State.Player2, 2);
 
-            i++;
-            if (i == 664) break;
+            var map = mapBuilder.CreateMap();
+            maps = maps.Add(map);
         }
 
-        var map = mapBuilder.CreateMap();
-
-        Map = new MapViewModel(map);
+        UpdateMap();
     }
+
+    private readonly IImmutableList<Map> maps = ImmutableList<Map>.Empty;
+
+    private int tick = 0;
+    public int Tick
+    {
+        get => tick;
+        set
+        {
+            if (tick != value)
+            {
+                tick = Math.Clamp(value, 0, MaxTick);
+                OnPropertyChanged();
+                UpdateMap();
+            }
+        }
+    }
+
+    public int MaxTick => maps.Count - 1;
 
     private MapViewModel map = new();
     public MapViewModel Map
@@ -50,5 +71,12 @@ class MainViewModel : ViewModelBase
             map = value;
             OnPropertyChanged();
         }
+    }
+
+    private void UpdateMap()
+    {
+        var map = maps[tick];
+        var vm = new MapViewModel(map);
+        Map = vm;
     }
 }

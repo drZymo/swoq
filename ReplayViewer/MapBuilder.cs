@@ -81,10 +81,11 @@ internal class MapBuilder(int height, int width, int visibilityRange)
 
     public Map CreateMap()
     {
+
         // TODO: enemy positions
-        return new Map(mapData, height, width, player1Position,
+        return new Map(mapData.Cast<Cell>(), height, width, player1Position,
             initialPlayer2Position: player2Position,
-            visibility: visibility);
+            visibility: visibility.Cast<bool>());
     }
 
     private static Cell ToCell(int cellState) => cellState switch

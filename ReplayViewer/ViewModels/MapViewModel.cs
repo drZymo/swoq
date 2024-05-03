@@ -89,7 +89,7 @@ internal class MapViewModel : ViewModelBase
 
                 if (tile != null)
                 {
-                    if (map.Visibility != null && !map.Visibility[y, x])
+                    if (!map.IsVisible(y, x))
                     {
                         var newTile = new byte[tile.Length];
                         for (var i = 0; i < tile.Length; i++)

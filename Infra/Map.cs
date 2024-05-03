@@ -1,9 +1,10 @@
 ﻿namespace Swoq.Infra;
 
+using System.Collections.Immutable;
 using Position = (int y, int x);
 
 public class Map(
-    Cell[,] data,
+    IEnumerable<Cell> data,
     int height,
     int width,
     Position initialPlayer1Position,
@@ -12,11 +13,12 @@ public class Map(
     Inventory initialEnemy1Inventory = Inventory.None,
     Position? initialEnemy2Position = null,
     Inventory initialEnemy2Inventory = Inventory.None,
-    bool[,]? visibility = null)
+    IEnumerable<bool>? visibility = null)
 {
-    public static readonly Map Empty = new(new Cell[0, 0], 0, 0, (0, 0));
+    public static readonly Map Empty = new([], 0, 0, (0, 0));
 
-    private readonly Cell[,] data = data;
+    private readonly IImmutableList<Cell> data = data.ToImmutableArray();
+    private readonly IImmutableList<bool>? visibility = visibility?.ToImmutableArray();
 
     public int Height { get; } = height;
     public int Width { get; } = width;
@@ -28,17 +30,20 @@ public class Map(
     public Position? InitialEnemy2Position { get; } = initialEnemy2Position;
     public Inventory InitialEnemy2Inventory { get; } = initialEnemy2Inventory;
 
-    public bool[,]? Visibility { get; } = visibility;
+    public Cell this[int y, int x] => data[y * Width + x];
 
-    public Cell this[int y, int x]
+    public Cell this[Position pos] => this[pos.y, pos.x];
+
+    public Map Set(int y, int x, Cell cell)
     {
-        get => data[y, x];
-        set { data[y, x] = value; }
+        var data = this.data.SetItem(y * Width + x, cell);
+        return new Map(data, Height, Width, InitialPlayer1Position, InitialPlayer2Position, InitialEnemy1Position, InitialEnemy1Inventory, InitialEnemy2Position, InitialEnemy2Inventory, visibility);
     }
 
-    public Cell this[Position pos]
-    {
-        get => data[pos.y, pos.x];
-        set { data[pos.y, pos.x] = value; }
-    }
+    public Map Set(Position pos, Cell cell) => Set(pos.y, pos.x, cell);
+
+
+    public bool IsVisible(int y, int x) => visibility == null || visibility[y * Width + x];
+
+    public bool IsVisible(Position pos) => IsVisible(pos.y, pos.x);
 }

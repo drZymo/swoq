@@ -72,6 +72,8 @@ public class MapGenerator
         if (level == 8) GenerateLevel8();
         if (level == 9) GenerateLevel9();
         if (level == 10) GenerateLevel10();
+
+        var data = this.data.Cast<Cell>().ToImmutableArray();
         return new Map(data, height, width,
             initialPlayer1Position,
             initialPlayer2Position,

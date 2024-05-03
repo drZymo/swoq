@@ -17,7 +17,7 @@ internal class Game
         : Character(Name, Position, Inventory, Health);
 
     private readonly int level;
-    private readonly Map map;
+    private Map map;
 
     private Player? player1 = null;
     private Player? player2 = null;
@@ -281,7 +281,7 @@ internal class Game
 
         // Put in inventory and remove from map
         player = player with { Inventory = item };
-        map[position] = Cell.Empty;
+        map = map.Set(position, Cell.Empty);
     }
 
     private void PickupSword(ref Player player, Position position)
@@ -291,14 +291,14 @@ internal class Game
 
         // Add to player and remove from map
         player = player with { HasSword = true };
-        map[position] = Cell.Empty;
+        map = map.Set(position, Cell.Empty);
     }
 
     private void PickupHealth(ref Player player, Position position)
     {
         // Add to player's health and remove from map
         player = player with { Health = player.Health + Parameters.ExtraHealth };
-        map[position] = Cell.Empty;
+        map = map.Set(position, Cell.Empty);
 
         Console.WriteLine($"{player.Name} picked up health. Health = {player.Health}");
     }
@@ -343,7 +343,7 @@ internal class Game
             {
                 if (map[y, x] == closedDoor)
                 {
-                    map[y, x] = openDoor;
+                    map = map.Set(y, x, openDoor);
                 }
             }
         }
@@ -359,7 +359,7 @@ internal class Game
                 Position pos = (y, x);
                 if (map[pos] == openDoor)
                 {
-                    map[pos] = closedDoor;
+                    map = map.Set(pos, closedDoor);
                     KillCharacterAtPosition(pos);
                 }
             }
@@ -561,7 +561,7 @@ internal class Game
         if (character.Health <= 0 && character.Position.IsValid())
         {
             // Drop loot
-            map[character.Position] = character.Inventory.ToDroppedLoot();
+            map = map.Set(character.Position, character.Inventory.ToDroppedLoot());
             character = character with { Inventory = Inventory.None };
             // Remove from game
             character = character with { Position = PositionEx.Invalid };
