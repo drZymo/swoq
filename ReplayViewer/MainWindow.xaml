@@ -7,7 +7,8 @@
         xmlns:vm="clr-namespace:ReplayViewer.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="MainWindow" Height="800" Width="1000">
+        Title="SWOQ Replay Viewer" Height="800" Width="1000"
+        Loaded="Window_Loaded">
     <Window.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="boolToVisConverter" />
@@ -82,7 +83,14 @@
         </StackPanel>
 
         <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Replay" Margin="8" Padding="8">
-            <Slider Value="{Binding Tick}" Minimum="0" Maximum="{Binding MaxTick}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Text="{Binding Tick, UpdateSourceTrigger=PropertyChanged}" Margin="4,0" PreviewTextInput="TextBox_PreviewTextInput" />
+                <Slider x:Name="slider" Grid.Column="1" Value="{Binding Tick}" Minimum="0" Maximum="{Binding MaxTick}" SmallChange="1" LargeChange="20" />
+            </Grid>
         </GroupBox>
     </Grid>
 </Window>

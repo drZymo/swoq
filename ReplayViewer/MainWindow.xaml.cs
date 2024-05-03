@@ -1,5 +1,6 @@
 ﻿using ReplayViewer.ViewModels;
 using System.Windows;
+using System.Windows.Input;
 
 namespace ReplayViewer;
 
@@ -12,5 +13,15 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = new MainViewModel();
+    }
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        slider.Focus();
+    }
+
+    private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        e.Handled = !int.TryParse(e.Text, out _);
     }
 }
