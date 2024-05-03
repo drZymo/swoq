@@ -3,7 +3,7 @@ using Swoq.Server.Services;
 
 namespace Swoq.Server;
 
-class Quest
+class Quest : IGame
 {
     private readonly Player player;
     private readonly ISwoqDatabase database;
@@ -16,7 +16,7 @@ class Quest
         this.database = database;
         Id = Guid.NewGuid();
         currentGame = new Game(Level);
-        State = currentGame.GetState();
+        State = currentGame.State;
     }
 
     public Guid Id { get; }
@@ -33,7 +33,7 @@ class Quest
 
         // Play current game
         currentGame.Act(action1, action2);
-        var state = currentGame.GetState();
+        var state = currentGame.State;
 
         // If game is completed successfully, then move to next level.
         if (currentGame.Status == GameStatus.Completed)
@@ -42,7 +42,7 @@ class Quest
             {
                 Level++;
                 currentGame = new Game(Level);
-                state = currentGame.GetState();
+                state = currentGame.State;
 
                 if (player.Id != null && player.Level < Level)
                 {

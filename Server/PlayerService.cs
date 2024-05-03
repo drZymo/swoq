@@ -4,7 +4,7 @@ using Swoq.Server.Services;
 
 namespace Swoq.Server;
 
-internal class PlayerService(ILogger<PlayerService> logger, ISwoqDatabase database) : Player.PlayerBase
+internal class PlayerService(ILogger<PlayerService> logger, ISwoqDatabase database) : Swoq.Interface.PlayerService.PlayerServiceBase
 {
     public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
     {

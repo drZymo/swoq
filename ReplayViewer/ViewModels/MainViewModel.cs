@@ -1,6 +1,7 @@
 ﻿using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Text;
 
@@ -12,12 +13,9 @@ internal class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        //using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\ff0eaad9-2e05-49fa-8bea-47cf7f602a9f.bin");
-        //using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\812d2c95-f70f-4eb0-ba93-cf35a6d249ad.bin");
-        //using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\c9174e1d-cad6-4c85-bcfb-1ad244e05c29.bin");
-        using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\caaf5822-36a6-477e-8594-923604231961.bin");
-        
-        var startRequest = StartTrainingRequest.Parser.ParseDelimitedFrom(file);
+        using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Quest\Ralph - d7acc2d6-f6c6-47e5-8a5e-fd7501c5ab81.bin");
+
+        var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
         var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
         var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
@@ -52,6 +50,12 @@ internal class MainViewModel : ViewModelBase
 
     private static (bool hasPlayer2, bool hasEnemies, bool hasPickups) AddTimeStep(ref IImmutableList<TimeStep> timeSteps, MapBuilder mapBuilder, ActionRequest? request, State state)
     {
+        // Clear whole map on new level
+        if (timeSteps.Count > 0 && state.Level != timeSteps[^1].Level)
+        {
+            mapBuilder.Reset();
+        }
+
         mapBuilder.PrepareForNextTimeStep();
         mapBuilder.AddPlayerState(state.Player1, 1);
         mapBuilder.AddPlayerState(state.Player2, 2);
@@ -158,7 +162,6 @@ internal class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(Player2Inventory));
         OnPropertyChanged(nameof(Player2HasSword));
     }
-
 
     private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)
     {

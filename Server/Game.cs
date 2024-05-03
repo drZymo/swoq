@@ -8,7 +8,7 @@ using Position = (int y, int x);
 
 internal enum GameStatus { Active, Completed, Failed }
 
-internal class Game
+internal class Game : IGame
 {
     private abstract record Character(string Name, Position Position, Inventory Inventory, int Health);
     private record Player(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false)
@@ -44,39 +44,32 @@ internal class Game
         }
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public DateTime LastAction { get; private set; } = DateTime.Now;
-
     public GameStatus Status { get; private set; } = GameStatus.Active;
 
-    public GameState GetState()
-    {
-        Debug.Assert(player1 != null || player2 != null);
-        PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
-        PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
-        return new GameState(level, Status != GameStatus.Active, player1State, player2State);
-    }
+    public Guid Id { get; } = Guid.NewGuid();
+    public DateTime LastAction { get; private set; } = DateTime.Now;
+    public GameState State => CreateState();
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
         LastAction = DateTime.Now;
 
-        if (Status != GameStatus.Active) throw new GameFinishedException(GetState());
+        if (Status != GameStatus.Active) throw new GameFinishedException(CreateState());
 
         Debug.Assert(player1 != null || player2 != null);
 
         // Pre conditions
         if (action1 != null)
         {
-            if (player1 == null) throw new Player1NotPresentException(GetState());
-            if (!player1.Position.IsValid()) throw new Player1NotPresentException(GetState());
-            if (player1.Health <= 0) throw new Player1DiedException(GetState());
+            if (player1 == null) throw new Player1NotPresentException(CreateState());
+            if (!player1.Position.IsValid()) throw new Player1NotPresentException(CreateState());
+            if (player1.Health <= 0) throw new Player1DiedException(CreateState());
         }
         if (action2 != null)
         {
-            if (player2 == null) throw new Player2NotPresentException(GetState());
-            if (!player2.Position.IsValid()) throw new Player2NotPresentException(GetState());
-            if (player2.Health <= 0) throw new Player2DiedException(GetState());
+            if (player2 == null) throw new Player2NotPresentException(CreateState());
+            if (!player2.Position.IsValid()) throw new Player2NotPresentException(CreateState());
+            if (player2.Health <= 0) throw new Player2DiedException(CreateState());
         }
 
         if (action1 != null && player1 != null)
@@ -90,7 +83,7 @@ internal class Game
                     Use(ref player1, action1.Direction);
                     break;
                 default:
-                    throw new UnknownActionException(GetState());
+                    throw new UnknownActionException(CreateState());
             }
         }
 
@@ -105,7 +98,7 @@ internal class Game
                     Use(ref player2, action2.Direction);
                     break;
                 default:
-                    throw new UnknownActionException(GetState());
+                    throw new UnknownActionException(CreateState());
             }
         }
 
@@ -120,6 +113,14 @@ internal class Game
         CleanupDeadCharacters();
 
         UpdateGameStatus();
+    }
+
+    private GameState CreateState()
+    {
+        Debug.Assert(player1 != null || player2 != null);
+        PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
+        PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
+        return new GameState(level, Status != GameStatus.Active, player1State, player2State);
     }
 
     private void UpdateGameStatus()
@@ -146,7 +147,7 @@ internal class Game
 
         if (!CanMoveTo(nextPos))
         {
-            throw new MoveNotAllowedException(GetState());
+            throw new MoveNotAllowedException(CreateState());
         }
 
         LeaveCell(player.Position);
@@ -167,7 +168,7 @@ internal class Game
         }
         else
         {
-            if (player.Inventory == Inventory.None) throw new InventoryEmptyException(GetState());
+            if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
 
             switch (map[usePos])
             {
@@ -182,7 +183,7 @@ internal class Game
                 case Cell.KeyBlue:
                 case Cell.Sword:
                     // Cannot use on this
-                    throw new UseNotAllowedException(GetState());
+                    throw new UseNotAllowedException(CreateState());
 
                 case Cell.DoorRedClosed:
                     UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
@@ -206,7 +207,7 @@ internal class Game
         Direction.East => (player.Position.y, player.Position.x + 1),
         Direction.South => (player.Position.y + 1, player.Position.x),
         Direction.West => (player.Position.y, player.Position.x - 1),
-        _ => throw new UnknownDirectionException(GetState()),
+        _ => throw new UnknownDirectionException(CreateState()),
     };
 
     private void LeaveCell(Position position)
@@ -273,7 +274,7 @@ internal class Game
     private void PickupKey(ref Player player, Position position)
     {
         // Cannot pickup if inventory is full
-        if (player.Inventory != Inventory.None) throw new InventoryFullException(GetState());
+        if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
 
         // Is it an item that can be picked up?
         var item = map[position].ToInventory();
@@ -287,7 +288,7 @@ internal class Game
     private void PickupSword(ref Player player, Position position)
     {
         // Cannot pickup if player already has sword
-        if (player.HasSword) throw new InventoryFullException(GetState());
+        if (player.HasSword) throw new InventoryFullException(CreateState());
 
         // Add to player and remove from map
         player = player with { HasSword = true };
@@ -309,7 +310,7 @@ internal class Game
         {
             if (usePos.Equals(enemy.Position))
             {
-                if (!player.HasSword) throw new NoSwordException(GetState());
+                if (!player.HasSword) throw new NoSwordException(CreateState());
 
                 var newEnemy = enemy;
                 DealDamage(ref newEnemy, 1);
@@ -324,7 +325,7 @@ internal class Game
     private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
-        if (player.Inventory != item) throw new UseNotAllowedException(GetState());
+        if (player.Inventory != item) throw new UseNotAllowedException(CreateState());
 
         // Oopen all the doors of the same type
         var closedDoor = map[usePosition];

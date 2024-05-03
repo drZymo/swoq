@@ -39,38 +39,31 @@ _result_strings  = {
 }
 
 class GamePlayer:
-    
-    def __init__(self, quest:bool=False, plot:bool=True, print:bool=True):
-        self.quest = quest
+
+    def __init__(self, plot:bool=True, print:bool=True):
         self.plot = plot
         self.print = print
-        
+
         self.channel = grpc.insecure_channel('localhost:5009')
-        if quest:
-            self.stub = swoq_pb2_grpc.QuestStub(self.channel)
-        else:
-            self.stub = swoq_pb2_grpc.TrainingStub(self.channel)
-   
+        self.stub = swoq_pb2_grpc.GameServiceStub(self.channel)
+
 
     def close(self) -> None:
         self.channel.close()
-        
-    
+
+
     def __enter__(self) -> object:
         return self
 
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.close()
-        
 
-    def start(self, level:int=0) -> None:
+
+    def start(self, level:int=None) -> None:
         global played_id
-        
-        if self.quest:        
-            startResponse = self.stub.Start(swoq_pb2.StartQuestRequest(playerId=player_id))
-        else:
-            startResponse = self.stub.Start(swoq_pb2.StartTrainingRequest(playerId=player_id, level=level))
+
+        startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=player_id, level=level))
 
         if self.print:
             result = _result_strings[startResponse.result]
@@ -85,15 +78,15 @@ class GamePlayer:
         self.map = np.zeros((self.height, self.width), dtype=np.int8)
 
         self.update_global_state(startResponse.state)
-        
+
         self.action1:swoq_pb2.Action = None
         self.direction1:swoq_pb2.Direction = None
         self.action2:swoq_pb2.Action = None
         self.direction2:swoq_pb2.Direction = None
-        
+
         if self.plot:
             self._frame = plot_map(self.map)
-    
+
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
         self.level = state.level
@@ -113,7 +106,7 @@ class GamePlayer:
             print(f'finished={self.finished} level={self.level}')
             print(f'player1: pos={self.player1_pos}, health={self.player1_health}, inventory={self.player1_inventory}, has_sword={self.player1_has_sword}')
             print(f'player2: pos={self.player2_pos}, health={self.player2_health}, inventory={self.player2_inventory}, has_sword={self.player2_has_sword}')
-        
+
         # Clear map for every new level
         if self.prev_level != self.level:
             self.prev_level = self.level
@@ -159,13 +152,10 @@ class GamePlayer:
 
         if self.player1_pos is not None:
             self.player1_distances, self.player1_paths = compute_distances_quick(self.map, self.player1_pos)
-            # self.player1_distances, self.player1_paths = compute_distances(self.map, self.player1_pos)
-            # self.player1_distances_nokeys, self.player1_paths_nokeys = compute_distances(self.map, self.player1_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
-        
+
         if self.player2_pos is not None:
             self.player2_distances, self.player2_paths = compute_distances_quick(self.map, self.player2_pos)
-            # self.player2_distances, self.player2_paths = compute_distances(self.map, self.player2_pos)
-            # self.player2_distances_nokeys, self.player2_paths_nokeys = compute_distances(self.map, self.player2_pos, exclude_cells={ KEY_RED, KEY_GREEN, KEY_BLUE })
+
 
     def act(self):
         print(f'{self.action1=}, {self.action2=}')
@@ -175,18 +165,18 @@ class GamePlayer:
 
         if self.plot:
             update_map(self._frame, self.map)
-            
+
         if self.print:
             result = _result_strings[response.result]
             print(f'{result=}')
             print(f' finished={self.finished}')
-            
+
         # clear for next act
         self.action1:swoq_pb2.Action = None
         self.direction1:swoq_pb2.Direction = None
         self.action2:swoq_pb2.Action = None
         self.direction2:swoq_pb2.Direction = None
-        
+
         return response.result == 0
 
 
@@ -196,7 +186,7 @@ class GamePlayer:
         self.action1 = swoq_pb2.MOVE
         self.direction1 = dir
         return self.act()
-        
+
 
     def use(self, direction:str) -> bool:
         global to_swoq_pb2_direction
@@ -204,35 +194,39 @@ class GamePlayer:
         self.action1 = swoq_pb2.USE
         self.direction1 = dir
         return self.act()
-    
+
+
     def queue_move1(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action1 is None)
         self.action1 = swoq_pb2.MOVE
         self.direction1 = to_swoq_pb2_direction[direction]
-        
+
+
     def queue_move2(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action2 is None)
         self.action2 = swoq_pb2.MOVE
         self.direction2 = to_swoq_pb2_direction[direction]
-    
+
+
     def queue_use1(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action1 is None)
         self.action1 = swoq_pb2.USE
         self.direction1 = to_swoq_pb2_direction[direction]
-        
+
+
     def queue_use2(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action2 is None)
         self.action2 = swoq_pb2.USE
         self.direction2 = to_swoq_pb2_direction[direction]
-    
-    
+
+
     def step(self) -> None:
         if self.finished: return
-        
+
         self.try_explore1()
         self.try_explore2()
         # self.explore()
@@ -246,12 +240,13 @@ class GamePlayer:
         # self.try_get_key()
         # self.try_open_door()
         # self.move_to_pressure_plate()
-        
+
         self.act()
+
 
     def try_explore1(self) -> None:
         if self.action1 is not None: return
-        
+
         # stop immediately when exit is visible
         if np.any(self.map == EXIT): return
         # stop immediately to pickup sword
@@ -269,13 +264,13 @@ class GamePlayer:
 
         direction = self.get_direction_towards_closest_unknown(self.player1_pos, self.player1_distances_nokeys, self.player1_paths_nokeys)
         if direction is None: return
-        
+
         self.queue_move1(direction)
 
 
     def try_explore2(self) -> None:
         if self.action2 is not None: return
-        
+
         # stop immediately when exit is visible
         if np.any(self.map == EXIT): return
         # stop immediately to pickup sword
@@ -293,15 +288,15 @@ class GamePlayer:
 
         direction = self.get_direction_towards_closest_unknown(self.player2_pos, self.player2_distances_nokeys, self.player2_paths_nokeys)
         if direction is None: return
-        
+
         self.queue_move2(direction)
-        
+
 
     def get_direction_from_to(self, from_pos:tuple[int,int], to_pos:tuple[int,int], paths, paths_nokeys) -> str:
         if from_pos == to_pos: return None
-        
+
         current_paths = paths_nokeys
-        
+
         # prevent picking up keys accidentally unless it is the target key
         excluded_cells = {KEY_RED, KEY_GREEN, KEY_BLUE}
         target_type = self.map[to_pos[0], to_pos[1]]
@@ -328,7 +323,7 @@ class GamePlayer:
                     if closest_dist is None or dist < closest_dist:
                         closest_dist = dist
                         closest_empty = pos
-                
+
         if closest_empty is None:
             return None
 
@@ -337,27 +332,27 @@ class GamePlayer:
 
     def try_reach_exit1(self) -> None:
         if self.action1 is not None: return
-        
+
         exit_pos = np.argwhere(self.map == EXIT)
         if not np.any(exit_pos): return
-        
+
         exit_pos = exit_pos[0]
         direction = self.get_direction_from_to(self.player1_pos, tuple(exit_pos), self.player1_paths, self.player1_paths_nokeys)
         if direction is None: return
-        
+
         self.queue_move1(direction)
 
 
     def try_reach_exit2(self) -> None:
         if self.action2 is not None: return
-        
+
         exit_pos = np.argwhere(self.map == EXIT)
         if not np.any(exit_pos): return
-        
+
         exit_pos = exit_pos[0]
         direction = self.get_direction_from_to(self.player2_pos, tuple(exit_pos), self.player2_paths, self.player2_paths_nokeys)
         if direction is None: return
-        
+
         self.queue_move2(direction)
 
 
@@ -372,7 +367,7 @@ class GamePlayer:
         if self.player1_inventory != INVENTORY_NONE: return
 
         target_pos = None
-        
+
         doors = np.argwhere(self.map == DOOR_RED)
         keys = np.argwhere(self.map == KEY_RED)
         if target_pos is None and np.any(doors) and np.any(keys):
@@ -391,38 +386,38 @@ class GamePlayer:
         if target_pos is not None:
             self.move_to_target(target_pos)
 
-    
+
     def try_get_sword1(self) -> None:
         if self.action1 is not None: return
         if self.player1_has_sword: return
-        
+
         swords = np.argwhere(self.map == SWORD)
         if not np.any(swords): return
         target_pos = tuple(swords[0])
 
         direction = self.get_direction_from_to(self.player1_pos, target_pos, self.player1_paths, self.player1_paths_nokeys)
         if direction is None: return
-        
+
         self.queue_move1(direction)
-    
+
 
     def try_get_sword2(self) -> None:
         if self.action2 is not None: return
         if self.player2_has_sword: return
-        
+
         swords = np.argwhere(self.map == SWORD)
         if not np.any(swords): return
         target_pos = tuple(swords[0])
 
         direction = self.get_direction_from_to(self.player2_pos, target_pos, self.player2_paths, self.player2_paths_nokeys)
         if direction is None: return
-        
+
         self.queue_move2(direction)
 
 
     def try_get_health(self) -> None:
         target_pos = None
-        
+
         healths = np.argwhere(self.map == HEALTH)
         if np.any(healths):
             target_pos = tuple(healths[0])
@@ -434,10 +429,10 @@ class GamePlayer:
     def try_open_door(self) -> None:
         target_pos = None
         use_direction = None
-        
+
         def find_target(door):
             nonlocal target_pos, use_direction
-            
+
             top = (door[0]-1, door[1])
             if target_pos is None and self.map[top[0], top[1]] == EMPTY:
                 target_pos = top
@@ -454,7 +449,7 @@ class GamePlayer:
             if target_pos is None and self.map[right[0], right[1]] == EMPTY:
                 target_pos = right
                 use_direction = 'W'
-        
+
         if target_pos is None and self.player1_inventory == INVENTORY_KEY_RED:
             doors = np.argwhere(self.map == DOOR_RED)
             if np.any(doors): find_target(doors[0])
@@ -466,7 +461,7 @@ class GamePlayer:
         if target_pos is None and self.player1_inventory == INVENTORY_KEY_BLUE:
             doors = np.argwhere(self.map == DOOR_BLUE)
             if np.any(doors): find_target(doors[0])
-                    
+
         if target_pos is not None:
             self.move_to_target(target_pos)
             self.use(use_direction)

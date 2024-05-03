@@ -2,13 +2,16 @@
 using Swoq.Interface;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+
 namespace Swoq.Server;
 
 using Message = (Guid gameId, IMessage message);
 
-internal class ReplaySaver : ITrainingObserver, IDisposable
+internal class ReplaySaver : IGameServiceObserver, IDisposable
 {
-    private static readonly string TrainingFolder = @"D:\Projects\swoq-stuff\Replays";
+    // TODO: move to appsettings.json
+    private static readonly string TrainingFolder = @"D:\Projects\swoq-stuff\Replays\Training";
+    private static readonly string QuestFolder = @"D:\Projects\swoq-stuff\Replays\Quest";
 
     private readonly ILogger<ReplaySaver> logger;
 
@@ -29,25 +32,35 @@ internal class ReplaySaver : ITrainingObserver, IDisposable
     private readonly CancellationTokenSource cancel = new();
     private readonly Thread handleMessagesThread;
 
-    private readonly object playerNamesWriteMutex = new();
-    private IImmutableDictionary<Guid, string> playerNames = ImmutableDictionary<Guid, string>.Empty;
+    private readonly object filenamesWriteMutex = new();
+    private IImmutableDictionary<Guid, string> filenames = ImmutableDictionary<Guid, string>.Empty;
 
     private readonly SemaphoreSlim messagesSemaphore = new(0);
     private readonly ConcurrentQueue<Message> messages = new();
 
-    void ITrainingObserver.Started(string playerName, Guid gameId, StartTrainingRequest request, StartResponse response)
+    void IGameServiceObserver.Started(string playerName, Guid gameId, StartRequest request, StartResponse response)
     {
-        // Register new player name
-        lock (playerNamesWriteMutex)
+        // Register filename for this game id
+        string filename;
+        if (request.HasLevel)
         {
-            playerNames = playerNames.Add(gameId, playerName);
+            filename = Path.Combine(TrainingFolder, playerName, $"level {request.Level} - {gameId}.bin");
+        }
+        else
+        {
+            filename = Path.Combine(QuestFolder, $"{playerName} - {gameId}.bin");
+        }
+
+        lock (filenamesWriteMutex)
+        {
+            filenames = filenames.Add(gameId, filename);
         }
 
         Enqueue(gameId, request);
         Enqueue(gameId, response);
     }
 
-    void ITrainingObserver.Acted(Guid gameId, ActionRequest request, ActionResponse response)
+    void IGameServiceObserver.Acted(Guid gameId, ActionRequest request, ActionResponse response)
     {
         Enqueue(gameId, request);
         Enqueue(gameId, response);
@@ -81,22 +94,19 @@ internal class ReplaySaver : ITrainingObserver, IDisposable
     {
         try
         {
-            // Get player name (must be registered before)
-            var playerName = playerNames[gameId];
+            // Get file name (must be registered before)
+            var filename = filenames[gameId];
 
-            // Open file (create dir if needed)
-            var path = Path.Combine(TrainingFolder, playerName, $"{gameId}.bin");
-            var dir = Path.GetDirectoryName(path);
+            // Create dir if needed
+            var dir = Path.GetDirectoryName(filename);
             if (dir != null)
             {
                 Directory.CreateDirectory(dir);
             }
-            using var file = File.OpenWrite(path);
 
-            // Append
+            // Append serialized message to the end
+            using var file = File.OpenWrite(filename);
             file.Seek(0, SeekOrigin.End);
-
-            // Serialize messages
             message.WriteDelimitedTo(file);
         }
         catch (Exception ex)

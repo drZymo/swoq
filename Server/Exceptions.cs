@@ -1,27 +1,28 @@
 ﻿namespace Swoq.Server;
 
+internal abstract class SwoqException : Exception;
 
-internal class PlayerAlreadyRegisteredException : Exception;
-internal class UnknownPlayerException : Exception;
-internal class UnknownGameIdException : Exception;
-internal class LevelNotAvailableException : Exception;
+internal class PlayerAlreadyRegisteredException : SwoqException;
+internal class UnknownPlayerException : SwoqException;
+internal class UnknownGameIdException : SwoqException;
+internal class LevelNotAvailableException : SwoqException;
 
-internal class SwoqException(GameState state) : Exception
+internal abstract class SwoqGameException(GameState state) : SwoqException
 {
-    public GameState State { get; private set; } = state;
+    public GameState State { get; } = state;
 }
 
-internal class MoveNotAllowedException(GameState state) : SwoqException(state);
-internal class UseNotAllowedException(GameState state) : SwoqException(state);
-internal class UnknownActionException(GameState state) : SwoqException(state);
-internal class UnknownDirectionException(GameState state) : SwoqException(state);
-internal class GameFinishedException(GameState state) : SwoqException(state);
-internal class Player1NotPresentException(GameState state) : SwoqException(state);
-internal class Player2NotPresentException(GameState state) : SwoqException(state);
-internal class InventoryEmptyException(GameState state) : SwoqException(state);
-internal class InventoryFullException(GameState state) : SwoqException(state);
-internal class NoSwordException(GameState state) : SwoqException(state);
-internal class Player1DiedException(GameState state) : SwoqException(state);
-internal class Player2DiedException(GameState state) : SwoqException(state);
-internal class UnknownQuestIdException(GameState state) : SwoqException(state);
+internal class MoveNotAllowedException(GameState state) : SwoqGameException(state);
+internal class UseNotAllowedException(GameState state) : SwoqGameException(state);
+internal class UnknownActionException(GameState state) : SwoqGameException(state);
+internal class UnknownDirectionException(GameState state) : SwoqGameException(state);
+internal class GameFinishedException(GameState state) : SwoqGameException(state);
+internal class Player1NotPresentException(GameState state) : SwoqGameException(state);
+internal class Player2NotPresentException(GameState state) : SwoqGameException(state);
+internal class InventoryEmptyException(GameState state) : SwoqGameException(state);
+internal class InventoryFullException(GameState state) : SwoqGameException(state);
+internal class NoSwordException(GameState state) : SwoqGameException(state);
+internal class Player1DiedException(GameState state) : SwoqGameException(state);
+internal class Player2DiedException(GameState state) : SwoqGameException(state);
+internal class UnknownQuestIdException(GameState state) : SwoqGameException(state);
 

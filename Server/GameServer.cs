@@ -3,14 +3,14 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
-internal class TrainingServer(ISwoqDatabase database)
+internal class GameServer(ISwoqDatabase database)
 {
     public record StartResult(string PlayerName, Guid GameId, int Height, int Width, int VisibilityRange, GameState State);
 
     private readonly object gamesWriteMutex = new();
-    private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
+    private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
-    public StartResult Start(string playerId, int level)
+    public StartResult Start(string playerId, int? level)
     {
         // Check if player can play this level
         if (level < 0) throw new LevelNotAvailableException();
@@ -18,7 +18,7 @@ internal class TrainingServer(ISwoqDatabase database)
         if (level > player.Level) throw new LevelNotAvailableException();
 
         // Create a new game
-        var game = new Game(level);
+        IGame game = level.HasValue ? new Game(level.Value) : new Quest(player, database);
         lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
@@ -27,7 +27,7 @@ internal class TrainingServer(ISwoqDatabase database)
         CleanupOldGames();
 
         // Return initial state of game
-        var state = game.GetState();
+        var state = game.State;
         return new StartResult(player.Name, game.Id, Parameters.MapHeight, Parameters.MapWidth, Parameters.PlayerVisibilityRange, state);
     }
 
@@ -38,7 +38,7 @@ internal class TrainingServer(ISwoqDatabase database)
 
         // Play game
         game.Act(action1, action2);
-        return game.GetState();
+        return game.State;
     }
 
     private void CleanupOldGames()

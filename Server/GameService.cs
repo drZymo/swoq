@@ -3,16 +3,16 @@ using Swoq.Interface;
 
 namespace Swoq.Server;
 
-internal class TrainingService(ILogger<TrainingService> logger, TrainingServer server, ITrainingObserver observer) : Training.TrainingBase
+internal class GameService(ILogger<GameService> logger, GameServer server, IGameServiceObserver observer) : Swoq.Interface.GameService.GameServiceBase
 {
-    public override Task<StartResponse> Start(StartTrainingRequest request, ServerCallContext context)
+    public override Task<StartResponse> Start(StartRequest request, ServerCallContext context)
     {
         return Task.Run(() =>
         {
             var response = new StartResponse();
             try
             {
-                var startResult = server.Start(request.PlayerId, request.Level);
+                var startResult = server.Start(request.PlayerId, request.HasLevel ? request.Level : null);
 
                 response.Result = Result.Ok;
                 response.GameId = startResult.GameId.ToString();
@@ -24,13 +24,22 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
                 // Report
                 observer.Started(startResult.PlayerName, startResult.GameId, request, response);
             }
+            catch (SwoqGameException ex)
+            {
+                response.Result = ServiceUtil.ResultFromException(ex, logger);
+                response.State = ex.State.Convert();
+            }
+            catch (SwoqException ex)
+            {
+                response.Result = ServiceUtil.ResultFromException(ex, logger);
+                response.State = null;
+            }
             catch (Exception ex)
             {
-                var (result, state) = ServiceUtil.ResultFromException(ex, logger);
-                response.Result = result;
-                response.State = state?.Convert();
+                logger.LogError(ex, "Internal error");
+                response.Result = Result.InternalError;
+                response.State = null;
             }
-
             return response;
         });
     }
@@ -59,11 +68,21 @@ internal class TrainingService(ILogger<TrainingService> logger, TrainingServer s
                 response.Result = Result.Ok;
                 response.State = state.Convert();
             }
+            catch (SwoqGameException ex)
+            {
+                response.Result = ServiceUtil.ResultFromException(ex, logger);
+                response.State = ex.State.Convert();
+            }
+            catch (SwoqException ex)
+            {
+                response.Result = ServiceUtil.ResultFromException(ex, logger);
+                response.State = null;
+            }
             catch (Exception ex)
             {
-                var (result, state) = ServiceUtil.ResultFromException(ex, logger);
-                response.Result = result;
-                response.State = state?.Convert();
+                logger.LogError(ex, "Internal error");
+                response.Result = Result.InternalError;
+                response.State = null;
             }
 
             // Report
