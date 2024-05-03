@@ -172,18 +172,18 @@ public class MapGenerator
 
     private void GenerateLevel6()
     {
-        // TODO: create one left and one right of proper size, connect them, add items without overlap player or enemy
-        CreateRandomRooms(1, 3, 15, 5);
+        var room1 = CreateRandomRoom(5, 10, 1, 0, height, 0, width / 2);
+        Debug.Assert(room1 != null);
+        var room2 = CreateRandomRoom(5, 10, 1, 0, height, width / 2, width);
+        Debug.Assert(room2 != null);
         Debug.Assert(rooms.Count == 2);
-        var room1 = rooms[0];
-        var room2 = rooms[1];
         ConnectRooms(room1, room2);
 
         PlacePlayerTopLeftAndExitBottomRight();
 
         var (exitKeyColor, _) = AddLockAroundExit();
 
-        initialEnemy1Position = (room2.Top + 1, room2.Right - 2);
+        initialEnemy1Position = room2.Center;
         initialEnemy1Inventory = ToInventory(exitKeyColor);
 
         Position swordPos = (room1.Top + 1, room1.Left + 1);
@@ -194,7 +194,6 @@ public class MapGenerator
 
         availableRooms = availableRooms.Remove(room1).Remove(room2);
     }
-
 
     private void GenerateLevel7()
     {
