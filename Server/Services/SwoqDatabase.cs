@@ -8,8 +8,7 @@ public class SwoqDatabase : ISwoqDatabase
 {
     private readonly IMongoCollection<Player> playersCollection;
 
-    public SwoqDatabase(
-        IOptions<SwoqDatabaseSettings> swoqDatabaseSettings)
+    public SwoqDatabase(IOptions<SwoqDatabaseSettings> swoqDatabaseSettings)
     {
         var mongoClient = new MongoClient(
             swoqDatabaseSettings.Value.ConnectionString);

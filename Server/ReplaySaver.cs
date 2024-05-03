@@ -1,5 +1,7 @@
 ﻿using Google.Protobuf;
+using Microsoft.Extensions.Options;
 using Swoq.Interface;
+using Swoq.Server.Models;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
@@ -9,16 +11,13 @@ using Message = (Guid gameId, IMessage message);
 
 internal class ReplaySaver : IGameServiceObserver, IDisposable
 {
-    // TODO: move to appsettings.json
-    private static readonly string TrainingFolder = @"D:\Projects\swoq-stuff\Replays\Training";
-    private static readonly string QuestFolder = @"D:\Projects\swoq-stuff\Replays\Quest";
-
     private readonly ILogger<ReplaySaver> logger;
+    private readonly ReplayStorageSettings replayStorageSettings;
 
-    public ReplaySaver(ILogger<ReplaySaver> logger)
+    public ReplaySaver(ILogger<ReplaySaver> logger, IOptions<ReplayStorageSettings> replayStorageSettings)
     {
         this.logger = logger;
-
+        this.replayStorageSettings = replayStorageSettings.Value;
         handleMessagesThread = new Thread(new ThreadStart(HandleMessages));
         handleMessagesThread.Start();
     }
@@ -44,11 +43,11 @@ internal class ReplaySaver : IGameServiceObserver, IDisposable
         string filename;
         if (request.HasLevel)
         {
-            filename = Path.Combine(TrainingFolder, playerName, $"level {request.Level} - {gameId}.bin");
+            filename = Path.Combine(replayStorageSettings.TrainingFolder, playerName, $"level {request.Level} - {gameId}.bin");
         }
         else
         {
-            filename = Path.Combine(QuestFolder, $"{playerName} - {gameId}.bin");
+            filename = Path.Combine(replayStorageSettings.QuestFolder, $"{playerName} - {gameId}.bin");
         }
 
         lock (filenamesWriteMutex)
