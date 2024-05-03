@@ -2,6 +2,8 @@
 
 public enum Cell
 {
+    Unknown,
+
     Empty,
     Wall,
     Exit,

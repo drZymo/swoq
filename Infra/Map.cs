@@ -11,7 +11,8 @@ public class Map(
     Position? initialEnemy1Position = null,
     Inventory initialEnemy1Inventory = Inventory.None,
     Position? initialEnemy2Position = null,
-    Inventory initialEnemy2Inventory = Inventory.None)
+    Inventory initialEnemy2Inventory = Inventory.None,
+    bool[,]? visibility = null)
 {
     public static readonly Map Empty = new(new Cell[0, 0], 0, 0, (0, 0));
 
@@ -26,6 +27,8 @@ public class Map(
     public Inventory InitialEnemy1Inventory { get; } = initialEnemy1Inventory;
     public Position? InitialEnemy2Position { get; } = initialEnemy2Position;
     public Inventory InitialEnemy2Inventory { get; } = initialEnemy2Inventory;
+
+    public bool[,]? Visibility { get; } = visibility;
 
     public Cell this[int y, int x]
     {
