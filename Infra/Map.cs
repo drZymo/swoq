@@ -1,5 +1,6 @@
 ﻿namespace Swoq.Infra;
 
+using System.Collections;
 using System.Collections.Immutable;
 using Position = (int y, int x);
 
@@ -13,11 +14,11 @@ public class Map(
     Inventory initialEnemy1Inventory = Inventory.None,
     Position? initialEnemy2Position = null,
     Inventory initialEnemy2Inventory = Inventory.None,
-    IEnumerable<bool>? visibility = null)
+    IEnumerable<bool>? visibility = null) : IEnumerable<Cell>
 {
     public static readonly Map Empty = new([], 0, 0, (0, 0));
 
-    private readonly IImmutableList<Cell> data = data.ToImmutableArray();
+    private readonly IImmutableList<Cell> cells = data.ToImmutableArray();
     private readonly IImmutableList<bool>? visibility = visibility?.ToImmutableArray();
 
     public int Height { get; } = height;
@@ -30,13 +31,19 @@ public class Map(
     public Position? InitialEnemy2Position { get; } = initialEnemy2Position;
     public Inventory InitialEnemy2Inventory { get; } = initialEnemy2Inventory;
 
-    public Cell this[int y, int x] => data[y * Width + x];
+    public Cell this[int y, int x] => cells[y * Width + x];
 
     public Cell this[Position pos] => this[pos.y, pos.x];
 
+    public IEnumerator<Cell> GetEnumerator() => cells.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => cells.GetEnumerator();
+
+
+
     public Map Set(int y, int x, Cell cell)
     {
-        var data = this.data.SetItem(y * Width + x, cell);
+        var data = this.cells.SetItem(y * Width + x, cell);
         return new Map(data, Height, Width, InitialPlayer1Position, InitialPlayer2Position, InitialEnemy1Position, InitialEnemy1Inventory, InitialEnemy2Position, InitialEnemy2Inventory, visibility);
     }
 
