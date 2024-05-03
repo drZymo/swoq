@@ -1,5 +1,6 @@
 ﻿using Swoq.Infra;
 using Swoq.Interface;
+using System.Collections.Immutable;
 
 namespace ReplayViewer;
 
@@ -7,14 +8,18 @@ using Position = (int y, int x);
 
 internal class MapBuilder(int height, int width, int visibilityRange)
 {
+    private const int CellStateEnemy = 14;
+
     private readonly int height = height;
     private readonly int width = width;
     private readonly int visibilityRange = visibilityRange;
+
     private readonly Cell[,] mapData = new Cell[height, width];
     private readonly bool[,] visibility = new bool[height, width];
 
     private Position player1Position = (-1, -1);
     private Position? player2Position = null;
+    private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
 
     public void Reset()
     {
@@ -23,12 +28,12 @@ internal class MapBuilder(int height, int width, int visibilityRange)
             for (var x = 0; x < width; x++)
             {
                 mapData[y, x] = Cell.Unknown;
-                visibility[y, x] = false;
             }
         }
+        PrepareForNextTimeStep();
     }
 
-    public void Hide()
+    public void PrepareForNextTimeStep()
     {
         for (var y = 0; y < height; y++)
         {
@@ -37,6 +42,9 @@ internal class MapBuilder(int height, int width, int visibilityRange)
                 visibility[y, x] = false;
             }
         }
+        player1Position = (-1, -1);
+        player2Position = null;
+        enemyPositions = ImmutableList<Position>.Empty;
     }
 
     public void AddPlayerState(PlayerState? playerState, int playerIndex)
@@ -64,7 +72,12 @@ internal class MapBuilder(int height, int width, int visibilityRange)
                 var mx = left + x;
                 if (0 <= my && my < height && 0 <= mx && mx < width)
                 {
-                    var cell = ToCell(playerState.Surroundings[i]);
+                    int cellState = playerState.Surroundings[i];
+                    if (cellState == CellStateEnemy)
+                    {
+                        enemyPositions = enemyPositions.Add((my, mx));
+                    }
+                    var cell = ToCell(cellState);
                     if (cell != Cell.Unknown)
                     {
                         mapData[my, mx] = cell;
@@ -81,10 +94,13 @@ internal class MapBuilder(int height, int width, int visibilityRange)
 
     public Map CreateMap()
     {
+        Position? enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
+        Position? enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
 
-        // TODO: enemy positions
         return new Map(mapData.Cast<Cell>(), height, width, player1Position,
             initialPlayer2Position: player2Position,
+            initialEnemy1Position: enemy1Pos,
+            initialEnemy2Position: enemy2Pos,
             visibility: visibility.Cast<bool>());
     }
 
@@ -104,7 +120,7 @@ internal class MapBuilder(int height, int width, int visibilityRange)
         11 => Cell.DoorBlackClosed,
         12 => Cell.PressurePlate,
         13 => Cell.Sword,
-        14 => Cell.Empty, // Enemies always stand on empty
+        CellStateEnemy => Cell.Empty, // Enemies always stand on empty
         15 => Cell.Health,
         _ => throw new NotImplementedException(),
     };

@@ -14,8 +14,9 @@ internal class MainViewModel : ViewModelBase
     {
         //using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\ff0eaad9-2e05-49fa-8bea-47cf7f602a9f.bin");
         //using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\812d2c95-f70f-4eb0-ba93-cf35a6d249ad.bin");
-        using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\c9174e1d-cad6-4c85-bcfb-1ad244e05c29.bin");
-
+        //using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\c9174e1d-cad6-4c85-bcfb-1ad244e05c29.bin");
+        using var file = File.OpenRead(@"D:\Projects\swoq-stuff\Replays\Ralph\caaf5822-36a6-477e-8594-923604231961.bin");
+        
         var startRequest = StartTrainingRequest.Parser.ParseDelimitedFrom(file);
         var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
@@ -51,7 +52,7 @@ internal class MainViewModel : ViewModelBase
 
     private static (bool hasPlayer2, bool hasEnemies, bool hasPickups) AddTimeStep(ref IImmutableList<TimeStep> timeSteps, MapBuilder mapBuilder, ActionRequest? request, State state)
     {
-        mapBuilder.Hide();
+        mapBuilder.PrepareForNextTimeStep();
         mapBuilder.AddPlayerState(state.Player1, 1);
         mapBuilder.AddPlayerState(state.Player2, 2);
         var map = mapBuilder.CreateMap();
@@ -62,7 +63,17 @@ internal class MainViewModel : ViewModelBase
             ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
             : "Start";
         var player1State = new PlayerState(action1, state.Player1);
-        var timeStep = new TimeStep(state.Level, gameState, map, player1State);
+
+        PlayerState? player2State = null;
+        if (state.Player2 != null)
+        {
+            var action2 = request != null
+                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null, request.HasDirection2 ? request.Direction2 : null)
+                : "Start";
+            player2State = new PlayerState(action2, state.Player2);
+        }
+
+        var timeStep = new TimeStep(state.Level, gameState, map, player1State, player2State);
         timeSteps = timeSteps.Add(timeStep);
 
         var hasPlayer2 = map.InitialPlayer2Position != null;
