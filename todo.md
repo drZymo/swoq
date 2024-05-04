@@ -8,8 +8,8 @@
 - [X] Quest game
 - [X] Combat
 - [X] Extra health
-- [ ] Replay storage
-- [ ] Replay viewer
+- [X] Replay storage
+- [X] Replay viewer
 - [ ] Order: width/height, x/y
 - [ ] Levels
 - [X] Sword separate inventory
@@ -19,8 +19,11 @@
 - [X] Always send state, even on failures
 - [X] Stop game when one of two players dies
 - [X] Game Time-To-Live (TTL) for cleanup
+- [ ] Quest statistics
 - [ ] Dashboard with player stats
-
+- [ ] One quest at a time
+- [ ] Quest monitoring
+- [ ] Proto file hosting per level
 
 ## Act vs Move/Use
 
@@ -141,3 +144,33 @@ A locker room with the exit key. Door to the locker room can only be opened with
 ### Double pressure plate
 
 Level is split in two. In left half there is a pressure plate that opens the door to the right half. Then one of the two players can enter. In the right half there is another pressure plate to open another door on the other side of the map where the other player can enter.
+
+
+## Replay viewer
+
+Should allow live viewing. But how to handle multiple games at the same time?
+Or should we allow only one quest at a time and only live viewing of quests?
+
+
+## Dashboard
+
+Web page hosted by server that shows player statistics.
+- Time line with player progression.
+- Ordered list of players with levels
+- Nr ticks needed to finish quest
+
+## Quest monitoring
+
+Live viewing of current progress. Show current map. No timer based replay. Always show current state. Could mean skipping a few steps.
+
+## Proto file hosting per level
+
+Features are enabled per level, so proto file must be extended as well.
+Makes it a surprise to player when a new feature is unlocked.
+
+## Quest statistics
+
+Number of ticks needed to finish quest.
+Wall clock time needed to finish quest.
+
+Winner is one who finished with lowest number of ticks or shortest wall clock time if tied.
