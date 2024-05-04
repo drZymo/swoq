@@ -28,13 +28,20 @@ public class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorSer
 
     public override async Task Monitor(Empty request, IServerStreamWriter<QuestUpdate> responseStream, ServerCallContext context)
     {
-        while (!context.CancellationToken.IsCancellationRequested)
+        try
         {
-            await updatesCount.WaitAsync(context.CancellationToken);
-            if (updates.TryDequeue(out var update))
+            while (!context.CancellationToken.IsCancellationRequested)
             {
-                await responseStream.WriteAsync(update);
+                await updatesCount.WaitAsync(context.CancellationToken);
+                if (updates.TryDequeue(out var update))
+                {
+                    await responseStream.WriteAsync(update);
+                }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Gracefull shutdown
         }
     }
 
