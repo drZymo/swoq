@@ -3,7 +3,7 @@ using Swoq.Interface;
 
 namespace Swoq.Server;
 
-internal class GameService(ILogger<GameService> logger, GameServer server, IGameServiceObserver observer) : Swoq.Interface.GameService.GameServiceBase
+internal class GameService(ILogger<GameService> logger, GameServer server, GameServicePostman gameServicePostman) : Swoq.Interface.GameService.GameServiceBase
 {
     public override Task<StartResponse> Start(StartRequest request, ServerCallContext context)
     {
@@ -22,7 +22,7 @@ internal class GameService(ILogger<GameService> logger, GameServer server, IGame
                 response.State = startResult.State.Convert();
 
                 // Report
-                observer.Started(startResult.PlayerName, startResult.GameId, request, response);
+                gameServicePostman.RaiseStarted(startResult.PlayerName, startResult.GameId, request, response);
             }
             catch (SwoqGameException ex)
             {
@@ -88,7 +88,7 @@ internal class GameService(ILogger<GameService> logger, GameServer server, IGame
             // Report
             if (gameId.HasValue)
             {
-                observer.Acted(gameId.Value, request, response);
+                gameServicePostman.RaiseActed(gameId.Value, request, response);
             }
 
             return response;

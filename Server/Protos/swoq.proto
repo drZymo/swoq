@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package Swoq.Interface;
 
 enum Result {
@@ -26,8 +28,9 @@ enum Result {
 }
 
 
+
 service PlayerService {
-	rpc Register(RegisterRequest) returns (RegisterResponse) {};
+	rpc Register(RegisterRequest) returns (RegisterResponse);
 }
 
 message RegisterRequest {
@@ -40,11 +43,11 @@ message RegisterResponse {
 }
 
 
-service GameService {
-	rpc Start(StartRequest) returns (StartResponse) {};
-	rpc Act(ActionRequest) returns (ActionResponse) {};
-}
 
+service GameService {
+	rpc Start(StartRequest) returns (StartResponse);
+	rpc Act(ActionRequest) returns (ActionResponse);
+}
 
 enum Direction {
 	NORTH = 0;
@@ -103,4 +106,27 @@ message ActionRequest {
 message ActionResponse {
 	Result result = 1;
 	optional State state = 2;
+}
+
+
+
+service QuestMonitorService {
+	rpc Monitor(google.protobuf.Empty) returns (stream QuestUpdate);
+}
+
+message QuestStarted {
+	StartRequest request = 1;
+	StartResponse response = 2;
+}
+
+message QuestActed {
+	ActionRequest request = 1;
+	ActionResponse response = 2;
+}
+
+message QuestUpdate {
+	string gameId = 1;
+	optional string player = 2;
+	optional QuestStarted started = 3;
+	optional QuestActed acted = 4;
 }

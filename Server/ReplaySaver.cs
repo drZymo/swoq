@@ -9,21 +9,30 @@ namespace Swoq.Server;
 
 using Message = (Guid gameId, IMessage message);
 
-internal class ReplaySaver : IGameServiceObserver, IDisposable
+internal class ReplaySaver : IDisposable
 {
+    private readonly GameServicePostman gameServicePostman;
     private readonly ILogger<ReplaySaver> logger;
     private readonly ReplayStorageSettings replayStorageSettings;
 
-    public ReplaySaver(ILogger<ReplaySaver> logger, IOptions<ReplayStorageSettings> replayStorageSettings)
+    public ReplaySaver(GameServicePostman gameServicePostman, ILogger<ReplaySaver> logger, IOptions<ReplayStorageSettings> replayStorageSettings)
     {
+        this.gameServicePostman = gameServicePostman;
         this.logger = logger;
         this.replayStorageSettings = replayStorageSettings.Value;
+
         handleMessagesThread = new Thread(new ThreadStart(HandleMessages));
         handleMessagesThread.Start();
+
+        this.gameServicePostman.Started += OnGameStarted;
+        this.gameServicePostman.Acted += OnGameActed;
     }
 
     public void Dispose()
     {
+        gameServicePostman.Acted -= OnGameActed;
+        gameServicePostman.Started -= OnGameStarted;
+
         cancel.Cancel();
         handleMessagesThread.Join();
     }
@@ -37,32 +46,34 @@ internal class ReplaySaver : IGameServiceObserver, IDisposable
     private readonly SemaphoreSlim messagesSemaphore = new(0);
     private readonly ConcurrentQueue<Message> messages = new();
 
-    void IGameServiceObserver.Started(string playerName, Guid gameId, StartRequest request, StartResponse response)
+    private void OnGameStarted(object? sender, (string playerName, Guid gameId, StartRequest request, StartResponse response) e)
     {
         // Register filename for this game id
         string filename;
-        if (request.HasLevel)
+        if (e.request.HasLevel)
         {
-            filename = Path.Combine(replayStorageSettings.TrainingFolder, playerName, $"level {request.Level} - {gameId}.bin");
+            filename = Path.Combine(replayStorageSettings.TrainingFolder, e.playerName, $"level {e.request.Level} - {e.gameId}.bin");
         }
         else
         {
-            filename = Path.Combine(replayStorageSettings.QuestFolder, $"{playerName} - {gameId}.bin");
+            filename = Path.Combine(replayStorageSettings.QuestFolder, $"{e.playerName} - {e.gameId}.bin");
         }
 
         lock (filenamesWriteMutex)
         {
-            filenames = filenames.Add(gameId, filename);
+            filenames = filenames.Add(e.gameId, filename);
         }
 
-        Enqueue(gameId, request);
-        Enqueue(gameId, response);
+        logger.LogInformation("New replay started at {path}", filename);
+
+        Enqueue(e.gameId, e.request);
+        Enqueue(e.gameId, e.response);
     }
 
-    void IGameServiceObserver.Acted(Guid gameId, ActionRequest request, ActionResponse response)
+    private void OnGameActed(object? sender, (Guid gameId, ActionRequest request, ActionResponse response) e)
     {
-        Enqueue(gameId, request);
-        Enqueue(gameId, response);
+        Enqueue(e.gameId, e.request);
+        Enqueue(e.gameId, e.response);
     }
 
     private void Enqueue(Guid gameId, IMessage message)
@@ -70,6 +81,7 @@ internal class ReplaySaver : IGameServiceObserver, IDisposable
         messages.Enqueue((gameId, message));
         messagesSemaphore.Release();
     }
+
 
     private void HandleMessages()
     {
