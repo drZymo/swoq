@@ -9,11 +9,6 @@ using Position = (int y, int x);
 internal class MapBuilder(int height, int width, int visibilityRange)
 {
     private const int CellStateEnemy = 14;
-
-    private readonly int height = height;
-    private readonly int width = width;
-    private readonly int visibilityRange = visibilityRange;
-
     private readonly Cell[,] mapData = new Cell[height, width];
     private readonly bool[,] visibility = new bool[height, width];
 
@@ -21,11 +16,17 @@ internal class MapBuilder(int height, int width, int visibilityRange)
     private Position? player2Position = null;
     private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
 
+    public int Height { get; } = height;
+
+    public int Width { get; } = width;
+
+    public int VisibilityRange { get; } = visibilityRange;
+
     public void Reset()
     {
-        for (var y = 0; y < height; y++)
+        for (var y = 0; y < Height; y++)
         {
-            for (var x = 0; x < width; x++)
+            for (var x = 0; x < Width; x++)
             {
                 mapData[y, x] = Cell.Unknown;
             }
@@ -35,9 +36,9 @@ internal class MapBuilder(int height, int width, int visibilityRange)
 
     public void PrepareForNextTimeStep()
     {
-        for (var y = 0; y < height; y++)
+        for (var y = 0; y < Height; y++)
         {
-            for (var x = 0; x < width; x++)
+            for (var x = 0; x < Width; x++)
             {
                 visibility[y, x] = false;
             }
@@ -60,17 +61,17 @@ internal class MapBuilder(int height, int width, int visibilityRange)
             return;
         }
 
-        var top = playerState.Position.Y - visibilityRange;
-        var left = playerState.Position.X - visibilityRange;
+        var top = playerState.Position.Y - VisibilityRange;
+        var left = playerState.Position.X - VisibilityRange;
 
         var i = 0;
-        for (var y = 0; y < visibilityRange * 2 + 1; y++)
+        for (var y = 0; y < VisibilityRange * 2 + 1; y++)
         {
-            for (var x = 0; x < visibilityRange * 2 + 1; x++)
+            for (var x = 0; x < VisibilityRange * 2 + 1; x++)
             {
                 var my = top + y;
                 var mx = left + x;
-                if (0 <= my && my < height && 0 <= mx && mx < width)
+                if (0 <= my && my < Height && 0 <= mx && mx < Width)
                 {
                     int cellState = playerState.Surroundings[i];
                     if (cellState == CellStateEnemy)
@@ -97,7 +98,7 @@ internal class MapBuilder(int height, int width, int visibilityRange)
         Position? enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
         Position? enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
 
-        return new Map(mapData.Cast<Cell>(), height, width, player1Position,
+        return new Map(mapData.Cast<Cell>(), Height, Width, player1Position,
             initialPlayer2Position: player2Position,
             initialEnemy1Position: enemy1Pos,
             initialEnemy2Position: enemy2Pos,

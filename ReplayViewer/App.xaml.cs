@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ReplayViewer;
+namespace Swoq.ReplayViewer;
 
 /// <summary>
 /// Interaction logic for App.xaml

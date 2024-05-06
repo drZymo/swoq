@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReplayViewer", "ReplayViewe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuestDashboard", "QuestDashboard\QuestDashboard.csproj", "{195B94C4-DBFC-4069-AFFB-7862F0E97730}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfraUI", "InfraUI\InfraUI.csproj", "{3081AB81-5FC5-41DE-8B51-1F944C079657}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interface", "Interface\Interface.csproj", "{367F2769-6C1D-496E-8E99-71187E602D18}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{195B94C4-DBFC-4069-AFFB-7862F0E97730}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{195B94C4-DBFC-4069-AFFB-7862F0E97730}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{195B94C4-DBFC-4069-AFFB-7862F0E97730}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3081AB81-5FC5-41DE-8B51-1F944C079657}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3081AB81-5FC5-41DE-8B51-1F944C079657}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3081AB81-5FC5-41DE-8B51-1F944C079657}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3081AB81-5FC5-41DE-8B51-1F944C079657}.Release|Any CPU.Build.0 = Release|Any CPU
+		{367F2769-6C1D-496E-8E99-71187E602D18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{367F2769-6C1D-496E-8E99-71187E602D18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{367F2769-6C1D-496E-8E99-71187E602D18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{367F2769-6C1D-496E-8E99-71187E602D18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

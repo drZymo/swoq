@@ -37,18 +37,42 @@ internal class MainViewModel : ViewModelBase, IDisposable
     {
         try
         {
+            MapBuilder? mapBuilder = null;
+
             using var channel = GrpcChannel.ForAddress("http://localhost:5009");
 
             var client = new Swoq.Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
             var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty());
             while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
             {
-                Debug.WriteLine(".");
+                var message = call.ResponseStream.Current;
+
+                if (message.Started != null)
+                {
+                    Debug.WriteLine("Started");
+                    var response = message.Started.Response;
+                    if (mapBuilder == null ||
+                        mapBuilder.Height != response.Height ||
+                        mapBuilder.Width != response.Width ||
+                        mapBuilder.VisibilityRange != response.VisibilityRange)
+                    {
+                        mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
+                    }
+
+                    mapBuilder.PrepareForNextTimeStep();
+                    mapBuilder.AddPlayerState(response.State.Player1, 1);
+                    mapBuilder.AddPlayerState(response.State.Player2, 2);
+                    mapBuilder.CreateMap();
+                }
+
+                if (message.Acted != null)
+                {
+                    Debug.WriteLine("Acted");
+                }
             }
         }
         catch (OperationCanceledException)
         {
-            await Console.Out.WriteLineAsync("Stopping ReadAsync");
             // Stop gracefully
         }
     }

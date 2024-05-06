@@ -2,7 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace ReplayViewer;
+namespace Swoq.ReplayViewer;
 
 /// <summary>
 /// Interaction logic for ReplayView.xaml

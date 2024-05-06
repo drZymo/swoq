@@ -1,7 +1,7 @@
-﻿using ReplayViewer.ViewModels;
+﻿using Swoq.ReplayViewer.ViewModels;
 using System.Windows;
 
-namespace ReplayViewer;
+namespace Swoq.ReplayViewer;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml

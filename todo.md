@@ -24,6 +24,13 @@
 - [ ] One quest at a time
 - [ ] Quest monitoring
 - [ ] Proto file hosting per level
+- [ ] Correct shutdown of open grpc streams
+- [ ] Single output folder
+- [ ] Sync appsettings for production/development
+- [ ] Installer for ReplayViewer
+- [ ] Example bot Python
+- [ ] Example bot C#
+
 
 ## Act vs Move/Use
 

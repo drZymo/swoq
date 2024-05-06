@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Input;
 using System.Windows.Threading;
 
+
 namespace QuestDashboard.ViewModels;
 
 internal class ReplayViewModel : ViewModelBase
@@ -30,15 +31,11 @@ internal class ReplayViewModel : ViewModelBase
 
         var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
 
-        var hasPlayer2 = false;
-        var hasEnemies = false;
-        var hasPickups = false;
-
         {
             var (hp2, he, hp) = AddTimeStep(ref timeSteps, mapBuilder, null, startResponse.State);
-            hasPlayer2 = hasPlayer2 || hp2;
-            hasEnemies = hasEnemies || he;
-            hasPickups = hasPickups || hp;
+            HasPlayer2 = HasPlayer2 || hp2;
+            HasEnemies = HasEnemies || he;
+            HasPickups = HasPickups || hp;
         }
 
         while (file.Position < file.Length)
@@ -47,14 +44,10 @@ internal class ReplayViewModel : ViewModelBase
             var response = ActionResponse.Parser.ParseDelimitedFrom(file);
 
             var (hp2, he, hp) = AddTimeStep(ref timeSteps, mapBuilder, request, response.State);
-            hasPlayer2 = hasPlayer2 || hp2;
-            hasEnemies = hasEnemies || he;
-            hasPickups = hasPickups || hp;
+            HasPlayer2 = HasPlayer2 || hp2;
+            HasEnemies = HasEnemies || he;
+            HasPickups = HasPickups || hp;
         }
-
-        HasPlayer2 = hasPlayer2;
-        HasEnemies = hasEnemies;
-        HasPickups = hasPickups;
 
         PlayPauseCommand = new RelayCommand(PlayPause);
 

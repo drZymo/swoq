@@ -6,32 +6,17 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<RootNamespace>Swoq.ReplayViewer</RootNamespace>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="tiles.png" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Include="tiles.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Protobuf Include="..\Server\Protos\swoq.proto" Link="Protos\swoq.proto" GrpcServices="Server" ProtoRoot="..\Server" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Protos\" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\InfraUI\InfraUI.csproj" />
 		<ProjectReference Include="..\Infra\Infra.csproj" />
+		<ProjectReference Include="..\Interface\Interface.csproj" />
 	</ItemGroup>
 
 </Project>

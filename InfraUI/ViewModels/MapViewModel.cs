@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace ReplayViewer.ViewModels;
+namespace Swoq.InfraUI.ViewModels;
 
-internal class MapViewModel : ViewModelBase
+public class MapViewModel : ViewModelBase
 {
     private static readonly TileSet tiles;
 

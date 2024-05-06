@@ -1,8 +1,8 @@
 ﻿using System.Windows.Input;
 
-namespace ReplayViewer.ViewModels;
+namespace Swoq.InfraUI.ViewModels;
 
-internal class RelayCommand(Action<object?>? execute = null, Func<object?, bool>? canExecute = null) : ICommand
+public class RelayCommand(Action<object?>? execute = null, Func<object?, bool>? canExecute = null) : ICommand
 {
     private readonly Func<object?, bool>? canExecute = canExecute;
     private readonly Action<object?>? execute = execute;

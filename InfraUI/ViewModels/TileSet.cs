@@ -4,9 +4,9 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 
-namespace ReplayViewer.ViewModels;
+namespace Swoq.InfraUI.ViewModels;
 
-internal record TileSet(IImmutableDictionary<Cell, byte[]> Cells, byte[] Player, byte[] Enemy)
+public record TileSet(IImmutableDictionary<Cell, byte[]> Cells, byte[] Player, byte[] Enemy)
 {
     public static TileSet FromImageFile(string path)
     {

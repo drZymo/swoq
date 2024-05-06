@@ -2,7 +2,7 @@
 using Swoq.Interface;
 using System.Collections.Immutable;
 
-namespace ReplayViewer;
+namespace Swoq.ReplayViewer;
 
 using Position = (int y, int x);
 
