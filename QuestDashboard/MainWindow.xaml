@@ -11,11 +11,21 @@
         Title="Swoq Replay Viewer" Height="800" Width="1000"
         Closed="Window_Closed">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
-        </Grid.RowDefinitions>
-        <infraui:GameStateView Grid.Row="0" DataContext="{Binding GameState}"/>
-        <TextBlock Grid.Row="1" Text="{Binding StatusMessage}"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <GroupBox Margin="8" Padding="8" Header="Highscores">
+            </GroupBox>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <infraui:GameStateView Grid.Row="0" DataContext="{Binding GameStateMonitor.GameState}"/>
+            <TextBlock Grid.Row="1" Text="{Binding GameStateMonitor.StatusMessage}"/>
+        </Grid>
     </Grid>
 </Window>
