@@ -27,13 +27,9 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     public async Task<Player?> FindPlayerByNameAsync(string name) =>
         await Task.Run(() => players.Values.Where(p => p.Name.Equals(name)).FirstOrDefault());
 
-    public async Task UpdatePlayerLevelAsync(string playerId, int level)
+    public async Task UpdatePlayerAsync(Player player)
     {
-        if (!players.TryGetValue(playerId, out var player))
-        {
-            throw new ArgumentException("Unknown player", nameof(playerId));
-        }
-        var newPlayer = new Player { Id = player.Id, Name = player.Name, Level = level };
-        await Task.Run(() => players = players.SetItem(playerId, newPlayer));
+        if (player.Id == null) return;
+        await Task.Run(() => players = players.SetItem(player.Id, player));
     }
 }

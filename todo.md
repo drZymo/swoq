@@ -31,7 +31,7 @@
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Example bot Python
 - [ ] Example bot C#
-
+- [ ] Show result of request in GameStateView
 
 ## Act vs Move/Use
 

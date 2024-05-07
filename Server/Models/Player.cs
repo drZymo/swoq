@@ -12,4 +12,8 @@ public class Player
     public string Name { get; set; } = null!;
 
     public int Level { get; set; } = 0;
+
+    public int QuestLengthTicks { get; set; } = int.MaxValue;
+
+    public TimeSpan QuestLengthTime { get; set; } = TimeSpan.MaxValue;
 }

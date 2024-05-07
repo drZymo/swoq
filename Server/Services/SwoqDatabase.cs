@@ -29,10 +29,15 @@ public class SwoqDatabase : ISwoqDatabase
     public async Task<Player?> FindPlayerByNameAsync(string name) =>
         await playersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
 
-    public async Task UpdatePlayerLevelAsync(string playerId, int level)
+    public async Task UpdatePlayerAsync(Player player)
     {
-        var filter = Builders<Player>.Filter.Eq(p => p.Id, playerId);
-        var update = Builders<Player>.Update.Set(p => p.Level, level);
+        if (player.Id == null) return;
+        var filter = Builders<Player>.Filter.
+            Eq(p => p.Id, player.Id);
+        var update = Builders<Player>.Update.
+            Set(p => p.Level, player.Level).
+            Set(p => p.QuestLengthTicks, player.QuestLengthTicks).
+            Set(p => p.QuestLengthTime, player.QuestLengthTime);
         await playersCollection.UpdateOneAsync(filter, update);
     }
 }
