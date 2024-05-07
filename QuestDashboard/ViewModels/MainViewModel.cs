@@ -106,8 +106,15 @@ internal class MainViewModel : ViewModelBase, IDisposable
                 // Stop gracefully
                 break;
             }
+            catch (Grpc.Core.RpcException ex)
+            {
+                uiDispatcher.Invoke(() => { StatusMessage = "Disconnected"; });
+                Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
+                Thread.Sleep(TimeSpan.FromSeconds(5));
+            }
             catch (Exception ex)
             {
+                uiDispatcher.Invoke(() => { StatusMessage = "Internal error"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
