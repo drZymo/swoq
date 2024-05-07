@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
 using System.Collections.Immutable;
 using System.IO;
@@ -6,8 +7,7 @@ using System.Text;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-
-namespace QuestDashboard.ViewModels;
+namespace Swoq.QuestDashboard.ViewModels;
 
 internal class ReplayViewModel : ViewModelBase
 {

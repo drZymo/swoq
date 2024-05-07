@@ -1,7 +1,7 @@
-﻿using MapGeneratorTester.ViewModels;
+﻿using Swoq.MapGeneratorTester.ViewModels;
 using System.Windows;
 
-namespace MapGeneratorTester;
+namespace Swoq.MapGeneratorTester;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml

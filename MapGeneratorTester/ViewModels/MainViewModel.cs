@@ -1,7 +1,8 @@
 ﻿using Swoq.Infra;
+using Swoq.InfraUI.ViewModels;
 using System.Windows.Input;
 
-namespace MapGeneratorTester.ViewModels;
+namespace Swoq.MapGeneratorTester.ViewModels;
 
 class MainViewModel : ViewModelBase
 {
@@ -36,7 +37,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    private int width = 64;
+    private int width = 48;
     public int Width
     {
         get => width;

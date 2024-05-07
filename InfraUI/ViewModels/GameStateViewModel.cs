@@ -1,23 +1,44 @@
-﻿using Swoq.InfraUI.Models;
+﻿using Swoq.Infra;
+using Swoq.InfraUI.Models;
 
 namespace Swoq.InfraUI.ViewModels;
 
-public class GameStateViewModel(GameState? gameState) : ViewModelBase
+public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
 {
-    private GameState? gameState = gameState;
+    private GameState? current = gameState;
+    private GameState? Current
+    {
+        get => current;
+        set
+        {
+            current = value;
+            OnPropertyChanged(nameof(Level));
+            OnPropertyChanged(nameof(Status));
 
-    public int Level => gameState?.Level ?? -1;
-    public string Status => gameState?.Status ?? "Unknown";
+            OnPropertyChanged(nameof(Player1Action));
+            OnPropertyChanged(nameof(Player1Health));
+            OnPropertyChanged(nameof(Player1Inventory));
+            OnPropertyChanged(nameof(Player1HasSword));
 
-    public string Player1Action => gameState?.Player1.LastAction ?? "Unknown";
-    public int Player1Health => gameState?.Player1.Health ?? -1;
-    public string Player1Inventory => gameState?.Player1.Inventory ?? "Unknown";
-    public string Player1HasSword => NullableBooleanString(gameState?.Player1.HasSword);
+            OnPropertyChanged(nameof(Player2Action));
+            OnPropertyChanged(nameof(Player2Health));
+            OnPropertyChanged(nameof(Player2Inventory));
+            OnPropertyChanged(nameof(Player2HasSword));
+        }
+    }
 
-    public string Player2Action => gameState?.Player2?.LastAction ?? "Unknown";
-    public int Player2Health => gameState?.Player2?.Health ?? -1;
-    public string Player2Inventory => gameState?.Player2?.Inventory ?? "Unknown";
-    public string Player2HasSword => NullableBooleanString(gameState?.Player2?.HasSword);
+    public int Level => Current?.Level ?? -1;
+    public string Status => Current?.Status ?? "Unknown";
+
+    public string Player1Action => Current?.Player1.LastAction ?? "Unknown";
+    public int Player1Health => Current?.Player1.Health ?? -1;
+    public string Player1Inventory => Current?.Player1.Inventory ?? "Unknown";
+    public string Player1HasSword => NullableBooleanString(Current?.Player1.HasSword);
+
+    public string Player2Action => Current?.Player2?.LastAction ?? "Unknown";
+    public int Player2Health => Current?.Player2?.Health ?? -1;
+    public string Player2Inventory => Current?.Player2?.Inventory ?? "Unknown";
+    public string Player2HasSword => NullableBooleanString(Current?.Player2?.HasSword);
 
     private MapViewModel map = new();
     public MapViewModel Map
@@ -30,77 +51,76 @@ public class GameStateViewModel(GameState? gameState) : ViewModelBase
         }
     }
 
-    private bool showHealth = false;
-    public bool ShowHealth
+    private bool hasPlayer2 = false;
+    public bool HasPlayer2
     {
-        get => showHealth;
+        get => hasPlayer2;
         private set
         {
-            showHealth = value;
-            OnPropertyChanged();
+            if (hasPlayer2 != value)
+            {
+                hasPlayer2 = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+    private bool hasEnemies = false;
+    public bool HasEnemies
+    {
+        get => hasEnemies;
+        private set
+        {
+            if (hasEnemies != value)
+            {
+                hasEnemies = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+    private bool hasPickups = false;
+    public bool HasPickups
+    {
+        get => hasPickups;
+        private set
+        {
+            if (hasPickups != value)
+            {
+                hasPickups = value;
+                OnPropertyChanged();
+            }
         }
     }
 
-    private bool showInventory = false;
-    public bool ShowInventory
+    public void Reset()
     {
-        get => showInventory;
-        private set
-        {
-            showInventory = value;
-            OnPropertyChanged();
-        }
+        Current = null;
+        Map = new MapViewModel();
+        HasPlayer2 = false;
+        HasEnemies = false;
+        HasPickups = false;
     }
-
-    private bool showSword = false;
-    public bool ShowSword
-    {
-        get => showSword;
-        private set
-        {
-            showSword = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private bool showPlayer2 = false;
-    public bool ShowPlayer2
-    {
-        get => showPlayer2;
-        private set
-        {
-            showPlayer2 = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private static string NullableBooleanString(bool? value) => value.HasValue ? (value.Value ? "Yes" : "No") : "Unknown";
 
     public void SetGameState(GameState gameState)
     {
-        this.gameState = gameState;
+        Current = gameState;
 
         Map = new MapViewModel(gameState.Map);
 
-        OnPropertyChanged(nameof(Level));
-        OnPropertyChanged(nameof(Status));
-
-        OnPropertyChanged(nameof(Player1Action));
-        OnPropertyChanged(nameof(Player1Health));
-        OnPropertyChanged(nameof(Player1Inventory));
-        OnPropertyChanged(nameof(Player1HasSword));
-
-        OnPropertyChanged(nameof(Player2Action));
-        OnPropertyChanged(nameof(Player2Health));
-        OnPropertyChanged(nameof(Player2Inventory));
-        OnPropertyChanged(nameof(Player2HasSword));
+        HasPlayer2 = HasPlayer2 || (gameState.Map.InitialPlayer2Position != null);
+        HasEnemies = HasEnemies || (gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null);
+        HasPickups = HasPickups || (gameState.Map.Any(RequiresInventory));
     }
 
-    public void UpdateMapFeatures(bool hasPickups, bool hasEnemies, bool hasPlayer2)
+    public bool RequiresInventory(Cell cell) => cell switch
     {
-        ShowHealth = hasEnemies;
-        ShowInventory = hasPickups;
-        ShowSword = hasEnemies;
-        ShowPlayer2 = hasPlayer2;
-    }
+        Cell.KeyRed => true,
+        Cell.KeyGreen => true,
+        Cell.KeyBlue => true,
+        Cell.DoorRedClosed => true,
+        Cell.DoorGreenClosed => true,
+        Cell.DoorBlueClosed => true,
+        _ => false,
+    };
+
+    private static string NullableBooleanString(bool? value) => value.HasValue ? (value.Value ? "Yes" : "No") : "Unknown";
 }

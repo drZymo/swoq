@@ -1,32 +1,27 @@
-﻿<UserControl x:Class="QuestDashboard.ReplayView"
+﻿<UserControl x:Class="Swoq.InfraUI.Views.GameStateView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:QuestDashboard"
-             xmlns:vm="clr-namespace:QuestDashboard.ViewModels"
+             xmlns:vm="clr-namespace:Swoq.InfraUI.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
-             d:DataContext="{d:DesignInstance Type=vm:ReplayViewModel}"
-             Loaded="UserControl_Loaded">
+             d:DataContext="{d:DesignInstance Type=vm:GameStateViewModel}">
     <UserControl.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="boolToVisConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
-        </Grid.RowDefinitions>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="200"/>
         </Grid.ColumnDefinitions>
-        <Grid Grid.Row="0" Grid.Column="0" Background="Black">
+        <Grid  Grid.Column="0" Background="Black">
             <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
         </Grid>
-        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical">
+        <StackPanel Grid.Column="1" Orientation="Vertical">
             <GroupBox Header="Game" Margin="8" Padding="8">
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
@@ -34,13 +29,30 @@
                         <Run Text="{Binding Level, Mode=OneWay}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run>State:</Run>
-                        <Run Text="{Binding GameState, Mode=OneWay}" />
+                        <Run>Status:</Run>
+                        <Run Text="{Binding Status, Mode=OneWay}" />
                     </TextBlock>
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="Player #1" Margin="8" Padding="8">
+            <GroupBox Margin="8" Padding="8">
+                <GroupBox.Header>
+                    <TextBlock>
+                            <Run>Player</Run>
+                            <Run>
+                                <Run.Style>
+                                    <Style TargetType="Run">
+                                        <Setter Property="Text" Value="{x:Null}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasPlayer2}" Value="True">
+                                                <Setter Property="Text" Value="#1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Run.Style>
+                            </Run>
+                    </TextBlock>
+                </GroupBox.Header>
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
                         <Run>Last action:</Run>
@@ -60,7 +72,13 @@
                     </TextBlock>
                 </StackPanel>
             </GroupBox>
-            <GroupBox Header="Player #2" Margin="8" Padding="8" Visibility="{Binding HasPlayer2, Converter={StaticResource boolToVisConverter}}">
+            <GroupBox Margin="8" Padding="8" Visibility="{Binding HasPlayer2, Converter={StaticResource boolToVisConverter}}">
+                <GroupBox.Header>
+                    <TextBlock>
+                            <Run>Player</Run>
+                            <Run>#2</Run>
+                    </TextBlock>
+                </GroupBox.Header>
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
                         <Run>Last action:</Run>
@@ -81,18 +99,5 @@
                 </StackPanel>
             </GroupBox>
         </StackPanel>
-
-        <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Replay" Margin="8" Padding="8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="80"/>
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Command="{Binding PlayPauseCommand}" FontSize="20">⏯️</Button>
-                <TextBox Grid.Column="1" Text="{Binding Tick, UpdateSourceTrigger=PropertyChanged}" Margin="8,0" PreviewTextInput="TextBox_PreviewTextInput" VerticalAlignment="Center" />
-                <Slider x:Name="slider" Grid.Column="2" Value="{Binding Tick}" Minimum="0" Maximum="{Binding MaxTick}" SmallChange="1" LargeChange="20" VerticalAlignment="Center" />
-            </Grid>
-        </GroupBox>
     </Grid>
 </UserControl>

@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace MapGeneratorTester;
+namespace Swoq.MapGeneratorTester;
 
 /// <summary>
 /// Interaction logic for App.xaml

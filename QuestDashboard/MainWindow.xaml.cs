@@ -1,7 +1,7 @@
-﻿using QuestDashboard.ViewModels;
+﻿using Swoq.QuestDashboard.ViewModels;
 using System.Windows;
 
-namespace QuestDashboard;
+namespace Swoq.QuestDashboard;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml

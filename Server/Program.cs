@@ -26,7 +26,7 @@ public class Program
 
         // force replay saver to be created
         _ = app.Services.GetService<ReplaySaver>();
-        
+
         app.Run();
     }
 }

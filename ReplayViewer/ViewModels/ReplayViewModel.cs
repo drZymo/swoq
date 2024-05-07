@@ -1,5 +1,4 @@
-﻿using Swoq.Infra;
-using Swoq.InfraUI.Models;
+﻿using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
 using System.Collections.Immutable;
@@ -23,31 +22,17 @@ internal class ReplayViewModel : ViewModelBase
 
         var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
 
-        var hasPlayer2 = false;
-        var hasEnemies = false;
-        var hasPickups = false;
-
-        {
-            var (hp2, he, hp) = AddGameState(ref gameStates, mapBuilder, null, startResponse.State);
-            hasPlayer2 = hasPlayer2 || hp2;
-            hasEnemies = hasEnemies || he;
-            hasPickups = hasPickups || hp;
-        }
+        AddGameState(ref gameStates, mapBuilder, null, startResponse.State);
 
         while (file.Position < file.Length)
         {
             var request = ActionRequest.Parser.ParseDelimitedFrom(file);
             var response = ActionResponse.Parser.ParseDelimitedFrom(file);
 
-            var (hp2, he, hp) = AddGameState(ref gameStates, mapBuilder, request, response.State);
-            hasPlayer2 = hasPlayer2 || hp2;
-            hasEnemies = hasEnemies || he;
-            hasPickups = hasPickups || hp;
+            AddGameState(ref gameStates, mapBuilder, request, response.State);
         }
 
         PlayPauseCommand = new RelayCommand(PlayPause);
-
-        Current.UpdateMapFeatures(hasPickups, hasEnemies, hasPlayer2);
 
         OnTickChanged();
     }
@@ -69,7 +54,7 @@ internal class ReplayViewModel : ViewModelBase
         }
     }
 
-    public GameStateViewModel Current { get; } = new GameStateViewModel(null);
+    public GameStateViewModel Current { get; } = new GameStateViewModel();
 
     public int MaxTick => gameStates.Count - 1;
 
@@ -78,7 +63,7 @@ internal class ReplayViewModel : ViewModelBase
     private DispatcherTimer? timer = null;
 
 
-    private static (bool hasPlayer2, bool hasEnemies, bool hasPickups) AddGameState(ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state)
+    private static void AddGameState(ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state)
     {
         // Clear whole map on new level
         if (gameStates.Count > 0 && state.Level != gameStates[^1].Level)
@@ -109,11 +94,6 @@ internal class ReplayViewModel : ViewModelBase
 
         var gameState = new GameState(state.Level, status, map, player1State, player2State);
         gameStates = gameStates.Add(gameState);
-
-        var hasPlayer2 = map.InitialPlayer2Position != null;
-        var hasEnemies = map.InitialEnemy1Position != null || map.InitialEnemy2Position != null;
-        var hasPickups = map.Any(c => c == Cell.KeyRed || c == Cell.KeyGreen || c == Cell.KeyBlue);
-        return (hasPlayer2, hasEnemies, hasPickups);
     }
 
     private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)

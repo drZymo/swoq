@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace QuestDashboard;
+namespace Swoq.QuestDashboard;
 
 /// <summary>
 /// Interaction logic for App.xaml

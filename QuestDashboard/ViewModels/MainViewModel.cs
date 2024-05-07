@@ -1,17 +1,21 @@
 ﻿using Grpc.Net.Client;
+using Swoq.InfraUI.Models;
+using Swoq.InfraUI.ViewModels;
 using System.Diagnostics;
+using System.Text;
+using System.Windows.Threading;
 
-namespace QuestDashboard.ViewModels;
+namespace Swoq.QuestDashboard.ViewModels;
 
 internal class MainViewModel : ViewModelBase, IDisposable
 {
-    private CancellationTokenSource cancellationTokenSource = new();
-    private Thread readThread;
-    private ReplayViewModel replay;
+    private readonly CancellationTokenSource cancellationTokenSource = new();
+    private readonly Dispatcher uiDispatcher;
+    private readonly Thread readThread;
 
     public MainViewModel()
     {
-        replay = new ReplayViewModel(@"D:\Projects\swoq-stuff\Replays\Training\Ralph\level 9 - d11b7860-2fc2-4d5e-b369-dae05f2c4512.bin");
+        uiDispatcher = Dispatcher.CurrentDispatcher;
 
         readThread = new Thread(new ThreadStart(ReadThread));
         readThread.Start();
@@ -23,12 +27,13 @@ internal class MainViewModel : ViewModelBase, IDisposable
         readThread.Join();
     }
 
-    public ReplayViewModel Replay
+    private GameStateViewModel gameState = new(null);
+    public GameStateViewModel GameState
     {
-        get => replay;
+        get => gameState;
         private set
         {
-            replay = value;
+            gameState = value;
             OnPropertyChanged();
         }
     }
@@ -38,10 +43,11 @@ internal class MainViewModel : ViewModelBase, IDisposable
         try
         {
             MapBuilder? mapBuilder = null;
+            int prevLevel = -1;
 
             using var channel = GrpcChannel.ForAddress("http://localhost:5009");
 
-            var client = new Swoq.Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
+            var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
             var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty());
             while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
             {
@@ -50,6 +56,10 @@ internal class MainViewModel : ViewModelBase, IDisposable
                 if (message.Started != null)
                 {
                     Debug.WriteLine("Started");
+
+                    prevLevel = -1;
+                    uiDispatcher.Invoke(() => { GameState.Reset(); });
+
                     var response = message.Started.Response;
                     if (mapBuilder == null ||
                         mapBuilder.Height != response.Height ||
@@ -59,15 +69,15 @@ internal class MainViewModel : ViewModelBase, IDisposable
                         mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
                     }
 
-                    mapBuilder.PrepareForNextTimeStep();
-                    mapBuilder.AddPlayerState(response.State.Player1, 1);
-                    mapBuilder.AddPlayerState(response.State.Player2, 2);
-                    mapBuilder.CreateMap();
+                    var gameState = CreateGameState(response.State, ref prevLevel, ref mapBuilder);
+                    uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
                 }
 
-                if (message.Acted != null)
+                if (message.Acted != null && mapBuilder != null)
                 {
                     Debug.WriteLine("Acted");
+                    var gameState = CreateGameState(message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
+                    uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
                 }
             }
         }
@@ -75,5 +85,54 @@ internal class MainViewModel : ViewModelBase, IDisposable
         {
             // Stop gracefully
         }
+    }
+
+    private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
+
+    private GameState CreateGameState(Interface.State state, ref int prevLevel, ref MapBuilder mapBuilder, Interface.ActionRequest? request = null)
+    {
+        // Clear whole map on new level
+        if (state.Level != prevLevel)
+        {
+            mapBuilder.Reset();
+            prevLevel = state.Level;
+        }
+
+        mapBuilder.PrepareForNextTimeStep();
+        mapBuilder.AddPlayerState(state.Player1, 1);
+        mapBuilder.AddPlayerState(state.Player2, 2);
+        var map = mapBuilder.CreateMap();
+
+        var status = state.Finished ? "Finished" : "Active";
+
+        var action1 = request != null
+            ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
+            : "Start";
+        var player1State = new PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
+
+        PlayerState? player2State = null;
+        if (state.Player2 != null)
+        {
+            var action2 = request != null
+                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null, request.HasDirection2 ? request.Direction2 : null)
+                : "Start";
+            player2State = new PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
+        }
+
+        return new GameState(state.Level, status, map, player1State, player2State);
+    }
+
+    private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)
+    {
+        if (!action.HasValue) return "None";
+
+        var playerAction = new StringBuilder();
+        playerAction.Append(action.Value.ToString());
+        if (direction.HasValue)
+        {
+            playerAction.Append(' ');
+            playerAction.Append(direction.Value.ToString());
+        }
+        return playerAction.ToString();
     }
 }

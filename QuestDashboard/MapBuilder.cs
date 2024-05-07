@@ -2,7 +2,7 @@
 using Swoq.Interface;
 using System.Collections.Immutable;
 
-namespace QuestDashboard;
+namespace Swoq.QuestDashboard;
 
 using Position = (int y, int x);
 

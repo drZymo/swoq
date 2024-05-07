@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Swoq.ReplayViewer"
+             xmlns:infraui="clr-namespace:Swoq.InfraUI.Views;assembly=InfraUI"
              xmlns:vm="clr-namespace:Swoq.ReplayViewer.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
@@ -20,93 +20,7 @@
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" DataContext="{Binding Current}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <Grid  Grid.Column="0" Background="Black">
-                <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-            </Grid>
-            <StackPanel Grid.Column="1" Orientation="Vertical">
-                <GroupBox Header="Game" Margin="8" Padding="8">
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock>
-                        <Run>Level:</Run>
-                        <Run Text="{Binding Level, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock>
-                        <Run>Status:</Run>
-                        <Run Text="{Binding Status, Mode=OneWay}" />
-                        </TextBlock>
-                    </StackPanel>
-                </GroupBox>
-
-                <GroupBox Margin="8" Padding="8">
-                    <GroupBox.Header>
-                        <TextBlock>
-                            <Run>Player</Run>
-                            <Run>
-                                <Run.Style>
-                                    <Style TargetType="Run">
-                                        <Setter Property="Text" Value="{x:Null}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ShowPlayer2}" Value="True">
-                                                <Setter Property="Text" Value="#1"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Run.Style>
-                            </Run>
-                        </TextBlock>
-                    </GroupBox.Header>
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock>
-                        <Run>Last action:</Run>
-                        <Run Text="{Binding Player1Action, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Visibility="{Binding ShowHealth, Converter={StaticResource boolToVisConverter}}">
-                        <Run>Health:</Run>
-                        <Run Text="{Binding Player1Health, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Visibility="{Binding ShowInventory, Converter={StaticResource boolToVisConverter}}">
-                        <Run>Inventory:</Run>
-                        <Run Text="{Binding Player1Inventory, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Visibility="{Binding ShowSword, Converter={StaticResource boolToVisConverter}}">
-                        <Run>Has sword:</Run>
-                        <Run Text="{Binding Player1HasSword, Mode=OneWay}" />
-                        </TextBlock>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Margin="8" Padding="8" Visibility="{Binding ShowPlayer2, Converter={StaticResource boolToVisConverter}}">
-                    <GroupBox.Header>
-                        <TextBlock>
-                            <Run>Player</Run>
-                            <Run>#2</Run>
-                        </TextBlock>
-                    </GroupBox.Header>
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock>
-                        <Run>Last action:</Run>
-                        <Run Text="{Binding Player2Action, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Visibility="{Binding ShowHealth, Converter={StaticResource boolToVisConverter}}">
-                        <Run>Health:</Run>
-                        <Run Text="{Binding Player2Health, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Visibility="{Binding ShowInventory, Converter={StaticResource boolToVisConverter}}">
-                        <Run>Inventory:</Run>
-                        <Run Text="{Binding Player2Inventory, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Visibility="{Binding ShowSword, Converter={StaticResource boolToVisConverter}}">
-                        <Run>Has sword:</Run>
-                        <Run Text="{Binding Player2HasSword, Mode=OneWay}" />
-                        </TextBlock>
-                    </StackPanel>
-                </GroupBox>
-            </StackPanel>
-        </Grid>
+        <infraui:GameStateView DataContext="{Binding Current}"/>
 
         <GroupBox Grid.Row="1" Header="Replay" Margin="8" Padding="8">
             <Grid>
