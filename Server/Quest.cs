@@ -9,6 +9,7 @@ class Quest : IGame
     private readonly ISwoqDatabase database;
 
     private Game currentGame;
+    private int ticks = 0;
 
     public Quest(Player player, ISwoqDatabase database)
     {
@@ -27,9 +28,10 @@ class Quest : IGame
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        LastAction = DateTime.Now;
-
         if (State.Finished) { return; }
+        
+        LastAction = DateTime.Now;
+        ticks++;
 
         // Play current game
         currentGame.Act(action1, action2);
@@ -54,9 +56,11 @@ class Quest : IGame
             else
             {
                 Console.WriteLine($"{player.Name} finished the quest");
-                state = new GameState(Level, true);
+                state = new GameState(ticks, Level, true);
             }
         }
+
+        state = state with { Tick = ticks };
 
         State = state;
     }

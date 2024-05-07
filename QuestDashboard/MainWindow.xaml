@@ -10,5 +10,12 @@
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="Swoq Replay Viewer" Height="800" Width="1000"
         Closed="Window_Closed">
-    <infraui:GameStateView DataContext="{Binding GameState}"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <infraui:GameStateView Grid.Row="0" DataContext="{Binding GameState}"/>
+        <TextBlock Grid.Row="1" Text="{Binding StatusMessage}"/>
+    </Grid>
 </Window>

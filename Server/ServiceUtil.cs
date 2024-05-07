@@ -34,6 +34,7 @@ internal static class ServiceUtil
     {
         return new State
         {
+            Tick = gameState.Tick,
             Level = gameState.Level,
             Finished = gameState.Finished,
             Player1 = gameState.Player1 != null ? Convert(gameState.Player1) : null,

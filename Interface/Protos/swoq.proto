@@ -70,10 +70,11 @@ message PlayerState {
 }
 
 message State {
-	int32 level = 1;
-	bool finished = 2;
-	optional PlayerState player1 = 3;
-	optional PlayerState player2 = 4;
+	int32 tick = 1;
+	int32 level = 2;
+	bool finished = 3;
+	optional PlayerState player1 = 4;
+	optional PlayerState player2 = 5;
 }
 
 message StartRequest {

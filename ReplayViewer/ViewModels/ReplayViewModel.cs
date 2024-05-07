@@ -92,7 +92,7 @@ internal class ReplayViewModel : ViewModelBase
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        var gameState = new GameState(state.Level, status, map, player1State, player2State);
+        var gameState = new GameState(state.Tick, state.Level, status, map, player1State, player2State);
         gameStates = gameStates.Add(gameState);
     }
 

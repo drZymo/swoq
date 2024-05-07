@@ -28,6 +28,7 @@
 - [ ] Single output folder
 - [ ] Sync appsettings for production/development
 - [ ] Installer for ReplayViewer
+- [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Example bot Python
 - [ ] Example bot C#
 

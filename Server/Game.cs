@@ -16,6 +16,7 @@ internal class Game : IGame
     private record Enemy(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth)
         : Character(Name, Position, Inventory, Health);
 
+    private int ticks = 0;
     private readonly int level;
     private Map map;
 
@@ -52,9 +53,10 @@ internal class Game : IGame
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        LastAction = DateTime.Now;
-
         if (Status != GameStatus.Active) throw new GameFinishedException(CreateState());
+
+        LastAction = DateTime.Now;
+        ticks++;
 
         Debug.Assert(player1 != null || player2 != null);
 
@@ -120,7 +122,7 @@ internal class Game : IGame
         Debug.Assert(player1 != null || player2 != null);
         PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
-        return new GameState(level, Status != GameStatus.Active, player1State, player2State);
+        return new GameState(ticks, level, Status != GameStatus.Active, player1State, player2State);
     }
 
     private void UpdateGameStatus()

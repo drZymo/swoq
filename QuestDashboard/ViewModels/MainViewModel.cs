@@ -38,58 +38,85 @@ internal class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private string statusMessage = "";
+    public string StatusMessage
+    {
+        get => statusMessage;
+        private set
+        {
+            statusMessage = value;
+            OnPropertyChanged();
+        }
+    }
+
     private async void ReadThread()
     {
-        try
+        while (!cancellationTokenSource.IsCancellationRequested)
         {
-            MapBuilder? mapBuilder = null;
-            int prevLevel = -1;
-
-            using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-
-            var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
-            var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty());
-            while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
+            try
             {
-                var message = call.ResponseStream.Current;
+                bool connected = false;
+                uiDispatcher.Invoke(() => { StatusMessage = "Connecting..."; });
+                using var channel = GrpcChannel.ForAddress("http://localhost:5009");
 
-                if (message.Started != null)
+                var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
+
+                MapBuilder? mapBuilder = null;
+                int prevLevel = -1;
+
+                var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty());
+                while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
                 {
-                    Debug.WriteLine("Started");
-
-                    prevLevel = -1;
-                    uiDispatcher.Invoke(() => { GameState.Reset(); });
-
-                    var response = message.Started.Response;
-                    if (mapBuilder == null ||
-                        mapBuilder.Height != response.Height ||
-                        mapBuilder.Width != response.Width ||
-                        mapBuilder.VisibilityRange != response.VisibilityRange)
+                    if (!connected)
                     {
-                        mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
+                        uiDispatcher.Invoke(() => { StatusMessage = "Connected"; });
+                        connected = true;
                     }
 
-                    var gameState = CreateGameState(response.State, ref prevLevel, ref mapBuilder);
-                    uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
-                }
+                    var message = call.ResponseStream.Current;
 
-                if (message.Acted != null && mapBuilder != null)
-                {
-                    Debug.WriteLine("Acted");
-                    var gameState = CreateGameState(message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
-                    uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
+                    if (message.Started != null)
+                    {
+
+                        prevLevel = -1;
+                        uiDispatcher.Invoke(() => { GameState.Reset(); });
+
+                        var response = message.Started.Response;
+                        if (mapBuilder == null ||
+                            mapBuilder.Height != response.Height ||
+                            mapBuilder.Width != response.Width ||
+                            mapBuilder.VisibilityRange != response.VisibilityRange)
+                        {
+                            mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
+                        }
+
+                        var gameState = CreateGameState(response.State, ref prevLevel, ref mapBuilder);
+                        uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
+                    }
+
+                    if (message.Acted != null && mapBuilder != null)
+                    {
+                        var gameState = CreateGameState(message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
+                        uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
+                    }
                 }
             }
-        }
-        catch (OperationCanceledException)
-        {
-            // Stop gracefully
+            catch (OperationCanceledException)
+            {
+                // Stop gracefully
+                break;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
+                Thread.Sleep(TimeSpan.FromSeconds(5));
+            }
         }
     }
 
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
-    private GameState CreateGameState(Interface.State state, ref int prevLevel, ref MapBuilder mapBuilder, Interface.ActionRequest? request = null)
+    private static GameState CreateGameState(Interface.State state, ref int prevLevel, ref MapBuilder mapBuilder, Interface.ActionRequest? request = null)
     {
         // Clear whole map on new level
         if (state.Level != prevLevel)
@@ -119,7 +146,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
             player2State = new PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        return new GameState(state.Level, status, map, player1State, player2State);
+        return new GameState(state.Tick, state.Level, status, map, player1State, player2State);
     }
 
     private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)

@@ -12,6 +12,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         set
         {
             current = value;
+            OnPropertyChanged(nameof(Tick));
             OnPropertyChanged(nameof(Level));
             OnPropertyChanged(nameof(Status));
 
@@ -27,6 +28,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         }
     }
 
+    public int Tick => Current?.Tick ?? -1;
     public int Level => Current?.Level ?? -1;
     public string Status => Current?.Status ?? "Unknown";
 
@@ -107,11 +109,11 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         Map = new MapViewModel(gameState.Map);
 
         HasPlayer2 = HasPlayer2 || (gameState.Map.InitialPlayer2Position != null);
-        HasEnemies = HasEnemies || (gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null);
+        HasEnemies = HasEnemies || (gameState.Map.Any(c => c == Cell.Sword) || gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null);
         HasPickups = HasPickups || (gameState.Map.Any(RequiresInventory));
     }
 
-    public bool RequiresInventory(Cell cell) => cell switch
+    public static bool RequiresInventory(Cell cell) => cell switch
     {
         Cell.KeyRed => true,
         Cell.KeyGreen => true,

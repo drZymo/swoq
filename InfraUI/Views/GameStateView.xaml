@@ -25,6 +25,10 @@
             <GroupBox Header="Game" Margin="8" Padding="8">
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
+                        <Run>Tick:</Run>
+                        <Run Text="{Binding Tick, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock>
                         <Run>Level:</Run>
                         <Run Text="{Binding Level, Mode=OneWay}" />
                     </TextBlock>
