@@ -94,7 +94,7 @@ public class MapViewModel : ViewModelBase
                         var newTile = new byte[tile.Length];
                         for (var i = 0; i < tile.Length; i++)
                         {
-                            newTile[i] = (byte)(tile[i] / 2);
+                            newTile[i] = (byte)(tile[i] * 2 / 3);
                         }
                         tile = newTile;
                     }
