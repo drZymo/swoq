@@ -1,7 +1,7 @@
-﻿using Swoq.Server.Services;
+﻿using Swoq.Server.Data;
 using System.Collections.Immutable;
 
-namespace Swoq.Server;
+namespace Swoq.Server.Services;
 
 internal class GameServer(ISwoqDatabase database)
 {

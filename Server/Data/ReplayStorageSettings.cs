@@ -1,4 +1,4 @@
-﻿namespace Swoq.Server.Models;
+﻿namespace Swoq.Server.Data;
 
 internal class ReplayStorageSettings
 {

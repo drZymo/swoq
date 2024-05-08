@@ -1,9 +1,9 @@
 ﻿using Grpc.Core;
 using Swoq.Interface;
 
-namespace Swoq.Server;
+namespace Swoq.Server.Services;
 
-internal class GameService(ILogger<GameService> logger, GameServer server, GameServicePostman gameServicePostman) : Swoq.Interface.GameService.GameServiceBase
+internal class GameService(ILogger<GameService> logger, GameServer server, GameServicePostman gameServicePostman) : Interface.GameService.GameServiceBase
 {
     public override Task<StartResponse> Start(StartRequest request, ServerCallContext context)
     {
@@ -55,11 +55,11 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
             {
                 gameId = Guid.Parse(request.GameId);
 
-                DirectedAction? action1 = (request.HasAction1 && request.HasDirection1)
+                DirectedAction? action1 = request.HasAction1 && request.HasDirection1
                     ? new DirectedAction(request.Action1.Convert(), request.Direction1.Convert())
                     : null;
 
-                DirectedAction? action2 = (request.HasAction2 && request.HasDirection2)
+                DirectedAction? action2 = request.HasAction2 && request.HasDirection2
                     ? new DirectedAction(request.Action2.Convert(), request.Direction2.Convert())
                     : null;
 

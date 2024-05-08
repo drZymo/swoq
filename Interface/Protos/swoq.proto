@@ -28,9 +28,9 @@ enum Result {
 }
 
 
-
 service PlayerService {
 	rpc Register(RegisterRequest) returns (RegisterResponse);
+	rpc GetScores(google.protobuf.Empty) returns(Scores);
 }
 
 message RegisterRequest {
@@ -42,6 +42,16 @@ message RegisterResponse {
 	optional string playerId = 2;
 }
 
+message Score {
+	string playerName = 1;
+	int32 level = 2;
+	int32 lengthTicks = 3;
+	int32 lengthSeconds = 4;
+}
+
+message Scores {
+	repeated Score scores = 1;
+}
 
 
 service GameService {

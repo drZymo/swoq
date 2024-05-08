@@ -3,7 +3,7 @@ using Grpc.Core;
 using Swoq.Interface;
 using System.Collections.Concurrent;
 
-namespace Swoq.Server;
+namespace Swoq.Server.Services;
 
 public class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorServiceBase, IDisposable
 {

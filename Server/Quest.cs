@@ -1,5 +1,4 @@
-﻿using Swoq.Server.Models;
-using Swoq.Server.Services;
+﻿using Swoq.Server.Data;
 
 namespace Swoq.Server;
 
@@ -46,7 +45,7 @@ class Quest : IGame
             Level++;
 
             // Update player stats
-            var lengthTime = LastAction - startTime;
+            var lengthSeconds = (int)Math.Round((LastAction - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
             if (player.Level < Level)
             {
                 // If this level was not reached before,
@@ -54,13 +53,13 @@ class Quest : IGame
                 Console.WriteLine($"{player.Name} unlocked level {Level}");
                 player.Level = Level;
                 player.QuestLengthTicks = ticks;
-                player.QuestLengthTime = lengthTime;
+                player.QuestLengthSeconds = lengthSeconds;
             }
             else if (player.Level == Level)
             {
                 // If this level was the highest level reached before, then update the duration if it improved.
                 player.QuestLengthTicks = ticks < player.QuestLengthTicks ? ticks : player.QuestLengthTicks;
-                player.QuestLengthTime = lengthTime < player.QuestLengthTime ? lengthTime : player.QuestLengthTime;
+                player.QuestLengthSeconds = Math.Min(lengthSeconds, player.QuestLengthSeconds);
             }
 
             // Create a new game if this was not the last level

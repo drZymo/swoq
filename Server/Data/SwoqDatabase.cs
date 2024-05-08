@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using Swoq.Server.Models;
+using Swoq.Server.Data;
+using System.Collections.Immutable;
 
-namespace Swoq.Server.Services;
+namespace Swoq.Server.Data;
 
 public class SwoqDatabase : ISwoqDatabase
 {
@@ -37,7 +38,14 @@ public class SwoqDatabase : ISwoqDatabase
         var update = Builders<Player>.Update.
             Set(p => p.Level, player.Level).
             Set(p => p.QuestLengthTicks, player.QuestLengthTicks).
-            Set(p => p.QuestLengthTime, player.QuestLengthTime);
+            Set(p => p.QuestLengthSeconds, player.QuestLengthSeconds);
         await playersCollection.UpdateOneAsync(filter, update);
+    }
+
+    public async Task<IImmutableList<Player>> GetAllPlayers()
+    {
+        var players = await playersCollection.FindAsync(p => true);
+        var playersList = await players.ToListAsync();
+        return playersList.ToImmutableArray();
     }
 }

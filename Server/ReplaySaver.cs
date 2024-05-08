@@ -1,7 +1,8 @@
 ﻿using Google.Protobuf;
 using Microsoft.Extensions.Options;
 using Swoq.Interface;
-using Swoq.Server.Models;
+using Swoq.Server.Data;
+using Swoq.Server.Services;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 

@@ -1,6 +1,7 @@
-﻿using Swoq.Server.Models;
+﻿using Swoq.Server.Data;
+using System.Collections.Immutable;
 
-namespace Swoq.Server.Services;
+namespace Swoq.Server.Data;
 
 public interface ISwoqDatabase
 {
@@ -8,4 +9,6 @@ public interface ISwoqDatabase
     Task<Player?> FindPlayerByIdAsync(string id);
     Task<Player?> FindPlayerByNameAsync(string name);
     Task UpdatePlayerAsync(Player player);
+
+    Task<IImmutableList<Player>> GetAllPlayers();
 }

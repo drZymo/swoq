@@ -1,6 +1,6 @@
 ﻿using Swoq.Interface;
 
-namespace Swoq.Server;
+namespace Swoq.Server.Services;
 
 public class GameServicePostman
 {

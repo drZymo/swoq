@@ -1,7 +1,7 @@
-﻿using Swoq.Server.Models;
+﻿using Swoq.Server.Data;
 using System.Collections.Immutable;
 
-namespace Swoq.Server.Services;
+namespace Swoq.Server.Data;
 
 public class SwoqDatabaseInMemory : ISwoqDatabase
 {
@@ -32,4 +32,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         if (player.Id == null) return;
         await Task.Run(() => players = players.SetItem(player.Id, player));
     }
+
+    public async Task<IImmutableList<Player>> GetAllPlayers() =>
+        await Task.FromResult(players.Values.ToImmutableArray());
 }
