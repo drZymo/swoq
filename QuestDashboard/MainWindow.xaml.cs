@@ -26,13 +26,15 @@ public partial class MainWindow : Window
         {
             if (WindowState != WindowState.Maximized)
             {
-                WindowState = WindowState.Maximized;
                 WindowStyle = WindowStyle.None;
+                ResizeMode = ResizeMode.NoResize;
+                WindowState = WindowState.Maximized;
             }
             else
             {
-                WindowStyle = WindowStyle.SingleBorderWindow;
                 WindowState = WindowState.Normal;
+                ResizeMode = ResizeMode.CanResize;
+                WindowStyle = WindowStyle.SingleBorderWindow;
             }
         }
 

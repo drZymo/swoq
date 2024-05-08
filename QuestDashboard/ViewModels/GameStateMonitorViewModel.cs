@@ -51,6 +51,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
     private async void MonitorThread()
     {
+        var callOptions = new Grpc.Core.CallOptions(cancellationToken: cancellationTokenSource.Token);
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             try
@@ -58,13 +59,12 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 bool connected = false;
                 uiDispatcher.Invoke(() => { StatusMessage = "Connecting..."; });
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-
                 var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
 
                 MapBuilder? mapBuilder = null;
                 int prevLevel = -1;
 
-                var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty());
+                var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
                 while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
                 {
                     if (!connected)
@@ -108,6 +108,11 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
             }
             catch (Grpc.Core.RpcException ex)
             {
+                if (ex.InnerException is OperationCanceledException)
+                {
+                    // Stop gracefully on cancel
+                    break;
+                }
                 uiDispatcher.Invoke(() => { StatusMessage = "Disconnected"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
@@ -161,11 +166,24 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         if (!action.HasValue) return "None";
 
         var playerAction = new StringBuilder();
-        playerAction.Append(action.Value.ToString());
+
+        playerAction.Append(action.Value switch
+        {
+            Interface.Action.Use => "Use",
+            Interface.Action.Move => "Move",
+            _ => "Unknown",
+        });
         if (direction.HasValue)
         {
             playerAction.Append(' ');
-            playerAction.Append(direction.Value.ToString());
+            playerAction.Append(direction.Value switch
+            {
+                Interface.Direction.North => "North",
+                Interface.Direction.East => "East",
+                Interface.Direction.South => "South",
+                Interface.Direction.West => "West",
+                _ => "Unknown",
+            });
         }
         return playerAction.ToString();
     }

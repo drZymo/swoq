@@ -9,7 +9,7 @@ namespace Swoq.QuestDashboard.ViewModels;
 
 internal class ScoresViewModel : ViewModelBase, IDisposable
 {
-    private static readonly TimeSpan PollDelay = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan PollDelay = TimeSpan.FromSeconds(3);
 
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Dispatcher uiDispatcher;
@@ -49,19 +49,22 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
 
     private async void PollThread()
     {
+        var callOptions = new Grpc.Core.CallOptions(cancellationToken: cancellationTokenSource.Token);
+
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             try
             {
                 bool connected = false;
                 uiDispatcher.Invoke(() => { StatusMessage = "Connecting..."; });
-                using var channel = GrpcChannel.ForAddress("http://localhost:5009");
 
+                using var channel = GrpcChannel.ForAddress("http://localhost:5009");
                 var client = new Interface.PlayerService.PlayerServiceClient(channel);
 
                 while (!cancellationTokenSource.IsCancellationRequested)
                 {
-                    var orderedScores = client.GetScores(new Google.Protobuf.WellKnownTypes.Empty()).Scores_.
+                    var orderedScores = client.GetScores(new Google.Protobuf.WellKnownTypes.Empty(), callOptions).
+                        Scores_.
                         Select(s => new Score(s.PlayerName, s.Level, s.LengthTicks, s.LengthSeconds)).
                         OrderByDescending(s => s.Level).
                         ThenBy(s => s.LengthTicks).
@@ -88,11 +91,16 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
             }
             catch (OperationCanceledException)
             {
-                // Stop gracefully
+                // Stop gracefully on cancel
                 break;
             }
             catch (Grpc.Core.RpcException ex)
             {
+                if (ex.InnerException is OperationCanceledException)
+                {
+                    // Stop gracefully on cancel
+                    break;
+                }
                 uiDispatcher.Invoke(() => { StatusMessage = "Disconnected"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
