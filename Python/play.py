@@ -4,9 +4,6 @@ import swoq_pb2_grpc
 import numpy as np
 from map_util import *
 
-
-player_id = '6616b1c5bd0a697480a68319'
-
 to_swoq_pb2_direction = {
     'N': swoq_pb2.NORTH,
     'E': swoq_pb2.EAST,
@@ -40,9 +37,12 @@ _result_strings  = {
 
 class GamePlayer:
 
-    def __init__(self, plot:bool=True, print:bool=True):
+    def __init__(self, player_id:str, plot:bool=True, print:bool=True):
+        self.player_id = player_id
         self.plot = plot
         self.print = print
+
+        self.remain_on_plate_counter = 0
 
         self.channel = grpc.insecure_channel('localhost:5009')
         self.stub = swoq_pb2_grpc.GameServiceStub(self.channel)
@@ -63,7 +63,7 @@ class GamePlayer:
     def start(self, level:int=None) -> None:
         global played_id
 
-        startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=player_id, level=level))
+        startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=self.player_id, level=level))
 
         if self.print:
             result = _result_strings[startResponse.result]
@@ -180,22 +180,6 @@ class GamePlayer:
         return response.result == 0
 
 
-    def move(self, direction:str) -> bool:
-        global to_swoq_pb2_direction
-        dir = to_swoq_pb2_direction[direction]
-        self.action1 = swoq_pb2.MOVE
-        self.direction1 = dir
-        return self.act()
-
-
-    def use(self, direction:str) -> bool:
-        global to_swoq_pb2_direction
-        dir = to_swoq_pb2_direction[direction]
-        self.action1 = swoq_pb2.USE
-        self.direction1 = dir
-        return self.act()
-
-
     def queue_move1(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action1 is None)
@@ -227,83 +211,16 @@ class GamePlayer:
     def step(self) -> None:
         if self.finished: return
 
-        self.try_explore1()
-        self.try_explore2()
-        # self.explore()
-        self.try_reach_exit1()
-        self.try_reach_exit2()
-        # if self.finished: return
-        # self.try_get_health()
-        self.try_get_sword1()
-        self.try_get_sword2()
-        # self.fight_enemy()
-        # self.try_get_key()
-        # self.try_open_door()
-        # self.move_to_pressure_plate()
-
+        self.move_to_exit()
+        self.attack()
+        self.pickup_health()
+        self.pickup_sword()
+        self.pickup_keys()
+        self.explore()
+        self.move_to_pressure_plate()
+        self.wait_at_black_door()
         self.act()
-
-
-    def try_explore1(self) -> None:
-        if self.action1 is not None: return
-
-        # stop immediately when exit is visible
-        if np.any(self.map == EXIT): return
-        # stop immediately to pickup sword
-        if not self.player1_has_sword and np.any(self.map == SWORD): return
-        # stop immediately to pickup health
-        if np.any(self.map == HEALTH): return
-
-        # stop immediately if matching key and door have been found
-        if np.any(self.map == KEY_RED) and np.any(self.map == DOOR_RED): return
-        if np.any(self.map == KEY_GREEN) and np.any(self.map == DOOR_GREEN): return
-        if np.any(self.map == KEY_BLUE) and np.any(self.map == DOOR_BLUE): return
-        if self.player1_inventory == INVENTORY_KEY_RED and np.any(self.map == DOOR_RED): return
-        if self.player1_inventory == INVENTORY_KEY_GREEN and np.any(self.map == DOOR_GREEN): return
-        if self.player1_inventory == INVENTORY_KEY_BLUE and np.any(self.map == DOOR_BLUE): return
-
-        direction = self.get_direction_towards_closest_unknown(self.player1_pos, self.player1_distances_nokeys, self.player1_paths_nokeys)
-        if direction is None: return
-
-        self.queue_move1(direction)
-
-
-    def try_explore2(self) -> None:
-        if self.action2 is not None: return
-
-        # stop immediately when exit is visible
-        if np.any(self.map == EXIT): return
-        # stop immediately to pickup sword
-        if not self.player2_has_sword and np.any(self.map == SWORD): return
-        # stop immediately to pickup health
-        if np.any(self.map == HEALTH): return
-
-        # stop immediately if matching key and door have been found
-        if np.any(self.map == KEY_RED) and np.any(self.map == DOOR_RED): return
-        if np.any(self.map == KEY_GREEN) and np.any(self.map == DOOR_GREEN): return
-        if np.any(self.map == KEY_BLUE) and np.any(self.map == DOOR_BLUE): return
-        if self.player2_inventory == INVENTORY_KEY_RED and np.any(self.map == DOOR_RED): return
-        if self.player2_inventory == INVENTORY_KEY_GREEN and np.any(self.map == DOOR_GREEN): return
-        if self.player2_inventory == INVENTORY_KEY_BLUE and np.any(self.map == DOOR_BLUE): return
-
-        direction = self.get_direction_towards_closest_unknown(self.player2_pos, self.player2_distances_nokeys, self.player2_paths_nokeys)
-        if direction is None: return
-
-        self.queue_move2(direction)
-
-
-    def get_direction_from_to(self, from_pos:tuple[int,int], to_pos:tuple[int,int], paths, paths_nokeys) -> str:
-        if from_pos == to_pos: return None
-
-        current_paths = paths_nokeys
-
-        # prevent picking up keys accidentally unless it is the target key
-        excluded_cells = {KEY_RED, KEY_GREEN, KEY_BLUE}
-        target_type = self.map[to_pos[0], to_pos[1]]
-        if target_type in excluded_cells:
-            current_paths = paths
-
-        return get_direction_towards(current_paths, from_pos, to_pos)
+        self.update_remain_on_plate()
 
 
     def get_direction_towards_closest_unknown(self, from_pos, distances, paths) -> str:
@@ -330,155 +247,208 @@ class GamePlayer:
         return get_direction_towards(paths, from_pos, closest_empty)
 
 
-    def try_reach_exit1(self) -> None:
-        if self.action1 is not None: return
-
-        exit_pos = np.argwhere(self.map == EXIT)
-        if not np.any(exit_pos): return
-
-        exit_pos = exit_pos[0]
-        direction = self.get_direction_from_to(self.player1_pos, tuple(exit_pos), self.player1_paths, self.player1_paths_nokeys)
-        if direction is None: return
-
-        self.queue_move1(direction)
+    def can_act1(self) -> bool:
+        return valid_pos(self.player1_pos) and self.action1 is None and self.remain_on_plate_counter <= 0
 
 
-    def try_reach_exit2(self) -> None:
-        if self.action2 is not None: return
-
-        exit_pos = np.argwhere(self.map == EXIT)
-        if not np.any(exit_pos): return
-
-        exit_pos = exit_pos[0]
-        direction = self.get_direction_from_to(self.player2_pos, tuple(exit_pos), self.player2_paths, self.player2_paths_nokeys)
-        if direction is None: return
-
-        self.queue_move2(direction)
+    def can_act2(self) -> bool:
+        return valid_pos(self.player2_pos) and self.action2 is None
 
 
-    def move_to_target(self, target_pos:tuple[int,int]) -> None:
-        while True:
-            direction = self.get_direction_from_player_towards(target_pos)
-            if direction is None: break
-            if not self.move(direction): break
+    def move_to_1(self, pos:tuple[int,int]) -> None:
+        dir = get_direction(self.player1_pos, pos, self.player1_distances, self.player1_paths)
+        self.queue_move1(dir)
 
 
-    def try_get_key(self) ->None:
-        if self.player1_inventory != INVENTORY_NONE: return
-
-        target_pos = None
-
-        doors = np.argwhere(self.map == DOOR_RED)
-        keys = np.argwhere(self.map == KEY_RED)
-        if target_pos is None and np.any(doors) and np.any(keys):
-            target_pos = tuple(keys[0])
-
-        doors = np.argwhere(self.map == DOOR_GREEN)
-        keys = np.argwhere(self.map == KEY_GREEN)
-        if target_pos is None and np.any(doors) and np.any(keys):
-            target_pos = tuple(keys[0])
-
-        doors = np.argwhere(self.map == DOOR_BLUE)
-        keys = np.argwhere(self.map == KEY_BLUE)
-        if target_pos is None and np.any(doors) and np.any(keys):
-            target_pos = tuple(keys[0])
-
-        if target_pos is not None:
-            self.move_to_target(target_pos)
+    def move_to_2(self, pos:tuple[int,int]) -> None:
+        dir = get_direction(self.player2_pos, pos, self.player2_distances, self.player2_paths)
+        self.queue_move2(dir)
 
 
-    def try_get_sword1(self) -> None:
-        if self.action1 is not None: return
-        if self.player1_has_sword: return
-
-        swords = np.argwhere(self.map == SWORD)
-        if not np.any(swords): return
-        target_pos = tuple(swords[0])
-
-        direction = self.get_direction_from_to(self.player1_pos, target_pos, self.player1_paths, self.player1_paths_nokeys)
-        if direction is None: return
-
-        self.queue_move1(direction)
+    def use_1(self, pos:tuple[int,int]) -> None:
+        if self.player1_pos[0] < pos[0]: self.queue_use1('S')
+        if self.player1_pos[0] > pos[0]: self.queue_use1('N')
+        if self.player1_pos[1] < pos[1]: self.queue_use1('E')
+        if self.player1_pos[1] > pos[1]: self.queue_use1('W')
 
 
-    def try_get_sword2(self) -> None:
-        if self.action2 is not None: return
-        if self.player2_has_sword: return
-
-        swords = np.argwhere(self.map == SWORD)
-        if not np.any(swords): return
-        target_pos = tuple(swords[0])
-
-        direction = self.get_direction_from_to(self.player2_pos, target_pos, self.player2_paths, self.player2_paths_nokeys)
-        if direction is None: return
-
-        self.queue_move2(direction)
+    def use_2(self, pos:tuple[int,int]) -> None:
+        if self.player2_pos[0] < pos[0]: self.queue_use2('S')
+        if self.player2_pos[0] > pos[0]: self.queue_use2('N')
+        if self.player2_pos[1] < pos[1]: self.queue_use2('E')
+        if self.player2_pos[1] > pos[1]: self.queue_use2('W')
 
 
-    def try_get_health(self) -> None:
-        target_pos = None
+    def pickup_key_or_open_door(self, key:int, door:int, item:int) -> None:
+        doors = np.argwhere(self.map == door)
+        if np.any(doors):
+            door_pos = tuple(doors[0])
+            if self.can_act1() and self.player1_inventory == item:
+                if are_adjacent(self.player1_pos, door_pos):
+                    print('use_door1')
+                    self.use_1(door_pos)
+                else:
+                    print('move_door1')
+                    self.move_to_1(door_pos)
+            elif self.can_act2() and self.player2_inventory == item:
+                if are_adjacent(self.player2_pos, door_pos):
+                    print('use_door2')
+                    self.use_2(door_pos)
+                else:
+                    print('move_door2')
+                    self.move_to_2(door_pos)
+            else:
+                keys = np.argwhere(self.map == key)
+                if np.any(keys):
 
+                    if self.can_act1() and self.player1_inventory == 0:
+                        for key in keys:
+                            key_pos = tuple(key)
+                            if get_direction(self.player1_pos, key_pos, self.player1_distances, self.player1_paths) is not None:
+                                print('move_key1')
+                                self.move_to_1(key_pos)
+                                break
+
+                    if self.can_act2() and self.player2_inventory == 0:
+                        for key in keys:
+                            key_pos = tuple(key)
+                            if get_direction(self.player2_pos, key_pos, self.player2_distances, self.player2_paths) is not None:
+                                print('move_key2')
+                                self.move_to_2(key_pos)
+                                break
+
+
+    def move_to_exit(self) -> None:
+        # Move to exit if possible
+        exits = np.argwhere(self.map == EXIT)
+        if np.any(exits):
+            exit_pos = tuple(exits[0])
+            if self.can_act1():
+                print('exit1')
+                self.move_to_1(exit_pos)
+            if self.can_act2():
+                print('exit2')
+                self.move_to_2(exit_pos)
+
+
+    def attack(self) -> None:
+        # Attack
+        enemies = np.argwhere(self.map == ENEMY)
+        if np.any(enemies):
+            enemy_pos = tuple(enemies[0])
+
+            # make sure players are close to each other so they can both attack
+            dist_1_to_2 = get_dist_to_other_player(self.player1_pos, self.player2_pos, self.player1_distances) if self.player1_pos is not None else None
+            dist_2_to_1 = get_dist_to_other_player(self.player2_pos, self.player1_pos, self.player2_distances) if self.player2_pos is not None else None
+            if dist_1_to_2 is None and dist_2_to_1 is None:
+                dist_players = None
+            elif dist_1_to_2 is None:
+                dist_players = dist_2_to_1
+            elif dist_2_to_1 is None:
+                dist_players = dist_1_to_2
+            else:
+                dist_players = min(dist_1_to_2, dist_2_to_1)
+            print(f'dist: 1>2: {dist_1_to_2}, 2>1: {dist_2_to_1}')
+
+            if self.can_act1() and self.player1_has_sword:
+                can_attack = True
+                if dist_players is not None and dist_players > 5:
+                    print('move_closer1')
+                    self.move_to_1(self.player2_pos)
+                    can_attack = False
+
+                if can_attack:
+                    if are_adjacent(self.player1_pos, enemy_pos):
+                        print('attack_use1')
+                        self.use_1(enemy_pos)
+                    else:
+                        print('attack_move1')
+                        self.move_to_1(enemy_pos)
+
+            if self.can_act2() and self.player2_has_sword:
+                can_attack = True
+                if dist_players is not None and dist_players > 4:
+                    print('move_closer2')
+                    self.move_to_2(self.player1_pos)
+                    can_attack = False
+
+                if can_attack:
+                    if are_adjacent(self.player2_pos, enemy_pos):
+                        print('attack_use2')
+                        self.use_2(enemy_pos)
+                    else:
+                        print('attack_move2')
+                        self.move_to_2(enemy_pos)
+
+
+    def pickup_health(self) -> None:
+        # Pickup health
         healths = np.argwhere(self.map == HEALTH)
         if np.any(healths):
-            target_pos = tuple(healths[0])
+            health_pos = tuple(healths[0])
+            if self.can_act1() and self.player1_health <= 5:
+                print('health1')
+                self.move_to_1(health_pos)
+            elif self.can_act2() and self.player2_health <= 5:
+                print('health2')
+                self.move_to_2(health_pos)
 
-        if target_pos is not None:
-            self.move_to_target(target_pos)
+
+    def pickup_sword(self) -> None:
+        # Pickup sword
+        swords = np.argwhere(self.map == SWORD)
+        if np.any(swords):
+            sword_pos = tuple(swords[0])
+            if self.can_act1() and not self.player1_has_sword:
+                print('sword1')
+                self.move_to_1(sword_pos)
+            elif self.can_act2() and not self.player2_has_sword:
+                print('sword2')
+                self.move_to_2(sword_pos)
 
 
-    def try_open_door(self) -> None:
-        target_pos = None
-        use_direction = None
+    def pickup_keys(self) -> None:
+        # Pickup keys
+        self.pickup_key_or_open_door(KEY_RED, DOOR_RED, INVENTORY_KEY_RED)
+        self.pickup_key_or_open_door(KEY_GREEN, DOOR_GREEN, INVENTORY_KEY_GREEN)
+        self.pickup_key_or_open_door(KEY_BLUE, DOOR_BLUE, INVENTORY_KEY_BLUE)
 
-        def find_target(door):
-            nonlocal target_pos, use_direction
 
-            top = (door[0]-1, door[1])
-            if target_pos is None and self.map[top[0], top[1]] == EMPTY:
-                target_pos = top
-                use_direction = 'S'
-            bottom = (door[0]+1, door[1])
-            if target_pos is None and self.map[bottom[0], bottom[1]] == EMPTY:
-                target_pos = bottom
-                use_direction = 'N'
-            left = (door[0], door[1]-1)
-            if target_pos is None and self.map[left[0], left[1]] == EMPTY:
-                target_pos = left
-                use_direction = 'E'
-            right = (door[0], door[1]+1)
-            if target_pos is None and self.map[right[0], right[1]] == EMPTY:
-                target_pos = right
-                use_direction = 'W'
-
-        if target_pos is None and self.player1_inventory == INVENTORY_KEY_RED:
-            doors = np.argwhere(self.map == DOOR_RED)
-            if np.any(doors): find_target(doors[0])
-
-        if target_pos is None and self.player1_inventory == INVENTORY_KEY_GREEN:
-            doors = np.argwhere(self.map == DOOR_GREEN)
-            if np.any(doors): find_target(doors[0])
-
-        if target_pos is None and self.player1_inventory == INVENTORY_KEY_BLUE:
-            doors = np.argwhere(self.map == DOOR_BLUE)
-            if np.any(doors): find_target(doors[0])
-
-        if target_pos is not None:
-            self.move_to_target(target_pos)
-            self.use(use_direction)
+    def explore(self) -> None:
+        # Explore
+        if self.can_act1():
+            dir = self.get_direction_towards_closest_unknown(self.player1_pos, self.player1_distances, self.player1_paths)
+            if dir is not None:
+                print('explore1')
+                self.queue_move1(dir)
+        if self.can_act2():
+            dir = self.get_direction_towards_closest_unknown(self.player2_pos, self.player2_distances, self.player2_paths)
+            if dir is not None:
+                print('explore2')
+                self.queue_move2(dir)
 
 
     def move_to_pressure_plate(self) -> None:
-        target_pos = np.argwhere(self.map == PRESSURE_PLATE)
-        if len(target_pos) > 0:
-            self.move_to_target(tuple(target_pos[0]))
+        plates = np.argwhere(self.map == PRESSURE_PLATE)
+        self.plate_pos = None
+        if np.any(plates):
+            plate_pos = tuple(plates[0])
+            if self.can_act1():
+                print('plate1')
+                self.move_to_1(self.plate_pos)
 
 
-    def fight_enemy(self) -> None:
-        if self.map[self.player1_pos[0]-1, self.player1_pos[1]] == ENEMY: self.use('N')
-        elif self.map[self.player1_pos[0]+1, self.player1_pos[1]] == ENEMY: self.use('S')
-        elif self.map[self.player1_pos[0], self.player1_pos[1]-1] == ENEMY: self.use('W')
-        elif self.map[self.player1_pos[0], self.player1_pos[1]+1] == ENEMY: self.use('E')
-        else:
-            target_pos = np.argwhere(self.map == ENEMY)
-            if len(target_pos) > 0:
-                self.move_to_target(tuple(target_pos[0]))
+    def wait_at_black_door(self) -> None:
+        black_doors = np.argwhere(self.map == DOOR_BLACK)
+        if np.any(black_doors):
+            black_door_pos = tuple(black_doors[0])
+            if self.can_act2():
+                print('move_black2')
+                self.move_to_2(black_door_pos)
+
+
+    def update_remain_on_plate(self) -> None:
+        if self.plate_pos is not None and self.player1_pos[0] == self.plate_pos[0] and self.player1_pos[1] == self.plate_pos[1]:
+            print(f'Reset {self.remain_on_plate_counter=}')
+            self.remain_on_plate_counter = 100
+        self.remain_on_plate_counter -= 1
