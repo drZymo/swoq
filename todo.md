@@ -19,12 +19,12 @@
 - [X] Always send state, even on failures
 - [X] Stop game when one of two players dies
 - [X] Game Time-To-Live (TTL) for cleanup
-- [ ] Quest statistics
-- [ ] Dashboard with player stats
+- [X] Quest statistics
+- [X] Dashboard with player stats
 - [ ] One quest at a time
-- [ ] Quest monitoring
+- [X] Quest monitoring
 - [ ] Proto file hosting per level
-- [ ] Correct shutdown of open grpc streams
+- [X] Correct shutdown of open grpc streams
 - [ ] Single output folder
 - [ ] Sync appsettings for production/development
 - [ ] Installer for ReplayViewer
@@ -32,7 +32,8 @@
 - [ ] Example bot Python
 - [ ] Example bot C#
 - [ ] Show result of request in GameStateView
-
+- [ ] Truncate game time / detect stuck/idle
+  
 ## Act vs Move/Use
 
 Combine Move and Use functions into one Act/Step function. One parameter (enum) for the type of action to perform and one parameter for the direction. Then later, when two players are introduced the message can be extended with two optional fields for action/direction of player 2.

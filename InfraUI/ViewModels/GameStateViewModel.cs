@@ -32,10 +32,10 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
     public int Level => Current?.Level ?? -1;
     public string Status => Current?.Status ?? "Unknown";
 
-    public string Player1Action => Current?.Player1.LastAction ?? "Unknown";
-    public int Player1Health => Current?.Player1.Health ?? -1;
-    public string Player1Inventory => Current?.Player1.Inventory ?? "Unknown";
-    public string Player1HasSword => NullableBooleanString(Current?.Player1.HasSword);
+    public string Player1Action => Current?.Player1?.LastAction ?? "Unknown";
+    public int Player1Health => Current?.Player1?.Health ?? -1;
+    public string Player1Inventory => Current?.Player1?.Inventory ?? "Unknown";
+    public string Player1HasSword => NullableBooleanString(Current?.Player1?.HasSword);
 
     public string Player2Action => Current?.Player2?.LastAction ?? "Unknown";
     public int Player2Health => Current?.Player2?.Health ?? -1;
@@ -106,7 +106,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
     {
         Current = gameState;
 
-        Map = new MapViewModel(gameState.Map);
+        Map.Map = gameState.Map;
 
         HasPlayer2 = HasPlayer2 || (gameState.Map.InitialPlayer2Position != null);
         HasEnemies = HasEnemies || (gameState.Map.Any(c => c == Cell.Sword) || gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null);

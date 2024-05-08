@@ -11,6 +11,7 @@ namespace Swoq.ReplayViewer.ViewModels;
 
 internal class ReplayViewModel : ViewModelBase
 {
+    private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
     public ReplayViewModel(string path)
@@ -78,10 +79,14 @@ internal class ReplayViewModel : ViewModelBase
 
         var status = state.Finished ? "Finished" : "Active";
 
-        var action1 = request != null
-            ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
-            : "Start";
-        var player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
+        InfraUI.Models.PlayerState? player1State = null;
+        if (state.Player1 != null)
+        {
+            var action1 = request != null
+                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
+                : "Start";
+            player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
+        }
 
         InfraUI.Models.PlayerState? player2State = null;
         if (state.Player2 != null)
@@ -101,11 +106,24 @@ internal class ReplayViewModel : ViewModelBase
         if (!action.HasValue) return "None";
 
         var playerAction = new StringBuilder();
-        playerAction.Append(action.Value.ToString());
+
+        playerAction.Append(action.Value switch
+        {
+            Interface.Action.Use => "Use",
+            Interface.Action.Move => "Move",
+            _ => "Unknown",
+        });
         if (direction.HasValue)
         {
             playerAction.Append(' ');
-            playerAction.Append(direction.Value.ToString());
+            playerAction.Append(direction.Value switch
+            {
+                Interface.Direction.North => "North",
+                Interface.Direction.East => "East",
+                Interface.Direction.South => "South",
+                Interface.Direction.West => "West",
+                _ => "Unknown",
+            });
         }
         return playerAction.ToString();
     }
@@ -120,7 +138,7 @@ internal class ReplayViewModel : ViewModelBase
     {
         if (timer == null)
         {
-            timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Normal, OnTimer, Dispatcher.CurrentDispatcher);
+            timer = new DispatcherTimer(FrameDelay, DispatcherPriority.Normal, OnTimer, Dispatcher.CurrentDispatcher);
         }
         else
         {
