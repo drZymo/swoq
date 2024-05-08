@@ -16,7 +16,7 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
         <Grid  Grid.Column="0" Background="Black">
             <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>

@@ -1,4 +1,5 @@
 ﻿using Swoq.QuestDashboard.ViewModels;
+using System.Diagnostics;
 using System.Windows;
 
 namespace Swoq.QuestDashboard;
@@ -17,5 +18,23 @@ public partial class MainWindow : Window
     private void Window_Closed(object sender, EventArgs e)
     {
         if (DataContext is IDisposable disposable) disposable.Dispose();
+    }
+
+    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.F11)
+        {
+            if (WindowState != WindowState.Maximized)
+            {
+                WindowState = WindowState.Maximized;
+                WindowStyle = WindowStyle.None;
+            }
+            else
+            {
+                WindowStyle = WindowStyle.SingleBorderWindow;
+                WindowState = WindowState.Normal;
+            }
+        }
+
     }
 }

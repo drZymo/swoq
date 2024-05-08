@@ -4,14 +4,12 @@ namespace Swoq.QuestDashboard.ViewModels;
 
 internal class MainViewModel : ViewModelBase, IDisposable
 {
-    public MainViewModel()
-    {
-    }
-
     public void Dispose()
     {
         GameStateMonitor.Dispose();
+        Scores.Dispose();
     }
 
+    public ScoresViewModel Scores { get; } = new();
     public GameStateMonitorViewModel GameStateMonitor { get; } = new();
 }

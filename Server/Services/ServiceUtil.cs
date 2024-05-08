@@ -37,8 +37,8 @@ internal static class ServiceUtil
             Tick = gameState.Tick,
             Level = gameState.Level,
             Finished = gameState.Finished,
-            Player1 = gameState.Player1 != null ? gameState.Player1.Convert() : null,
-            Player2 = gameState.Player2 != null ? gameState.Player2.Convert() : null,
+            Player1 = gameState.Player1?.Convert(),
+            Player2 = gameState.Player2?.Convert(),
         };
     }
 
