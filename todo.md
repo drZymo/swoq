@@ -183,3 +183,17 @@ Number of ticks needed to finish quest.
 Wall clock time needed to finish quest.
 
 Winner is one who finished with lowest number of ticks or shortest wall clock time if tied.
+
+
+## One quest at a time
+
+Makes it more a competition.
+Allow starting a quest, but return an error code that indicates the game is queued.
+Retry start will make sure that the previous queued game is checked.
+If it is your turn, then start and act are allowed to proceed.
+Timeout needed. If it is a game's turn and last event is more than X seconds ago, then skip game and continue to next.
+
+
+## Truncate game time / detect stuck/idle
+
+If a game does not proceeed in a certain time it has to stop. In particular quests, otherwise other players cannot compete.
