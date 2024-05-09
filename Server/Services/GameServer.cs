@@ -5,7 +5,7 @@ namespace Swoq.Server.Services;
 
 internal class GameServer(ISwoqDatabase database)
 {
-    public record StartResult(string PlayerName, Guid GameId, int Height, int Width, int VisibilityRange, GameState State);
+    public record StartResult(string PlayerName, Guid GameId, GameState State);
 
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
@@ -13,12 +13,12 @@ internal class GameServer(ISwoqDatabase database)
     public StartResult Start(string playerId, int? level)
     {
         // Check if player can play this level
-        if (level < 0) throw new LevelNotAvailableException();
+        if (level.HasValue && level.Value < 0) throw new LevelNotAvailableException();
         var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
-        if (level > player.Level) throw new LevelNotAvailableException();
+        if (level.HasValue && level.Value > player.Level) throw new LevelNotAvailableException();
 
         // Create a new game
-        IGame game = level.HasValue ? new Game(level.Value) : new Quest(player, database);
+        IGame game = level.HasValue ? StartTraining(player, level.Value) : StartQuest(player);
         lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
@@ -28,7 +28,17 @@ internal class GameServer(ISwoqDatabase database)
 
         // Return initial state of game
         var state = game.State;
-        return new StartResult(player.Name, game.Id, Parameters.MapHeight, Parameters.MapWidth, Parameters.PlayerVisibilityRange, state);
+        return new StartResult(player.Name, game.Id, state);
+    }
+
+    private IGame StartTraining(Player player, int level)
+    {
+        return new Game(level);
+    }
+
+    private IGame StartQuest(Player player)
+    {
+        return new Quest(player, database);
     }
 
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
@@ -49,7 +59,7 @@ internal class GameServer(ISwoqDatabase database)
         foreach (var game in games.Values)
         {
             var age = now - game.LastAction;
-            if (age > Parameters.MaxGameIdleTime)
+            if (age > Parameters.MaxGameRetentionTime)
             {
                 idsToRemove = idsToRemove.Add(game.Id);
             }

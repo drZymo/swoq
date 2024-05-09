@@ -6,14 +6,15 @@
              xmlns:vm="clr-namespace:Swoq.InfraUI.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
-             d:DataContext="{d:DesignInstance Type=vm:GameStateViewModel}">
+             d:DataContext="{d:DesignInstance Type=vm:GameStateViewModel}"
+             Background="Black"
+             Foreground="White">
     <UserControl.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="boolToVisConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
-
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="300"/>

@@ -6,7 +6,13 @@ namespace Swoq.Server;
 
 using Position = (int y, int x);
 
-internal enum GameStatus { Active, Completed, Failed }
+internal enum GameStatus
+{
+    Active,
+    Completed,
+    Failed,
+    Timeout
+}
 
 internal class Game : IGame
 {
@@ -23,6 +29,8 @@ internal class Game : IGame
     private Player? player1 = null;
     private Player? player2 = null;
     private IImmutableList<Enemy> enemies = ImmutableList<Enemy>.Empty;
+
+    private int lastChangeTick = 0;
 
     public Game(int level)
     {
@@ -133,13 +141,18 @@ internal class Game : IGame
             (player2 != null && player2.Health <= 0))
         {
             // One of the players died
-            Status = GameStatus.Failed;
+            Status = GameStatus.Failed; // TODO: change to Died?
         }
         else if ((player1 == null || (!player1.Position.IsValid() && player1.Health > 0)) &&
             (player2 == null || (!player2.Position.IsValid() && player2.Health > 0)))
         {
             // Both players exited the map alive
             Status = GameStatus.Completed;
+        }
+        else if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
+        {
+            Status = GameStatus.Timeout;
+            Console.WriteLine($"Timeout. {ticks - lastChangeTick} ticks");
         }
     }
 
@@ -285,6 +298,7 @@ internal class Game : IGame
         // Put in inventory and remove from map
         player = player with { Inventory = item };
         map = map.Set(position, Cell.Empty);
+        lastChangeTick = ticks;
     }
 
     private void PickupSword(ref Player player, Position position)
@@ -295,6 +309,7 @@ internal class Game : IGame
         // Add to player and remove from map
         player = player with { HasSword = true };
         map = map.Set(position, Cell.Empty);
+        lastChangeTick = ticks;
     }
 
     private void PickupHealth(ref Player player, Position position)
@@ -302,8 +317,7 @@ internal class Game : IGame
         // Add to player's health and remove from map
         player = player with { Health = player.Health + Parameters.ExtraHealth };
         map = map.Set(position, Cell.Empty);
-
-        Console.WriteLine($"{player.Name} picked up health. Health = {player.Health}");
+        lastChangeTick = ticks;
     }
 
     private bool TryUseOnEnemy(Player player, Position usePos)
@@ -335,6 +349,7 @@ internal class Game : IGame
 
         // Remove key from inventory
         player = player with { Inventory = Inventory.None };
+        lastChangeTick = ticks;
     }
 
     private void OpenAllDoors(Cell closedDoor)
@@ -347,6 +362,7 @@ internal class Game : IGame
                 if (map[y, x] == closedDoor)
                 {
                     map = map.Set(y, x, openDoor);
+                    lastChangeTick = ticks;
                 }
             }
         }
@@ -363,6 +379,7 @@ internal class Game : IGame
                 if (map[pos] == openDoor)
                 {
                     map = map.Set(pos, closedDoor);
+                    lastChangeTick = ticks;
                     KillCharacterAtPosition(pos);
                 }
             }
@@ -456,7 +473,7 @@ internal class Game : IGame
     private void DealDamage<T>(ref T character, int damage) where T : Character
     {
         character = character with { Health = character.Health - damage };
-        Console.WriteLine($"{character.Name} received {damage} damage. Health = {character.Health}");
+        lastChangeTick = ticks;
         character = CleanupDeadCharacter(ref character);
     }
 
@@ -568,8 +585,7 @@ internal class Game : IGame
             character = character with { Inventory = Inventory.None };
             // Remove from game
             character = character with { Position = PositionEx.Invalid };
-            //Console.WriteLine($"{character.Name} died");
-            Console.WriteLine($"{character.Name} died");
+            lastChangeTick = ticks;
         }
 
         return character;

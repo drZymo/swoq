@@ -33,7 +33,9 @@
 - [ ] Example bot C#
 - [ ] Show result of request in GameStateView
 - [ ] Truncate game time / detect stuck/idle
-  
+- [ ] Lore in the proto files
+- [ ] Remember health at start of level
+
 ## Act vs Move/Use
 
 Combine Move and Use functions into one Act/Step function. One parameter (enum) for the type of action to perform and one parameter for the direction. Then later, when two players are introduced the message can be extended with two optional fields for action/direction of player 2.
@@ -193,7 +195,35 @@ Retry start will make sure that the previous queued game is checked.
 If it is your turn, then start and act are allowed to proceed.
 Timeout needed. If it is a game's turn and last event is more than X seconds ago, then skip game and continue to next.
 
+Need to know current active quest and a list of queued quests.
+On start always add to queue first. Then cleanup all items in queue.
+
+If action comes in for timed out quest special return needed.
+
 
 ## Truncate game time / detect stuck/idle
 
 If a game does not proceeed in a certain time it has to stop. In particular quests, otherwise other players cannot compete.
+
+
+## Remember health at start of level
+
+Instead of resetting health at start of a level use the health at the end of the previous level.
+Remember these healths of the best quest, and use that during training as well. 
+This way it becomes important to not lose too much health in order to reach the end.
+
+Each enemy has 5 health, so it can deal 5 damage. Total player health plus all health that can be obtained must sum up to total damage that can be dealt plus some margin.
+
+But, this might make it too difficult.
+
+
+
+
+# Lore in the proto files
+
+Add a short story in the proto file for each level about the quest.
+
+Main character: Female, daughter of town baker. Adventurous, is rather outside than in the bakery.
+Secondary character: Male, son of miner. Likes to explore caves. Went missing 2 years ago.
+Prisoner: Duke of town.
+Final enemy: Younger brother of duke.

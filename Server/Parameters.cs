@@ -14,5 +14,7 @@ internal static class Parameters
 
     public const int FinalLevel = 10;
 
-    public static readonly TimeSpan MaxGameIdleTime = TimeSpan.FromMinutes(5);
+    public static readonly TimeSpan MaxGameRetentionTime = TimeSpan.FromMinutes(5);
+
+    public const int MaxIdleTicks = 500;
 }

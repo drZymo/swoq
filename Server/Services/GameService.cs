@@ -16,9 +16,9 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
 
                 response.Result = Result.Ok;
                 response.GameId = startResult.GameId.ToString();
-                response.Height = startResult.Height;
-                response.Width = startResult.Width;
-                response.VisibilityRange = startResult.VisibilityRange;
+                response.Height = Parameters.MapHeight;
+                response.Width = Parameters.MapWidth;
+                response.VisibilityRange = Parameters.PlayerVisibilityRange;
                 response.State = startResult.State.Convert();
 
                 // Report

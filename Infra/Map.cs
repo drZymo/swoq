@@ -39,12 +39,10 @@ public class Map(
 
     IEnumerator IEnumerable.GetEnumerator() => cells.GetEnumerator();
 
-
-
     public Map Set(int y, int x, Cell cell)
     {
-        var data = this.cells.SetItem(y * Width + x, cell);
-        return new Map(data, Height, Width, InitialPlayer1Position, InitialPlayer2Position, InitialEnemy1Position, InitialEnemy1Inventory, InitialEnemy2Position, InitialEnemy2Inventory, visibility);
+        var cells = this.cells.SetItem(y * Width + x, cell);
+        return new Map(cells, Height, Width, InitialPlayer1Position, InitialPlayer2Position, InitialEnemy1Position, InitialEnemy1Inventory, InitialEnemy2Position, InitialEnemy2Inventory, visibility);
     }
 
     public Map Set(Position pos, Cell cell) => Set(pos.y, pos.x, cell);

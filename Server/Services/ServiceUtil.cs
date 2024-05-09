@@ -24,7 +24,8 @@ internal static class ServiceUtil
             case NoSwordException: return Result.NoSword;
             case Player1DiedException: return Result.Player1Died;
             case Player2DiedException: return Result.Player2Died;
-            case UnknownQuestIdException: return Result.UnknownQuestId;
+            case QuestQueuedException: return Result.QuestQueued;
+            case QuestTimedOutException: return Result.QuestTimedOut;
         }
         logger.LogError(ex, "Internal error");
         return Result.InternalError;
