@@ -152,7 +152,6 @@ internal class Game : IGame
         else if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
         {
             Status = GameStatus.Timeout;
-            Console.WriteLine($"Timeout. {ticks - lastChangeTick} ticks");
         }
     }
 

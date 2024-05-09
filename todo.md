@@ -32,7 +32,7 @@
 - [ ] Example bot Python
 - [ ] Example bot C#
 - [ ] Show result of request in GameStateView
-- [ ] Truncate game time / detect stuck/idle
+- [ ] Truncate game time / detect stuck/idle   !! BUG. only exploring does not trigger change.
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
 

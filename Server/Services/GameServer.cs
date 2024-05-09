@@ -10,6 +10,9 @@ internal class GameServer(ISwoqDatabase database)
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
+    private readonly object currentQuestMutex = new();
+    private Guid? currentQuestId = null;
+
     public StartResult Start(string playerId, int? level)
     {
         // Check if player can play this level
@@ -31,14 +34,35 @@ internal class GameServer(ISwoqDatabase database)
         return new StartResult(player.Name, game.Id, state);
     }
 
-    private IGame StartTraining(Player player, int level)
+    private Game StartTraining(Player player, int level)
     {
         return new Game(level);
     }
 
-    private IGame StartQuest(Player player)
+    private Quest StartQuest(Player player)
     {
-        return new Quest(player, database);
+        lock (currentQuestMutex)
+        {
+            // Cleanup current quest if finished
+            if (currentQuestId.HasValue)
+            {
+                var currentQuest = games[currentQuestId.Value];
+                if (currentQuest.State.Finished)
+                {
+                    currentQuestId = null;
+                }
+            }
+
+            // Do not allow starting another quest when current quest is active.
+            if (currentQuestId.HasValue)
+            {
+                throw new QuestQueuedException();
+            }
+
+            var quest = new Quest(player, database);
+            currentQuestId = quest.Id;
+            return quest;
+        }
     }
 
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
