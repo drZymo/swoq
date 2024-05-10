@@ -8,12 +8,14 @@ internal class GameServer(ISwoqDatabase database)
 {
     public record StartResult(string PlayerName, Guid GameId, GameState State);
 
+    private record QueuedQuest(string PlayerId, DateTime StartTime, DateTime LastQueryTime);
+
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
     private readonly object currentQuestMutex = new();
     private Guid? currentQuestId = null;
-    private IImmutableQueue<string> pendingQuestPlayerIds = [];
+    private IImmutableList<QueuedQuest> pendingQuests = [];
 
     public StartResult Start(string playerId, int? level)
     {
@@ -46,13 +48,13 @@ internal class GameServer(ISwoqDatabase database)
 
         lock (currentQuestMutex)
         {
-            // First enqueue this player
-            if (!pendingQuestPlayerIds.Any(pId => pId == player.Id))
-            {
-                pendingQuestPlayerIds = pendingQuestPlayerIds.Enqueue(player.Id);
-            }
+            var now = DateTime.Now;
 
-            // TODO: cleanup inactive queued players.
+            // Cleanup inactive queued players.
+            var inactiveQuests = pendingQuests.
+                Where(q => q.LastQueryTime < now - Parameters.MaxQuestInactivityTime).
+                ToImmutableArray();
+            pendingQuests = pendingQuests.RemoveRange(inactiveQuests);
 
             // Cleanup current quest if finished or idle for too long
             if (currentQuestId.HasValue)
@@ -64,6 +66,19 @@ internal class GameServer(ISwoqDatabase database)
                 }
             }
 
+            // Enqueue this player if not queued already
+            var pendingQuest = pendingQuests.FirstOrDefault(q => q.PlayerId == player.Id);
+            if (pendingQuest == null)
+            {
+                pendingQuest = new QueuedQuest(player.Id, now, now);
+                pendingQuests = pendingQuests.Add(pendingQuest);
+            }
+            else
+            {
+                // Refresh query time of existing entry
+                pendingQuests = pendingQuests.Replace(pendingQuest, pendingQuest with { LastQueryTime = now });
+            }
+
             // Do not allow starting another quest when current quest is active.
             if (currentQuestId.HasValue)
             {
@@ -71,16 +86,16 @@ internal class GameServer(ISwoqDatabase database)
             }
 
             // Can only start when first in line
-            var firstPlayerId = pendingQuestPlayerIds.First();
-            if (firstPlayerId != player.Id)
+            var firstPendingQuest = pendingQuests.OrderBy(q => q.StartTime).First();
+            if (firstPendingQuest.PlayerId != player.Id)
             {
                 throw new QuestQueuedException();
             }
 
-            // No other quest active and first player in queue
-            pendingQuestPlayerIds = pendingQuestPlayerIds.Dequeue();
+            // No other quest active and first in queue
+            pendingQuests = pendingQuests.Remove(firstPendingQuest);
 
-            // start a new game
+            // Start a new game
             var quest = new Quest(player, database);
             currentQuestId = quest.Id;
             return quest;
