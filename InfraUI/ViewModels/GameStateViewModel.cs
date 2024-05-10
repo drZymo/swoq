@@ -12,6 +12,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         set
         {
             current = value;
+            OnPropertyChanged(nameof(PlayerName));
             OnPropertyChanged(nameof(Tick));
             OnPropertyChanged(nameof(Level));
             OnPropertyChanged(nameof(Status));
@@ -28,6 +29,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         }
     }
 
+    public string PlayerName => Current?.PlayerName ?? "Unknown";
     public int Tick => Current?.Tick ?? -1;
     public int Level => Current?.Level ?? -1;
     public string Status => Current?.Status ?? "Unknown";

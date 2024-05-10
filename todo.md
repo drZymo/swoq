@@ -37,6 +37,7 @@
 - [ ] Remember health at start of level
 - [ ] Player name (big) in quest dashboard
 - [ ] Distinct player in game and player on interface. Knight & Player?
+- [ ] Unit tests for waiting queue, using mocked datetime
 
 
 ## Act vs Move/Use

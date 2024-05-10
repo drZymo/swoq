@@ -63,6 +63,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                 MapBuilder? mapBuilder = null;
                 int prevLevel = -1;
+                string playerName = "Unknown";
 
                 var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
                 while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
@@ -75,9 +76,13 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     var message = call.ResponseStream.Current;
 
+                    if (message.HasPlayer)
+                    {
+                        playerName = message.Player;
+                    }
+
                     if (message.Started != null)
                     {
-
                         prevLevel = -1;
                         uiDispatcher.Invoke(() => { GameState.Reset(); });
 
@@ -90,13 +95,13 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                             mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
                         }
 
-                        var gameState = CreateGameState(response.State, ref prevLevel, ref mapBuilder);
+                        var gameState = CreateGameState(playerName, response.State, ref prevLevel, ref mapBuilder);
                         uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
                     if (message.Acted != null && mapBuilder != null)
                     {
-                        var gameState = CreateGameState(message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
+                        var gameState = CreateGameState(playerName, message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
                         uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
                     }
                 }
@@ -128,7 +133,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
-    private static GameState CreateGameState(Interface.State state, ref int prevLevel, ref MapBuilder mapBuilder, Interface.ActionRequest? request = null)
+    private static GameState CreateGameState(string playerName, Interface.State state, ref int prevLevel, ref MapBuilder mapBuilder, Interface.ActionRequest? request = null)
     {
         // Clear whole map on new level
         if (state.Level != prevLevel)
@@ -158,7 +163,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
             player2State = new PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        return new GameState(state.Tick, state.Level, status, map, player1State, player2State);
+        return new GameState(playerName, state.Tick, state.Level, status, map, player1State, player2State);
     }
 
     private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)
