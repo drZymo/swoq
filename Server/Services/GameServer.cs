@@ -15,10 +15,8 @@ internal class GameServer(ISwoqDatabase database)
 
     public StartResult Start(string playerId, int? level)
     {
-        // Check if player can play this level
-        if (level.HasValue && level.Value < 0) throw new LevelNotAvailableException();
+        // Get player object
         var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
-        if (level.HasValue && level.Value > player.Level) throw new LevelNotAvailableException();
 
         // Create a new game
         IGame game = level.HasValue ? StartTraining(player, level.Value) : StartQuest(player);
@@ -26,28 +24,31 @@ internal class GameServer(ISwoqDatabase database)
         {
             games = games.Add(game.Id, game);
         }
-
+        // and remove old games        
         CleanupOldGames();
 
-        // Return initial state of game
-        var state = game.State;
-        return new StartResult(player.Name, game.Id, state);
+        return new StartResult(player.Name, game.Id, game.State);
     }
 
     private Game StartTraining(Player player, int level)
     {
-        return new Game(level);
+        // Check if player can play this level
+        if (level < 0 || level > player.Level) throw new LevelNotAvailableException();
+        // Create new training game
+        return new Game(level, Parameters.MaxTrainingInactivityTime);
     }
 
     private Quest StartQuest(Player player)
     {
+        // TODO: Enqueue this quest
+
         lock (currentQuestMutex)
         {
-            // Cleanup current quest if finished
             if (currentQuestId.HasValue)
             {
+                // Cleanup current quest if finished or idle for too long
                 var currentQuest = games[currentQuestId.Value];
-                if (currentQuest.State.Finished)
+                if (currentQuest.State.Finished || currentQuest.IsInactive)
                 {
                     currentQuestId = null;
                 }
@@ -59,6 +60,7 @@ internal class GameServer(ISwoqDatabase database)
                 throw new QuestQueuedException();
             }
 
+            // No other quest active, so make a new quest
             var quest = new Quest(player, database);
             currentQuestId = quest.Id;
             return quest;
@@ -78,19 +80,13 @@ internal class GameServer(ISwoqDatabase database)
     private void CleanupOldGames()
     {
         // Gather ids to remove
-        var idsToRemove = ImmutableList<Guid>.Empty;
-        var now = DateTime.Now;
-        foreach (var game in games.Values)
-        {
-            var age = now - game.LastAction;
-            if (age > Parameters.MaxGameRetentionTime)
-            {
-                idsToRemove = idsToRemove.Add(game.Id);
-            }
-        }
+        var idsToRemove = games.Values.
+            Where(g => g.IsInactive).
+            Select(g => g.Id).
+            ToImmutableArray();
 
         // Remove all at once
-        if (idsToRemove.Count > 0)
+        if (idsToRemove.Length > 0)
         {
             lock (gamesWriteMutex)
             {

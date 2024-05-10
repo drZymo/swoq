@@ -14,27 +14,30 @@ internal class Game : IGame
     private record Enemy(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth)
         : Character(Name, Position, Inventory, Health);
 
-    private int ticks = 0;
     private readonly int level;
-    private Map map;
+    private readonly TimeSpan maxInactivityTime;
+    
+    private int ticks = 0;
+    private int lastChangeTick = 0;
+    private DateTime lastActionTime = DateTime.Now;
 
+    private Map map;
     private Player? player1 = null;
     private Player? player2 = null;
     private IImmutableList<Enemy> enemies = ImmutableList<Enemy>.Empty;
 
-    private int lastChangeTick = 0;
 
-    public Game(int level)
+    public Game(int level, TimeSpan maxInactivityTime)
     {
         this.level = level;
-
+        this.maxInactivityTime = maxInactivityTime;
+    
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
         player1 = new Player("Player1", map.InitialPlayer1Position);
         if (map.InitialPlayer2Position.HasValue)
         {
             player2 = new Player("Player2", map.InitialPlayer2Position.Value);
         }
-
         if (map.InitialEnemy1Position.HasValue)
         {
             enemies = enemies.Add(new Enemy("Enemy1", map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
@@ -46,15 +49,17 @@ internal class Game : IGame
     }
 
     public Guid Id { get; } = Guid.NewGuid();
-    public DateTime LastAction { get; private set; } = DateTime.Now;
     public GameState State => CreateState();
+    public bool IsInactive =>  (DateTime.Now - lastActionTime) > maxInactivityTime;
+    
     public bool IsFinished { get; private set; } = false;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        if (IsInactive) IsFinished = true;
         if (IsFinished) throw new GameFinishedException(CreateState());
 
-        LastAction = DateTime.Now;
+        lastActionTime = DateTime.Now;
         ticks++;
 
         Debug.Assert(player1 != null || player2 != null);

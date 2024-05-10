@@ -18,7 +18,7 @@ class Quest : IGame
         this.startTime = DateTime.Now;
 
         Id = Guid.NewGuid();
-        currentGame = new Game(Level);
+        currentGame = new Game(Level, Parameters.MaxQuestInactivityTime);
         State = currentGame.State;
     }
 
@@ -27,6 +27,7 @@ class Quest : IGame
 
     public int Level { get; private set; } = 0;
     public GameState State { get; private set; }
+    public bool IsInactive => currentGame.IsInactive;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
@@ -66,7 +67,7 @@ class Quest : IGame
             // Create a new game if this was not the last level
             if (Level <= Parameters.FinalLevel)
             {
-                currentGame = new Game(Level);
+                currentGame = new Game(Level, Parameters.MaxQuestInactivityTime);
                 state = currentGame.State;
             }
             else

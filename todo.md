@@ -35,6 +35,8 @@
 - [ ] Truncate game time / detect stuck/idle   !! BUG. only exploring does not trigger change.
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
+- [ ] Player name (big) in quest dashboard
+
 
 ## Act vs Move/Use
 
