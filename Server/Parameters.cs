@@ -16,5 +16,8 @@ internal static class Parameters
 
     public static readonly TimeSpan MaxGameRetentionTime = TimeSpan.FromMinutes(5);
 
-    public const int MaxIdleTicks = 500;
+    /// <summary>
+    /// Maximum number of ticks that a game is allowed to not have progress, i.e. player is idle.
+    /// </summary>
+    public const int MaxIdleTicks = 1000;
 }

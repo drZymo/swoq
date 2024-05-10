@@ -26,7 +26,7 @@ enum Result {
 	NO_SWORD = 19;
 	PLAYER1_DIED = 20;
 	PLAYER2_DIED = 21;
-	QUEST_TIMED_OUT = 22;
+	NO_PROGRESS = 22;
 }
 
 

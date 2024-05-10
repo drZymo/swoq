@@ -35,7 +35,7 @@ _result_strings  = {
     swoq_pb2.NO_SWORD: 'NO_SWORD',
     swoq_pb2.PLAYER1_DIED: 'PLAYER1_DIED',
     swoq_pb2.PLAYER2_DIED: 'PLAYER2_DIED',
-    swoq_pb2.QUEST_TIMED_OUT: 'QUEST_TIMED_OUT',
+    swoq_pb2.NO_PROGRESS: 'NO_PROGRESS',
 }
 
 class GamePlayer:
@@ -216,7 +216,7 @@ class GamePlayer:
 
         self.move_to_exit()
         self.attack()
-        self.pickup_health()
+        #self.pickup_health()
         self.pickup_sword()
         self.pickup_keys()
         self.explore()

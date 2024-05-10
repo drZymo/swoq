@@ -40,7 +40,8 @@ class Quest : IGame
         var state = currentGame.State;
 
         // If game is completed successfully, then move to next level.
-        if (currentGame.Status == GameStatus.Completed)
+        // If game is finished unsuccessfully, then an exception has been thrown and this line is not reached.
+        if (state.Finished)
         {
             Level++;
 

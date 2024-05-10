@@ -6,14 +6,6 @@ namespace Swoq.Server;
 
 using Position = (int y, int x);
 
-internal enum GameStatus
-{
-    Active,
-    Completed,
-    Failed,
-    Timeout
-}
-
 internal class Game : IGame
 {
     private abstract record Character(string Name, Position Position, Inventory Inventory, int Health);
@@ -53,15 +45,14 @@ internal class Game : IGame
         }
     }
 
-    public GameStatus Status { get; private set; } = GameStatus.Active;
-
     public Guid Id { get; } = Guid.NewGuid();
     public DateTime LastAction { get; private set; } = DateTime.Now;
     public GameState State => CreateState();
+    public bool IsFinished { get; private set; } = false;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (Status != GameStatus.Active) throw new GameFinishedException(CreateState());
+        if (IsFinished) throw new GameFinishedException(CreateState());
 
         LastAction = DateTime.Now;
         ticks++;
@@ -130,28 +121,35 @@ internal class Game : IGame
         Debug.Assert(player1 != null || player2 != null);
         PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
         PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
-        return new GameState(ticks, level, Status != GameStatus.Active, player1State, player2State);
+        return new GameState(ticks, level, IsFinished, player1State, player2State);
     }
 
     private void UpdateGameStatus()
     {
-        Debug.Assert(Status == GameStatus.Active);
+        Debug.Assert(!IsFinished);
 
-        if ((player1 != null && player1.Health <= 0) ||
-            (player2 != null && player2.Health <= 0))
+        if (player1 != null && player1.Health <= 0)
         {
-            // One of the players died
-            Status = GameStatus.Failed; // TODO: change to Died?
+            IsFinished = true;
+            throw new Player1DiedException(CreateState());
+        }
+        else if (player2 != null && player2.Health <= 0)
+        {
+            IsFinished = true;
+            throw new Player2DiedException(CreateState());
+        }
+        else if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
+        {
+            // Time since last change was too long ago
+            IsFinished = true;
+            throw new NoProgressException(CreateState());
         }
         else if ((player1 == null || (!player1.Position.IsValid() && player1.Health > 0)) &&
             (player2 == null || (!player2.Position.IsValid() && player2.Health > 0)))
         {
             // Both players exited the map alive
-            Status = GameStatus.Completed;
-        }
-        else if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
-        {
-            Status = GameStatus.Timeout;
+            IsFinished = true;
+            // This is expected, so no exception
         }
     }
 

@@ -25,5 +25,5 @@ internal class InventoryFullException(GameState state) : SwoqGameException(state
 internal class NoSwordException(GameState state) : SwoqGameException(state);
 internal class Player1DiedException(GameState state) : SwoqGameException(state);
 internal class Player2DiedException(GameState state) : SwoqGameException(state);
-internal class QuestTimedOutException(GameState state) : SwoqGameException(state);
+internal class NoProgressException(GameState state) : SwoqGameException(state);
 
