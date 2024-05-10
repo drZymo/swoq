@@ -1,4 +1,5 @@
 ﻿using Swoq.Server.Data;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
@@ -12,6 +13,7 @@ internal class GameServer(ISwoqDatabase database)
 
     private readonly object currentQuestMutex = new();
     private Guid? currentQuestId = null;
+    private IImmutableQueue<string> pendingQuestPlayerIds = [];
 
     public StartResult Start(string playerId, int? level)
     {
@@ -40,13 +42,21 @@ internal class GameServer(ISwoqDatabase database)
 
     private Quest StartQuest(Player player)
     {
-        // TODO: Enqueue this quest
+        if (player.Id == null) throw new ArgumentNullException(nameof(player));
 
         lock (currentQuestMutex)
         {
+            // First enqueue this player
+            if (!pendingQuestPlayerIds.Any(pId => pId == player.Id))
+            {
+                pendingQuestPlayerIds = pendingQuestPlayerIds.Enqueue(player.Id);
+            }
+
+            // TODO: cleanup inactive queued players.
+
+            // Cleanup current quest if finished or idle for too long
             if (currentQuestId.HasValue)
             {
-                // Cleanup current quest if finished or idle for too long
                 var currentQuest = games[currentQuestId.Value];
                 if (currentQuest.State.Finished || currentQuest.IsInactive)
                 {
@@ -60,7 +70,17 @@ internal class GameServer(ISwoqDatabase database)
                 throw new QuestQueuedException();
             }
 
-            // No other quest active, so make a new quest
+            // Can only start when first in line
+            var firstPlayerId = pendingQuestPlayerIds.First();
+            if (firstPlayerId != player.Id)
+            {
+                throw new QuestQueuedException();
+            }
+
+            // No other quest active and first player in queue
+            pendingQuestPlayerIds = pendingQuestPlayerIds.Dequeue();
+
+            // start a new game
             var quest = new Quest(player, database);
             currentQuestId = quest.Id;
             return quest;

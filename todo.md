@@ -36,6 +36,7 @@
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
 - [ ] Player name (big) in quest dashboard
+- [ ] Distinct player in game and player on interface. Knight & Player?
 
 
 ## Act vs Move/Use
