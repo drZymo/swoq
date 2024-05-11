@@ -1,5 +1,4 @@
 ﻿using Swoq.Server.Data;
-using Swoq.Server.Data;
 using Swoq.Server.Services;
 
 namespace Swoq.Server;

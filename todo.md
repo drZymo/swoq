@@ -21,11 +21,11 @@
 - [X] Game Time-To-Live (TTL) for cleanup
 - [X] Quest statistics
 - [X] Dashboard with player stats
-- [ ] One quest at a time
+- [X] One quest at a time
 - [X] Quest monitoring
 - [ ] Proto file hosting per level
 - [X] Correct shutdown of open grpc streams
-- [ ] Single output folder
+- [ ] Single build output folder
 - [ ] Sync appsettings for production/development
 - [ ] Installer for ReplayViewer
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
@@ -38,7 +38,7 @@
 - [ ] Player name (big) in quest dashboard
 - [ ] Distinct player in game and player on interface. Knight & Player?
 - [ ] Unit tests for waiting queue, using mocked datetime
-
+- [ ] Quest queue in dashboard
 
 ## Act vs Move/Use
 

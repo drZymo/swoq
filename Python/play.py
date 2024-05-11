@@ -3,6 +3,7 @@ import swoq_pb2
 import swoq_pb2_grpc
 import numpy as np
 from map_util import *
+from time import sleep
 
 to_swoq_pb2_direction = {
     'N': swoq_pb2.NORTH,
@@ -67,10 +68,16 @@ class GamePlayer:
         global played_id
 
         startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=self.player_id, level=level))
-
         if self.print:
             result = _result_strings[startResponse.result]
             print(f'{result=}')
+        
+        while startResponse.result == swoq_pb2.QUEST_QUEUED:
+            sleep(1)
+            startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=self.player_id, level=level))
+            if self.print:
+                result = _result_strings[startResponse.result]
+                print(f'{result=}')
 
         self.game_id = startResponse.gameId
         self.height = startResponse.height

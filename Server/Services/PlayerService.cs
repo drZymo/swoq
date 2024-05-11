@@ -2,7 +2,6 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Swoq.Interface;
 using Swoq.Server.Data;
-using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
 

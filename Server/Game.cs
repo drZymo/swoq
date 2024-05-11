@@ -16,7 +16,7 @@ internal class Game : IGame
 
     private readonly int level;
     private readonly TimeSpan maxInactivityTime;
-    
+
     private int ticks = 0;
     private int lastChangeTick = 0;
     private DateTime lastActionTime = DateTime.Now;
@@ -31,7 +31,7 @@ internal class Game : IGame
     {
         this.level = level;
         this.maxInactivityTime = maxInactivityTime;
-    
+
         map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
         player1 = new Player("Player1", map.InitialPlayer1Position);
         if (map.InitialPlayer2Position.HasValue)
@@ -50,8 +50,8 @@ internal class Game : IGame
 
     public Guid Id { get; } = Guid.NewGuid();
     public GameState State => CreateState();
-    public bool IsInactive =>  (DateTime.Now - lastActionTime) > maxInactivityTime;
-    
+    public bool IsInactive => (DateTime.Now - lastActionTime) > maxInactivityTime;
+
     public bool IsFinished { get; private set; } = false;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)

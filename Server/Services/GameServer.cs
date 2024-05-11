@@ -1,5 +1,4 @@
 ﻿using Swoq.Server.Data;
-using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
@@ -8,7 +7,7 @@ internal class GameServer(ISwoqDatabase database)
 {
     public record StartResult(string PlayerName, Guid GameId, GameState State);
 
-    private record QueuedQuest(string PlayerId, DateTime StartTime, DateTime LastQueryTime);
+    public record QueuedQuest(string PlayerId, DateTime StartTime, DateTime LastQueryTime);
 
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
@@ -16,6 +15,8 @@ internal class GameServer(ISwoqDatabase database)
     private readonly object currentQuestMutex = new();
     private Guid? currentQuestId = null;
     private IImmutableList<QueuedQuest> pendingQuests = [];
+
+    public event EventHandler<IImmutableList<(string playerName, int queueTime)>>? QueueUpdated;
 
     public StartResult Start(string playerId, int? level)
     {
@@ -34,7 +35,7 @@ internal class GameServer(ISwoqDatabase database)
         return new StartResult(player.Name, game.Id, game.State);
     }
 
-    private Game StartTraining(Player player, int level)
+    private static Game StartTraining(Player player, int level)
     {
         // Check if player can play this level
         if (level < 0 || level > player.Level) throw new LevelNotAvailableException();
@@ -82,6 +83,7 @@ internal class GameServer(ISwoqDatabase database)
             // Do not allow starting another quest when current quest is active.
             if (currentQuestId.HasValue)
             {
+                NotifyQueueUpdate();
                 throw new QuestQueuedException();
             }
 
@@ -89,11 +91,13 @@ internal class GameServer(ISwoqDatabase database)
             var firstPendingQuest = pendingQuests.OrderBy(q => q.StartTime).First();
             if (firstPendingQuest.PlayerId != player.Id)
             {
+                NotifyQueueUpdate();
                 throw new QuestQueuedException();
             }
 
             // No other quest active and first in queue
             pendingQuests = pendingQuests.Remove(firstPendingQuest);
+            NotifyQueueUpdate();
 
             // Start a new game
             var quest = new Quest(player, database);
@@ -128,5 +132,23 @@ internal class GameServer(ISwoqDatabase database)
                 games = games.RemoveRange(idsToRemove);
             }
         }
+    }
+
+    private void NotifyQueueUpdate()
+    {
+        // TODO: decouple on background thread?
+        // Only update every X seconds
+        var now = DateTime.Now;
+
+        (string playerName, int queueTime) Convert(QueuedQuest qq)
+        {
+            var playerName = database.FindPlayerByIdAsync(qq.PlayerId)?.Result?.Name ?? "Unknown";
+            var queueTime = (int)Math.Round((now - qq.StartTime).TotalSeconds);
+            return (playerName, queueTime);
+        }
+
+        var queue = pendingQuests.Select(qq => Convert(qq)).ToImmutableArray();
+
+        QueueUpdated?.Invoke(this, queue);
     }
 }

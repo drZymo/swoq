@@ -1,6 +1,8 @@
 ﻿using Grpc.Net.Client;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
+using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
 using System.Windows.Threading;
@@ -16,6 +18,8 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     public GameStateMonitorViewModel()
     {
         uiDispatcher = Dispatcher.CurrentDispatcher;
+
+        QueuedPlayers = new(queuedPlayers);
 
         readThread = new Thread(new ThreadStart(MonitorThread));
         readThread.Start();
@@ -37,6 +41,11 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
             OnPropertyChanged();
         }
     }
+
+    public record QueuedPlayer(string PlayerName, int QueueTime);
+
+    private ObservableCollection<QueuedPlayer> queuedPlayers = [];
+    public ReadOnlyObservableCollection<QueuedPlayer> QueuedPlayers { get; }
 
     private string statusMessage = "";
     public string StatusMessage
@@ -76,15 +85,12 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     var message = call.ResponseStream.Current;
 
-                    if (message.HasPlayer)
-                    {
-                        playerName = message.Player;
-                    }
-
                     if (message.Started != null)
                     {
                         prevLevel = -1;
                         uiDispatcher.Invoke(() => { GameState.Reset(); });
+
+                        playerName = message.Started.Player;
 
                         var response = message.Started.Response;
                         if (mapBuilder == null ||
@@ -103,6 +109,23 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                     {
                         var gameState = CreateGameState(playerName, message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
                         uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
+                    }
+
+                    if (message.QueueUpdate != null)
+                    {
+                        var queuedPlayers = message.QueueUpdate.Entries.
+                            Select(e => new QueuedPlayer(e.PlayerName, e.QueueTime)).
+                            OrderBy(q => q.QueueTime).
+                            ToImmutableArray();
+
+                        uiDispatcher.Invoke(() =>
+                        {
+                            this.queuedPlayers.Clear();
+                            foreach (var qp in queuedPlayers)
+                            {
+                                this.queuedPlayers.Add(qp);
+                            }
+                        });
                     }
                 }
             }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using Swoq.Server.Data;
 using System.Collections.Immutable;
 
 namespace Swoq.Server.Data;

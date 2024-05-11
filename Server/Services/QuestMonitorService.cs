@@ -2,26 +2,31 @@
 using Grpc.Core;
 using Swoq.Interface;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
 
-public class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorServiceBase, IDisposable
+internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorServiceBase, IDisposable
 {
     private readonly GameServicePostman gameServicePostman;
+    private readonly GameServer gameServer;
 
     private readonly ConcurrentQueue<QuestUpdate> updates = new();
     private readonly SemaphoreSlim updatesCount = new(0);
 
-    public QuestMonitorService(GameServicePostman gameServicePostman)
+    public QuestMonitorService(GameServicePostman gameServicePostman, GameServer gameServer)
     {
         this.gameServicePostman = gameServicePostman;
+        this.gameServer = gameServer;
 
         this.gameServicePostman.Started += OnStarted;
         this.gameServicePostman.Acted += OnActed;
+        this.gameServer.QueueUpdated += OnQueueUpdated;
     }
 
     public void Dispose()
     {
+        gameServer.QueueUpdated -= OnQueueUpdated;
         gameServicePostman.Acted -= OnActed;
         gameServicePostman.Started -= OnStarted;
     }
@@ -56,10 +61,10 @@ public class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorSer
 
             var update = new QuestUpdate
             {
-                GameId = e.gameId.ToString(),
-                Player = e.playerName,
                 Started = new QuestStarted
                 {
+                    GameId = e.gameId.ToString(),
+                    Player = e.playerName,
                     Request = e.request,
                     Response = e.response
                 },
@@ -76,9 +81,9 @@ public class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorSer
         {
             var update = new QuestUpdate
             {
-                GameId = e.gameId.ToString(),
                 Acted = new QuestActed
                 {
+                    GameId = e.gameId.ToString(),
                     Request = e.request,
                     Response = e.response
                 },
@@ -87,5 +92,17 @@ public class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorSer
             updates.Enqueue(update);
             updatesCount.Release();
         }
+    }
+
+    private void OnQueueUpdated(object? sender, IImmutableList<(string playerName, int queueTime)> queue)
+    {
+        var update = new QuestUpdate
+        {
+            QueueUpdate = new()
+        };
+        update.QueueUpdate.Entries.AddRange(queue.Select(e => new QueueEntry { PlayerName = e.playerName, QueueTime = e.queueTime }));
+
+        updates.Enqueue(update);
+        updatesCount.Release();
     }
 }

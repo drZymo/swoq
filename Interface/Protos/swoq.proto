@@ -128,18 +128,29 @@ service QuestMonitorService {
 }
 
 message QuestStarted {
-	StartRequest request = 1;
-	StartResponse response = 2;
+	string gameId = 1;
+	string player = 2;
+	StartRequest request = 3;
+	StartResponse response = 4;
 }
 
 message QuestActed {
-	ActionRequest request = 1;
-	ActionResponse response = 2;
+	string gameId = 1;
+	ActionRequest request = 2;
+	ActionResponse response = 3;
+}
+
+message QueueEntry {
+	string playerName = 1;
+	int32 queueTime = 2;
+}
+
+message QueueUpdate {
+	repeated QueueEntry entries = 1;
 }
 
 message QuestUpdate {
-	string gameId = 1;
-	optional string player = 2;
-	optional QuestStarted started = 3;
-	optional QuestActed acted = 4;
+	optional QuestStarted started = 1;
+	optional QuestActed acted = 2;
+	optional QueueUpdate queueUpdate = 3;
 }

@@ -1,5 +1,4 @@
 ﻿using Swoq.QuestDashboard.ViewModels;
-using System.Diagnostics;
 using System.Windows;
 
 namespace Swoq.QuestDashboard;
