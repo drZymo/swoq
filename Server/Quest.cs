@@ -1,8 +1,9 @@
-﻿using Swoq.Server.Data;
+﻿using Swoq.Infra;
+using Swoq.Server.Data;
 
 namespace Swoq.Server;
 
-class Quest : IGame
+internal class Quest : IGame
 {
     private readonly Player player;
     private readonly ISwoqDatabase database;
@@ -15,7 +16,7 @@ class Quest : IGame
     {
         this.player = player;
         this.database = database;
-        this.startTime = DateTime.Now;
+        this.startTime = Clock.Now;
 
         Id = Guid.NewGuid();
         currentGame = new Game(Level, Parameters.MaxQuestInactivityTime);
@@ -23,7 +24,7 @@ class Quest : IGame
     }
 
     public Guid Id { get; }
-    public DateTime LastAction { get; private set; } = DateTime.Now;
+    public DateTime LastAction { get; private set; } = Clock.Now;
 
     public int Level { get; private set; } = 0;
     public GameState State { get; private set; }
@@ -33,7 +34,7 @@ class Quest : IGame
     {
         if (State.Finished) return;
 
-        LastAction = DateTime.Now;
+        LastAction = Clock.Now;
         ticks++;
 
         // Play current game

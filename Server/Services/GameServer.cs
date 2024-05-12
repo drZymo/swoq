@@ -1,4 +1,5 @@
-﻿using Swoq.Server.Data;
+﻿using Swoq.Infra;
+using Swoq.Server.Data;
 using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
@@ -49,7 +50,7 @@ internal class GameServer(ISwoqDatabase database)
 
         lock (currentQuestMutex)
         {
-            var now = DateTime.Now;
+            var now = Clock.Now;
 
             // Cleanup inactive queued players.
             var inactiveQuests = pendingQuests.
@@ -138,7 +139,7 @@ internal class GameServer(ISwoqDatabase database)
     {
         // TODO: decouple on background thread?
         // Only update every X seconds
-        var now = DateTime.Now;
+        var now = Clock.Now;
 
         (string playerName, int queueTime) Convert(QueuedQuest qq)
         {

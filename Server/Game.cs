@@ -19,7 +19,7 @@ internal class Game : IGame
 
     private int ticks = 0;
     private int lastChangeTick = 0;
-    private DateTime lastActionTime = DateTime.Now;
+    private DateTime lastActionTime = Clock.Now;
 
     private Map map;
     private Player? player1 = null;
@@ -50,7 +50,7 @@ internal class Game : IGame
 
     public Guid Id { get; } = Guid.NewGuid();
     public GameState State => CreateState();
-    public bool IsInactive => (DateTime.Now - lastActionTime) > maxInactivityTime;
+    public bool IsInactive => (Clock.Now - lastActionTime) > maxInactivityTime;
 
     public bool IsFinished { get; private set; } = false;
 
@@ -59,7 +59,7 @@ internal class Game : IGame
         if (IsInactive) IsFinished = true;
         if (IsFinished) throw new GameFinishedException(CreateState());
 
-        lastActionTime = DateTime.Now;
+        lastActionTime = Clock.Now;
         ticks++;
 
         Debug.Assert(player1 != null || player2 != null);
