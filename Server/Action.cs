@@ -1,6 +1,6 @@
 ﻿namespace Swoq.Server;
 
-internal enum Action
+public enum Action
 {
     Move,
     Use,

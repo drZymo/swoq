@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
 
-internal class GameServer(ISwoqDatabase database)
+public class GameServer(ISwoqDatabase database)
 {
     public record StartResult(string PlayerName, Guid GameId, GameState State);
 
