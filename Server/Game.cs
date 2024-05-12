@@ -6,7 +6,7 @@ namespace Swoq.Server;
 
 using Position = (int y, int x);
 
-internal class Game : IGame
+public class Game : IGame
 {
     private abstract record Character(string Name, Position Position, Inventory Inventory, int Health);
     private record Player(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false)
