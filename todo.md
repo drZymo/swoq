@@ -42,7 +42,7 @@
 - [ ] Reduce code duplication between dashboard and replay viewer
 - [X] Player name in replay so it is visible in viewer
 - [ ] File browser in replay viewer
-
+- [ ] Random idle for enemy
 
 ## Act vs Move/Use
 
@@ -225,6 +225,9 @@ Each enemy has 5 health, so it can deal 5 damage. Total player health plus all h
 But, this might make it too difficult.
 
 
+## Random idle for enemy
+
+Let enemies once every action stop interacting. This randomizes their moves a little, preventing deadlocks with player
 
 
 # Lore in the proto files

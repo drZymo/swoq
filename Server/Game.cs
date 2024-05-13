@@ -8,6 +8,8 @@ using Position = (int y, int x);
 
 public class Game : IGame
 {
+    private static readonly Random random = new();
+
     private abstract record Character(string Name, Position Position, Inventory Inventory, int Health);
     private record Player(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false)
         : Character(Name, Position, Inventory, Health);
@@ -418,6 +420,9 @@ public class Game : IGame
     {
         if (!enemy.Position.IsValid()) return;
         if (enemy.Health <= 0) return;
+
+        // Once in a while do not interact
+        if (random.NextDouble() < 0.1) return;
 
         // Is there a player near by?
         var closestPlayer = FindClosestVisiblePlayer(enemy.Position, Parameters.EnemyVisibilityRange);

@@ -335,18 +335,19 @@ class GamePlayer:
         if np.any(exits):
             exit_pos = tuple(exits[0])
             
-            # Only move when both players can reach the exit
-            if valid_pos(self.player1_pos):
-                player1_can_reach = get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None
-            else:
-                player1_can_reach = True
-
-            if valid_pos(self.player2_pos):
-                player2_can_reach = get_direction(self.player2_pos, exit_pos, self.player2_distances, self.player2_paths) is not None
-            else:
-                player2_can_reach = True
+            # Only move when both players can reach the exit (or each other)
+            can_reach = False
+            if valid_pos(self.player1_pos) and valid_pos(self.player2_pos):
+                can_reach = (get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None and \
+                    get_direction(self.player1_pos, self.player1_pos, self.player1_distances, self.player1_paths) is not None) or \
+                    (get_direction(self.player1_pos, self.player2_pos, self.player1_distances, self.player1_paths) is not None and \
+                    get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None)
+            elif valid_pos(self.player1_pos):
+                can_reach = get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None
+            elif valid_pos(self.player2_pos):
+                can_reach = get_direction(self.player2_pos, exit_pos, self.player2_distances, self.player2_paths) is not None
                 
-            if player1_can_reach and player2_can_reach:
+            if can_reach:
                 if self.can_act1():
                     print('exit1')
                     self.move_to_1(exit_pos)
