@@ -44,7 +44,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
     public record QueuedPlayer(string PlayerName, int QueueTime);
 
-    private ObservableCollection<QueuedPlayer> queuedPlayers = [];
+    private readonly ObservableCollection<QueuedPlayer> queuedPlayers = [];
     public ReadOnlyObservableCollection<QueuedPlayer> QueuedPlayers { get; }
 
     private string statusMessage = "";

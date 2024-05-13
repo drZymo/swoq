@@ -19,33 +19,51 @@ public class GameTests
     {
         var game = new Game(0, TimeSpan.FromSeconds(20));
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         now += TimeSpan.FromSeconds(10);
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         now += TimeSpan.FromSeconds(9);
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         now += TimeSpan.FromSeconds(2);
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
     }
 
     [Test]
@@ -53,27 +71,42 @@ public class GameTests
     {
         var game = new Game(0, TimeSpan.FromSeconds(20));
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsFalse(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.False);
+        });
 
         now += TimeSpan.FromSeconds(21);
 
-        Assert.IsFalse(game.IsFinished);
-        Assert.IsTrue(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.IsInactive, Is.True);
+        });
 
         Assert.Throws<GameTimeoutException>(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
 
-        Assert.IsTrue(game.IsFinished);
-        Assert.IsTrue(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.IsInactive, Is.True);
+        });
 
         Assert.Throws<GameFinishedException>(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
 
-        Assert.IsTrue(game.IsFinished);
-        Assert.IsTrue(game.IsInactive);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.IsInactive, Is.True);
+        });
     }
 }
