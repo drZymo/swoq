@@ -37,6 +37,7 @@ _result_strings  = {
     swoq_pb2.PLAYER1_DIED: 'PLAYER1_DIED',
     swoq_pb2.PLAYER2_DIED: 'PLAYER2_DIED',
     swoq_pb2.NO_PROGRESS: 'NO_PROGRESS',
+    swoq_pb2.GAME_TIMEOUT: 'GAME_TIMEOUT',
 }
 
 class GamePlayer:

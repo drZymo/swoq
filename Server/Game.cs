@@ -19,7 +19,6 @@ public class Game : IGame
 
     private int ticks = 0;
     private int lastChangeTick = 0;
-    private DateTime lastActionTime = Clock.Now;
 
     private Map map;
     private Player? player1 = null;
@@ -50,16 +49,22 @@ public class Game : IGame
 
     public Guid Id { get; } = Guid.NewGuid();
     public GameState State => CreateState();
-    public bool IsInactive => (Clock.Now - lastActionTime) > maxInactivityTime;
+    public DateTime LastActionTime { get; private set; } = Clock.Now;
+    public bool IsInactive => (Clock.Now - LastActionTime) > maxInactivityTime;
 
     public bool IsFinished { get; private set; } = false;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (IsInactive) IsFinished = true;
         if (IsFinished) throw new GameFinishedException(CreateState());
 
-        lastActionTime = Clock.Now;
+        if (IsInactive)
+        {
+            IsFinished = true;
+            throw new GameTimeoutException(CreateState());
+        }
+
+        LastActionTime = Clock.Now;
         ticks++;
 
         Debug.Assert(player1 != null || player2 != null);

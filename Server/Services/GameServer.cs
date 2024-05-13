@@ -119,9 +119,11 @@ public class GameServer(ISwoqDatabase database)
 
     private void CleanupOldGames()
     {
+        var now = Clock.Now;
+
         // Gather ids to remove
         var idsToRemove = games.Values.
-            Where(g => g.IsInactive).
+            Where(g => (now - g.LastActionTime) > Parameters.GameRetentionTime).
             Select(g => g.Id).
             ToImmutableArray();
 

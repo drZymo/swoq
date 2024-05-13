@@ -27,6 +27,7 @@ enum Result {
 	PLAYER1_DIED = 20;
 	PLAYER2_DIED = 21;
 	NO_PROGRESS = 22;
+	GAME_TIMEOUT = 23;
 }
 
 

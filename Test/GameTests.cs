@@ -22,8 +22,6 @@ public class GameTests
         Assert.IsFalse(game.IsFinished);
         Assert.IsFalse(game.IsInactive);
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
-
         now += TimeSpan.FromSeconds(10);
 
         Assert.IsFalse(game.IsFinished);
@@ -34,7 +32,17 @@ public class GameTests
         Assert.IsFalse(game.IsFinished);
         Assert.IsFalse(game.IsInactive);
 
-        now += TimeSpan.FromSeconds(11);
+        now += TimeSpan.FromSeconds(9);
+
+        Assert.IsFalse(game.IsFinished);
+        Assert.IsFalse(game.IsInactive);
+
+        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+
+        Assert.IsFalse(game.IsFinished);
+        Assert.IsFalse(game.IsInactive);
+
+        now += TimeSpan.FromSeconds(2);
 
         Assert.IsFalse(game.IsFinished);
         Assert.IsFalse(game.IsInactive);
@@ -56,6 +64,11 @@ public class GameTests
         now += TimeSpan.FromSeconds(21);
 
         Assert.IsFalse(game.IsFinished);
+        Assert.IsTrue(game.IsInactive);
+
+        Assert.Throws<GameTimeoutException>(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+
+        Assert.IsTrue(game.IsFinished);
         Assert.IsTrue(game.IsInactive);
 
         Assert.Throws<GameFinishedException>(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));

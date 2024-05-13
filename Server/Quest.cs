@@ -28,6 +28,7 @@ internal class Quest : IGame
 
     public int Level { get; private set; } = 0;
     public GameState State { get; private set; }
+    public DateTime LastActionTime => currentGame.LastActionTime;
     public bool IsInactive => currentGame.IsInactive;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)

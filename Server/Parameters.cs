@@ -14,6 +14,8 @@ internal static class Parameters
 
     public const int FinalLevel = 10;
 
+    public static readonly TimeSpan GameRetentionTime = TimeSpan.FromMinutes(10);
+
     public static readonly TimeSpan MaxTrainingInactivityTime = TimeSpan.FromMinutes(1);
 
     public static readonly TimeSpan MaxQuestInactivityTime = TimeSpan.FromSeconds(10);
