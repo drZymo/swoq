@@ -35,7 +35,7 @@
 - [X] Truncate game time / detect stuck/idle
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
-- [ ] Player name (big) in quest dashboard
+- [X] Player name (big) in quest dashboard
 - [ ] Distinct player in game and player on interface. Knight & Player?
 - [X] Unit tests for waiting queue, using mocked datetime
 - [X] Quest queue in dashboard

@@ -357,14 +357,103 @@ public class MapGenerator
 
     private void GenerateLevel8()
     {
-        // Two player exit
-        var room = CreateRoom(10, 10, 8, 16);
+        // Prison
+        // One big room that holds the second player.
+        // Guard has key to prison.
+        // Exit is open.
+        // Health and sword spread around map.
 
-        initialPlayer1Position = (room.Top + 1, room.Left + 1);
-        initialPlayer2Position = (room.Top + 3, room.Left + 1);
+        // Need at least one big room that can fit prison
+        var prisonRoom = CreateRandomRoom(11, 15, 0, 5, height - 5, 5, width - 5);
+        Debug.Assert(prisonRoom != null);
+        // Create extra rooms to fill map
+        CreateRandomRooms(30, 3, 10, 2);
+        // Connect them all
+        ConnectRoomsRandomly();
 
-        exitPosition = (room.Bottom - 1, room.Right);
-        data[exitPosition.y, exitPosition.x] = Cell.Exit;
+        availableRooms = availableRooms.Remove(prisonRoom);
+
+        // Place player and exit
+        PlacePlayerTopLeftAndExitBottomRight();
+
+        // Create prison
+        var prisonKeyColor = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(prisonKeyColor);
+
+        var (cy, cx) = prisonRoom.Center;
+        for (int x = cx - 3; x <= cx + 3; x++)
+        {
+            if (data[cy - 3, x] == Cell.Empty)
+            {
+                data[cy - 3, x] = Cell.Wall;
+            }
+            if (data[cy + 3, x] == Cell.Empty)
+            {
+                data[cy + 3, x] = Cell.Wall;
+            }
+        }
+        for (int y = cy - 2; y <= cy + 2; y++)
+        {
+            if (data[y, cx - 3] == Cell.Empty)
+            {
+                data[y, cx - 3] = Cell.Wall;
+            }
+            if (data[y, cx + 3] == Cell.Empty)
+            {
+                data[y, cx + 3] = Cell.Wall;
+            }
+        }
+
+        // Player 2 is in prison
+        initialPlayer2Position = prisonRoom.Center;
+
+        // Add large door with enemy guard in front
+        var doorCell = ToDoor(prisonKeyColor);
+        int direction = new[] { 0, 1, 2, 3 }.PickOne();
+        switch (direction)
+        {
+            case 0:
+                data[cy - 3, cx - 1] = doorCell;
+                data[cy - 3, cx] = doorCell;
+                data[cy - 3, cx + 1] = doorCell;
+                initialEnemy1Position = (cy - 4, cx);
+                break;
+            case 1:
+                data[cy - 1, cx + 3] = doorCell;
+                data[cy, cx + 3] = doorCell;
+                data[cy + 1, cx + 3] = doorCell;
+                initialEnemy1Position = (cy, cx + 4);
+                break;
+            case 2:
+                data[cy + 3, cx - 1] = doorCell;
+                data[cy + 3, cx] = doorCell;
+                data[cy + 3, cx + 1] = doorCell;
+                initialEnemy1Position = (cy + 4, cx);
+                break;
+            case 3:
+                data[cy - 1, cx - 3] = doorCell;
+                data[cy, cx - 3] = doorCell;
+                data[cy + 1, cx - 3] = doorCell;
+                initialEnemy1Position = (cy, cx - 4);
+                break;
+
+            default: throw new InvalidOperationException();
+        }
+
+        // Give guard the key
+        initialEnemy1Inventory = ToInventory(prisonKeyColor);
+
+        // Place a sword randomly
+        var swordRoom = GetFarthestRoomFromTwo(initialPlayer1Position, initialEnemy1Position.Value);
+        availableRooms = availableRooms.Remove(swordRoom);
+        var swordPos = swordRoom.RandomPosition(1);
+        data[swordPos.y, swordPos.x] = Cell.Sword;
+
+        // Place health randomly
+        var healthRoom = GetFarthestRoomFromTwo(initialPlayer1Position, swordPos);
+        availableRooms = availableRooms.Remove(healthRoom);
+        var healthPos = healthRoom.RandomPosition(1);
+        data[healthPos.y, healthPos.x] = Cell.Health;
     }
 
     private void GenerateLevel9()
