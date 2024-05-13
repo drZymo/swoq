@@ -1,23 +1,27 @@
 ﻿using Swoq.Infra;
 using Swoq.Server.Data;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
-namespace Swoq.Server.Services;
+namespace Swoq.Server;
 
 public class GameServer(ISwoqDatabase database)
 {
     public record StartResult(string PlayerName, Guid GameId, GameState State);
-
-    public record QueuedQuest(string PlayerId, DateTime StartTime, DateTime LastQueryTime);
 
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
     private readonly object currentQuestMutex = new();
     private Guid? currentQuestId = null;
-    private IImmutableList<QueuedQuest> pendingQuests = [];
 
-    public event EventHandler<IImmutableList<(string playerName, int queueTime)>>? QueueUpdated;
+    private QuestQueue questQueue = new();
+
+    public event EventHandler<IImmutableList<string>>? QueueUpdated
+    {
+        add => questQueue.Updated += value;
+        remove => questQueue.Updated -= value;
+    }
 
     public StartResult Start(string playerId, int? level)
     {
@@ -52,12 +56,6 @@ public class GameServer(ISwoqDatabase database)
         {
             var now = Clock.Now;
 
-            // Cleanup inactive queued players.
-            var inactiveQuests = pendingQuests.
-                Where(q => q.LastQueryTime < now - Parameters.MaxQuestInactivityTime).
-                ToImmutableArray();
-            pendingQuests = pendingQuests.RemoveRange(inactiveQuests);
-
             // Cleanup current quest if finished or idle for too long
             if (currentQuestId.HasValue)
             {
@@ -68,38 +66,26 @@ public class GameServer(ISwoqDatabase database)
                 }
             }
 
-            // Enqueue this player if not queued already
-            var pendingQuest = pendingQuests.FirstOrDefault(q => q.PlayerId == player.Id);
-            if (pendingQuest == null)
-            {
-                pendingQuest = new QueuedQuest(player.Id, now, now);
-                pendingQuests = pendingQuests.Add(pendingQuest);
-            }
-            else
-            {
-                // Refresh query time of existing entry
-                pendingQuests = pendingQuests.Replace(pendingQuest, pendingQuest with { LastQueryTime = now });
-            }
+            // Queue (or update entry) player
+            questQueue.Enqueue(player);
 
             // Do not allow starting another quest when current quest is active.
             if (currentQuestId.HasValue)
             {
-                NotifyQueueUpdate();
                 throw new QuestQueuedException();
             }
 
-            // Can only start when first in line
-            var firstPendingQuest = pendingQuests.OrderBy(q => q.StartTime).First();
-            if (firstPendingQuest.PlayerId != player.Id)
+            // Is this player the first entry in the queue?
+            if (questQueue.FrontPlayerId != player.Id)
             {
-                NotifyQueueUpdate();
                 throw new QuestQueuedException();
             }
+            var (frontPlayerId, frontPlayerName) = questQueue.Dequeue();
+            Debug.Assert(frontPlayerId == player.Id);
+            Debug.Assert(frontPlayerName == player.Name);
 
-            // No other quest active and first in queue
-            pendingQuests = pendingQuests.Remove(firstPendingQuest);
-            NotifyQueueUpdate();
-
+            // No quest active
+            // Player first in queue
             // Start a new game
             var quest = new Quest(player, database);
             currentQuestId = quest.Id;
@@ -123,7 +109,7 @@ public class GameServer(ISwoqDatabase database)
 
         // Gather ids to remove
         var idsToRemove = games.Values.
-            Where(g => (now - g.LastActionTime) > Parameters.GameRetentionTime).
+            Where(g => now - g.LastActionTime > Parameters.GameRetentionTime).
             Select(g => g.Id).
             ToImmutableArray();
 
@@ -135,23 +121,5 @@ public class GameServer(ISwoqDatabase database)
                 games = games.RemoveRange(idsToRemove);
             }
         }
-    }
-
-    private void NotifyQueueUpdate()
-    {
-        // TODO: decouple on background thread?
-        // Only update every X seconds
-        var now = Clock.Now;
-
-        (string playerName, int queueTime) Convert(QueuedQuest qq)
-        {
-            var playerName = database.FindPlayerByIdAsync(qq.PlayerId)?.Result?.Name ?? "Unknown";
-            var queueTime = (int)Math.Round((now - qq.StartTime).TotalSeconds);
-            return (playerName, queueTime);
-        }
-
-        var queue = pendingQuests.Select(qq => Convert(qq)).ToImmutableArray();
-
-        QueueUpdated?.Invoke(this, queue);
     }
 }

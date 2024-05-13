@@ -42,10 +42,8 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public record QueuedPlayer(string PlayerName, int QueueTime);
-
-    private readonly ObservableCollection<QueuedPlayer> queuedPlayers = [];
-    public ReadOnlyObservableCollection<QueuedPlayer> QueuedPlayers { get; }
+    private readonly ObservableCollection<string> queuedPlayers = [];
+    public ReadOnlyObservableCollection<string> QueuedPlayers { get; }
 
     private string statusMessage = "";
     public string StatusMessage
@@ -113,11 +111,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     if (message.QueueUpdate != null)
                     {
-                        var queuedPlayers = message.QueueUpdate.Entries.
-                            Select(e => new QueuedPlayer(e.PlayerName, e.QueueTime)).
-                            OrderBy(q => q.QueueTime).
-                            ToImmutableArray();
-
+                        var queuedPlayers = message.QueueUpdate.QueuedPlayers.ToImmutableArray();
                         uiDispatcher.Invoke(() =>
                         {
                             this.queuedPlayers.Clear();

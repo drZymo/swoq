@@ -94,13 +94,13 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
         }
     }
 
-    private void OnQueueUpdated(object? sender, IImmutableList<(string playerName, int queueTime)> queue)
+    private void OnQueueUpdated(object? sender, IImmutableList<string> queue)
     {
         var update = new QuestUpdate
         {
             QueueUpdate = new()
         };
-        update.QueueUpdate.Entries.AddRange(queue.Select(e => new QueueEntry { PlayerName = e.playerName, QueueTime = e.queueTime }));
+        update.QueueUpdate.QueuedPlayers.AddRange(queue);
 
         updates.Enqueue(update);
         updatesCount.Release();

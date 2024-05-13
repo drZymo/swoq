@@ -57,14 +57,7 @@
                 <ItemsControl ItemsSource="{Binding QueuedPlayers}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*"/>
-                                    <ColumnDefinition Width="1*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding PlayerName}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding QueueTime}" TextAlignment="Right"/>
-                            </Grid>
+                            <TextBlock Text="{Binding}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

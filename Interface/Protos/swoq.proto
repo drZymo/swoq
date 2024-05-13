@@ -141,13 +141,8 @@ message QuestActed {
 	ActionResponse response = 3;
 }
 
-message QueueEntry {
-	string playerName = 1;
-	int32 queueTime = 2;
-}
-
 message QueueUpdate {
-	repeated QueueEntry entries = 1;
+	repeated string queuedPlayers = 1;
 }
 
 message QuestUpdate {
