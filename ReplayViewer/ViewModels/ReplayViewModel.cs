@@ -18,19 +18,20 @@ internal class ReplayViewModel : ViewModelBase
     {
         using var file = File.OpenRead(path);
 
+        var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
         var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
         var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
         var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
 
-        AddGameState(ref gameStates, mapBuilder, null, startResponse.State, startResponse.Result);
+        AddGameState(header.PlayerName, ref gameStates, mapBuilder, null, startResponse.State, startResponse.Result);
 
         while (file.Position < file.Length)
         {
             var request = ActionRequest.Parser.ParseDelimitedFrom(file);
             var response = ActionResponse.Parser.ParseDelimitedFrom(file);
 
-            AddGameState(ref gameStates, mapBuilder, request, response.State, response.Result);
+            AddGameState(header.PlayerName, ref gameStates, mapBuilder, request, response.State, response.Result);
         }
 
         PlayPauseCommand = new RelayCommand(PlayPause);
@@ -64,7 +65,7 @@ internal class ReplayViewModel : ViewModelBase
     private DispatcherTimer? timer = null;
 
 
-    private static void AddGameState(ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
+    private static void AddGameState(string playerName, ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
     {
         // Clear whole map on new level
         if (gameStates.Count > 0 && state.Level != gameStates[^1].Level)
@@ -97,7 +98,7 @@ internal class ReplayViewModel : ViewModelBase
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        var gameState = new GameState("Unknown player", state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State);
+        var gameState = new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State);
         gameStates = gameStates.Add(gameState);
     }
 

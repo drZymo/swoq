@@ -150,3 +150,11 @@ message QuestUpdate {
 	optional QuestActed acted = 2;
 	optional QueueUpdate queueUpdate = 3;
 }
+
+
+
+
+message ReplayHeader {
+	string playerName = 1;
+	string dateTime = 2;
+}

@@ -8,7 +8,7 @@ internal class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        replay = new ReplayViewModel(@"D:\Projects\swoq-stuff\Replays\Quest\Second - 2883fb38-b1d1-4883-a0b4-19f3c76aafc8.bin");
+        replay = new ReplayViewModel(@"D:\Projects\swoq-stuff\Replays\Quest\Ralph - d07b1b93-6664-4a68-8f2a-67baa6c02f18.bin");
     }
 
     public ReplayViewModel Replay

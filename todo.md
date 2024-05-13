@@ -40,7 +40,7 @@
 - [X] Unit tests for waiting queue, using mocked datetime
 - [X] Quest queue in dashboard
 - [ ] Reduce code duplication between dashboard and replay viewer
-- [ ] Player name in replay so it is visible in viewer
+- [X] Player name in replay so it is visible in viewer
 - [ ] File browser in replay viewer
 
 

@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using Microsoft.Extensions.Options;
+using Swoq.Infra;
 using Swoq.Interface;
 using Swoq.Server.Data;
 using Swoq.Server.Services;
@@ -66,6 +67,9 @@ internal class ReplaySaver : IDisposable
         }
 
         logger.LogInformation("New replay started at {path}", filename);
+
+        var header = new ReplayHeader { PlayerName = e.playerName, DateTime = Clock.Now.ToString("s") };
+        Enqueue(e.gameId, header);
 
         Enqueue(e.gameId, e.request);
         Enqueue(e.gameId, e.response);

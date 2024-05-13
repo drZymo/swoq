@@ -224,7 +224,7 @@ class GamePlayer:
 
         self.move_to_exit()
         self.attack()
-        #self.pickup_health()
+        self.pickup_health()
         self.pickup_sword()
         self.pickup_keys()
         self.explore()
