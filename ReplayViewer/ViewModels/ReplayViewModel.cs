@@ -23,14 +23,14 @@ internal class ReplayViewModel : ViewModelBase
 
         var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
 
-        AddGameState(ref gameStates, mapBuilder, null, startResponse.State);
+        AddGameState(ref gameStates, mapBuilder, null, startResponse.State, startResponse.Result);
 
         while (file.Position < file.Length)
         {
             var request = ActionRequest.Parser.ParseDelimitedFrom(file);
             var response = ActionResponse.Parser.ParseDelimitedFrom(file);
 
-            AddGameState(ref gameStates, mapBuilder, request, response.State);
+            AddGameState(ref gameStates, mapBuilder, request, response.State, response.Result);
         }
 
         PlayPauseCommand = new RelayCommand(PlayPause);
@@ -64,7 +64,7 @@ internal class ReplayViewModel : ViewModelBase
     private DispatcherTimer? timer = null;
 
 
-    private static void AddGameState(ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state)
+    private static void AddGameState(ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
     {
         // Clear whole map on new level
         if (gameStates.Count > 0 && state.Level != gameStates[^1].Level)
@@ -97,7 +97,7 @@ internal class ReplayViewModel : ViewModelBase
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        var gameState = new GameState("Unknown player", state.Tick, state.Level, status, map, player1State, player2State);
+        var gameState = new GameState("Unknown player", state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State);
         gameStates = gameStates.Add(gameState);
     }
 
@@ -107,23 +107,11 @@ internal class ReplayViewModel : ViewModelBase
 
         var playerAction = new StringBuilder();
 
-        playerAction.Append(action.Value switch
-        {
-            Interface.Action.Use => "Use",
-            Interface.Action.Move => "Move",
-            _ => "Unknown",
-        });
+        playerAction.Append(action.Value.ConvertToString());
         if (direction.HasValue)
         {
             playerAction.Append(' ');
-            playerAction.Append(direction.Value switch
-            {
-                Interface.Direction.North => "North",
-                Interface.Direction.East => "East",
-                Interface.Direction.South => "South",
-                Interface.Direction.West => "West",
-                _ => "Unknown",
-            });
+            playerAction.Append(direction.Value.ConvertToString());
         }
         return playerAction.ToString();
     }

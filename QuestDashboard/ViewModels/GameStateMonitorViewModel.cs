@@ -1,6 +1,7 @@
 ﻿using Grpc.Net.Client;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
+using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -99,13 +100,14 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                             mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
                         }
 
-                        var gameState = CreateGameState(playerName, response.State, ref prevLevel, ref mapBuilder);
+                        var gameState = CreateGameState(playerName, response.State, response.Result, ref prevLevel, ref mapBuilder);
                         uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
                     if (message.Acted != null && mapBuilder != null)
                     {
-                        var gameState = CreateGameState(playerName, message.Acted.Response.State, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
+                        var response = message.Acted.Response;
+                        var gameState = CreateGameState(playerName, response.State, response.Result, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
                         uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
@@ -150,7 +152,13 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
-    private static GameState CreateGameState(string playerName, Interface.State state, ref int prevLevel, ref MapBuilder mapBuilder, Interface.ActionRequest? request = null)
+    private static GameState CreateGameState(
+        string playerName,
+        Interface.State state,
+        Interface.Result actionResult,
+        ref int prevLevel,
+        ref MapBuilder mapBuilder,
+        Interface.ActionRequest? request = null)
     {
         // Clear whole map on new level
         if (state.Level != prevLevel)
@@ -166,46 +174,38 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
         var status = state.Finished ? "Finished" : "Active";
 
-        var action1 = request != null
-            ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
-            : "Start";
-        var player1State = new PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
+        InfraUI.Models.PlayerState? player1State = null;
+        if (state.Player1 != null)
+        {
+            var action1 = request != null
+                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
+                : "Start";
+            player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
+        }
 
-        PlayerState? player2State = null;
+        InfraUI.Models.PlayerState? player2State = null;
         if (state.Player2 != null)
         {
             var action2 = request != null
                 ? GetPlayerAction(request.HasAction2 ? request.Action2 : null, request.HasDirection2 ? request.Direction2 : null)
                 : "Start";
-            player2State = new PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
+            player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        return new GameState(playerName, state.Tick, state.Level, status, map, player1State, player2State);
+        return new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State);
     }
 
-    private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)
+    private static string GetPlayerAction(Interface.Action? action, Interface.Direction? direction)
     {
         if (!action.HasValue) return "None";
 
         var playerAction = new StringBuilder();
 
-        playerAction.Append(action.Value switch
-        {
-            Interface.Action.Use => "Use",
-            Interface.Action.Move => "Move",
-            _ => "Unknown",
-        });
+        playerAction.Append(action.Value.ConvertToString());
         if (direction.HasValue)
         {
             playerAction.Append(' ');
-            playerAction.Append(direction.Value switch
-            {
-                Interface.Direction.North => "North",
-                Interface.Direction.East => "East",
-                Interface.Direction.South => "South",
-                Interface.Direction.West => "West",
-                _ => "Unknown",
-            });
+            playerAction.Append(direction.Value.ConvertToString());
         }
         return playerAction.ToString();
     }

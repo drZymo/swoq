@@ -32,13 +32,17 @@
 - [ ] Example bot Python
 - [ ] Example bot C#
 - [ ] Show result of request in GameStateView
-- [ ] Truncate game time / detect stuck/idle   !! BUG. only exploring does not trigger change.
+- [X] Truncate game time / detect stuck/idle
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
 - [ ] Player name (big) in quest dashboard
 - [ ] Distinct player in game and player on interface. Knight & Player?
-- [ ] Unit tests for waiting queue, using mocked datetime
-- [ ] Quest queue in dashboard
+- [X] Unit tests for waiting queue, using mocked datetime
+- [X] Quest queue in dashboard
+- [ ] Reduce code duplication between dashboard and replay viewer
+- [ ] Player name in replay so it is visible in viewer
+- [ ] File browser in replay viewer
+
 
 ## Act vs Move/Use
 

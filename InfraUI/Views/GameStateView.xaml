@@ -38,6 +38,10 @@
                         <Run>Status:</Run>
                         <Run Text="{Binding Status, Mode=OneWay}" />
                     </TextBlock>
+                    <TextBlock>
+                        <Run>Action result:</Run>
+                        <Run Text="{Binding ActionResult, Mode=OneWay}" />
+                    </TextBlock>
                 </StackPanel>
             </GroupBox>
 
