@@ -73,6 +73,8 @@ public class MapGenerator
         if (level == 9) GenerateLevel9();
         if (level == 10) GenerateLevel10();
 
+        RemoveInnerWalls();
+
         var data = this.data.Cast<Cell>().ToImmutableArray();
         return new Map(data, height, width,
             initialPlayer1Position,
@@ -1084,5 +1086,45 @@ public class MapGenerator
         }
 
         return doorPositions;
+    }
+
+    private void RemoveInnerWalls()
+    {
+        var innerWalls = ImmutableList<Position>.Empty;
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var isInner = true;
+                if (y > 1)
+                {
+                    if (x > 1) isInner = isInner && (data[y - 1, x - 1] == Cell.Wall);
+                    isInner = isInner && (data[y - 1, x] == Cell.Wall);
+                    if (x < width - 1) isInner = isInner && (data[y - 1, x + 1] == Cell.Wall);
+                }
+
+                if (x > 1) isInner = isInner && (data[y, x - 1] == Cell.Wall);
+                isInner = isInner && (data[y, x] == Cell.Wall);
+                if (x < width - 1) isInner = isInner && (data[y, x + 1] == Cell.Wall);
+
+                if (y < height - 1)
+                {
+                    if (x > 1) isInner = isInner && (data[y + 1, x - 1] == Cell.Wall);
+                    isInner = isInner && (data[y + 1, x] == Cell.Wall);
+                    if (x < width - 1) isInner = isInner && (data[y + 1, x + 1] == Cell.Wall);
+                }
+
+                if (isInner)
+                {
+                    innerWalls = innerWalls.Add((y, x));
+                }
+            }
+        }
+
+        foreach (var (y, x) in innerWalls)
+        {
+            data[y, x] = Cell.Unknown;
+        }
     }
 }
