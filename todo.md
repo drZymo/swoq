@@ -31,7 +31,7 @@
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Example bot Python
 - [ ] Example bot C#
-- [ ] Show result of request in GameStateView
+- [X] Show result of request in GameStateView
 - [X] Truncate game time / detect stuck/idle
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
@@ -41,8 +41,10 @@
 - [X] Quest queue in dashboard
 - [ ] Reduce code duplication between dashboard and replay viewer
 - [X] Player name in replay so it is visible in viewer
-- [ ] File browser in replay viewer
-- [ ] Random idle for enemy
+- [X] File browser in replay viewer
+- [X] Random idle for enemy
+- [ ] Autotile in map viewer
+
 
 ## Act vs Move/Use
 

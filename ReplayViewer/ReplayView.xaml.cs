@@ -23,4 +23,9 @@ public partial class ReplayView : UserControl
     {
         e.Handled = !int.TryParse(e.Text, out _);
     }
+
+    private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        slider.Focus();
+    }
 }

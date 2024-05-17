@@ -1,16 +1,19 @@
-﻿using Swoq.InfraUI.ViewModels;
+﻿using Microsoft.Win32;
+using Swoq.InfraUI.ViewModels;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
 internal class MainViewModel : ViewModelBase
 {
-    private ReplayViewModel replay;
-
     public MainViewModel()
     {
-        replay = new ReplayViewModel(@"D:\Projects\swoq-stuff\Replays\Quest\Ralph - d07b1b93-6664-4a68-8f2a-67baa6c02f18.bin");
+        LoadCommand = new RelayCommand(Load);
     }
 
+    private ReplayViewModel replay = new();
     public ReplayViewModel Replay
     {
         get => replay;
@@ -18,6 +21,47 @@ internal class MainViewModel : ViewModelBase
         {
             replay = value;
             OnPropertyChanged();
+        }
+    }
+
+    public ICommand LoadCommand { get; }
+
+    private string currentFile = "";
+    public string CurrentFile
+    {
+        get => currentFile;
+        private set
+        {
+            if (currentFile != value)
+            {
+                currentFile = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public void LoadFile(string path)
+    {
+        Replay = new ReplayViewModel(path);
+        CurrentFile = path;
+    }
+
+    private void Load(object? param)
+    {
+        var dialog = new OpenFileDialog
+        {
+            FileName = CurrentFile,
+            DefaultExt = ".bin",
+            Filter = "Replay files (.bin)|*.bin",
+            CheckFileExists = true,
+            CheckPathExists = true,
+            Multiselect = false,
+            Title = "Open replay file",
+        };
+        var result = dialog.ShowDialog();
+        if (result.HasValue && result.Value)
+        {
+            LoadFile(dialog.FileName);
         }
     }
 }

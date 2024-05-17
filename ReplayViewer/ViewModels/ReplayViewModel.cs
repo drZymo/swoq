@@ -4,6 +4,7 @@ using Swoq.Interface;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -14,32 +15,37 @@ internal class ReplayViewModel : ViewModelBase
     private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
-    public ReplayViewModel(string path)
+    private readonly Dispatcher uiDispatcher;
+    private DispatcherTimer? timer = null;
+
+    private IImmutableList<GameState> gameStates = ImmutableList<GameState>.Empty;
+
+    public ReplayViewModel()
     {
-        using var file = File.OpenRead(path);
-
-        var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
-        var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
-        var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
-
-        var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
-
-        AddGameState(header.PlayerName, ref gameStates, mapBuilder, null, startResponse.State, startResponse.Result);
-
-        while (file.Position < file.Length)
-        {
-            var request = ActionRequest.Parser.ParseDelimitedFrom(file);
-            var response = ActionResponse.Parser.ParseDelimitedFrom(file);
-
-            AddGameState(header.PlayerName, ref gameStates, mapBuilder, request, response.State, response.Result);
-        }
-
+        uiDispatcher = Dispatcher.CurrentDispatcher;
         PlayPauseCommand = new RelayCommand(PlayPause);
-
-        OnTickChanged();
     }
 
-    private readonly IImmutableList<GameState> gameStates = ImmutableList<GameState>.Empty;
+    public ReplayViewModel(string path) : this()
+    {
+        IsLoading = true;
+        Task.Run(() => Load(path));
+    }
+
+    private bool isLoading = false;
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set
+        {
+            if (isLoading != value)
+            {
+                isLoading = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
 
     private int tick = 0;
     public int Tick
@@ -62,10 +68,47 @@ internal class ReplayViewModel : ViewModelBase
 
     public ICommand PlayPauseCommand { get; }
 
-    private DispatcherTimer? timer = null;
 
+    private void Load(string path)
+    {
+        try
+        {
+            using var file = File.OpenRead(path);
 
-    private static void AddGameState(string playerName, ref IImmutableList<GameState> gameStates, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
+            var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
+            var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
+            var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
+
+            var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
+
+            AddGameState(header.PlayerName, mapBuilder, null, startResponse.State, startResponse.Result);
+
+            while (file.Position < file.Length)
+            {
+                var request = ActionRequest.Parser.ParseDelimitedFrom(file);
+                var response = ActionResponse.Parser.ParseDelimitedFrom(file);
+
+                AddGameState(header.PlayerName, mapBuilder, request, response.State, response.Result);
+            }
+        }
+        catch
+        {
+            gameStates = ImmutableList<GameState>.Empty;
+            MessageBox.Show($"Failed to load replay file\n\n{path}");
+        }
+        finally
+        {
+            uiDispatcher.Invoke(() =>
+            {
+                Tick = 0;
+                OnPropertyChanged(nameof(MaxTick));
+                IsLoading = false;
+                OnTickChanged();
+            });
+        }
+    }
+
+    private void AddGameState(string playerName, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
     {
         // Clear whole map on new level
         if (gameStates.Count > 0 && state.Level != gameStates[^1].Level)
@@ -98,8 +141,15 @@ internal class ReplayViewModel : ViewModelBase
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        var gameState = new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State);
+        var gameState = CreateOnUI(() => new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State)) ?? throw new InvalidOperationException();
         gameStates = gameStates.Add(gameState);
+    }
+
+    private T? CreateOnUI<T>(Func<T> func)
+    {
+        T? value = default;
+        uiDispatcher.Invoke(() => { value = func(); });
+        return value;
     }
 
     private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)
@@ -119,8 +169,15 @@ internal class ReplayViewModel : ViewModelBase
 
     private void OnTickChanged()
     {
-        var gameState = gameStates[tick];
-        Current.SetGameState(gameState);
+        if (gameStates.Count == 0)
+        {
+            Current.Reset();
+        }
+        else
+        {
+            var gameState = gameStates[tick];
+            Current.SetGameState(gameState);
+        }
     }
 
     private void PlayPause(object? _)

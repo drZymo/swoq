@@ -22,7 +22,7 @@
         <Grid Grid.Column="0" Background="Black">
             <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
         </Grid>
-        <StackPanel Grid.Column="1" Orientation="Vertical">
+        <StackPanel Grid.Column="1" Orientation="Vertical" Visibility="{Binding IsLoaded, Mode=OneWay, Converter={StaticResource boolToVisConverter}}">
             <TextBlock VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding PlayerName}" FontSize="20"/>
             <GroupBox Header="Game" Margin="8" Padding="8">
                 <StackPanel Orientation="Vertical">

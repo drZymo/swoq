@@ -12,6 +12,8 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         set
         {
             current = value;
+            OnPropertyChanged(nameof(IsLoaded));
+
             OnPropertyChanged(nameof(PlayerName));
             OnPropertyChanged(nameof(Tick));
             OnPropertyChanged(nameof(Level));
@@ -29,6 +31,8 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
             OnPropertyChanged(nameof(Player2HasSword));
         }
     }
+
+    public bool IsLoaded => Current != null;
 
     public string PlayerName => Current?.PlayerName ?? "Unknown";
     public int Tick => Current?.Tick ?? -1;
