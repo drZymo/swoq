@@ -1,5 +1,22 @@
 # TODO
 
+- [ ] Order: width/height, x/y
+- [ ] Levels
+- [ ] Proto file hosting per level
+- [ ] Single build output folder
+- [ ] Sync appsettings for production/development
+- [ ] Installer for ReplayViewer
+- [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
+- [ ] Example bot Python
+- [ ] Example bot C#
+- [ ] Lore in the proto files
+- [ ] Remember health at start of level
+- [ ] Distinct player in game and player on interface. Knight & Player?
+- [ ] Reduce code duplication between dashboard and replay viewer
+- [ ] Autotile in map viewer
+
+## Done
+
 - [X] Act vs Move/Use
 - [X] Door open/closed states
 - [X] Map generator
@@ -10,8 +27,6 @@
 - [X] Extra health
 - [X] Replay storage
 - [X] Replay viewer
-- [ ] Order: width/height, x/y
-- [ ] Levels
 - [X] Sword separate inventory
 - [X] Health in state
 - [X] Map editor writeablebitmap
@@ -23,27 +38,15 @@
 - [X] Dashboard with player stats
 - [X] One quest at a time
 - [X] Quest monitoring
-- [ ] Proto file hosting per level
 - [X] Correct shutdown of open grpc streams
-- [ ] Single build output folder
-- [ ] Sync appsettings for production/development
-- [ ] Installer for ReplayViewer
-- [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
-- [ ] Example bot Python
-- [ ] Example bot C#
 - [X] Show result of request in GameStateView
 - [X] Truncate game time / detect stuck/idle
-- [ ] Lore in the proto files
-- [ ] Remember health at start of level
 - [X] Player name (big) in quest dashboard
-- [ ] Distinct player in game and player on interface. Knight & Player?
 - [X] Unit tests for waiting queue, using mocked datetime
 - [X] Quest queue in dashboard
-- [ ] Reduce code duplication between dashboard and replay viewer
 - [X] Player name in replay so it is visible in viewer
 - [X] File browser in replay viewer
 - [X] Random idle for enemy
-- [ ] Autotile in map viewer
 
 
 ## Act vs Move/Use
