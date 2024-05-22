@@ -14,6 +14,8 @@
 - [ ] Distinct player in game and player on interface. Knight & Player?
 - [ ] Reduce code duplication between dashboard and replay viewer
 - [ ] Autotile in map viewer
+- [ ] Use Avalonia for all UIs so it is multi-platform
+
 
 ## Done
 
