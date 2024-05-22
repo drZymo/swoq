@@ -37,7 +37,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    private int width = 48;
+    private int width = 64;
     public int Width
     {
         get => width;
@@ -51,7 +51,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    private int height = 32;
+    private int height = 38;
     public int Height
     {
         get => height;

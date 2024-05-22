@@ -709,7 +709,7 @@ public class MapGenerator
         availableRooms = availableRooms.Remove(exitRoom);
 
         initialPlayer1Position = playerRoom.Center;
-        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
         data[exitPosition.y, exitPosition.x] = Cell.Exit;
     }
 
@@ -756,6 +756,12 @@ public class MapGenerator
 
     private (KeyColor keyColor, Position doorPos) AddLockAroundExit()
     {
+        // pick a random key color
+        var keyColor = availableKeyColors.PickOne();
+        availableKeyColors = availableKeyColors.Remove(keyColor);
+
+        // Place wall of doors around exit
+        Position doorPos = new();
         for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
         {
             for (var x = exitPosition.x - 1; x <= exitPosition.x + 1; x++)
@@ -764,21 +770,14 @@ public class MapGenerator
                 {
                     if (data[y, x] == Cell.Empty)
                     {
-                        data[y, x] = Cell.Wall;
+                        data[y, x] = ToDoor(keyColor);
+                        doorPos = (y, x);
                     }
                 }
             }
         }
 
-        var doorPos = PickRandomDoorPosForSmallRoom(exitPosition);
-
-        // pick a random key
-        var key = availableKeyColors.PickOne();
-        availableKeyColors = availableKeyColors.Remove(key);
-
-        data[doorPos.y, doorPos.x] = ToDoor(key);
-
-        return (key, doorPos);
+        return (keyColor, doorPos);
     }
 
     private Position PickRandomDoorPosForSmallRoom(Position roomCenter)
@@ -1041,7 +1040,7 @@ public class MapGenerator
         initialPlayer1Position = (playerRoom.Top, playerRoom.Left);
         initialPlayer2Position = (playerRoom.Bottom - 1, playerRoom.Right - 1);
 
-        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right);
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
         data[exitPosition.y, exitPosition.x] = Cell.Exit;
         availableRooms = availableRooms.Remove(playerRoom).Remove(exitRoom);
     }
