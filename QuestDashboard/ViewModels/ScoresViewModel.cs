@@ -1,9 +1,9 @@
-﻿using Grpc.Net.Client;
+﻿using Avalonia.Threading;
+using Grpc.Net.Client;
 using Swoq.InfraUI.ViewModels;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Windows.Threading;
 
 namespace Swoq.QuestDashboard.ViewModels;
 
@@ -12,12 +12,10 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
     private static readonly TimeSpan PollDelay = TimeSpan.FromSeconds(3);
 
     private readonly CancellationTokenSource cancellationTokenSource = new();
-    private readonly Dispatcher uiDispatcher;
     private readonly Thread pollThread;
 
     public ScoresViewModel()
     {
-        uiDispatcher = Dispatcher.CurrentDispatcher;
         Scores = new ReadOnlyObservableCollection<Score>(scores);
 
         pollThread = new Thread(new ThreadStart(PollThread));
@@ -56,7 +54,7 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
             try
             {
                 bool connected = false;
-                uiDispatcher.Invoke(() => { StatusMessage = "Connecting..."; });
+                Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
 
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
                 var client = new Interface.PlayerService.PlayerServiceClient(channel);
@@ -73,11 +71,11 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
 
                     if (!connected)
                     {
-                        uiDispatcher.Invoke(() => { StatusMessage = "Connected"; });
+                        Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connected"; });
                         connected = true;
                     }
 
-                    uiDispatcher.Invoke(() =>
+                    Dispatcher.UIThread.Invoke(() =>
                     {
                         scores.Clear();
                         foreach (var score in orderedScores)
@@ -101,13 +99,13 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
                     // Stop gracefully on cancel
                     break;
                 }
-                uiDispatcher.Invoke(() => { StatusMessage = "Disconnected"; });
+                Dispatcher.UIThread.Invoke(() => { StatusMessage = "Disconnected"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
             catch (Exception ex)
             {
-                uiDispatcher.Invoke(() => { StatusMessage = "Internal error"; });
+                Dispatcher.UIThread.Invoke(() => { StatusMessage = "Internal error"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }

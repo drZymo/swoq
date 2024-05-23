@@ -1,7 +1,7 @@
-﻿using System.Collections.Immutable;
-using System.IO;
-using System.Windows;
-using System.Windows.Media.Imaging;
+﻿using Avalonia;
+using Avalonia.Media.Imaging;
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 
 namespace Swoq.InfraUI.ViewModels;
 
@@ -27,21 +27,40 @@ public enum Tile
 
 public static class TileSet
 {
+    // TODO: make tile size configurable, e.g. from bitmap size?
+    public const int TileWidth = 16;
+    public const int TileHeight = 16;
+
+    private static (PixelSize size, byte[] pixels) LoadBitmapPixels(string path)
+    {
+        Bitmap bitmap = new(path);
+
+        var pixels = new byte[bitmap.PixelSize.Height * bitmap.PixelSize.Width * 4];
+
+        var pixelsHandle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+        bitmap.CopyPixels(new PixelRect(PixelPoint.Origin, bitmap.PixelSize), pixelsHandle.AddrOfPinnedObject(), pixels.Length, bitmap.PixelSize.Width * 4);
+        pixelsHandle.Free();
+
+        return (bitmap.PixelSize, pixels);
+    }
+
     public static IImmutableDictionary<Tile, byte[]> FromImageFile(string path)
     {
-        BitmapFrame atlasImage;
-        using (var file = File.OpenRead(path))
-        {
-            var decoder = PngBitmapDecoder.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            atlasImage = decoder.Frames[0];
-            atlasImage.Freeze();
-        }
+        var (bitmapSize, bitmapPixels) = LoadBitmapPixels(path);
+
+        var tileStride = TileWidth * 4;
 
         byte[] GetTile(int row, int column)
         {
-            byte[] pixels = new byte[16 * 16 * 4];
-            atlasImage.CopyPixels(new Int32Rect(column * 16, row * 16, 16, 16), pixels, 16 * 4, 0);
-            return pixels;
+            byte[] tilePixels = new byte[TileHeight * TileWidth * 4];
+            for (var tileY = 0; tileY < TileHeight; tileY++)
+            {
+                var bitmapX = column * TileWidth;
+                var bitmapY = row * TileHeight + tileY;
+                var bitmapIndex = (bitmapY * bitmapSize.Width + bitmapX) * 4;
+                Array.Copy(bitmapPixels, bitmapIndex, tilePixels, tileY * tileStride, tileStride);
+            }
+            return tilePixels;
         }
 
         var tiles = ImmutableDictionary<Tile, byte[]>.Empty;

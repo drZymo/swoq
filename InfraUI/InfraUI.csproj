@@ -1,31 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Swoq.InfraUI</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>Swoq.InfraUI</RootNamespace>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="tiles.png" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="tiles.png" />
+		<None Remove="Views\GameStateView.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="tiles.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+	  <AvaloniaResource Include="Views\GameStateView.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Infra\Infra.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="tiles.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Views\GameStateView.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Infra\Infra.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.0.10" />
+		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+		<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
+	</ItemGroup>
 
 </Project>

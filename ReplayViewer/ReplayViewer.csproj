@@ -2,15 +2,33 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<UseWPF>true</UseWPF>
 		<RootNamespace>Swoq.ReplayViewer</RootNamespace>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="App.xaml" />
+		<None Remove="MainWindow.xaml" />
+		<None Remove="ReplayView.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="App.xaml" />
+		<AvaloniaResource Include="Views\MainWindow.xaml" />
+		<AvaloniaResource Include="Views\ReplayView.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+		<PackageReference Include="Avalonia" Version="11.0.10" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.0.10" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10" />
+		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+		<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
 	</ItemGroup>
 
 	<ItemGroup>

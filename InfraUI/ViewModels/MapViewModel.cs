@@ -1,19 +1,19 @@
-﻿using Swoq.Infra;
-using System.Collections.Immutable;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using Avalonia.Media;
+using Swoq.Infra;
+
+using Position = (int y, int x);
 
 namespace Swoq.InfraUI.ViewModels;
 
 public class MapViewModel : ViewModelBase
 {
-    private static readonly IImmutableDictionary<Tile, byte[]> tileset;
-
-    static MapViewModel()
-    {
-        tileset = TileSet.FromImageFile("tiles.png");
-    }
+    // Use double buffering
+    // Needed for Avalonia, because WriteableBitmaps are not correctly invalidated after unlocking.
+    // Parts of the bitmap are not redrawn.
+    // By switching images every frame the whole bitmap is redrawn.
+    private bool useBitmap1 = true;
+    private MapImage? bitmap1 = null;
+    private MapImage? bitmap2 = null;
 
     public MapViewModel() : this(Map.Empty)
     { }
@@ -22,11 +22,6 @@ public class MapViewModel : ViewModelBase
     {
         Map = map;
     }
-
-    private Tile[,]? tiles = null;
-    private bool[,]? visibility = null;
-    private WriteableBitmap? mapImage = null;
-    public ImageSource? MapImage => mapImage;
 
     private Map map = Map.Empty;
     public Map Map
@@ -40,77 +35,76 @@ public class MapViewModel : ViewModelBase
         }
     }
 
-    private void UpdateMapImage()
+    private IImage? mapImage = null;
+    public IImage? MapImage
     {
-        var imgHeight = map.Height * 16;
-        var imgWidth = map.Width * 16;
-
-        if (imgHeight == 0 || imgWidth == 0)
+        get => mapImage;
+        private set
         {
-            tiles = null;
-            visibility = null;
-            mapImage = null;
-            OnPropertyChanged(nameof(MapImage));
-        }
-        else
-        {
-            if (mapImage == null || mapImage.Height != imgHeight || mapImage.Width != imgWidth)
-            {
-                tiles = new Tile[map.Height, map.Width];
-                visibility = new bool[map.Height, map.Width];
-                mapImage = new WriteableBitmap(imgWidth, imgHeight, 96, 96, PixelFormats.Bgra32, null);
-                OnPropertyChanged(nameof(MapImage));
-            }
-
-            RenderMap();
+            mapImage = value;
+            OnPropertyChanged();
         }
     }
 
-    private void RenderMap()
+    private void UpdateMapImage()
     {
-        if (mapImage == null || tiles == null || visibility == null) return;
+        if (map.Height == 0 || map.Width == 0)
+        {
+            useBitmap1 = true;
+            bitmap1 = null;
+            bitmap2 = null;
+            MapImage = null;
+        }
+        else
+        {
+            if (useBitmap1)
+            {
+                RenderMap(ref bitmap1);
+                MapImage = bitmap1?.Image;
+            }
+            else
+            {
+                RenderMap(ref bitmap2);
+                MapImage = bitmap2?.Image;
+            }
+
+            useBitmap1 = !useBitmap1;
+        }
+    }
+
+    private void RenderMap(ref MapImage? bitmap)
+    {
+        if (bitmap == null || bitmap.MapHeight != map.Height || bitmap.MapWidth != map.Width)
+        {
+            bitmap = new MapImage(map.Height, map.Width);
+        }
+
+        using var lockedBitmap = bitmap.Lock();
 
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
-                (int y, int x) pos = (y, x);
-                bool isVisible = map.IsVisible(y, x);
+                Position pos = (y, x);
+                bool isVisible = map.IsVisible(pos);
 
                 Tile tile;
-                if (map.InitialPlayer1Position.Equals(((int, int))pos) ||
-                    map.InitialPlayer2Position.Equals(pos))
+                if (map.InitialPlayer1Position.Equals(pos) ||
+                    (map.InitialPlayer2Position != null && map.InitialPlayer2Position.Equals(pos)))
                 {
                     tile = Tile.Player;
                 }
-                else if ((map.InitialEnemy1Position != null && map.InitialEnemy1Position.Value.Equals(((int, int))pos)) ||
-                    (map.InitialEnemy2Position != null && map.InitialEnemy2Position.Value.Equals(((int, int))pos)))
+                else if ((map.InitialEnemy1Position != null && map.InitialEnemy1Position.Value.Equals(pos)) ||
+                    (map.InitialEnemy2Position != null && map.InitialEnemy2Position.Value.Equals(pos)))
                 {
                     tile = Tile.Enemy;
                 }
                 else
                 {
-                    tile = ToTile(map[y, x]);
+                    tile = ToTile(map[pos]);
                 }
 
-                if (tile != tiles[y, x] || isVisible != visibility[y, x])
-                {
-                    byte[] tileImage = tileset[tile];
-                    if (!isVisible)
-                    {
-                        var newTileImage = new byte[tileImage.Length];
-                        for (var i = 0; i < tileImage.Length; i++)
-                        {
-                            newTileImage[i] = (byte)(tileImage[i] * 2 / 3);
-                        }
-                        tileImage = newTileImage;
-                    }
-
-                    mapImage.WritePixels(new Int32Rect(0, 0, 16, 16), tileImage, 16 * 4, x * 16, y * 16);
-
-                    tiles[y, x] = tile;
-                    visibility[y, x] = isVisible;
-                }
+                lockedBitmap.Set(y, x, tile, isVisible);
             }
         }
     }

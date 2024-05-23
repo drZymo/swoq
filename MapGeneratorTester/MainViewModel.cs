@@ -2,7 +2,7 @@
 using Swoq.InfraUI.ViewModels;
 using System.Windows.Input;
 
-namespace Swoq.MapGeneratorTester.ViewModels;
+namespace Swoq.MapGeneratorTester;
 
 class MainViewModel : ViewModelBase
 {

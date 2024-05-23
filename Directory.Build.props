@@ -1,0 +1,5 @@
+<Project>
+    <PropertyGroup>
+        <Platform Condition="'$(Platform)' == ''">Any CPU</Platform>
+    </PropertyGroup>
+</Project>

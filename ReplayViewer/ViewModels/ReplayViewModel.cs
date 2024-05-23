@@ -1,12 +1,10 @@
-﻿using Swoq.InfraUI.Models;
+﻿using Avalonia.Threading;
+using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
 using System.Collections.Immutable;
-using System.IO;
 using System.Text;
-using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
@@ -15,14 +13,12 @@ internal class ReplayViewModel : ViewModelBase
     private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
-    private readonly Dispatcher uiDispatcher;
     private DispatcherTimer? timer = null;
 
     private IImmutableList<GameState> gameStates = ImmutableList<GameState>.Empty;
 
     public ReplayViewModel()
     {
-        uiDispatcher = Dispatcher.CurrentDispatcher;
         PlayPauseCommand = new RelayCommand(PlayPause);
     }
 
@@ -94,11 +90,11 @@ internal class ReplayViewModel : ViewModelBase
         catch
         {
             gameStates = ImmutableList<GameState>.Empty;
-            MessageBox.Show($"Failed to load replay file\n\n{path}");
+            // TODO: MessageBox.Show($"Failed to load replay file\n\n{path}");
         }
         finally
         {
-            uiDispatcher.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 Tick = 0;
                 OnPropertyChanged(nameof(MaxTick));
@@ -148,7 +144,7 @@ internal class ReplayViewModel : ViewModelBase
     private T? CreateOnUI<T>(Func<T> func)
     {
         T? value = default;
-        uiDispatcher.Invoke(() => { value = func(); });
+        Dispatcher.UIThread.Invoke(() => { value = func(); });
         return value;
     }
 
@@ -184,7 +180,7 @@ internal class ReplayViewModel : ViewModelBase
     {
         if (timer == null)
         {
-            timer = new DispatcherTimer(FrameDelay, DispatcherPriority.Normal, OnTimer, Dispatcher.CurrentDispatcher);
+            timer = new DispatcherTimer(FrameDelay, DispatcherPriority.Normal, OnTimer);
         }
         else
         {
@@ -192,6 +188,7 @@ internal class ReplayViewModel : ViewModelBase
             timer = null;
         }
     }
+
     private void OnTimer(object? sender, EventArgs e)
     {
         Tick++;

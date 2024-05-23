@@ -1,8 +1,8 @@
-﻿using Microsoft.Win32;
+﻿using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using Swoq.InfraUI.ViewModels;
-using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
@@ -46,22 +46,29 @@ internal class MainViewModel : ViewModelBase
         CurrentFile = path;
     }
 
-    private void Load(object? param)
+    private async void Load(object? param)
     {
-        var dialog = new OpenFileDialog
+        // TODO: Proper way of getting StorageProvider (inject?)
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
+            desktop.MainWindow?.StorageProvider is not { } provider)
         {
-            FileName = CurrentFile,
-            DefaultExt = ".bin",
-            Filter = "Replay files (.bin)|*.bin",
-            CheckFileExists = true,
-            CheckPathExists = true,
-            Multiselect = false,
+            throw new NullReferenceException("Missing StorageProvider instance.");
+        }
+
+        var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
             Title = "Open replay file",
-        };
-        var result = dialog.ShowDialog();
-        if (result.HasValue && result.Value)
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("Replay file") { Patterns = ["*.bin"] }],
+        });
+
+        if (files.Count > 0)
         {
-            LoadFile(dialog.FileName);
+            var localPath = files[0].TryGetLocalPath();
+            if (localPath != null)
+            {
+                LoadFile(localPath);
+            }
         }
     }
 }

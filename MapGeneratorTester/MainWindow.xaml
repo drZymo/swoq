@@ -1,34 +1,38 @@
-﻿<Window x:Class="Swoq.MapGeneratorTester.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Swoq.MapGeneratorTester"
-        xmlns:vm="clr-namespace:Swoq.MapGeneratorTester.ViewModels"
+        x:Class="Swoq.MapGeneratorTester.MainWindow"
+        x:DataType="local:MainViewModel"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="MainWindow" Height="800" Width="1000">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="200"/>
-        </Grid.ColumnDefinitions>
+        Title="MapGenerator Tester" Height="800" Width="1000">
+    <Grid ColumnDefinitions="*,200">
         <Grid Grid.Column="0" Background="Black">
-            <Image Source="{Binding Map.MapImage}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+            <Image Source="{Binding Map.MapImage}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
+
         <StackPanel Grid.Column="1" Orientation="Vertical">
-            <GroupBox Header="Generate" Margin="8" Padding="8">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Margin="0,4,0,0">Level</TextBlock>
-                    <TextBox Margin="0,0,0,4" Text="{Binding Level}"/>
-                    <TextBlock Margin="0,4,0,0">Width</TextBlock>
-                    <TextBox Margin="0,0,0,4" Text="{Binding Width}"/>
-                    <TextBlock Margin="0,4,0,0">Height</TextBlock>
-                    <TextBox Margin="0,0,0,4" Text="{Binding Height}"/>
-                    <Button Margin="0,4" Command="{Binding Generate}">Generate</Button>
-                </StackPanel>
-            </GroupBox>
-            <TextBlock Margin="8" Text="{Binding Status}"/>
+            <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
+                       FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
+                Generate
+            </TextBlock>
+
+            <Separator Margin="8"/>
+
+            <StackPanel Orientation="Vertical">
+                <TextBlock Margin="0,4,0,0">Level</TextBlock>
+                <TextBox Margin="0,0,0,4" Text="{Binding Level}"/>
+                <TextBlock Margin="0,4,0,0">Width</TextBlock>
+                <TextBox Margin="0,0,0,4" Text="{Binding Width}"/>
+                <TextBlock Margin="0,4,0,0">Height</TextBlock>
+                <TextBox Margin="0,0,0,4" Text="{Binding Height}"/>
+                <Button Margin="0,4" Command="{Binding Generate}">Generate</Button>
+            </StackPanel>
+
+            <Separator Margin="8"/>
+
+            <TextBlock Text="{Binding Status}"/>
         </StackPanel>
     </Grid>
 </Window>

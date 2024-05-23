@@ -1,17 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <RootNamespace>Swoq.MapGeneratorTester</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>Swoq.MapGeneratorTester</RootNamespace>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\InfraUI\InfraUI.csproj" />
-    <ProjectReference Include="..\Infra\Infra.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="App.xaml" />
+		<None Remove="MainWindow.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="App.xaml" />
+		<AvaloniaResource Include="MainWindow.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.0.10" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.0.10" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10" />
+		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+		<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\InfraUI\InfraUI.csproj" />
+		<ProjectReference Include="..\Infra\Infra.csproj" />
+	</ItemGroup>
 
 </Project>

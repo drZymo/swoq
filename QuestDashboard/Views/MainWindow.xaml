@@ -1,45 +1,32 @@
-﻿<Window x:Class="Swoq.QuestDashboard.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Swoq.QuestDashboard"
         xmlns:vm="clr-namespace:Swoq.QuestDashboard.ViewModels"
         xmlns:infraui="clr-namespace:Swoq.InfraUI.Views;assembly=InfraUI"
+        x:Class="Swoq.QuestDashboard.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="Swoq Replay Viewer" Height="800" Width="1000"
+        Title="Swoq Quest Dashboard" Height="800" Width="1000"
         Closed="Window_Closed"
         KeyDown="Window_KeyDown"
         FontSize="20"
         Foreground="White"
-        Background="Black"
-        >
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        Background="Black">
+    <Grid ColumnDefinitions="300,*">
+        <Grid Grid.Column="0" RowDefinitions="*,*,auto">
+            <StackPanel Grid.Row="0" Orientation="Vertical" DataContext="{Binding Scores}">
+                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
+                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
+                    Highscores
+                </TextBlock>
 
-        <Grid Grid.Column="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="auto"/>
-            </Grid.RowDefinitions>
-            <GroupBox Grid.Row="0" Margin="8" Padding="8" Header="Highscores" DataContext="{Binding Scores}">
+                <Separator Margin="8"/>
+
                 <ItemsControl ItemsSource="{Binding Scores}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
-                                    <RowDefinition Height="auto"/>
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*"/>
-                                    <ColumnDefinition Width="1*"/>
-                                </Grid.ColumnDefinitions>
+                            <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding PlayerName}"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
                                 <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
@@ -52,8 +39,15 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </GroupBox>
-            <GroupBox Grid.Row="1" Margin="8" Padding="8" Header="Queue" DataContext="{Binding GameStateMonitor}">
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Vertical" DataContext="{Binding GameStateMonitor}">
+                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
+                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
+                    Queue
+                </TextBlock>
+
+                <Separator Margin="8"/>
+
                 <ItemsControl ItemsSource="{Binding QueuedPlayers}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -61,15 +55,11 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </GroupBox>
+            </StackPanel>
             <TextBlock Grid.Row="2" Text="{Binding Scores.StatusMessage}" FontSize="12" Foreground="Gray"/>
         </Grid>
 
-        <Grid Grid.Column="1" DataContext="{Binding GameStateMonitor}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="auto"/>
-            </Grid.RowDefinitions>
+        <Grid Grid.Column="1" DataContext="{Binding GameStateMonitor}" RowDefinitions="*,auto">
             <infraui:GameStateView Grid.Row="0" DataContext="{Binding GameState}"/>
             <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
         </Grid>

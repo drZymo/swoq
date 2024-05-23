@@ -1,0 +1,20 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Swoq.ReplayViewer.Views"
+        xmlns:vm="clr-namespace:Swoq.ReplayViewer.ViewModels"
+        x:Class="Swoq.ReplayViewer.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        mc:Ignorable="d"
+        Title="Swoq Replay Viewer" Height="800" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True">
+    <Grid RowDefinitions="auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="auto,*">
+            <Button Grid.Column="0" Margin="8" Padding="8" VerticalAlignment="Center" Command="{Binding LoadCommand}">💾 Load</Button>
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" TextAlignment="Left" Text="{Binding CurrentFile}"/>
+        </Grid>
+        <local:ReplayView Grid.Row="1" DataContext="{Binding Replay}"/>
+    </Grid>
+</Window>

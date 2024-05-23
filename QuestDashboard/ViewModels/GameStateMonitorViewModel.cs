@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using Avalonia.Threading;
+using Grpc.Net.Client;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
@@ -6,20 +7,16 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
-using System.Windows.Threading;
 
 namespace Swoq.QuestDashboard.ViewModels;
 
 internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 {
     private readonly CancellationTokenSource cancellationTokenSource = new();
-    private readonly Dispatcher uiDispatcher;
     private readonly Thread readThread;
 
     public GameStateMonitorViewModel()
     {
-        uiDispatcher = Dispatcher.CurrentDispatcher;
-
         QueuedPlayers = new(queuedPlayers);
 
         readThread = new Thread(new ThreadStart(MonitorThread));
@@ -65,7 +62,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
             try
             {
                 bool connected = false;
-                uiDispatcher.Invoke(() => { StatusMessage = "Connecting..."; });
+                Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
                 var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
 
@@ -78,7 +75,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 {
                     if (!connected)
                     {
-                        uiDispatcher.Invoke(() => { StatusMessage = "Connected"; });
+                        Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connected"; });
                         connected = true;
                     }
 
@@ -87,7 +84,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                     if (message.Started != null)
                     {
                         prevLevel = -1;
-                        uiDispatcher.Invoke(() => { GameState.Reset(); });
+                        Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
 
                         playerName = message.Started.Player;
 
@@ -101,20 +98,20 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                         }
 
                         var gameState = CreateGameState(playerName, response.State, response.Result, ref prevLevel, ref mapBuilder);
-                        uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
+                        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
                     if (message.Acted != null && mapBuilder != null)
                     {
                         var response = message.Acted.Response;
                         var gameState = CreateGameState(playerName, response.State, response.Result, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
-                        uiDispatcher.Invoke(() => { GameState.SetGameState(gameState); });
+                        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
                     if (message.QueueUpdate != null)
                     {
                         var queuedPlayers = message.QueueUpdate.QueuedPlayers.ToImmutableArray();
-                        uiDispatcher.Invoke(() =>
+                        Dispatcher.UIThread.Invoke(() =>
                         {
                             this.queuedPlayers.Clear();
                             foreach (var qp in queuedPlayers)
@@ -137,13 +134,13 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                     // Stop gracefully on cancel
                     break;
                 }
-                uiDispatcher.Invoke(() => { StatusMessage = "Disconnected"; });
+                Dispatcher.UIThread.Invoke(() => { StatusMessage = "Disconnected"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
             catch (Exception ex)
             {
-                uiDispatcher.Invoke(() => { StatusMessage = "Internal error"; });
+                Dispatcher.UIThread.Invoke(() => { StatusMessage = "Internal error"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
