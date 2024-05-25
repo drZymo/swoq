@@ -3,7 +3,7 @@
 - [ ] Order: width/height, x/y
 - [ ] Levels
 - [ ] Proto file hosting per level
-- [ ] Single build output folder
+- [ ] Single build output/publish folder
 - [ ] Sync appsettings for production/development
 - [ ] Installer for ReplayViewer
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
@@ -11,14 +11,13 @@
 - [ ] Example bot C#
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
-- [ ] Distinct player in game and player on interface. Knight & Player?
+- [ ] Distinguish player in game and player on interface. Knight vs Player?
 - [ ] Reduce code duplication between dashboard and replay viewer (map builder)
 - [ ] Autotile in map viewer
-- [X] Use Avalonia for all UIs so it is multi-platform
 - [ ] Tile size (w/h) dynamic in InfraUI
-- [X] BUG: Refresh writeable bitmap
 - [ ] Show player2 info in replay viewer from start
-- [ ] Full screen with Avalonia
+- [ ] tiles.png path relative to exe
+
 
 ## Done
 
@@ -52,7 +51,9 @@
 - [X] Player name in replay so it is visible in viewer
 - [X] File browser in replay viewer
 - [X] Random idle for enemy
-
+- [X] Use Avalonia for all UIs so it is multi-platform
+- [X] BUG: Refresh writeable bitmap
+- [X] Full screen with Avalonia
 
 ## Act vs Move/Use
 

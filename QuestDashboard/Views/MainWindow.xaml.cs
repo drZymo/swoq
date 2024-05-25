@@ -14,17 +14,13 @@ public partial class MainWindow : Window
     {
         if (e.Key == Key.F11)
         {
-            if (WindowState != WindowState.Maximized)
+            if (WindowState != WindowState.FullScreen)
             {
-                //WindowStyle = WindowStyle.None;
-                //ResizeMode = ResizeMode.NoResize;
-                WindowState = WindowState.Maximized;
+                WindowState = WindowState.FullScreen;
             }
             else
             {
                 WindowState = WindowState.Normal;
-                //ResizeMode = ResizeMode.CanResize;
-                //WindowStyle = WindowStyle.SingleBorderWindow;
             }
         }
 
