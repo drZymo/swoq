@@ -11,6 +11,13 @@ internal class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         LoadCommand = new RelayCommand(Load);
+
+        // Load file given at command line
+        var args = Environment.GetCommandLineArgs();
+        if (args.Length > 1)
+        {
+            Task.Run(() => LoadFile(args[1]));
+        }
     }
 
     private ReplayViewModel replay = new();
