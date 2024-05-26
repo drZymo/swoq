@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Swoq.InfraUI.Views"
              xmlns:vm="clr-namespace:Swoq.InfraUI.ViewModels"
              x:Class="Swoq.InfraUI.Views.GameStateView"
              x:DataType="vm:GameStateViewModel"
@@ -15,93 +16,96 @@
         </Grid>
 
         <StackPanel Grid.Column="1" Orientation="Vertical" IsVisible="{Binding IsLoaded, Mode=OneWay}">
+
             <TextBlock VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding PlayerName}"
                        FontSize="{DynamicResource TabItemHeaderFontSize}"
                        FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}"/>
 
-            <Separator Margin="8"/>
+            <local:GroupBox Header="Game">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock>
+                        <Run>Tick:</Run>
+                        <Run Text="{Binding Tick, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock>
+                        <Run>Level:</Run>
+                        <Run Text="{Binding Level, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock>
+                        <Run>Status:</Run>
+                        <Run Text="{Binding Status, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock>
+                        <Run>Action result:</Run>
+                        <Run Text="{Binding ActionResult, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </local:GroupBox>
 
-            <StackPanel Orientation="Vertical">
-                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
-                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
-                    Game
-                </TextBlock>
+            <!-- TODO: Change Header type to visual element or something -->
+            <local:GroupBox Header="Player" IsVisible="{Binding !HasPlayer2}">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock>
+                        <Run>Last action:</Run>
+                        <Run Text="{Binding Player1Action, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
+                        <Run>Health:</Run>
+                        <Run Text="{Binding Player1Health, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
+                        <Run>Inventory:</Run>
+                        <Run Text="{Binding Player1Inventory, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
+                        <Run>Has sword:</Run>
+                        <Run Text="{Binding Player1HasSword, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </local:GroupBox>
 
-                <TextBlock>
-                    <Run>Tick:</Run>
-                    <Run Text="{Binding Tick, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock>
-                    <Run>Level:</Run>
-                    <Run Text="{Binding Level, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock>
-                    <Run>Status:</Run>
-                    <Run Text="{Binding Status, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock>
-                    <Run>Action result:</Run>
-                    <Run Text="{Binding ActionResult, Mode=OneWay}" />
-                </TextBlock>
-            </StackPanel>
+            <local:GroupBox Header="Player #1" IsVisible="{Binding HasPlayer2}">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock>
+                        <Run>Last action:</Run>
+                        <Run Text="{Binding Player1Action, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
+                        <Run>Health:</Run>
+                        <Run Text="{Binding Player1Health, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
+                        <Run>Inventory:</Run>
+                        <Run Text="{Binding Player1Inventory, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
+                        <Run>Has sword:</Run>
+                        <Run Text="{Binding Player1HasSword, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </local:GroupBox>
 
-            <Separator Margin="8"/>
 
-            <StackPanel Orientation="Vertical">
-                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
-                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}"
-                           IsVisible="{Binding !HasPlayer2}">
-                    Player
-                </TextBlock>
-                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
-                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}"
-                           IsVisible="{Binding HasPlayer2}">
-                    Player #1
-                </TextBlock>
-
-                <TextBlock>
-                    <Run>Last action:</Run>
-                    <Run Text="{Binding Player1Action, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                    <Run>Health:</Run>
-                    <Run Text="{Binding Player1Health, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
-                    <Run>Inventory:</Run>
-                    <Run Text="{Binding Player1Inventory, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                    <Run>Has sword:</Run>
-                    <Run Text="{Binding Player1HasSword, Mode=OneWay}" />
-                </TextBlock>
-            </StackPanel>
-
-            <Separator IsVisible="{Binding HasPlayer2}" Margin="8"/>
-
-            <StackPanel Orientation="Vertical" IsVisible="{Binding HasPlayer2}">
-                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
-                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
-                    Player #2
-                </TextBlock>
-
-                <TextBlock>
-                    <Run>Last action:</Run>
-                    <Run Text="{Binding Player2Action, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                    <Run>Health:</Run>
-                    <Run Text="{Binding Player2Health, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
-                    <Run>Inventory:</Run>
-                    <Run Text="{Binding Player2Inventory, Mode=OneWay}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                    <Run>Has sword:</Run>
-                    <Run Text="{Binding Player2HasSword, Mode=OneWay}" />
-                </TextBlock>
-            </StackPanel>
+            <local:GroupBox Header="Player #2" IsVisible="{Binding HasPlayer2}">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock>
+                        <Run>Last action:</Run>
+                        <Run Text="{Binding Player2Action, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
+                        <Run>Health:</Run>
+                        <Run Text="{Binding Player2Health, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
+                        <Run>Inventory:</Run>
+                        <Run Text="{Binding Player2Inventory, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
+                        <Run>Has sword:</Run>
+                        <Run Text="{Binding Player2HasSword, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </local:GroupBox>
         </StackPanel>
     </Grid>
 </UserControl>

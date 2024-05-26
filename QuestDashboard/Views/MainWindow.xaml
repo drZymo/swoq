@@ -15,47 +15,39 @@
         Background="Black">
     <Grid ColumnDefinitions="300,*">
         <Grid Grid.Column="0" RowDefinitions="*,*,auto">
-            <StackPanel Grid.Row="0" Orientation="Vertical" DataContext="{Binding Scores}">
-                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
-                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
-                    Highscores
-                </TextBlock>
-
-                <Separator Margin="8"/>
-
-                <ItemsControl ItemsSource="{Binding Scores}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding PlayerName}"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
-                                <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
+            <infraui:GroupBox Grid.Row="0" Header="Highscores">
+                <StackPanel Orientation="Vertical" DataContext="{Binding Scores}">
+                    <ItemsControl ItemsSource="{Binding Scores}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding PlayerName}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
                                     <Run Text="{Binding LengthTicks}"/>
                                     <Run>ticks,</Run>
                                     <Run Text="{Binding LengthSeconds}"/>
                                     <Run>sec.</Run>
-                                </TextBlock>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Vertical" DataContext="{Binding GameStateMonitor}">
-                <TextBlock FontSize="{DynamicResource TabItemHeaderFontSize}"
-                           FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}">
-                    Queue
-                </TextBlock>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </infraui:GroupBox>
 
-                <Separator Margin="8"/>
+            <infraui:GroupBox Grid.Row="1" Header="Queue">
+                <StackPanel Orientation="Vertical" DataContext="{Binding GameStateMonitor}">
+                    <ItemsControl ItemsSource="{Binding QueuedPlayers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </infraui:GroupBox>
 
-                <ItemsControl ItemsSource="{Binding QueuedPlayers}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
             <TextBlock Grid.Row="2" Text="{Binding Scores.StatusMessage}" FontSize="12" Foreground="Gray"/>
         </Grid>
 
