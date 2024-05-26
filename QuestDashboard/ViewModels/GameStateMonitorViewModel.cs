@@ -1,5 +1,6 @@
 ﻿using Avalonia.Threading;
 using Grpc.Net.Client;
+using Swoq.Infra;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
@@ -149,6 +150,8 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
     private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
+    private static (int y, int x) Convert(Position? position) => position == null ? PositionEx.Invalid : (position.Y, position.X);
+
     private static GameState CreateGameState(
         string playerName,
         Interface.State state,
@@ -165,8 +168,8 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
 
         mapBuilder.PrepareForNextTimeStep();
-        mapBuilder.AddPlayerState(state.Player1, 1);
-        mapBuilder.AddPlayerState(state.Player2, 2);
+        mapBuilder.AddPlayerState(Convert(state.Player1?.Position), state.Player1?.Surroundings ?? [], 1);
+        mapBuilder.AddPlayerState(Convert(state.Player2?.Position), state.Player2?.Surroundings ?? [], 2);
         var map = mapBuilder.CreateMap();
 
         var status = state.Finished ? "Finished" : "Active";

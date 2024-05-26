@@ -1,4 +1,5 @@
 ﻿using Avalonia.Threading;
+using Swoq.Infra;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
@@ -104,6 +105,8 @@ internal class ReplayViewModel : ViewModelBase
         }
     }
 
+    private static (int y, int x) Convert(Position? position) => position == null ? PositionEx.Invalid : (position.Y, position.X);
+
     private void AddGameState(string playerName, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
     {
         // Clear whole map on new level
@@ -113,8 +116,8 @@ internal class ReplayViewModel : ViewModelBase
         }
 
         mapBuilder.PrepareForNextTimeStep();
-        mapBuilder.AddPlayerState(state.Player1, 1);
-        mapBuilder.AddPlayerState(state.Player2, 2);
+        mapBuilder.AddPlayerState(Convert(state.Player1?.Position), state.Player1?.Surroundings ?? [], 1);
+        mapBuilder.AddPlayerState(Convert(state.Player2?.Position), state.Player2?.Surroundings ?? [], 2);
         var map = mapBuilder.CreateMap();
 
         var status = state.Finished ? "Finished" : "Active";
