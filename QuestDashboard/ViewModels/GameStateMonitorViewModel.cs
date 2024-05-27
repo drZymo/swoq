@@ -1,33 +1,30 @@
 ﻿using Avalonia.Threading;
 using Grpc.Net.Client;
-using Swoq.Infra;
-using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
-using Swoq.Interface;
+using Swoq.ReplayViewer.ViewModels;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text;
 
 namespace Swoq.QuestDashboard.ViewModels;
 
 internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 {
     private readonly CancellationTokenSource cancellationTokenSource = new();
-    private readonly Thread readThread;
+    private readonly Thread monitorThread;
 
     public GameStateMonitorViewModel()
     {
         QueuedPlayers = new(queuedPlayers);
 
-        readThread = new Thread(new ThreadStart(MonitorThread));
-        readThread.Start();
+        monitorThread = new Thread(new ThreadStart(MonitorThread));
+        monitorThread.Start();
     }
 
     public void Dispose()
     {
         cancellationTokenSource.Cancel();
-        readThread.Join();
+        monitorThread.Join();
     }
 
     private GameStateViewModel gameState = new(null);
@@ -67,9 +64,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
                 var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
 
-                MapBuilder? mapBuilder = null;
-                int prevLevel = -1;
-                string playerName = "Unknown";
+                GameStateBuilder? gameStateBuilder = null;
 
                 var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
                 while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
@@ -84,28 +79,18 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     if (message.Started != null)
                     {
-                        prevLevel = -1;
                         Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
 
-                        playerName = message.Started.Player;
-
-                        var response = message.Started.Response;
-                        if (mapBuilder == null ||
-                            mapBuilder.Height != response.Height ||
-                            mapBuilder.Width != response.Width ||
-                            mapBuilder.VisibilityRange != response.VisibilityRange)
-                        {
-                            mapBuilder = new MapBuilder(response.Height, response.Width, response.VisibilityRange);
-                        }
-
-                        var gameState = CreateGameState(playerName, response.State, response.Result, ref prevLevel, ref mapBuilder);
+                        var started = message.Started;
+                        gameStateBuilder = new GameStateBuilder(started.Response.Height, started.Response.Width, started.Response.VisibilityRange, started.Player);
+                        var gameState = gameStateBuilder.BuildNext(null, started.Response.State, started.Response.Result, Dispatcher.UIThread);
                         Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
-                    if (message.Acted != null && mapBuilder != null)
+                    if (message.Acted != null && gameStateBuilder != null)
                     {
-                        var response = message.Acted.Response;
-                        var gameState = CreateGameState(playerName, response.State, response.Result, ref prevLevel, ref mapBuilder, request: message.Acted.Request);
+                        var acted = message.Acted;
+                        var gameState = gameStateBuilder.BuildNext(acted.Request, acted.Response.State, acted.Response.Result, Dispatcher.UIThread);
                         Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
@@ -146,67 +131,5 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
-    }
-
-    private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
-
-    private static (int y, int x) Convert(Position? position) => position == null ? PositionEx.Invalid : (position.Y, position.X);
-
-    private static GameState CreateGameState(
-        string playerName,
-        Interface.State state,
-        Interface.Result actionResult,
-        ref int prevLevel,
-        ref MapBuilder mapBuilder,
-        Interface.ActionRequest? request = null)
-    {
-        // Clear whole map on new level
-        if (state.Level != prevLevel)
-        {
-            mapBuilder.Reset();
-            prevLevel = state.Level;
-        }
-
-        mapBuilder.PrepareForNextTimeStep();
-        mapBuilder.AddPlayerState(Convert(state.Player1?.Position), state.Player1?.Surroundings ?? [], 1);
-        mapBuilder.AddPlayerState(Convert(state.Player2?.Position), state.Player2?.Surroundings ?? [], 2);
-        var map = mapBuilder.CreateMap();
-
-        var status = state.Finished ? "Finished" : "Active";
-
-        InfraUI.Models.PlayerState? player1State = null;
-        if (state.Player1 != null)
-        {
-            var action1 = request != null
-                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
-                : "Start";
-            player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
-        }
-
-        InfraUI.Models.PlayerState? player2State = null;
-        if (state.Player2 != null)
-        {
-            var action2 = request != null
-                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null, request.HasDirection2 ? request.Direction2 : null)
-                : "Start";
-            player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
-        }
-
-        return new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State);
-    }
-
-    private static string GetPlayerAction(Interface.Action? action, Interface.Direction? direction)
-    {
-        if (!action.HasValue) return "None";
-
-        var playerAction = new StringBuilder();
-
-        playerAction.Append(action.Value.ConvertToString());
-        if (direction.HasValue)
-        {
-            playerAction.Append(' ');
-            playerAction.Append(direction.Value.ConvertToString());
-        }
-        return playerAction.ToString();
     }
 }

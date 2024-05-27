@@ -12,7 +12,6 @@
 - [ ] Lore in the proto files
 - [ ] Remember health at start of level
 - [ ] Distinguish player in game and player on interface. Knight vs Player?
-- [ ] Reduce code duplication between dashboard and replay viewer (map builder)
 - [ ] Autotile in map viewer
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
@@ -54,6 +53,8 @@
 - [X] Use Avalonia for all UIs so it is multi-platform
 - [X] BUG: Refresh writeable bitmap
 - [X] Full screen with Avalonia
+- [X] Reduce code duplication between dashboard and replay viewer (create game state)
+
 
 ## Act vs Move/Use
 

@@ -1,10 +1,8 @@
 ﻿using Avalonia.Threading;
-using Swoq.Infra;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
 using System.Collections.Immutable;
-using System.Text;
 using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
@@ -12,7 +10,6 @@ namespace Swoq.ReplayViewer.ViewModels;
 internal class ReplayViewModel : ViewModelBase
 {
     private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
-    private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
 
     private DispatcherTimer? timer = null;
 
@@ -65,7 +62,6 @@ internal class ReplayViewModel : ViewModelBase
 
     public ICommand PlayPauseCommand { get; }
 
-
     private void Load(string path)
     {
         try
@@ -76,16 +72,18 @@ internal class ReplayViewModel : ViewModelBase
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
             var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
-            var mapBuilder = new MapBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange);
+            var builder = new GameStateBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange, header.PlayerName);
 
-            AddGameState(header.PlayerName, mapBuilder, null, startResponse.State, startResponse.Result);
+            var gameState = builder.BuildNext(null, startResponse.State, startResponse.Result, Dispatcher.UIThread);
+            gameStates = gameStates.Add(gameState);
 
             while (file.Position < file.Length)
             {
                 var request = ActionRequest.Parser.ParseDelimitedFrom(file);
                 var response = ActionResponse.Parser.ParseDelimitedFrom(file);
 
-                AddGameState(header.PlayerName, mapBuilder, request, response.State, response.Result);
+                gameState = builder.BuildNext(request, response.State, response.Result, Dispatcher.UIThread);
+                gameStates = gameStates.Add(gameState);
             }
         }
         catch
@@ -99,71 +97,10 @@ internal class ReplayViewModel : ViewModelBase
             {
                 Tick = 0;
                 OnPropertyChanged(nameof(MaxTick));
-                IsLoading = false;
                 OnTickChanged();
+                IsLoading = false;
             });
         }
-    }
-
-    private static (int y, int x) Convert(Position? position) => position == null ? PositionEx.Invalid : (position.Y, position.X);
-
-    private void AddGameState(string playerName, MapBuilder mapBuilder, ActionRequest? request, State state, Result actionResult)
-    {
-        // Clear whole map on new level
-        if (gameStates.Count > 0 && state.Level != gameStates[^1].Level)
-        {
-            mapBuilder.Reset();
-        }
-
-        mapBuilder.PrepareForNextTimeStep();
-        mapBuilder.AddPlayerState(Convert(state.Player1?.Position), state.Player1?.Surroundings ?? [], 1);
-        mapBuilder.AddPlayerState(Convert(state.Player2?.Position), state.Player2?.Surroundings ?? [], 2);
-        var map = mapBuilder.CreateMap();
-
-        var status = state.Finished ? "Finished" : "Active";
-
-        InfraUI.Models.PlayerState? player1State = null;
-        if (state.Player1 != null)
-        {
-            var action1 = request != null
-                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
-                : "Start";
-            player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
-        }
-
-        InfraUI.Models.PlayerState? player2State = null;
-        if (state.Player2 != null)
-        {
-            var action2 = request != null
-                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null, request.HasDirection2 ? request.Direction2 : null)
-                : "Start";
-            player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
-        }
-
-        var gameState = CreateOnUI(() => new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State)) ?? throw new InvalidOperationException();
-        gameStates = gameStates.Add(gameState);
-    }
-
-    private T? CreateOnUI<T>(Func<T> func)
-    {
-        T? value = default;
-        Dispatcher.UIThread.Invoke(() => { value = func(); });
-        return value;
-    }
-
-    private static string GetPlayerAction(Swoq.Interface.Action? action, Swoq.Interface.Direction? direction)
-    {
-        if (!action.HasValue) return "None";
-
-        var playerAction = new StringBuilder();
-
-        playerAction.Append(action.Value.ConvertToString());
-        if (direction.HasValue)
-        {
-            playerAction.Append(' ');
-            playerAction.Append(direction.Value.ConvertToString());
-        }
-        return playerAction.ToString();
     }
 
     private void OnTickChanged()
