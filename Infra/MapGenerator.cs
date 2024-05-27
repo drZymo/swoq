@@ -9,16 +9,12 @@ public class MapGenerator
     private class MapGeneratorException(string message) : Exception(message) { }
 
     private static readonly Random random = new();
+    private static readonly char[] Directions = ['N', 'E', 'S', 'W'];
 
     private readonly int height;
     private readonly int width;
-    private readonly Cell[,] data;
-    private Position initialPlayer1Position;
-    private Position? initialPlayer2Position = null;
-    private Position? initialEnemy1Position = null;
-    private Inventory initialEnemy1Inventory = Inventory.None;
-    private Position? initialEnemy2Position = null;
-    private Inventory initialEnemy2Inventory = Inventory.None;
+    private readonly MutableMap map;
+
     private Position exitPosition;
 
     private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
@@ -46,14 +42,14 @@ public class MapGenerator
     {
         this.height = height;
         this.width = width;
-        data = new Cell[height, width];
+        map = new(height, width);
 
         // Fill with walls
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
-                data[y, x] = Cell.Wall;
+                map[y, x] = Cell.Wall;
                 allPosition = allPosition.Add((y, x));
             }
         }
@@ -75,20 +71,15 @@ public class MapGenerator
 
         RemoveInnerWalls();
 
-        var data = this.data.Cast<Cell>().ToImmutableArray();
-        return new Map(data, height, width,
-            initialPlayer1Position,
-            initialPlayer2Position,
-            initialEnemy1Position, initialEnemy1Inventory,
-            initialEnemy2Position, initialEnemy2Inventory);
+        return map.ToMap();
     }
 
     private void GenerateLevel0()
     {
         // TODO: subclasses per level?
         CreateRoom(32, 32, 10, 10);
-        initialPlayer1Position = (32 - 5, 32 - 5);
-        data[32 + 4, 32 + 5] = Cell.Exit;
+        map.Player1.Position = (32 - 5, 32 - 5);
+        map[32 + 4, 32 + 5] = Cell.Exit;
     }
 
     private void GenerateLevel1()
@@ -118,9 +109,9 @@ public class MapGenerator
         var infrontDoorPos = GetEmptyPositionInFront(doorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
 
         // Place key in far away room
-        var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, infrontDoorPos);
+        var keyRoom = GetFarthestRoomFromTwo(map.Player1.Position, infrontDoorPos);
         var keyPosition = keyRoom.RandomPosition(1);
-        data[keyPosition.y, keyPosition.x] = ToKey(keyColor);
+        map[keyPosition] = ToKey(keyColor);
     }
 
     private void GenerateLevel4()
@@ -134,15 +125,15 @@ public class MapGenerator
         var infrontExitDoorPos = GetEmptyPositionInFront(exitDoorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
 
         // Find room farthest away from player and exit large enough for locker room.
-        var lockerRoom = GetFarthestRoomFromTwo(initialPlayer1Position, infrontExitDoorPos, 5, 5);
+        var lockerRoom = GetFarthestRoomFromTwo(map.Player1.Position, infrontExitDoorPos, 5, 5);
         availableRooms = availableRooms.Remove(lockerRoom);
         var (lockerKeyColor, infrontLockerDoorPos) = AddLockerToRoom(lockerRoom, exitKeyColor);
 
         // Place key farthest away from player and locker room
-        var lockerKeyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, infrontLockerDoorPos);
+        var lockerKeyRoom = GetFarthestRoomFromTwo(map.Player1.Position, infrontLockerDoorPos);
         availableRooms = availableRooms.Remove(lockerKeyRoom);
         var lockerKeyPos = lockerKeyRoom.RandomPosition(1);
-        data[lockerKeyPos.y, lockerKeyPos.x] = ToKey(lockerKeyColor);
+        map[lockerKeyPos] = ToKey(lockerKeyColor);
     }
 
     private void GenerateLevel5()
@@ -156,7 +147,7 @@ public class MapGenerator
         var infrontExitDoorPos = GetEmptyPositionInFront(exitDoorPos) ?? throw new MapGeneratorException("Exit door not placed correctly");
 
         // Find room farthest away from player and exit large enough for locker room.
-        var locker1Room = GetFarthestRoomFromTwo(initialPlayer1Position, infrontExitDoorPos, 5, 5);
+        var locker1Room = GetFarthestRoomFromTwo(map.Player1.Position, infrontExitDoorPos, 5, 5);
         availableRooms = availableRooms.Remove(locker1Room);
         var (locker1KeyColor, infrontLocker1DoorPos) = AddLockerToRoom(locker1Room, exitKeyColor);
 
@@ -169,7 +160,7 @@ public class MapGenerator
         var locker2KeyRoom = GetFarthestRoomFromTwo(infrontLocker1DoorPos, infrontLocker2DoorPos);
         availableRooms = availableRooms.Remove(locker2KeyRoom);
         var locker2KeyPos = locker2KeyRoom.RandomPosition(1);
-        data[locker2KeyPos.y, locker2KeyPos.x] = ToKey(locker2KeyColor);
+        map[locker2KeyPos] = ToKey(locker2KeyColor);
     }
 
     private void GenerateLevel6()
@@ -195,61 +186,61 @@ public class MapGenerator
         // Create double locker room
         var (cy, cx) = lockerRoom.Center;
 
-        data[cy, cx] = ToKey(exitKeyColor);
+        map[cy, cx] = ToKey(exitKeyColor);
         for (int y = cy - 1; y <= cy + 1; y++)
         {
             for (int x = cx - 1; x <= cx + 1; x++)
             {
-                if (data[y, x] == Cell.Empty)
+                if (map[y, x] == Cell.Empty)
                 {
-                    data[y, x] = Cell.Wall;
+                    map[y, x] = Cell.Wall;
                 }
             }
         }
 
         for (int x = cx - 3; x <= cx + 3; x++)
         {
-            if (data[cy - 3, x] == Cell.Empty)
+            if (map[cy - 3, x] == Cell.Empty)
             {
-                data[cy - 3, x] = Cell.Wall;
+                map[cy - 3, x] = Cell.Wall;
             }
-            if (data[cy + 3, x] == Cell.Empty)
+            if (map[cy + 3, x] == Cell.Empty)
             {
-                data[cy + 3, x] = Cell.Wall;
+                map[cy + 3, x] = Cell.Wall;
             }
         }
         for (int y = cy - 2; y <= cy + 2; y++)
         {
-            if (data[y, cx - 3] == Cell.Empty)
+            if (map[y, cx - 3] == Cell.Empty)
             {
-                data[y, cx - 3] = Cell.Wall;
+                map[y, cx - 3] = Cell.Wall;
             }
-            if (data[y, cx + 3] == Cell.Empty)
+            if (map[y, cx + 3] == Cell.Empty)
             {
-                data[y, cx + 3] = Cell.Wall;
+                map[y, cx + 3] = Cell.Wall;
             }
         }
 
         var innerColor = availableKeyColors.PickOne();
         availableKeyColors = availableKeyColors.Remove(innerColor);
-        data[cy - 1, cx] = ToDoor(innerColor);
+        map[cy - 1, cx] = ToDoor(innerColor);
 
         var outerColor = availableKeyColors.PickOne();
         availableKeyColors = availableKeyColors.Remove(outerColor);
-        data[cy + 3, cx] = ToDoor(outerColor);
+        map[cy + 3, cx] = ToDoor(outerColor);
 
 
         // Place inner key in room closest to player so it can accidentally be picked up
-        var innerKeyRoom = GetClosestRoomFrom(availableRooms, initialPlayer1Position);
+        var innerKeyRoom = GetClosestRoomFrom(availableRooms, map.Player1.Position);
         availableRooms = availableRooms.Remove(innerKeyRoom);
         var innerKeyPos = innerKeyRoom.RandomPosition(1);
-        data[innerKeyPos.y, innerKeyPos.x] = ToKey(innerColor);
+        map[innerKeyPos] = ToKey(innerColor);
 
         // Place outer key far from exit and player
-        var outerKeyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, exitDoor);
+        var outerKeyRoom = GetFarthestRoomFromTwo(map.Player1.Position, exitDoor);
         availableRooms = availableRooms.Remove(outerKeyRoom);
         var outerKeyPos = outerKeyRoom.RandomPosition(1);
-        data[outerKeyPos.y, outerKeyPos.x] = ToKey(outerColor);
+        map[outerKeyPos] = ToKey(outerColor);
     }
 
     private void GenerateLevel7()
@@ -308,9 +299,9 @@ public class MapGenerator
         var doorPositions = ImmutableList<int>.Empty;
         for (var y = 0; y < height; y++)
         {
-            if (data[y, middle] == Cell.Empty)
+            if (map[y, middle] == Cell.Empty)
             {
-                data[y, middle] = ToDoor(keyColor);
+                map[y, middle] = ToDoor(keyColor);
                 doorPositions = doorPositions.Add(y);
             }
         }
@@ -319,7 +310,7 @@ public class MapGenerator
         Position farthestInfrontDoor = (0, 0);
         {
             var maxDist = 0;
-            var (distances, _) = ComputeDistancesFrom(initialPlayer1Position);
+            var (distances, _) = ComputeDistancesFrom(map.Player1.Position);
             foreach (var doorPos in doorPositions)
             {
                 var doorLeft = (doorPos, middle - 1);
@@ -334,27 +325,27 @@ public class MapGenerator
             }
         }
 
-        var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
+        var keyRoom = GetFarthestRoomFromTwo(map.Player1.Position, farthestInfrontDoor);
         var keyPos = keyRoom.RandomPosition(1);
-        data[keyPos.y, keyPos.x] = ToKey(keyColor);
+        map[keyPos] = ToKey(keyColor);
 
         // Place sword in any room on the left
         var swordRoom = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(swordRoom);
         var swordPos = swordRoom.RandomPosition(0);
-        data[swordPos.y, swordPos.x] = Cell.Sword;
+        map[swordPos] = Cell.Sword;
 
         // Place health in any room on the left
         var healthRoom = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(healthRoom);
         var healthPos = healthRoom.RandomPosition(0);
-        data[healthPos.y, healthPos.x] = Cell.Health;
+        map[healthPos] = Cell.Health;
 
         // Place enemy in any room on the right with key to exit
         var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();
         var enemyPos = enemyRoom.RandomPosition(0);
-        initialEnemy1Position = enemyPos;
-        initialEnemy1Inventory = ToInventory(exitKeyColor);
+        map.Enemy1.Position = enemyPos;
+        map.Enemy1.Inventory = ToInventory(exitKeyColor);
     }
 
     private void GenerateLevel8()
@@ -385,77 +376,77 @@ public class MapGenerator
         var (cy, cx) = prisonRoom.Center;
         for (int x = cx - 3; x <= cx + 3; x++)
         {
-            if (data[cy - 3, x] == Cell.Empty)
+            if (map[cy - 3, x] == Cell.Empty)
             {
-                data[cy - 3, x] = Cell.Wall;
+                map[cy - 3, x] = Cell.Wall;
             }
-            if (data[cy + 3, x] == Cell.Empty)
+            if (map[cy + 3, x] == Cell.Empty)
             {
-                data[cy + 3, x] = Cell.Wall;
+                map[cy + 3, x] = Cell.Wall;
             }
         }
         for (int y = cy - 2; y <= cy + 2; y++)
         {
-            if (data[y, cx - 3] == Cell.Empty)
+            if (map[y, cx - 3] == Cell.Empty)
             {
-                data[y, cx - 3] = Cell.Wall;
+                map[y, cx - 3] = Cell.Wall;
             }
-            if (data[y, cx + 3] == Cell.Empty)
+            if (map[y, cx + 3] == Cell.Empty)
             {
-                data[y, cx + 3] = Cell.Wall;
+                map[y, cx + 3] = Cell.Wall;
             }
         }
 
         // Player 2 is in prison
-        initialPlayer2Position = prisonRoom.Center;
+        map.Player2.Position = prisonRoom.Center;
 
         // Add large door with enemy guard in front
         var doorCell = ToDoor(prisonKeyColor);
-        int direction = new[] { 0, 1, 2, 3 }.PickOne();
+        int direction = Directions.PickOne();
         switch (direction)
         {
-            case 0:
-                data[cy - 3, cx - 1] = doorCell;
-                data[cy - 3, cx] = doorCell;
-                data[cy - 3, cx + 1] = doorCell;
-                initialEnemy1Position = (cy - 4, cx);
+            case 'N':
+                map[cy - 3, cx - 1] = doorCell;
+                map[cy - 3, cx] = doorCell;
+                map[cy - 3, cx + 1] = doorCell;
+                map.Enemy1.Position = (cy - 4, cx);
                 break;
-            case 1:
-                data[cy - 1, cx + 3] = doorCell;
-                data[cy, cx + 3] = doorCell;
-                data[cy + 1, cx + 3] = doorCell;
-                initialEnemy1Position = (cy, cx + 4);
+            case 'E':
+                map[cy - 1, cx + 3] = doorCell;
+                map[cy, cx + 3] = doorCell;
+                map[cy + 1, cx + 3] = doorCell;
+                map.Enemy1.Position = (cy, cx + 4);
                 break;
-            case 2:
-                data[cy + 3, cx - 1] = doorCell;
-                data[cy + 3, cx] = doorCell;
-                data[cy + 3, cx + 1] = doorCell;
-                initialEnemy1Position = (cy + 4, cx);
+            case 'S':
+                map[cy + 3, cx - 1] = doorCell;
+                map[cy + 3, cx] = doorCell;
+                map[cy + 3, cx + 1] = doorCell;
+                map.Enemy1.Position = (cy + 4, cx);
                 break;
-            case 3:
-                data[cy - 1, cx - 3] = doorCell;
-                data[cy, cx - 3] = doorCell;
-                data[cy + 1, cx - 3] = doorCell;
-                initialEnemy1Position = (cy, cx - 4);
+            case 'W':
+                map[cy - 1, cx - 3] = doorCell;
+                map[cy, cx - 3] = doorCell;
+                map[cy + 1, cx - 3] = doorCell;
+                map.Enemy1.Position = (cy, cx - 4);
                 break;
 
             default: throw new InvalidOperationException();
         }
 
         // Give guard the key
-        initialEnemy1Inventory = ToInventory(prisonKeyColor);
+        map.Enemy1.Inventory = ToInventory(prisonKeyColor);
 
         // Place a sword randomly
-        var swordRoom = GetFarthestRoomFromTwo(initialPlayer1Position, initialEnemy1Position.Value);
+        var swordRoom = GetFarthestRoomFromTwo(map.Player1.Position, map.Enemy1.Position);
         availableRooms = availableRooms.Remove(swordRoom);
         var swordPos = swordRoom.RandomPosition(1);
-        data[swordPos.y, swordPos.x] = Cell.Sword;
+        map[swordPos] = Cell.Sword;
 
         // Place health randomly
-        var healthRoom = GetFarthestRoomFromTwo(initialPlayer1Position, swordPos);
+        var healthRoom = GetFarthestRoomFromTwo(map.Player1.Position, swordPos);
         availableRooms = availableRooms.Remove(healthRoom);
         var healthPos = healthRoom.RandomPosition(1);
-        data[healthPos.y, healthPos.x] = Cell.Health;
+        map[healthPos] = Cell.Health;
     }
 
     private void GenerateLevel9()
@@ -473,7 +464,7 @@ public class MapGenerator
         Position farthestInfrontDoor = (0, 0);
         {
             var maxDist = 0;
-            var (distances, _) = ComputeDistancesFrom(initialPlayer1Position);
+            var (distances, _) = ComputeDistancesFrom(map.Player1.Position);
             foreach (var doorPos in doorPositions)
             {
                 var doorLeft = (doorPos, middle - 1);
@@ -488,28 +479,28 @@ public class MapGenerator
             }
         }
 
-        var keyRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
+        var keyRoom = GetFarthestRoomFromTwo(map.Player1.Position, farthestInfrontDoor);
         var keyPos = keyRoom.RandomPosition(1);
-        data[keyPos.y, keyPos.x] = ToKey(keyColor);
+        map[keyPos] = ToKey(keyColor);
 
         // Place sword in any room on the left
         var swordRoom1 = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(swordRoom1);
         var swordPos1 = swordRoom1.RandomPosition(0);
-        data[swordPos1.y, swordPos1.x] = Cell.Sword;
+        map[swordPos1] = Cell.Sword;
 
         // Place another sword in any room on the left
         var swordRoom2 = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(swordRoom2);
         var swordPos2 = swordRoom2.RandomPosition(0);
-        data[swordPos2.y, swordPos2.x] = Cell.Sword;
+        map[swordPos2] = Cell.Sword;
 
         // Place enemy in any room on the right with key to exit
         var enemyRoom = roomsRight.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(enemyRoom);
         var enemyPos = enemyRoom.RandomPosition(0);
-        initialEnemy1Position = enemyPos;
-        initialEnemy1Inventory = ToInventory(exitKeyColor);
+        map.Enemy1.Position = enemyPos;
+        map.Enemy1.Inventory = ToInventory(exitKeyColor);
     }
 
     private void GenerateLevel10()
@@ -524,7 +515,7 @@ public class MapGenerator
         Position farthestInfrontDoor = (0, 0);
         {
             var maxDist = 0;
-            var (distances, _) = ComputeDistancesFrom(initialPlayer1Position);
+            var (distances, _) = ComputeDistancesFrom(map.Player1.Position);
             foreach (var doorPos in doorPositionsBlack)
             {
                 var doorLeft = (doorPos, middle - 1);
@@ -539,9 +530,9 @@ public class MapGenerator
             }
         }
 
-        var plateRoom = GetFarthestRoomFromTwo(initialPlayer1Position, farthestInfrontDoor);
+        var plateRoom = GetFarthestRoomFromTwo(map.Player1.Position, farthestInfrontDoor);
         var platePos = plateRoom.RandomPosition(1);
-        data[platePos.y, platePos.x] = Cell.PressurePlate;
+        map[platePos] = Cell.PressurePlate;
 
 
         // Create another tunnel with a door
@@ -555,7 +546,7 @@ public class MapGenerator
             foreach (var doorPos in doorPositionsBlack)
             {
                 Position doorRight = (doorPos, middle + 1);
-                if (data[doorRight.y, doorRight.x] == Cell.Empty)
+                if (map[doorRight] == Cell.Empty)
                 {
                     infrontDoor = doorRight;
                     break;
@@ -567,13 +558,13 @@ public class MapGenerator
         var keyRoom = GetFarthestRoomFrom(roomsRight.Where(r => availableRooms.Contains(r)), infrontDoor.Value);
         availableRooms = availableRooms.Remove(keyRoom);
         var keyPos = keyRoom.RandomPosition(0);
-        data[keyPos.y, keyPos.x] = ToKey(doorKeyColor);
+        map[keyPos] = ToKey(doorKeyColor);
 
         // Put exit key on random room in the left
         var exitKeyRoom = roomsLeft.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(exitKeyRoom);
         var exitKeyPos = exitKeyRoom.RandomPosition(1);
-        data[exitKeyPos.y, exitKeyPos.x] = ToKey(exitKeyColor);
+        map[exitKeyPos] = ToKey(exitKeyColor);
     }
 
     private Room CreateRoom(int y, int x, int height, int width)
@@ -583,7 +574,7 @@ public class MapGenerator
         // Make empty
         for (var my = room.Top; my < room.Bottom; my++)
             for (var mx = room.Left; mx < room.Right; mx++)
-                data[my, mx] = Cell.Empty;
+                map[my, mx] = Cell.Empty;
 
         rooms = rooms.Add(room);
         availableRooms = availableRooms.Add(room);
@@ -708,9 +699,9 @@ public class MapGenerator
         var exitRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((height, width))).First();
         availableRooms = availableRooms.Remove(exitRoom);
 
-        initialPlayer1Position = playerRoom.Center;
+        map.Player1.Position = playerRoom.Center;
         exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
-        data[exitPosition.y, exitPosition.x] = Cell.Exit;
+        map[exitPosition] = Cell.Exit;
     }
 
     private void DrawHLine(int y, int x1, int x2, int dir, Cell value = Cell.Empty)
@@ -720,8 +711,8 @@ public class MapGenerator
         var end = Math.Max(x1, x2);
         for (var x = start; x <= end; x++)
         {
-            data[y, x] = value;
-            data[y - dir, x] = value;
+            map[y, x] = value;
+            map[y - dir, x] = value;
         }
     }
 
@@ -732,8 +723,8 @@ public class MapGenerator
         var end = Math.Max(y1, y2);
         for (var y = start; y <= end; y++)
         {
-            data[y, x] = value;
-            data[y, x - dir] = value;
+            map[y, x] = value;
+            map[y, x - dir] = value;
         }
     }
 
@@ -768,9 +759,9 @@ public class MapGenerator
             {
                 if (0 <= y && y < height && 0 <= x && x < width)
                 {
-                    if (data[y, x] == Cell.Empty)
+                    if (map[y, x] == Cell.Empty)
                     {
-                        data[y, x] = ToDoor(keyColor);
+                        map[y, x] = ToDoor(keyColor);
                         doorPos = (y, x);
                     }
                 }
@@ -783,19 +774,19 @@ public class MapGenerator
     private Position PickRandomDoorPosForSmallRoom(Position roomCenter)
     {
         var posibleDoorPositions = new List<Position>();
-        if (roomCenter.y < height - 2 && data[roomCenter.y + 2, roomCenter.x] == Cell.Empty)
+        if (roomCenter.y < height - 2 && map[roomCenter.y + 2, roomCenter.x] == Cell.Empty)
         {
             posibleDoorPositions.Add((roomCenter.y + 1, roomCenter.x));
         }
-        if (roomCenter.y > 2 && data[roomCenter.y - 2, roomCenter.x] == Cell.Empty)
+        if (roomCenter.y > 2 && map[roomCenter.y - 2, roomCenter.x] == Cell.Empty)
         {
             posibleDoorPositions.Add((roomCenter.y - 1, roomCenter.x));
         }
-        if (roomCenter.x < width - 2 && data[roomCenter.y, roomCenter.x + 2] == Cell.Empty)
+        if (roomCenter.x < width - 2 && map[roomCenter.y, roomCenter.x + 2] == Cell.Empty)
         {
             posibleDoorPositions.Add((roomCenter.y, roomCenter.x + 1));
         }
-        if (roomCenter.x > 2 && data[roomCenter.y, roomCenter.x - 2] == Cell.Empty)
+        if (roomCenter.x > 2 && map[roomCenter.y, roomCenter.x - 2] == Cell.Empty)
         {
             posibleDoorPositions.Add((roomCenter.y, roomCenter.x - 1));
         }
@@ -834,7 +825,7 @@ public class MapGenerator
 
         void CheckAndAdd(Position currentPos, int currentDist, Position nextPos)
         {
-            if (!data[nextPos.y, nextPos.x].CanWalkOn()) return;
+            if (!map[nextPos].CanWalkOn()) return;
 
             var nextDist = distances.TryGetValue(nextPos, out var d) ? d : int.MaxValue;
             if (currentDist + 1 < nextDist)
@@ -972,10 +963,10 @@ public class MapGenerator
 
     private Position? GetEmptyPositionInFront(Position pos)
     {
-        if (pos.y > 0 && data[pos.y - 1, pos.x] == Cell.Empty) return (pos.y - 1, pos.x);
-        if (pos.y < height && data[pos.y + 1, pos.x] == Cell.Empty) return (pos.y + 1, pos.x);
-        if (pos.x > 0 && data[pos.y, pos.x - 1] == Cell.Empty) return (pos.y, pos.x - 1);
-        if (pos.x < width && data[pos.y, pos.x + 1] == Cell.Empty) return (pos.y, pos.x + 1);
+        if (pos.y > 0 && map[pos.y - 1, pos.x] == Cell.Empty) return (pos.y - 1, pos.x);
+        if (pos.y < height && map[pos.y + 1, pos.x] == Cell.Empty) return (pos.y + 1, pos.x);
+        if (pos.x > 0 && map[pos.y, pos.x - 1] == Cell.Empty) return (pos.y, pos.x - 1);
+        if (pos.x < width && map[pos.y, pos.x + 1] == Cell.Empty) return (pos.y, pos.x + 1);
 
         return null;
     }
@@ -997,14 +988,14 @@ public class MapGenerator
     {
         // Create locker room (3x3) in random position in room
         var lockerCenter = lockerRoom.RandomPosition(2);
-        data[lockerCenter.y, lockerCenter.x] = ToKey(keyColor);
+        map[lockerCenter] = ToKey(keyColor);
         for (var y = lockerCenter.y - 1; y <= lockerCenter.y + 1; y++)
         {
             for (var x = lockerCenter.x - 1; x <= lockerCenter.x + 1; x++)
             {
-                if (data[y, x] == Cell.Empty)
+                if (map[y, x] == Cell.Empty)
                 {
-                    data[y, x] = Cell.Wall;
+                    map[y, x] = Cell.Wall;
                 }
             }
         }
@@ -1013,9 +1004,9 @@ public class MapGenerator
         var lockerDoorPos = PickRandomDoorPosForSmallRoom(lockerCenter);
         var lockerKeyColor = availableKeyColors.PickOne();
         availableKeyColors = availableKeyColors.Remove(lockerKeyColor);
-        data[lockerDoorPos.y, lockerDoorPos.x] = ToDoor(lockerKeyColor);
+        map[lockerDoorPos] = ToDoor(lockerKeyColor);
         var infrontLockerDoorPos = GetEmptyPositionInFront(lockerDoorPos) ?? throw new MapGeneratorException("Locker door not placed correctly");
-        Debug.Assert(data[infrontLockerDoorPos.y, infrontLockerDoorPos.x] == Cell.Empty);
+        Debug.Assert(map[infrontLockerDoorPos] == Cell.Empty);
         return (lockerKeyColor, infrontLockerDoorPos);
     }
 
@@ -1037,11 +1028,11 @@ public class MapGenerator
         var playerRoom = roomsLeft.Where(r => availableRooms.Contains(r)).Where(r => r.Width >= 3 && r.Height >= 3).OrderBy(r => r.Center.DistanceTo((0, 0))).First();
         var exitRoom = roomsRight.Where(r => availableRooms.Contains(r)).OrderBy(r => r.Center.DistanceTo((0, 0))).Last();
 
-        initialPlayer1Position = (playerRoom.Top, playerRoom.Left);
-        initialPlayer2Position = (playerRoom.Bottom - 1, playerRoom.Right - 1);
+        map.Player1.Position = (playerRoom.Top, playerRoom.Left);
+        map.Player2.Position = (playerRoom.Bottom - 1, playerRoom.Right - 1);
 
         exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
-        data[exitPosition.y, exitPosition.x] = Cell.Exit;
+        map[exitPosition] = Cell.Exit;
         availableRooms = availableRooms.Remove(playerRoom).Remove(exitRoom);
     }
 
@@ -1077,9 +1068,9 @@ public class MapGenerator
         var bottom = Math.Max(minLeft.Bottom, minRight.Bottom);
         for (var y = top; y < bottom; y++)
         {
-            if (data[y, middle] == Cell.Empty)
+            if (map[y, middle] == Cell.Empty)
             {
-                data[y, middle] = door;
+                map[y, middle] = door;
                 doorPositions = doorPositions.Add(y);
             }
         }
@@ -1098,20 +1089,20 @@ public class MapGenerator
                 var isInner = true;
                 if (y > 1)
                 {
-                    if (x > 1) isInner = isInner && (data[y - 1, x - 1] == Cell.Wall);
-                    isInner = isInner && (data[y - 1, x] == Cell.Wall);
-                    if (x < width - 1) isInner = isInner && (data[y - 1, x + 1] == Cell.Wall);
+                    if (x > 1) isInner = isInner && (map[y - 1, x - 1] == Cell.Wall);
+                    isInner = isInner && (map[y - 1, x] == Cell.Wall);
+                    if (x < width - 1) isInner = isInner && (map[y - 1, x + 1] == Cell.Wall);
                 }
 
-                if (x > 1) isInner = isInner && (data[y, x - 1] == Cell.Wall);
-                isInner = isInner && (data[y, x] == Cell.Wall);
-                if (x < width - 1) isInner = isInner && (data[y, x + 1] == Cell.Wall);
+                if (x > 1) isInner = isInner && (map[y, x - 1] == Cell.Wall);
+                isInner = isInner && (map[y, x] == Cell.Wall);
+                if (x < width - 1) isInner = isInner && (map[y, x + 1] == Cell.Wall);
 
                 if (y < height - 1)
                 {
-                    if (x > 1) isInner = isInner && (data[y + 1, x - 1] == Cell.Wall);
-                    isInner = isInner && (data[y + 1, x] == Cell.Wall);
-                    if (x < width - 1) isInner = isInner && (data[y + 1, x + 1] == Cell.Wall);
+                    if (x > 1) isInner = isInner && (map[y + 1, x - 1] == Cell.Wall);
+                    isInner = isInner && (map[y + 1, x] == Cell.Wall);
+                    if (x < width - 1) isInner = isInner && (map[y + 1, x + 1] == Cell.Wall);
                 }
 
                 if (isInner)
@@ -1123,7 +1114,7 @@ public class MapGenerator
 
         foreach (var (y, x) in innerWalls)
         {
-            data[y, x] = Cell.Unknown;
+            map[y, x] = Cell.Unknown;
         }
     }
 }

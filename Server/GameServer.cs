@@ -15,7 +15,7 @@ public class GameServer(ISwoqDatabase database)
     private readonly object currentQuestMutex = new();
     private Guid? currentQuestId = null;
 
-    private QuestQueue questQueue = new();
+    private readonly QuestQueue questQueue = new();
 
     public event EventHandler<IImmutableList<string>>? QueueUpdated
     {
