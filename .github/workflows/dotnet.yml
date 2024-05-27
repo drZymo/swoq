@@ -1,0 +1,27 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal
+    - name: Publish win-x64
+      run: dotnet publish -r win-x64 --sc
+    - name: Publish linux-x64
+      run: dotnet publish -r linux-x64 --sc
