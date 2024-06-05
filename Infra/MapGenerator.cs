@@ -576,7 +576,7 @@ public class MapGenerator
         CreateRandomRooms(50, 3, 12, 2);
         ConnectRoomsRandomly();
         PlaceTwoPlayersTopLeftAndExitBottomRight();
-        var (exitKeyColor, exitDoor) = AddLockAroundExit();
+        var (exitKeyColor, _) = AddLockAroundExit();
 
         var exitRoom = FindRoomContainingPosition(exitPosition) ?? throw new MapGeneratorException("Exit room not found");
 
@@ -608,7 +608,7 @@ public class MapGenerator
 
         var sword1Pos = GetFarthestPositionFrom(map.Player2.Position, map.Enemy2.Position, health1Pos, health2Pos);
         map[sword1Pos] = Cell.Sword;
-        
+
         var sword2Pos = GetFarthestPositionFrom(map.Player2.Position, map.Enemy2.Position, health1Pos, health2Pos, sword1Pos);
         map[sword2Pos] = Cell.Sword;
     }
@@ -914,8 +914,6 @@ public class MapGenerator
         return (distances, paths);
     }
 
-    private static double StdDev(params double[] values) => StdDev(values.AsEnumerable());
-
     private static double StdDev(IEnumerable<double> values)
     {
         var mean = values.Average();
@@ -937,7 +935,7 @@ public class MapGenerator
         var minPositions = ImmutableHashSet<Position>.Empty;
         foreach (var pos in checkPositions)
         {
-            var posDistances = inputDistances.Where(d => d.ContainsKey(pos)).Select(d=> (double)d[pos]).ToImmutableArray();
+            var posDistances = inputDistances.Where(d => d.ContainsKey(pos)).Select(d => (double)d[pos]).ToImmutableArray();
             if (posDistances.Length != inputDistances.Count) continue;
 
             var stdDev = StdDev(posDistances);
