@@ -3,9 +3,11 @@
 - [ ] Order: width/height, x/y
 - [ ] Levels
 - [ ] Proto file hosting per level
-- [ ] Single build output/publish folder
+- [ ] Single build output/publish folder for server and questdashboard
+- [ ] Auto start dashboard from server
+- [ ] Publish a single-file app
 - [ ] Sync appsettings for production/development
-- [ ] Installer for ReplayViewer
+- [ ] Zip file for ReplayViewer
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Example bot Python
 - [ ] Example bot C#
@@ -55,6 +57,8 @@
 - [X] Full screen with Avalonia
 - [X] Reduce code duplication between dashboard and replay viewer (create game state)
 
+
+# Design decisions
 
 ## Act vs Move/Use
 

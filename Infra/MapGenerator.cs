@@ -68,8 +68,12 @@ public class MapGenerator
         if (level == 8) GenerateLevel8();
         if (level == 9) GenerateLevel9();
         if (level == 10) GenerateLevel10();
+        if (level == 11) GenerateLevel11();
 
         RemoveInnerWalls();
+
+        if (map[map.Player1.Position] != Cell.Empty) throw new MapGeneratorException("Player 1 position invalid");
+        if (map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
 
         return map.ToMap();
     }
@@ -567,6 +571,49 @@ public class MapGenerator
         map[exitKeyPos] = ToKey(exitKeyColor);
     }
 
+    private void GenerateLevel11()
+    {
+        CreateRandomRooms(50, 3, 12, 2);
+        ConnectRoomsRandomly();
+        PlaceTwoPlayersTopLeftAndExitBottomRight();
+        var (exitKeyColor, exitDoor) = AddLockAroundExit();
+
+        var exitRoom = FindRoomContainingPosition(exitPosition) ?? throw new MapGeneratorException("Exit room not found");
+
+        var availablePositions = ImmutableHashSet<Position>.Empty;
+        for (var y = exitRoom.Top; y < exitRoom.Bottom; y++)
+        {
+            for (var x = exitRoom.Left; x < exitRoom.Right; x++)
+            {
+                var pos = (y, x);
+                if (map[pos] == Cell.Empty) availablePositions = availablePositions.Add(pos);
+            }
+        }
+
+        var enemy1Pos = availablePositions.PickOne();
+        availablePositions = availablePositions.Remove(enemy1Pos);
+
+        var enemy2Pos = availablePositions.PickOne();
+        //availablePositions = availablePositions.Remove(enemy2Pos);
+
+        map.Enemy1.Position = enemy1Pos;
+        map.Enemy2.Position = enemy2Pos;
+        map.Enemy2.Inventory = ToInventory(exitKeyColor);
+
+        var health1Pos = GetFarthestPositionFrom(map.Player1.Position, map.Enemy1.Position);
+        map[health1Pos] = Cell.Health;
+
+        var health2Pos = GetFarthestPositionFrom(map.Player2.Position, map.Enemy2.Position, health1Pos);
+        map[health2Pos] = Cell.Health;
+
+        var sword1Pos = GetFarthestPositionFrom(map.Player2.Position, map.Enemy2.Position, health1Pos, health2Pos);
+        map[sword1Pos] = Cell.Sword;
+        
+        var sword2Pos = GetFarthestPositionFrom(map.Player2.Position, map.Enemy2.Position, health1Pos, health2Pos, sword1Pos);
+        map[sword2Pos] = Cell.Sword;
+    }
+
+
     private Room CreateRoom(int y, int x, int height, int width)
     {
         var room = new Room(y, x, height, width);
@@ -700,6 +747,20 @@ public class MapGenerator
         availableRooms = availableRooms.Remove(exitRoom);
 
         map.Player1.Position = playerRoom.Center;
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
+        map[exitPosition] = Cell.Exit;
+    }
+
+    private void PlaceTwoPlayersTopLeftAndExitBottomRight()
+    {
+        var playerRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((0, 0))).First();
+        availableRooms = availableRooms.Remove(playerRoom);
+
+        var exitRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((height, width))).First();
+        availableRooms = availableRooms.Remove(exitRoom);
+
+        map.Player1.Position = (playerRoom.Center.y + 1, playerRoom.Center.x - 1);
+        map.Player2.Position = (playerRoom.Center.y - 1, playerRoom.Center.x + 1);
         exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
         map[exitPosition] = Cell.Exit;
     }
@@ -853,32 +914,47 @@ public class MapGenerator
         return (distances, paths);
     }
 
-    private Position GetFarthestPositionFromTwo(Position a, Position b)
-    {
-        var (distancesA, _) = ComputeDistancesFrom(a);
-        var (distancesB, _) = ComputeDistancesFrom(b);
+    private static double StdDev(params double[] values) => StdDev(values.AsEnumerable());
 
-        int? maxDistance = null;
-        var maxPositions = ImmutableHashSet<Position>.Empty;
-        foreach (var (pos, distA) in distancesA)
+    private static double StdDev(IEnumerable<double> values)
+    {
+        var mean = values.Average();
+        var stdDev2 = values.Select(v => v - mean).Select(v => v * v).Average();
+        return Math.Sqrt(stdDev2);
+    }
+
+    private Position GetFarthestPositionFrom(params Position[] inputPositions)
+    {
+        var inputDistances = ImmutableList<IImmutableDictionary<Position, int>>.Empty;
+        foreach (var pos in inputPositions)
         {
-            if (distancesB.TryGetValue(pos, out var distB))
+            var (distances, _) = ComputeDistancesFrom(pos);
+            inputDistances = inputDistances.Add(distances);
+        }
+        var checkPositions = inputDistances[0].Keys;
+
+        double minSpread = double.PositiveInfinity;
+        var minPositions = ImmutableHashSet<Position>.Empty;
+        foreach (var pos in checkPositions)
+        {
+            var posDistances = inputDistances.Where(d => d.ContainsKey(pos)).Select(d=> (double)d[pos]).ToImmutableArray();
+            if (posDistances.Length != inputDistances.Count) continue;
+
+            var stdDev = StdDev(posDistances);
+            if (stdDev < minSpread)
             {
-                var dist = distA + distB;
-                if (maxDistance == null || dist > maxDistance)
-                {
-                    maxDistance = dist;
-                    maxPositions = [pos];
-                }
-                else if (maxDistance != null && dist == maxDistance)
-                {
-                    maxPositions = maxPositions.Add(pos);
-                }
+                minSpread = stdDev;
+                minPositions = [pos];
+            }
+            else if (stdDev == minSpread)
+            {
+                minPositions = minPositions.Add(pos);
             }
         }
 
-        return maxPositions.PickOne();
+        return minPositions.PickOne();
     }
+
 
     private Room GetClosestRoomFrom(IEnumerable<Room> rooms, Position pos, int minRoomHeight = 1, int minRoomWidth = 1)
     {
