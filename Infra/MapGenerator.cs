@@ -72,8 +72,8 @@ public class MapGenerator
 
         RemoveInnerWalls();
 
-        if (map[map.Player1.Position] != Cell.Empty) throw new MapGeneratorException("Player 1 position invalid");
-        if (map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
+        if (map.Player1.Position.IsValid() && map[map.Player1.Position] != Cell.Empty) throw new MapGeneratorException("Player 1 position invalid");
+        if (map.Player2.Position.IsValid() && map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
 
         return map.ToMap();
     }
