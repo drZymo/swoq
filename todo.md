@@ -18,6 +18,8 @@
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
 - [ ] tiles.png path relative to exe
+- [ ] Boulder on pressure plate to keep door open
+- [ ] Colored pressure plates & black key
 
 
 ## Done

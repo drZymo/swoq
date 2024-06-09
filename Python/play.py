@@ -66,8 +66,6 @@ class GamePlayer:
 
 
     def start(self, level:int=None) -> None:
-        global played_id
-
         startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=self.player_id, level=level))
         if self.print:
             result = _result_strings[startResponse.result]
