@@ -1,25 +1,31 @@
 # TODO
 
+- [ ] Boulders.
+- [ ] Player portal
+  - [ ] Proto file hosting per level
+  - [ ] Current level
+  - [ ] API description
+- [ ] Reorder error code for incremental features
+- [ ] Remove player registration from proto (move to portal)
 - [ ] Order: width/height, x/y
+- [ ] Colored pressure plates & black key
 - [ ] Levels
-- [ ] Proto file hosting per level
+- [ ] Hardcode dashboard colors
+- [ ] Lore in the proto files
+- [ ] Zip file for ReplayViewer
+- [ ] Example bot Python
+- [ ] Example bot C#
+- [ ] tiles.png path relative to exe
+- [ ] Distinguish player in game and player on interface. Knight vs Player?
+- [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
+- [ ] Remember health at start of level
+- [ ] Autotile in map viewer
 - [ ] Single build output/publish folder for server and questdashboard
 - [ ] Auto start dashboard from server
 - [ ] Publish a single-file app
 - [ ] Sync appsettings for production/development
-- [ ] Zip file for ReplayViewer
-- [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
-- [ ] Example bot Python
-- [ ] Example bot C#
-- [ ] Lore in the proto files
-- [ ] Remember health at start of level
-- [ ] Distinguish player in game and player on interface. Knight vs Player?
-- [ ] Autotile in map viewer
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
-- [ ] tiles.png path relative to exe
-- [ ] Boulder on pressure plate to keep door open
-- [ ] Colored pressure plates & black key
 
 
 ## Done
@@ -152,6 +158,20 @@ Auto play mode: auto plays latest game. When finished plays next latest or loops
 
 ## Levels
 
+Basic setup:
+First one player, later 2 player.
+Progressive introduction of features. When feature is introduced it is done in a simple setting. Features are introduced in the following order:
+1. Maze
+2. Doors
+3. Boulders
+4. Pressure plate with boulders
+5. Combat
+6. Two players
+7. Combat two players
+8. Pressure plate with two players
+
+Once all features are introduced, the levels are constructed with more and more difficult combinations.
+
 1. Simple one room map. One player, no doors.
 2. More difficult map with maze. One player, no doors.
 3. Maze with door in front of exit. Key is placed far away from player and door.
@@ -166,12 +186,12 @@ Auto play mode: auto plays latest game. When finished plays next latest or loops
 12. Single locker room for right side of map. One enemy on right side. One sword on the left, one sword on the right. No armor. So fighting together. Enemy has key for exit door.
 13. Pressure plate locker room. Single locker room with a pressure plate door. One exit door, one key in locker room.
 14. Double pressure plate wall. Level split in two. Pressure plate in left part for one door, plate in right part for other door. Exit in the open, so it is tempting to enter without helping other.
-16. Double pressure plate wall with second pressure plate in locked room.
-17. Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
-18.  Double pressure plate with two lockers. First pressure plate to enter right part of map. Second plate to let second player enter right part. Then a locker room with a key for a locker on the left part of the map that contains the exit door key.
-19. Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
-20. Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword.
-21. Lure. One enemy (120 health) but no swords, so players cannot attack. Pressure plate room with two doors opposite to each other. Plate controls both doors. Enemy must be lured by one player into the room while other player controls the pressure plate. Leave room in time to lock the enemy. Entire room is pressure plate for exit door.
+15. Double pressure plate wall with second pressure plate in locked room.
+16. Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
+17.  Double pressure plate with two lockers. First pressure plate to enter right part of map. Second plate to let second player enter right part. Then a locker room with a key for a locker on the left part of the map that contains the exit door key.
+18. Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
+19. Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword.
+20. Lure. One enemy (120 health) but no swords, so players cannot attack. Pressure plate room with two doors opposite to each other. Plate controls both doors. Enemy must be lured by one player into the room while other player controls the pressure plate. Leave room in time to lock the enemy. Entire room is pressure plate for exit door.
 
 
 ### Pressure plate locker
@@ -246,6 +266,15 @@ But, this might make it too difficult.
 ## Random idle for enemy
 
 Let enemies once every action stop interacting. This randomizes their moves a little, preventing deadlocks with player
+
+
+## Boulders
+
+Can be picked up and placed with use command. But once picked up, the inventory is blocked for picking up keys.
+
+Used to block paths.
+
+Placed on pressure plate will leave it pressed.
 
 
 # Lore in the proto files

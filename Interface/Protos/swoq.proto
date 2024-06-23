@@ -76,10 +76,10 @@ message Position {
 
 message PlayerState {
 	Position position = 1;
-	int32 health = 2;
+	repeated int32 surroundings = 2;
 	int32 inventory = 3;
-	bool hasSword = 4;
-	repeated int32 surroundings = 5;
+	int32 health = 4;
+	bool hasSword = 5;
 }
 
 message State {
