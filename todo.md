@@ -14,6 +14,8 @@
 - [ ] Order: width/height, x/y
 - [ ] Colored pressure plates & black key
 - [ ] Levels
+- [ ] Unit tests
+  - [ ] Pickup and place boulders on pressure plates
 - [ ] Hardcode dashboard colors
 - [ ] Lore in the proto files
 - [ ] Zip file for ReplayViewer

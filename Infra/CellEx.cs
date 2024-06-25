@@ -16,7 +16,7 @@ public static class CellEx
             case Cell.KeyBlue:
             case Cell.DoorBlackOpen:
             case Cell.PressurePlate:
-            case Cell.Sword:
+			case Cell.Sword:
             case Cell.Health:
                 return true;
 
@@ -26,6 +26,7 @@ public static class CellEx
             case Cell.DoorBlueClosed:
             case Cell.DoorBlackClosed:
             case Cell.Boulders:
+            case Cell.PressurePlateWithBoulders:
                 return false;
         };
         return false;

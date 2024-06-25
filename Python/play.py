@@ -456,17 +456,24 @@ class GamePlayer:
         plates = np.argwhere(self.map == PRESSURE_PLATE)
         self.plate_pos = None
         if np.any(plates):
-            plate_pos = tuple(plates[0])
+            self.plate_pos = tuple(plates[0])
             if self.can_act1():
-                print('plate1')
-                self.move_to_1(self.plate_pos)
+                if valid_pos(self.player2_pos): # Only with two players simply move
+                    print('plate1')
+                    self.move_to_1(self.plate_pos)
+                elif self.player1_inventory == 4: # has boulder
+                    print('plate_boulder1')
+                    if are_adjacent(self.player1_pos, self.plate_pos):
+                        self.use_1(self.plate_pos)
+                    else:
+                        self.move_to_1(self.plate_pos)
 
 
     def wait_at_black_door(self) -> None:
         black_doors = np.argwhere(self.map == DOOR_BLACK)
         if np.any(black_doors):
             black_door_pos = tuple(black_doors[0])
-            if self.can_act2():
+            if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
                 print('move_black2')
                 self.move_to_2(black_door_pos)
 
