@@ -53,7 +53,11 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
 
             try
             {
-                gameId = Guid.Parse(request.GameId);
+                if (!Guid.TryParse(request.GameId, out var id))
+                {
+                    throw new UnknownGameIdException();
+                }
+                gameId = id;
 
                 DirectedAction? action1 = request.HasAction1 && request.HasDirection1
                     ? new DirectedAction(request.Action1.Convert(), request.Direction1.Convert())
