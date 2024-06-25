@@ -7,7 +7,8 @@ public static class Converters
         Cell.KeyRed => Inventory.KeyRed,
         Cell.KeyGreen => Inventory.KeyGreen,
         Cell.KeyBlue => Inventory.KeyBlue,
-        _ => Inventory.None,
+        Cell.Boulders => Inventory.Boulders,
+		_ => Inventory.None,
     };
 
     public static Cell ToDroppedLoot(this Inventory inventory) => inventory switch
@@ -16,9 +17,9 @@ public static class Converters
         Inventory.KeyRed => Cell.KeyRed,
         Inventory.KeyGreen => Cell.KeyGreen,
         Inventory.KeyBlue => Cell.KeyBlue,
+        Inventory.Boulders => Cell.Boulders,
         _ => throw new NotImplementedException(),
     };
-
 
     public static Cell ToOpenDoor(this Cell closedDoor) => closedDoor switch
     {

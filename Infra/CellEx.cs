@@ -25,6 +25,7 @@ public static class CellEx
             case Cell.DoorGreenClosed:
             case Cell.DoorBlueClosed:
             case Cell.DoorBlackClosed:
+            case Cell.Boulders:
                 return false;
         };
         return false;

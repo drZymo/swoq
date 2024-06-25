@@ -228,6 +228,7 @@ class GamePlayer:
         self.explore()
         self.move_to_pressure_plate()
         self.wait_at_black_door()
+        self.pickup_boulder()
         self.act()
         self.update_remain_on_plate()
 
@@ -470,6 +471,26 @@ class GamePlayer:
                 self.move_to_2(black_door_pos)
 
 
+    def pickup_boulder(self) -> None:
+        boulders = np.argwhere(self.map == BOULDERS)
+        if np.any(boulders):
+            boulder_pos = tuple(boulders[0])
+            if self.can_act1() and self.player1_inventory == 0:
+                if are_adjacent(self.player1_pos, boulder_pos):
+                    print('use_boulder1')
+                    self.use_1(boulder_pos)
+                else:
+                    print('move_boulder1')
+                    self.move_to_1(boulder_pos)                
+            if self.can_act2() and self.player2_inventory == 0:
+                if are_adjacent(self.player2_pos, boulder_pos):
+                    print('use_boulder2')
+                    self.use_2(boulder_pos)
+                else:
+                    print('move_boulder2')
+                    self.move_to_2(boulder_pos)                
+
+                
     def update_remain_on_plate(self) -> None:
         if self.plate_pos is not None and self.player1_pos[0] == self.plate_pos[0] and self.player1_pos[1] == self.plate_pos[1]:
             print(f'Reset {self.remain_on_plate_counter=}')

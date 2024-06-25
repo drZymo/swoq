@@ -7,4 +7,6 @@ public enum Inventory
     KeyRed,
     KeyGreen,
     KeyBlue,
+
+    Boulders,
 }

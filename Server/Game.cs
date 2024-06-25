@@ -192,31 +192,41 @@ public class Game : IGame
         }
         else
         {
-            if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-
             switch (map[usePos])
             {
-                case Cell.Empty:
                 case Cell.Exit:
                 case Cell.Wall:
-                case Cell.DoorRedOpen:
+				case Cell.DoorRedOpen:
                 case Cell.KeyRed:
-                case Cell.DoorGreenOpen:
+				case Cell.DoorGreenOpen:
                 case Cell.KeyGreen:
-                case Cell.DoorBlueOpen:
+				case Cell.DoorBlueOpen:
                 case Cell.KeyBlue:
                 case Cell.Sword:
                     // Cannot use on this
                     throw new UseNotAllowedException(CreateState());
 
-                case Cell.DoorRedClosed:
-                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
+				case Cell.Empty:
+					if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+					PlaceBoulder(ref player, usePos);
+					break;
+				
+                case Cell.Boulders:
+					if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
+					PickupInventory(ref player, usePos);
+                    break;
+
+				case Cell.DoorRedClosed:
+					if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+					UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
                     break;
                 case Cell.DoorGreenClosed:
-                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyGreen);
+					if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+					UseKeyToOpenDoor(ref player, usePos, Inventory.KeyGreen);
                     break;
                 case Cell.DoorBlueClosed:
-                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyBlue);
+					if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+					UseKeyToOpenDoor(ref player, usePos, Inventory.KeyBlue);
                     break;
 
                 default:
@@ -225,7 +235,7 @@ public class Game : IGame
         }
     }
 
-    private Position GetDirectionPosition(Player player, Direction direction) => direction switch
+	private Position GetDirectionPosition(Player player, Direction direction) => direction switch
     {
         Direction.North => (player.Position.y - 1, player.Position.x),
         Direction.East => (player.Position.y, player.Position.x + 1),
@@ -279,7 +289,7 @@ public class Game : IGame
             case Cell.KeyRed:
             case Cell.KeyGreen:
             case Cell.KeyBlue:
-                PickupKey(ref player, position);
+                PickupInventory(ref player, position);
                 break;
 
             case Cell.Sword:
@@ -295,7 +305,7 @@ public class Game : IGame
         }
     }
 
-    private void PickupKey(ref Player player, Position position)
+    private void PickupInventory(ref Player player, Position position)
     {
         // Cannot pickup if inventory is full
         if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
@@ -329,7 +339,7 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
-    private bool TryUseOnEnemy(Player player, Position usePos)
+	private bool TryUseOnEnemy(Player player, Position usePos)
     {
         foreach (var enemy in enemies)
         {
@@ -347,7 +357,17 @@ public class Game : IGame
         return false;
     }
 
-    private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
+	private void PlaceBoulder(ref Player player, Position usePos)
+	{
+        if (player.Inventory != Inventory.Boulders) throw new UseNotAllowedException(CreateState());
+		if (map[usePos] != Cell.Empty) throw new UseNotAllowedException(CreateState());
+
+        player = player with { Inventory = Inventory.None };
+        map = map.Set(usePos, Cell.Boulders);
+        lastChangeTick = ticks;
+	}
+
+	private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
         if (player.Inventory != item) throw new UseNotAllowedException(CreateState());
@@ -650,6 +670,7 @@ public class Game : IGame
         const int SWORD = 13;
         const int ENEMY = 14;
         const int HEALTH = 15;
+        const int BOULDERS = 16;
 
         if (pos.Equals(player.Position))
         {
@@ -688,6 +709,7 @@ public class Game : IGame
                 case Cell.PressurePlate: return PRESSURE_PLATE;
                 case Cell.Sword: return SWORD;
                 case Cell.Health: return HEALTH;
+                case Cell.Boulders: return BOULDERS;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:
@@ -707,6 +729,7 @@ public class Game : IGame
         Inventory.KeyRed => 1,
         Inventory.KeyGreen => 2,
         Inventory.KeyBlue => 3,
+        Inventory.Boulders => 4,
         _ => throw new NotImplementedException(),
     };
 

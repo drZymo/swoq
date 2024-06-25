@@ -1,6 +1,9 @@
 # TODO
 
 - [ ] Boulders.
+  - [X] pickup
+  - [X] place on empty
+  - [ ] place on pressure plate
 - [ ] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level

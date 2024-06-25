@@ -24,4 +24,6 @@ public enum Cell
 
     Sword,
     Health,
+
+    Boulders,
 }

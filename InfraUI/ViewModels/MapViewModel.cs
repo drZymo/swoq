@@ -131,7 +131,8 @@ public class MapViewModel : ViewModelBase
             Cell.DoorGreenOpen => Tile.Empty,
             Cell.DoorBlueOpen => Tile.Empty,
             Cell.DoorBlackOpen => Tile.Empty,
-            _ => Tile.Unknown,
+            Cell.Boulders => Tile.Boulders,
+			_ => Tile.Unknown,
         };
     }
 }

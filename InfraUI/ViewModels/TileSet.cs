@@ -23,6 +23,7 @@ public enum Tile
     DoorBlue,
     DoorBlack,
     Health,
+    Boulders,
 }
 
 public static class TileSet
@@ -80,6 +81,7 @@ public static class TileSet
         tiles = tiles.Add(Tile.DoorBlue, GetTile(2, 2));
         tiles = tiles.Add(Tile.DoorBlack, GetTile(2, 3));
         tiles = tiles.Add(Tile.Health, GetTile(2, 4));
+        tiles = tiles.Add(Tile.Boulders, GetTile(3, 0));
         return tiles;
     }
 }
