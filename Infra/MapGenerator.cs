@@ -70,6 +70,7 @@ public class MapGenerator
 		if (level == 10) GenerateLevel10();
 		if (level == 11) GenerateLevel11();
 		if (level == 12) GenerateLevel12();
+		if (level == 13) GenerateLevel13();
 
 		RemoveInnerWalls();
 
@@ -270,6 +271,58 @@ public class MapGenerator
 
 	private void GenerateLevel8()
 	{
+		// Fixed room position and size for the exit
+		CreateRoom(height - 5, width - 5, 8, 8);
+		// Fill with random rooms
+		CreateRandomRooms(30, 3, 15, 1);
+		ConnectRoomsRandomly();
+		PlacePlayerTopLeftAndExitBottomRight();
+
+		// Place wall of doors around exit
+		ImmutableList<Position> doorPositions = [];
+		for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
+		{
+			for (var x = exitPosition.x - 1; x <= exitPosition.x + 1; x++)
+			{
+				if (0 <= y && y < height && 0 <= x && x < width)
+				{
+					if (map[y, x] == Cell.Empty)
+					{
+						map[y, x] = Cell.DoorBlackClosed;
+						doorPositions = doorPositions.Add((y, x));
+					}
+				}
+			}
+		}
+
+		// Find the minimum walk distance from each empty point on the map to one of the doors.
+		var points = ImmutableDictionary<Position, int>.Empty;
+		foreach (var doorPos in doorPositions)
+		{
+			var (distances, paths) = ComputeDistancesFrom(doorPos);
+			foreach (var (pt, dist) in distances)
+			{
+				var minDist = dist;
+				if (points.TryGetValue(pt, out var oldDist))
+				{
+					minDist = Math.Min(minDist, oldDist);
+				}
+				points = points.SetItem(pt, minDist);
+			}
+		}
+
+		// Place a plate on a point at a fixed walk distance from the exit.
+		const int plateDistance = 5;
+
+		var platePos = points.Where(kvp => kvp.Value == plateDistance).Select(kvp => kvp.Key).PickOne();
+		map[platePos] = Cell.PressurePlate;
+
+		var boulderPos = GetFarthestPositionFrom(map.Player1.Position, platePos);
+		map[boulderPos] = Cell.Boulders;
+	}
+
+	private void GenerateLevel9()
+	{
 		// First combat.
 		// Key in left side for door to enter right side.
 		// One sword and armor in left side.
@@ -373,7 +426,7 @@ public class MapGenerator
 		map.Enemy1.Inventory = ToInventory(exitKeyColor);
 	}
 
-	private void GenerateLevel9()
+	private void GenerateLevel10()
 	{
 		// Prison
 		// One big room that holds the second player.
@@ -474,7 +527,7 @@ public class MapGenerator
 		map[healthPos] = Cell.Health;
 	}
 
-	private void GenerateLevel10()
+	private void GenerateLevel11()
 	{
 		CreateSplitWorldWithPlayersLeftAndExitRight(out var middle, out var roomsLeft, out var roomsRight);
 
@@ -528,7 +581,7 @@ public class MapGenerator
 		map.Enemy1.Inventory = ToInventory(exitKeyColor);
 	}
 
-	private void GenerateLevel11()
+	private void GenerateLevel12()
 	{
 		CreateSplitWorldWithPlayersLeftAndExitRight(out var middle, out var roomsLeft, out var roomsRight);
 
@@ -592,7 +645,7 @@ public class MapGenerator
 		map[exitKeyPos] = ToKey(exitKeyColor);
 	}
 
-	private void GenerateLevel12()
+	private void GenerateLevel13()
 	{
 		CreateRandomRooms(50, 3, 12, 2);
 		ConnectRoomsRandomly();
@@ -951,28 +1004,35 @@ public class MapGenerator
 		}
 		var checkPositions = inputDistances[0].Keys;
 
-		double minSpread = double.PositiveInfinity;
-		var minPositions = ImmutableHashSet<Position>.Empty;
+		int bestDistance = int.MinValue;
+		var bestPositions = ImmutableHashSet<Position>.Empty;
 		foreach (var pos in checkPositions)
 		{
-			var posDistances = inputDistances.Where(d => d.ContainsKey(pos)).Select(d => (double)d[pos]).ToImmutableArray();
+			var posDistances = inputDistances.Where(d => d.ContainsKey(pos)).Select(d => d[pos]).ToImmutableArray();
+			
+			// Check if it reachable from all input points
 			if (posDistances.Length != inputDistances.Count) continue;
-
-			var stdDev = StdDev(posDistances);
-			if (stdDev < minSpread)
+			
+			// Spread of 1 or less means this point is at nearly equal distance from all input points
+			var spread = posDistances.Max() - posDistances.Min();
+			if (spread <= 1)
 			{
-				minSpread = stdDev;
-				minPositions = [pos];
-			}
-			else if (stdDev == minSpread)
-			{
-				minPositions = minPositions.Add(pos);
+				// Store farthest points
+				var dist = posDistances[0];
+				if (dist > bestDistance)
+				{
+					bestDistance = dist;
+					bestPositions = [pos];
+				}
+				else if (dist == bestDistance)
+				{
+					bestPositions = bestPositions.Add(pos);
+				}
 			}
 		}
 
-		return minPositions.PickOne();
+		return bestPositions.PickOne();
 	}
-
 
 	private Room GetClosestRoomFrom(IEnumerable<Room> rooms, Position pos, int minRoomHeight = 1, int minRoomWidth = 1)
 	{

@@ -8,6 +8,7 @@
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
+- [ ] Once activated enemies will always follow
 - [ ] Reorder error code for incremental features
 - [ ] Remove player registration from proto (move to portal)
 - [ ] Order: width/height, x/y
