@@ -8,7 +8,7 @@ namespace Swoq.ReplayViewer.ViewModels;
 
 public class GameStateBuilder(int height, int width, int visibilityRange, string playerName)
 {
-    private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key"];
+    private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key", "Boulders"];
 
     private readonly MapBuilder mapBuilder = new(height, width, visibilityRange);
     private readonly string playerName = playerName;
