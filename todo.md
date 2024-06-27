@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Fix bug in later levels with combat. Use not allowed.
 - [ ] Boulders.
   - [X] pickup
   - [X] place on empty

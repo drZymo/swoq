@@ -9,6 +9,7 @@ public class GameServerTests
     private DateTime now = DateTime.Now;
 
     private SwoqDatabaseInMemory database;
+    private readonly MapGenerator mapGenerator = new(64, 64);
     private GameServer gameServer;
 
     [SetUp]
@@ -17,7 +18,7 @@ public class GameServerTests
         Clock.Setup(() => now);
 
         database = new();
-        gameServer = new(database);
+        gameServer = new(database, mapGenerator);
     }
 
     [Test]

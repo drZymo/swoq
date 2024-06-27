@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using Position = (int y, int x);
 
-public class MapGenerator
+public class MapGenerator : IMapGenerator
 {
 	private class MapGeneratorException(string message) : Exception(message) { }
 
@@ -13,17 +13,17 @@ public class MapGenerator
 
 	private readonly int height;
 	private readonly int width;
-	private readonly MutableMap map;
+
+	private readonly IImmutableSet<Position> allPositions = ImmutableHashSet<Position>.Empty;
+
+	private MutableMap map;
 
 	private Position exitPosition;
 
 	private IImmutableList<Room> rooms = ImmutableList<Room>.Empty;
-	private readonly IImmutableSet<Position> allPosition = ImmutableHashSet<Position>.Empty;
-
-	private enum KeyColor { Red, Green, Blue }
-
-	private IImmutableSet<KeyColor> availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
 	private IImmutableSet<Room> availableRooms = ImmutableHashSet<Room>.Empty;
+	private enum KeyColor { Red, Green, Blue }
+	private IImmutableSet<KeyColor> availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
 
 	public static Map Generate(int level, int height = 64, int width = 64)
 	{
@@ -38,25 +38,25 @@ public class MapGenerator
 		}
 	}
 
-	private MapGenerator(int height, int width)
+	public MapGenerator(int height, int width)
 	{
 		this.height = height;
 		this.width = width;
-		map = new(height, width);
 
-		// Fill with walls
-		for (var y = 0; y < height; y++)
+		map = new(-1, height, width);
+		for (var y = 0; y < this.height; y++)
 		{
-			for (var x = 0; x < width; x++)
+			for (var x = 0; x < this.width; x++)
 			{
-				map[y, x] = Cell.Wall;
-				allPosition = allPosition.Add((y, x));
+				allPositions = allPositions.Add((y, x));
 			}
 		}
 	}
 
-	private Map Generate(int level)
+	public Map Generate(int level)
 	{
+		Reset(level);
+
 		if (level == 0) GenerateLevel0();
 		if (level == 1) GenerateLevel1();
 		if (level == 2) GenerateLevel2();
@@ -78,6 +78,23 @@ public class MapGenerator
 		if (map.Player2.Position.IsValid() && map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
 
 		return map.ToMap();
+	}
+
+	private void Reset(int level)
+	{
+		map = new(level, height, width);
+
+		exitPosition = new();
+
+		rooms = ImmutableList<Room>.Empty;
+		availableRooms = ImmutableHashSet<Room>.Empty;
+		availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
+
+		// Fill with walls
+		foreach (var pos in allPositions)
+		{
+			map[pos] = Cell.Wall;
+		}
 	}
 
 	private void GenerateLevel0()
@@ -727,7 +744,7 @@ public class MapGenerator
 		var rw = random.Next(minSize, maxSize);
 		var rh = random.Next(minSize, maxSize);
 
-		var choices = allPosition.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToImmutableHashSet();
+		var choices = allPositions.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToImmutableHashSet();
 
 		// clear out edges
 		Debug.Assert(minY + 1 + rh / 2 <= maxY);
@@ -1009,10 +1026,10 @@ public class MapGenerator
 		foreach (var pos in checkPositions)
 		{
 			var posDistances = inputDistances.Where(d => d.ContainsKey(pos)).Select(d => d[pos]).ToImmutableArray();
-			
+
 			// Check if it reachable from all input points
 			if (posDistances.Length != inputDistances.Count) continue;
-			
+
 			// Spread of 1 or less means this point is at nearly equal distance from all input points
 			var spread = posDistances.Max() - posDistances.Min();
 			if (spread <= 1)

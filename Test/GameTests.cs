@@ -17,7 +17,7 @@ public class GameTests
     [Test]
     public void ActiveAfterAct()
     {
-        var game = new Game(0, TimeSpan.FromSeconds(20));
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
 
         Assert.Multiple(() =>
         {
@@ -69,7 +69,7 @@ public class GameTests
     [Test]
     public void InactiveAfterNoAction()
     {
-        var game = new Game(0, TimeSpan.FromSeconds(20));
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
 
         Assert.Multiple(() =>
         {

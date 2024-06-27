@@ -9,13 +9,15 @@ public class MapBuilder(int height, int width, int visibilityRange)
     private const int CellStateEnemy = 14;
     private readonly Cell[,] mapData = new Cell[height, width];
     private readonly bool[,] visibility = new bool[height, width];
-
-    private Position player1Position = (-1, -1);
+	
+    private int level = 0;
+	private Position player1Position = (-1, -1);
     private Position? player2Position = null;
     private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
 
     public void Reset()
     {
+        level = 0;
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -38,6 +40,11 @@ public class MapBuilder(int height, int width, int visibilityRange)
         player1Position = (-1, -1);
         player2Position = null;
         enemyPositions = ImmutableList<Position>.Empty;
+    }
+
+    public void SetLevel(int level)
+    {
+        this.level = level;
     }
 
     public void AddPlayerState(Position playerPosition, IReadOnlyList<int> surroundings, int playerIndex)
@@ -89,7 +96,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
         Position? enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
         Position? enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
 
-        return new Map(mapData.Cast<Cell>(), height, width, player1Position,
+        return new Map(level, mapData.Cast<Cell>(), height, width, player1Position,
             initialPlayer2Position: player2Position,
             initialEnemy1Position: enemy1Pos,
             initialEnemy2Position: enemy2Pos,

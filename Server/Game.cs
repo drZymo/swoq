@@ -16,7 +16,6 @@ public class Game : IGame
 	private record Enemy(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth)
 		: Character(Name, Position, Inventory, Health);
 
-	private readonly int level;
 	private readonly TimeSpan maxInactivityTime;
 
 	private int ticks = 0;
@@ -27,13 +26,11 @@ public class Game : IGame
 	private Player? player2 = null;
 	private IImmutableList<Enemy> enemies = ImmutableList<Enemy>.Empty;
 
-
-	public Game(int level, TimeSpan maxInactivityTime)
+	public Game(Map map, TimeSpan maxInactivityTime)
 	{
-		this.level = level;
+		this.map = map;
 		this.maxInactivityTime = maxInactivityTime;
 
-		map = MapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
 		player1 = new Player("Player1", map.InitialPlayer1Position);
 		if (map.InitialPlayer2Position.HasValue)
 		{
@@ -133,7 +130,7 @@ public class Game : IGame
 		Debug.Assert(player1 != null || player2 != null);
 		PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
 		PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
-		return new GameState(ticks, level, IsFinished, player1State, player2State);
+		return new GameState(ticks, map.Level, IsFinished, player1State, player2State);
 	}
 
 	private void UpdateGameStatus()

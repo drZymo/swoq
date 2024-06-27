@@ -2,17 +2,18 @@
 
 using Position = (int y, int x);
 
-internal class MutableCharacter
+public class MutableCharacter
 {
     public Position Position { get; set; } = PositionEx.Invalid;
     public Inventory Inventory { get; set; } = Inventory.None;
 }
 
-internal class MutableMap(int height, int width)
+public class MutableMap(int level, int height, int width)
 {
     private readonly Cell[] data = new Cell[height * width];
 
-    public int Height { get; } = height;
+	public int Level { get; } = level;
+	public int Height { get; } = height;
     public int Width { get; } = width;
 
     public MutableCharacter Player1 { get; } = new();
@@ -35,6 +36,7 @@ internal class MutableMap(int height, int width)
     public Map ToMap()
     {
         return new Map(
+            Level,
             data, Height, Width,
             Player1.Position,
             Player2.Position.IsValid() ? Player2.Position : null,

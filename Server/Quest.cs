@@ -7,19 +7,21 @@ internal class Quest : IGame
 {
     private readonly Player player;
     private readonly ISwoqDatabase database;
-    private readonly DateTime startTime;
+	private readonly IMapGenerator mapGenerator;
+	private readonly DateTime startTime;
 
     private Game currentGame;
     private int ticks = 0;
 
-    public Quest(Player player, ISwoqDatabase database)
+    public Quest(Player player, ISwoqDatabase database, IMapGenerator mapGenerator)
     {
         this.player = player;
         this.database = database;
-        this.startTime = Clock.Now;
+		this.mapGenerator = mapGenerator;
+		this.startTime = Clock.Now;
 
         Id = Guid.NewGuid();
-        currentGame = new Game(Level, Parameters.MaxQuestInactivityTime);
+        currentGame = new Game(mapGenerator.Generate(Level), Parameters.MaxQuestInactivityTime);
         State = currentGame.State;
     }
 
@@ -69,7 +71,7 @@ internal class Quest : IGame
             // Create a new game if this was not the last level
             if (Level <= Parameters.FinalLevel)
             {
-                currentGame = new Game(Level, Parameters.MaxQuestInactivityTime);
+                currentGame = new Game(mapGenerator.Generate(Level), Parameters.MaxQuestInactivityTime);
                 state = currentGame.State;
             }
             else

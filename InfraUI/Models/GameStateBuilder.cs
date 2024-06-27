@@ -22,6 +22,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
             mapBuilder.Reset();
         }
 
+        mapBuilder.SetLevel(state.Level);
         mapBuilder.PrepareForNextTimeStep();
         mapBuilder.AddPlayerState(Convert(state.Player1?.Position), state.Player1?.Surroundings ?? [], 1);
         mapBuilder.AddPlayerState(Convert(state.Player2?.Position), state.Player2?.Surroundings ?? [], 2);
