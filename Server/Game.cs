@@ -540,7 +540,7 @@ public class Game : IGame
     {
         if (to.y < 0 || to.y >= map.Height) return false;
         if (to.x < 0 || to.x >= map.Width) return false;
-        if (to.DistanceTo(from) >= Parameters.PlayerVisibilityRange) return false;
+        if (to.DistanceTo(from) > Parameters.PlayerVisibilityRange) return false;
 
         if (from.x < to.x && IsVisible(from.x + 0.5, from.y + 0.5, to.x, to.y + 0.5)) return true;
         if (from.x > to.x && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 1, to.y + 0.5)) return true;
@@ -596,6 +596,7 @@ public class Game : IGame
         return true;
     }
 
+
     private void CleanupDeadCharacters()
     {
         if (player1 != null)
@@ -615,19 +616,59 @@ public class Game : IGame
         }
     }
 
+
     private T CleanupDeadCharacter<T>(ref T character) where T : Character
     {
         if (character.Health <= 0 && character.Position.IsValid())
         {
-            // Drop loot
-            map = map.Set(character.Position, character.Inventory.ToDroppedLoot());
+            // Drop loot only on empty cell
+            // This is to prevent overwriting a pressure plate
+            // Otherwise loot is simply lost
+            var dropPos = character.Position;
+            if (map[dropPos] != Cell.Empty)
+            {
+                dropPos = FindEmptyPosAround(dropPos);
+            }
+            if (dropPos.IsValid())
+            {
+                var loot = character.Inventory.ToDroppedLoot();
+                map = map.Set(dropPos, loot);
+            }
+
+            // Remove loot from inventory
             character = character with { Inventory = Inventory.None };
-            // Remove from game
+            // Remove character from game
             character = character with { Position = PositionEx.Invalid };
             lastChangeTick = ticks;
         }
 
         return character;
+    }
+
+
+    private Position FindEmptyPosAround(Position pos)
+    {
+        bool IsNotOccupied(Position p) =>
+            map[p] == Cell.Empty &&
+            player1?.Position != p &&
+            player2?.Position != p &&
+            !enemies.Any(e => e.Position == p);
+
+        ImmutableList<Position> choices = [];
+        void AddIfNotOccupied(Position p)
+        {
+            if (IsNotOccupied(p)) choices = choices.Add(p);
+        }
+
+        AddIfNotOccupied((pos.y - 1, pos.x - 1));
+        AddIfNotOccupied((pos.y - 1, pos.x));
+        AddIfNotOccupied((pos.y - 1, pos.x + 1));
+        AddIfNotOccupied((pos.y, pos.x - 1));
+        AddIfNotOccupied((pos.y, pos.x + 1));
+        AddIfNotOccupied((pos.y + 1, pos.x - 1));
+        AddIfNotOccupied((pos.y + 1, pos.x));
+        AddIfNotOccupied((pos.y + 1, pos.x + 1));
+        return choices.Count > 0 ? choices.PickOne() : PositionEx.Invalid;
     }
 
     #region State

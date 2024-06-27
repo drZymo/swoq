@@ -34,7 +34,7 @@
 - [ ] Sync appsettings for production/development
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
-
+- [ ] Extend .editorconfig
 
 ## Done
 

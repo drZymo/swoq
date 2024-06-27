@@ -8,6 +8,7 @@ public static class Converters
         Cell.KeyGreen => Inventory.KeyGreen,
         Cell.KeyBlue => Inventory.KeyBlue,
         Cell.Boulders => Inventory.Boulders,
+        Cell.PressurePlateWithBoulders => Inventory.Boulders,
         _ => Inventory.None,
     };
 
