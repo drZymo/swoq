@@ -12,8 +12,8 @@ public class MutableMap(int level, int height, int width)
 {
     private readonly Cell[] data = new Cell[height * width];
 
-	public int Level { get; } = level;
-	public int Height { get; } = height;
+    public int Level { get; } = level;
+    public int Height { get; } = height;
     public int Width { get; } = width;
 
     public MutableCharacter Player1 { get; } = new();

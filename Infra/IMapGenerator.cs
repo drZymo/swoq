@@ -2,5 +2,5 @@
 
 public interface IMapGenerator
 {
-	Map Generate(int level);
+    Map Generate(int level);
 }

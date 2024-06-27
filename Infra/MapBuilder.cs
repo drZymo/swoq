@@ -9,9 +9,9 @@ public class MapBuilder(int height, int width, int visibilityRange)
     private const int CellStateEnemy = 14;
     private readonly Cell[,] mapData = new Cell[height, width];
     private readonly bool[,] visibility = new bool[height, width];
-	
+
     private int level = 0;
-	private Position player1Position = (-1, -1);
+    private Position player1Position = (-1, -1);
     private Position? player2Position = null;
     private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
 

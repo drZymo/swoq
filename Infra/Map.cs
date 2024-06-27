@@ -22,8 +22,8 @@ public class Map(
     private readonly IImmutableList<Cell> cells = data.ToImmutableArray();
     private readonly IImmutableList<bool>? visibility = visibility?.ToImmutableArray();
 
-	public int Level { get; } = level;
-	public int Height { get; } = height;
+    public int Level { get; } = level;
+    public int Height { get; } = height;
     public int Width { get; } = width;
 
     public Position InitialPlayer1Position { get; } = initialPlayer1Position;

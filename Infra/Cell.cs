@@ -22,7 +22,7 @@ public enum Cell
     DoorBlackOpen,
     PressurePlate,
 
-	Sword,
+    Sword,
     Health,
 
     Boulders,

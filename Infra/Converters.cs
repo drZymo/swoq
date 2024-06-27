@@ -8,7 +8,7 @@ public static class Converters
         Cell.KeyGreen => Inventory.KeyGreen,
         Cell.KeyBlue => Inventory.KeyBlue,
         Cell.Boulders => Inventory.Boulders,
-		_ => Inventory.None,
+        _ => Inventory.None,
     };
 
     public static Cell ToDroppedLoot(this Inventory inventory) => inventory switch

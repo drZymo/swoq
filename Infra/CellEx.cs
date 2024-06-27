@@ -16,7 +16,7 @@ public static class CellEx
             case Cell.KeyBlue:
             case Cell.DoorBlackOpen:
             case Cell.PressurePlate:
-			case Cell.Sword:
+            case Cell.Sword:
             case Cell.Health:
                 return true;
 

@@ -47,8 +47,8 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
 
         var map = mapGenerator.Generate(level);
 
-		// Create new training game
-		return new Game(map, Parameters.MaxTrainingInactivityTime);
+        // Create new training game
+        return new Game(map, Parameters.MaxTrainingInactivityTime);
     }
 
     private Quest StartQuest(Player player)

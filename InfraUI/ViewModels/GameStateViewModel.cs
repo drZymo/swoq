@@ -130,7 +130,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         Cell.DoorGreenClosed => true,
         Cell.DoorBlueClosed => true,
         Cell.Boulders => true,
-		_ => false,
+        _ => false,
     };
 
     private static string NullableBooleanString(bool? value) => value.HasValue ? (value.Value ? "Yes" : "No") : "Unknown";

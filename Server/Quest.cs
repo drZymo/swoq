@@ -7,8 +7,8 @@ internal class Quest : IGame
 {
     private readonly Player player;
     private readonly ISwoqDatabase database;
-	private readonly IMapGenerator mapGenerator;
-	private readonly DateTime startTime;
+    private readonly IMapGenerator mapGenerator;
+    private readonly DateTime startTime;
 
     private Game currentGame;
     private int ticks = 0;
@@ -17,8 +17,8 @@ internal class Quest : IGame
     {
         this.player = player;
         this.database = database;
-		this.mapGenerator = mapGenerator;
-		this.startTime = Clock.Now;
+        this.mapGenerator = mapGenerator;
+        this.startTime = Clock.Now;
 
         Id = Guid.NewGuid();
         currentGame = new Game(mapGenerator.Generate(Level), Parameters.MaxQuestInactivityTime);
