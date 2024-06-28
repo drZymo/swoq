@@ -7,241 +7,241 @@ namespace Swoq.Test;
 internal class PressurePlateTests
 {
     private Game game;
+    private MapCache mapCache;
+
+    internal static readonly int[] InitialSurroundings = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 34
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 51
+        0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 68
+        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
+        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
+        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
+        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 136
+        0, 0, 0, 3, 1, 1, 1, 1, 2, 1, 1,16, 0, 0, 0, 0, 0, // 153
+        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 170
+        0, 0, 0, 3, 1, 1, 1, 1, 1, 1,11,11, 0, 0, 0, 0, 0, // 187
+        0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 204
+        0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 221
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
+    ];
 
     [SetUp]
     public void SetUp()
     {
         game = new Game(CreateSquareMapWithPressurePlateDoorAroundExit(), TimeSpan.FromSeconds(20));
         Assert.That(game.State.Player1, Is.Not.Null);
-        Assert.That(game.State.Player1.Position == (5, 5));
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
-        Assert.That(game.State.Player1.Surroundings.Length, Is.EqualTo(17 * 17));
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position == (5, 5));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
+            Assert.That(game.State.Player1.Surroundings, Has.Length.EqualTo(17 * 17));
+            Assert.That(game.State.Player1.Surroundings, Is.EqualTo(InitialSurroundings));
+        });
+        mapCache = new MapCache(10, 10, 8);
+        mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
     }
 
     [Test]
     public void StandOnPlateOpensDoors()
     {
         Assert.That(game.State.Player1, Is.Not.Null);
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 51
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1, 1,16, 0, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 170
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1,11,11, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
 
-        // Move to plate
+        // Move towards plate, no change expected except for player itself.
         game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+        var changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(6, 5)], Is.EqualTo((1, 2)));
+        });
+
         game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            Assert.That(changes[(6, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
+        });
 
         // Player north from plate and doors around exit closed.
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 51
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1,16, 0, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1,11, 0, 0, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 170
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
 
         // Move on plate
         game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((8, 5)));
-
-        // Player now on plate and door around exit is open
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 51
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1,16, 0, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1, 1, 4, 3, 0, 0, 0, 0, // 153
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 170
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((8, 5)));
+            Assert.That(changes, Has.Count.EqualTo(10));
+            // Player pos has changed
+            Assert.That(changes[(7, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((12, 2)));
+            // Door has opened
+            Assert.That(changes[(8, 7)], Is.EqualTo((11, 1)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((11, 1)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((11, 1)));
+            // Exit appeared
+            Assert.That(changes[(8, 8)], Is.EqualTo((0, 4)));
+            // Walls around exit appeared
+            Assert.That(changes[(7, 9)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(8, 9)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(9, 7)], Is.EqualTo((0, 3)));
+        });
 
         // Move off plate
         game.Act(new DirectedAction(Server.Action.Move, Direction.North));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
-
-        // Situation back to before.
-        // Player north from plate and doors around exit closed.
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 51
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1,16, 0, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1,11, 0, 0, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 170
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            // Situation back to before.
+            Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+            Assert.That(changes, Has.Count.EqualTo(4));
+            // Player pos has changed
+            Assert.That(changes[(8, 5)], Is.EqualTo((2, 12)));
+            Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
+            // Door (only visible part) has closed
+            Assert.That(changes[(8, 7)], Is.EqualTo((1, 11)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((1, 11)));
+        });
     }
 
     [Test]
     public void BoulderOnPlateOpensDoors()
     {
         Assert.That(game.State.Player1, Is.Not.Null);
-        Assert.That(game.State.Player1.Position == (5, 5));
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
-        Assert.That(game.State.Player1.Surroundings.Length, Is.EqualTo(17 * 17));
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 51
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1, 1,16, 0, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 170
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1,11,11, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
 
         // Pickup boulders
         game.Act(new DirectedAction(Server.Action.Move, Direction.East));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((5, 6)));
+        var changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 6)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player pos changed
+            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 6)], Is.EqualTo((1, 2)));
+        });
+
         game.Act(new DirectedAction(Server.Action.Move, Direction.East));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((5, 7)));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 7)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player pos changed
+            Assert.That(changes[(5, 6)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 7)], Is.EqualTo((1, 2)));
+        });
+
         game.Act(new DirectedAction(Server.Action.Use, Direction.East));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((5, 7)));
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 7)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Boulder removed
+            Assert.That(changes[(5, 8)], Is.EqualTo((16, 1)));
+            // Wall behind visible
+            Assert.That(changes[(5, 9)], Is.EqualTo((0, 3)));
+        });
 
         // Move to plate
         game.Act(new DirectedAction(Server.Action.Move, Direction.West));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((5, 6)));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 6)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player pos changed
+            Assert.That(changes[(5, 7)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 6)], Is.EqualTo((1, 2)));
+        });
+
         game.Act(new DirectedAction(Server.Action.Move, Direction.West));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player pos changed
+            Assert.That(changes[(5, 6)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
+        });
+
         game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player pos changed
+            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(6, 5)], Is.EqualTo((1, 2)));
+        });
+
         game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player pos changed
+            Assert.That(changes[(6, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
+        });
 
         // Player north from plate,
         // no boulder visible,
-        // doors around exit closed.
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 51
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1,11, 0, 0, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 170
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
+        // doors around exit still closed.
 
         // Place boulder
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
         game.Act(new DirectedAction(Server.Action.Use, Direction.South));
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
-
-        // Boulder now on plate and door around exit is open
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 51
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1, 1, 1, 3, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1,16, 1, 1, 4, 3, 0, 0, 0, 0, // 170
-            0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
+            Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+            Assert.That(changes, Has.Count.EqualTo(9));
+            // Plate changed
+            Assert.That(changes[(8, 5)], Is.EqualTo((12, 16)));
+            // Door has opened
+            Assert.That(changes[(8, 7)], Is.EqualTo((11, 1)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((11, 1)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((11, 1)));
+            // Exit appeared
+            Assert.That(changes[(8, 8)], Is.EqualTo((0, 4)));
+            // Walls around exit appeared
+            Assert.That(changes[(7, 9)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(8, 9)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(9, 7)], Is.EqualTo((0, 3)));
+        });
 
         // Pick boulder
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
         game.Act(new DirectedAction(Server.Action.Use, Direction.South));
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
-
-        // Situation back to before.
-        // Doors around exit closed and plate visible.
-        Assert.That(game.State.Player1.Surroundings, Is.EqualTo(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-            0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 34
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 51
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 68
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-            0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // 136
-            0, 0, 0, 3, 1, 1, 1, 1, 2, 1,11, 0, 0, 0, 0, 0, 0, // 153
-            0, 0, 0, 3, 1, 1, 1, 1,12, 1,11, 0, 0, 0, 0, 0, 0, // 170
-            0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 187
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 204
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 221
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-        }));
+        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
+            Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+            Assert.That(changes, Has.Count.EqualTo(3));
+            // Plate changed
+            Assert.That(changes[(8, 5)], Is.EqualTo((16, 12)));
+            // Door has closed (only visible part)
+            Assert.That(changes[(8, 7)], Is.EqualTo((1, 11)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((1, 11)));
+        });
     }
 
     private static Map CreateSquareMapWithPressurePlateDoorAroundExit()

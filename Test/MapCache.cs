@@ -6,7 +6,7 @@ namespace Swoq.Test;
 
 internal class MapCache(int height, int width, int visibilityRange)
 {
-    private int[] cache = new int[height * width];
+    private readonly int[] cache = new int[height * width];
 
     public int this[int y, int x]
     {
@@ -48,7 +48,7 @@ internal class MapCache(int height, int width, int visibilityRange)
                 {
                     var newValue = playerState.Surroundings[sy * surroundingsSize + sx];
                     var cacheIndex = my * width + mx;
-                    if (cache[cacheIndex] != newValue)
+                    if (newValue != 0 && cache[cacheIndex] != newValue)
                     {
                         changes = changes.SetItem((my, mx), (cache[cacheIndex], newValue));
                         cache[cacheIndex] = newValue;

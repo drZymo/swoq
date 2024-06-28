@@ -1,9 +1,4 @@
 ﻿using Swoq.Server;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Swoq.Test;
 
@@ -16,13 +11,13 @@ public class MapCacheTests
         MapCache cache = new(8, 8, 2);
 
         var playerState = new PlayerState(
-            (1, 1), 5, 0, false, new int[] { 
+            (1, 1), 5, 0, false, [
                 0, 0, 0, 0, 0,
                 0, 3, 3, 3, 3,
                 0, 3, 2, 1, 1,
                 0, 3, 1, 1, 1,
                 0, 3, 1, 1, 1,
-            });
+            ]);
 
         cache.AddPlayerStates(playerState, null);
 
@@ -37,37 +32,135 @@ public class MapCacheTests
         MapCache cache = new(8, 8, 2);
 
         var playerState1 = new PlayerState(
-            (1, 1), 5, 0, false, new int[] {
+            (1, 1), 5, 0, false, [
                 0, 0, 0, 0, 0,
                 0, 3, 3, 3, 3,
                 0, 3, 2, 1, 1,
                 0, 3, 1, 1, 1,
                 0, 3, 1, 1, 1,
-            });
+            ]);
 
         cache.AddPlayerStates(playerState1, null);
 
         var playerState2 = new PlayerState(
-            (1, 2), 5, 0, false, new int[] {
+            (1, 2), 5, 0, false, [
                 0, 0, 0, 0, 0,
                 3, 3, 3, 3, 3,
                 3, 1, 2, 1, 1,
                 3, 1, 1, 1, 1,
                 3, 1, 1, 1, 1,
-            });
+            ]);
 
         var changes = cache.AddPlayerStates(playerState2, null);
-        Assert.That(changes, Is.Not.Empty);
 
         // column of 4 and 2 player positions (old and new)
-        Assert.That(changes.Count, Is.EqualTo(6));
-
-        Assert.That(changes[(0, 4)], Is.EqualTo((0, 3)));
-        Assert.That(changes[(1, 4)], Is.EqualTo((0, 1)));
-        Assert.That(changes[(2, 4)], Is.EqualTo((0, 1)));
-        Assert.That(changes[(3, 4)], Is.EqualTo((0, 1)));
-        
-        Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
-        Assert.That(changes[(1, 2)], Is.EqualTo((1, 2)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(changes, Is.Not.Empty);
+            Assert.That(changes, Has.Count.EqualTo(6));
+            // Player pos changed
+            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(1, 2)], Is.EqualTo((1, 2)));
+            // Right column appeared
+            Assert.That(changes[(0, 4)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(1, 4)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(2, 4)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(3, 4)], Is.EqualTo((0, 1)));
+        });
     }
+
+    [Test]
+    public void MoveSouthAddsRow()
+    {
+        MapCache cache = new(8, 8, 2);
+
+        var playerState1 = new PlayerState(
+            (1, 1), 5, 0, false, [
+                0, 0, 0, 0, 0,
+                0, 3, 3, 3, 3,
+                0, 3, 2, 1, 1,
+                0, 3, 1, 1, 1,
+                0, 3, 1, 1, 1,
+            ]);
+
+        cache.AddPlayerStates(playerState1, null);
+
+        var playerState2 = new PlayerState(
+            (2, 1), 5, 0, false, [
+                0, 3, 3, 3, 3,
+                0, 3, 1, 1, 1,
+                0, 3, 2, 1, 1,
+                0, 3, 1, 1, 1,
+                0, 3, 1, 1, 1,
+            ]);
+
+        var changes = cache.AddPlayerStates(playerState2, null);
+        // row of 4 and 2 player positions (old and new)
+        Assert.Multiple(() =>
+        {
+            Assert.That(changes, Is.Not.Empty);
+            Assert.That(changes, Has.Count.EqualTo(6));
+
+            // Player pos changed
+            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((1, 2)));
+
+            // Bottom row appeared
+            Assert.That(changes[(4, 0)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(4, 1)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(4, 2)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(4, 3)], Is.EqualTo((0, 1)));
+        });
+    }
+
+    [Test]
+    public void UnknownsDoNotOverwrite()
+    {
+        // All 4 corners are always out of view, so have value unknown.
+        // This should not be copied to cache, so no change is expected there.
+        MapCache cache = new(8, 8, 2);
+
+        var playerState1 = new PlayerState(
+            (1, 1), 5, 0, false, [
+                0, 0, 0, 0, 0,
+                0, 3, 3, 3, 3,
+                0, 3, 2, 1, 1,
+                0, 3, 1, 1, 1,
+                0, 3, 1, 1, 0,
+            ]);
+
+        cache.AddPlayerStates(playerState1, null);
+
+        // Move south with corner out of view
+        var playerState2 = new PlayerState(
+            (2, 1), 5, 0, false, [
+                0, 3, 3, 3, 0,
+                0, 3, 1, 1, 1,
+                0, 3, 2, 1, 1,
+                0, 3, 1, 1, 1,
+                0, 3, 1, 1, 0,
+            ]);
+
+        var changes = cache.AddPlayerStates(playerState2, null);
+
+        // row of 4 and 2 player positions (old and new)
+        Assert.Multiple(() =>
+        {
+            Assert.That(changes, Is.Not.Empty);
+            Assert.That(changes, Has.Count.EqualTo(6));
+
+            // Player pos changed
+            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((1, 2)));
+
+            // Bottom row (excl corner) appeared
+            Assert.That(changes[(4, 0)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(4, 1)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(4, 2)], Is.EqualTo((0, 1)));
+
+            // Earlier invisible bottom right corner became visible
+            Assert.That(changes[(3, 3)], Is.EqualTo((0, 1)));
+        });
+    }
+
 }
