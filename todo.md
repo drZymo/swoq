@@ -284,6 +284,20 @@ Used to block paths.
 
 Placed on pressure plate will leave it pressed.
 
+## Unit tests
+
+- [ ] Combat
+  - [ ] 1 player without health cannot win
+  - [ ] 1 player with health can win
+  - [ ] 2 player vs 1 enemy no extra health can win
+- [ ] Doors
+  - [ ] Door cannot be opened without key
+  - [ ] Door can be opened with key
+- [ ] Pressure plate
+  - [ ] Stand will open, leave will close
+  - [ ] Boulder will open, remove will close
+  - [ ] Close door kills player
+
 
 # Lore in the proto files
 
@@ -293,3 +307,4 @@ Main character: Female, daughter of town baker. Adventurous, is rather outside t
 Secondary character: Male, son of miner. Likes to explore caves. Went missing 2 years ago.
 Prisoner: Duke of town.
 Final enemy: Younger brother of duke.
+

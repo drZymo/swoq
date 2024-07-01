@@ -31,7 +31,7 @@ internal class PressurePlateTests : GameTestBase
         Assert.That(game.State.Player1, Is.Not.Null);
         Assert.Multiple(() =>
         {
-            Assert.That(game.State.Player1.Position == (5, 5));
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
             Assert.That(game.State.Player1.Surroundings, Has.Length.EqualTo(17 * 17));
             Assert.That(game.State.Player1.Surroundings, Is.EqualTo(InitialSurroundings));
