@@ -4,7 +4,9 @@
 - [ ] Boulders.
   - [X] pickup
   - [X] place on empty
-  - [ ] place on pressure plate
+  - [X] place on pressure plate
+  - [ ] Boulders => Boulder
+- [ ] Unit tests
 - [ ] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -16,8 +18,6 @@
 - [ ] Colored pressure plates & black key
 - [ ] Levels
 - [ ] Level not available => insufficient player level
-- [ ] Unit tests
-  - [ ] Pickup and place boulders on pressure plates
 - [ ] Hardcode dashboard colors
 - [ ] Lore in the proto files
 - [ ] Zip file for ReplayViewer

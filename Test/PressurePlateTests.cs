@@ -3,12 +3,8 @@ using Swoq.Server;
 
 namespace Swoq.Test;
 
-[TestFixture]
-internal class PressurePlateTests
+internal class PressurePlateTests : GameTestBase
 {
-    private Game game;
-    private MapCache mapCache;
-
     internal static readonly int[] InitialSurroundings = [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 34
@@ -29,10 +25,9 @@ internal class PressurePlateTests
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
     ];
 
-    [SetUp]
-    public void SetUp()
+    public override void SetUp()
     {
-        game = new Game(CreateSquareMapWithPressurePlateDoorAroundExit(), TimeSpan.FromSeconds(20));
+        base.SetUp();
         Assert.That(game.State.Player1, Is.Not.Null);
         Assert.Multiple(() =>
         {
@@ -41,8 +36,6 @@ internal class PressurePlateTests
             Assert.That(game.State.Player1.Surroundings, Has.Length.EqualTo(17 * 17));
             Assert.That(game.State.Player1.Surroundings, Is.EqualTo(InitialSurroundings));
         });
-        mapCache = new MapCache(10, 10, 8);
-        mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
     }
 
     [Test]
@@ -51,31 +44,22 @@ internal class PressurePlateTests
         Assert.That(game.State.Player1, Is.Not.Null);
 
         // Move towards plate, no change expected except for player itself.
-        game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        var changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
-            Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(6, 5)], Is.EqualTo((1, 2)));
-        });
-
-        game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Act(Server.Action.Move, Direction.South);
+        Act(Server.Action.Move, Direction.South);
+        var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(6, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
             Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
         });
 
         // Player north from plate and doors around exit closed.
 
         // Move on plate
-        game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Act(Server.Action.Move, Direction.South);
+        changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((8, 5)));
@@ -97,8 +81,8 @@ internal class PressurePlateTests
         });
 
         // Move off plate
-        game.Act(new DirectedAction(Server.Action.Move, Direction.North));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Act(Server.Action.Move, Direction.North);
+        changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             // Situation back to before.
@@ -118,31 +102,23 @@ internal class PressurePlateTests
     {
         Assert.That(game.State.Player1, Is.Not.Null);
 
-        // Pickup boulders
-        game.Act(new DirectedAction(Server.Action.Move, Direction.East));
-        var changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 6)));
-            Assert.That(changes, Has.Count.EqualTo(2));
-            // Player pos changed
-            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(5, 6)], Is.EqualTo((1, 2)));
-        });
-
-        game.Act(new DirectedAction(Server.Action.Move, Direction.East));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        // Move besides boulder
+        Act(Server.Action.Move, Direction.East);
+        Act(Server.Action.Move, Direction.East);
+        var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 7)));
             Assert.That(changes, Has.Count.EqualTo(2));
             // Player pos changed
-            Assert.That(changes[(5, 6)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 7)], Is.EqualTo((1, 2)));
+            Assert.That(changes, Has.Count.EqualTo(2));
         });
 
-        game.Act(new DirectedAction(Server.Action.Use, Direction.East));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        // Pickup boulder
+        Act(Server.Action.Use, Direction.East);
+        changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 7)));
@@ -154,48 +130,18 @@ internal class PressurePlateTests
             Assert.That(changes[(5, 9)], Is.EqualTo((0, 3)));
         });
 
-        // Move to plate
-        game.Act(new DirectedAction(Server.Action.Move, Direction.West));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 6)));
-            Assert.That(changes, Has.Count.EqualTo(2));
-            // Player pos changed
-            Assert.That(changes[(5, 7)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(5, 6)], Is.EqualTo((1, 2)));
-        });
-
-        game.Act(new DirectedAction(Server.Action.Move, Direction.West));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(changes, Has.Count.EqualTo(2));
-            // Player pos changed
-            Assert.That(changes[(5, 6)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
-        });
-
-        game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
-            Assert.That(changes, Has.Count.EqualTo(2));
-            // Player pos changed
-            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(6, 5)], Is.EqualTo((1, 2)));
-        });
-
-        game.Act(new DirectedAction(Server.Action.Move, Direction.South));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        // Move besides plate
+        Act(Server.Action.Move, Direction.West);
+        Act(Server.Action.Move, Direction.West);
+        Act(Server.Action.Move, Direction.South);
+        Act(Server.Action.Move, Direction.South);
+        changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(2));
             // Player pos changed
-            Assert.That(changes[(6, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 7)], Is.EqualTo((2, 1)));
             Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
         });
 
@@ -205,8 +151,8 @@ internal class PressurePlateTests
 
         // Place boulder
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
-        game.Act(new DirectedAction(Server.Action.Use, Direction.South));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Act(Server.Action.Use, Direction.South);
+        changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
@@ -229,8 +175,8 @@ internal class PressurePlateTests
 
         // Pick boulder
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
-        game.Act(new DirectedAction(Server.Action.Use, Direction.South));
-        changes = mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
+        Act(Server.Action.Use, Direction.South);
+        changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
@@ -244,7 +190,7 @@ internal class PressurePlateTests
         });
     }
 
-    private static Map CreateSquareMapWithPressurePlateDoorAroundExit()
+    protected override Map CreateGameMap()
     {
         var map = new MutableMap(0, 10, 10);
         for (var y = 0; y < 10; y++)

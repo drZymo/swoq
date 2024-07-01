@@ -20,10 +20,13 @@ public class MapCacheTests
             ]);
 
         cache.AddPlayerStates(playerState, null);
+        var changes1 = cache.GetNewChanges();
+        Assert.That(changes1, Is.Not.Empty);
 
-        var changes = cache.AddPlayerStates(playerState, null);
+        cache.AddPlayerStates(playerState, null);
+        var changes2 = cache.GetNewChanges();
 
-        Assert.That(changes, Is.Empty);
+        Assert.That(changes2, Is.Empty);
     }
 
     [Test]
@@ -41,6 +44,7 @@ public class MapCacheTests
             ]);
 
         cache.AddPlayerStates(playerState1, null);
+        cache.GetNewChanges();
 
         var playerState2 = new PlayerState(
             (1, 2), 5, 0, false, [
@@ -51,7 +55,8 @@ public class MapCacheTests
                 3, 1, 1, 1, 1,
             ]);
 
-        var changes = cache.AddPlayerStates(playerState2, null);
+        cache.AddPlayerStates(playerState2, null);
+        var changes = cache.GetNewChanges();
 
         // column of 4 and 2 player positions (old and new)
         Assert.Multiple(() =>
@@ -82,8 +87,8 @@ public class MapCacheTests
                 0, 3, 1, 1, 1,
                 0, 3, 1, 1, 1,
             ]);
-
         cache.AddPlayerStates(playerState1, null);
+        cache.GetNewChanges();
 
         var playerState2 = new PlayerState(
             (2, 1), 5, 0, false, [
@@ -94,7 +99,9 @@ public class MapCacheTests
                 0, 3, 1, 1, 1,
             ]);
 
-        var changes = cache.AddPlayerStates(playerState2, null);
+        cache.AddPlayerStates(playerState2, null);
+        var changes = cache.GetNewChanges();
+
         // row of 4 and 2 player positions (old and new)
         Assert.Multiple(() =>
         {
@@ -130,6 +137,7 @@ public class MapCacheTests
             ]);
 
         cache.AddPlayerStates(playerState1, null);
+        cache.GetNewChanges();
 
         // Move south with corner out of view
         var playerState2 = new PlayerState(
@@ -141,7 +149,8 @@ public class MapCacheTests
                 0, 3, 1, 1, 0,
             ]);
 
-        var changes = cache.AddPlayerStates(playerState2, null);
+        cache.AddPlayerStates(playerState2, null);
+        var changes = cache.GetNewChanges();
 
         // row of 4 and 2 player positions (old and new)
         Assert.Multiple(() =>

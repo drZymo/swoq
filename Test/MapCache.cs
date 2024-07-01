@@ -1,12 +1,12 @@
 ﻿using Swoq.Server;
 using System.Collections.Immutable;
-using Position = System.ValueTuple<int, int>;
 
 namespace Swoq.Test;
 
 internal class MapCache(int height, int width, int visibilityRange)
 {
     private readonly int[] cache = new int[height * width];
+    private ImmutableDictionary<(int, int), (int from, int to)> changes = ImmutableDictionary<(int, int), (int from, int to)>.Empty;
 
     public int this[int y, int x]
     {
@@ -18,18 +18,21 @@ internal class MapCache(int height, int width, int visibilityRange)
         }
     }
 
-    public IImmutableDictionary<Position, (int from, int to)> AddPlayerStates(
+    public void AddPlayerStates(
         PlayerState? playerState1, PlayerState? playerState2)
     {
-        var changes = ImmutableDictionary<Position, (int from, int to)>.Empty;
-
-        AddOnePlayerState(playerState1, ref changes);
-        AddOnePlayerState(playerState2, ref changes);
-
-        return changes;
+        AddPlayerState(playerState1);
+        AddPlayerState(playerState2);
     }
 
-    private void AddOnePlayerState(PlayerState? playerState, ref ImmutableDictionary<(int, int), (int from, int to)> changes)
+    public ImmutableDictionary<(int, int), (int from, int to)> GetNewChanges()
+    {
+        var currentChanges = changes;
+        changes = ImmutableDictionary<(int, int), (int from, int to)>.Empty;
+        return currentChanges;
+    }
+
+    private void AddPlayerState(PlayerState? playerState)
     {
         if (playerState == null) return;
 
@@ -47,14 +50,41 @@ internal class MapCache(int height, int width, int visibilityRange)
                 if (0 <= my && my < height && 0 <= mx && mx < width)
                 {
                     var newValue = playerState.Surroundings[sy * surroundingsSize + sx];
-                    var cacheIndex = my * width + mx;
-                    if (newValue != 0 && cache[cacheIndex] != newValue)
-                    {
-                        changes = changes.SetItem((my, mx), (cache[cacheIndex], newValue));
-                        cache[cacheIndex] = newValue;
-                    }
+                    Change(my, mx, newValue);
                 }
             }
+        }
+    }
+
+    private void Change(int y, int x, int newValue)
+    {
+        if (newValue == 0) return;
+
+        var cacheIndex = y * width + x;
+
+        if (cache[cacheIndex] == newValue) return;
+
+        var oldValue = cache[cacheIndex];
+        cache[cacheIndex] = newValue;
+
+        var key = (y, x);
+        if (changes.TryGetValue(key, out var oldChange))
+        {
+            if (newValue == oldChange.from)
+            {
+                // Earlier changes undone, so remove it
+                changes = changes.Remove(key);
+            }
+            else
+            {
+                // Earlier changes overwritten
+                changes = changes.SetItem(key, (oldChange.from, newValue));
+            }
+        }
+        else
+        {
+            // New change
+            changes = changes.Add(key, (oldValue, newValue));
         }
     }
 }
