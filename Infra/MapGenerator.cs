@@ -8,7 +8,6 @@ public class MapGenerator : IMapGenerator
 {
     private class MapGeneratorException(string message) : Exception(message) { }
 
-    private static readonly Random random = new();
     private static readonly char[] Directions = ['N', 'E', 'S', 'W'];
 
     private readonly int height;
@@ -741,8 +740,8 @@ public class MapGenerator : IMapGenerator
 
     private Room? CreateRandomRoom(int minSize, int maxSize, int margin, int minY, int maxY, int minX, int maxX)
     {
-        var rw = random.Next(minSize, maxSize);
-        var rh = random.Next(minSize, maxSize);
+        var rw = Rnd.Next(minSize, maxSize);
+        var rh = Rnd.Next(minSize, maxSize);
 
         var choices = allPositions.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToImmutableHashSet();
 
@@ -799,7 +798,7 @@ public class MapGenerator : IMapGenerator
 
         if (choices.Count > 0)
         {
-            var (ry, rx) = choices.OrderBy(_ => random.Next()).First();
+            var (ry, rx) = choices.PickOne();
             newRoom = CreateRoom(ry, rx, rh, rw);
         }
 
@@ -819,7 +818,7 @@ public class MapGenerator : IMapGenerator
 
             // pick one of the two closest rooms
             var closestRooms = remaining.OrderBy(r => r.Center.DistanceTo(current.Center)).Take(2);
-            var next = closestRooms.OrderBy(_ => random.Next()).First();
+            var next = closestRooms.PickOne();
 
             ConnectRooms(current, next);
             current = next;
