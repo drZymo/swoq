@@ -1,4 +1,5 @@
 ﻿using Swoq.Server;
+using static Swoq.Test.TestUtils;
 
 namespace Swoq.Test;
 
@@ -11,13 +12,12 @@ public class MapCacheTests
         // Initial state
         MapCache cache = new(8, 8, 2);
         var playerState = new PlayerState(
-            (1, 1), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                0, 3, 3, 3, 3,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 1,
-            ]);
+            (1, 1), 5, 0, false, ConvertSurroundings(
+                "     " +
+                " ####" +
+                " #p.." +
+                " #..." +
+                " #..."));
         cache.AddPlayerStates(playerState, null);
         var changes1 = cache.GetNewChanges();
         Assert.That(changes1, Is.Not.Empty);
@@ -35,25 +35,23 @@ public class MapCacheTests
         // Initial state
         MapCache cache = new(8, 8, 2);
         var playerState1 = new PlayerState(
-            (1, 1), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                0, 3, 3, 3, 3,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 1,
-            ]);
+            (1, 1), 5, 0, false, ConvertSurroundings(
+                "     " +
+                " ####" +
+                " #p.." +
+                " #..." +
+                " #..."));
         cache.AddPlayerStates(playerState1, null);
         cache.GetNewChanges();
 
         // Add move east
         var playerState2 = new PlayerState(
-            (1, 2), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                3, 3, 3, 3, 3,
-                3, 1, 2, 1, 1,
-                3, 1, 1, 1, 1,
-                3, 1, 1, 1, 1,
-            ]);
+            (1, 2), 5, 0, false, ConvertSurroundings(
+                "     " +
+                "#####" +
+                "#.p.." +
+                "#...." +
+                "#...."));
         cache.AddPlayerStates(playerState2, null);
         var changes = cache.GetNewChanges();
 
@@ -79,25 +77,23 @@ public class MapCacheTests
         // Initial state
         MapCache cache = new(8, 8, 2);
         var playerState1 = new PlayerState(
-            (1, 1), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                0, 3, 3, 3, 3,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 1,
-            ]);
+            (1, 1), 5, 0, false, ConvertSurroundings(
+                "     " +
+                " ####" +
+                " #p.." +
+                " #..." +
+                " #..."));
         cache.AddPlayerStates(playerState1, null);
         cache.GetNewChanges();
 
         // Add move south
         var playerState2 = new PlayerState(
-            (2, 1), 5, 0, false, [
-                0, 3, 3, 3, 3,
-                0, 3, 1, 1, 1,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 1,
-            ]);
+            (2, 1), 5, 0, false, ConvertSurroundings(
+                " ####" +
+                " #..." +
+                " #p.." +
+                " #..." +
+                " #..."));
         cache.AddPlayerStates(playerState2, null);
         var changes = cache.GetNewChanges();
 
@@ -128,25 +124,23 @@ public class MapCacheTests
         // Initial state
         MapCache cache = new(8, 8, 2);
         var playerState1 = new PlayerState(
-            (1, 1), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                0, 3, 3, 3, 3,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 0,
-            ]);
+            (1, 1), 5, 0, false, ConvertSurroundings(
+                "     " +
+                " ####" +
+                " #p.." +
+                " #..." +
+                " #.. ")); // bottom right corner is unknown
         cache.AddPlayerStates(playerState1, null);
         cache.GetNewChanges();
 
         // Move south with corner out of view
         var playerState2 = new PlayerState(
-            (2, 1), 5, 0, false, [
-                0, 3, 3, 3, 0,
-                0, 3, 1, 1, 1,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 0,
-            ]);
+            (2, 1), 5, 0, false, ConvertSurroundings(
+                " ### " +
+                " #..." +
+                " #p.." +
+                " #..." +
+                " #.. ")); // top and bottom right corners are unknown
         cache.AddPlayerStates(playerState2, null);
         var changes = cache.GetNewChanges();
 
@@ -176,34 +170,31 @@ public class MapCacheTests
         // Initial state
         MapCache cache = new(8, 8, 2);
         var playerState1 = new PlayerState(
-            (1, 1), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                0, 3, 3, 3, 3,
-                0, 3, 2, 1, 1,
-                0, 3, 1, 1, 1,
-                0, 3, 1, 1, 1,
-            ]);
+            (1, 1), 5, 0, false, ConvertSurroundings(
+                "     " +
+                " ####" +
+                " #p.." +
+                " #..." +
+                " #..."));
         cache.AddPlayerStates(playerState1, null);
         cache.GetNewChanges();
 
         // Move east twice
         var playerState2 = new PlayerState(
-            (1, 2), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                3, 3, 3, 3, 3,
-                3, 1, 2, 1, 1,
-                3, 1, 1, 1, 1,
-                3, 1, 1, 1, 1,
-            ]);
+            (1, 2), 5, 0, false, ConvertSurroundings(
+                "     " +
+                "#####" +
+                "#.p.." +
+                "#...." +
+                "#...."));
         cache.AddPlayerStates(playerState2, null);
         var playerState3 = new PlayerState(
-            (1, 3), 5, 0, false, [
-                0, 0, 0, 0, 0,
-                3, 3, 3, 3, 3,
-                1, 1, 2, 1, 3,
-                1, 1, 1, 1, 3,
-                1, 1, 1, 1, 3,
-            ]);
+            (1, 3), 5, 0, false, ConvertSurroundings(
+                "     " +
+                "#####" +
+                "..p.#" +
+                "....#" +
+                "....#"));
         cache.AddPlayerStates(playerState3, null);
 
         var changes = cache.GetNewChanges();

@@ -1,29 +1,33 @@
 ﻿using Swoq.Infra;
 using Swoq.Server;
+using System.Diagnostics;
+using static Swoq.Test.TestUtils;
 
 namespace Swoq.Test;
 
-internal class DoorTests : GameTestBase
+[TestFixture('R')]
+[TestFixture('G')]
+[TestFixture('B')]
+internal class DoorTests(char doorColor) : GameTestBase
 {
-    internal static readonly int[] InitialSurroundings = [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 34
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 51
-        0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 68
-        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 85
-        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 102
-        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 119
-        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 136
-        0, 0, 0, 3, 1, 1, 1, 1, 2, 1, 1, 2, 3, 0, 0, 0, 0, // 153
-        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 0, 0, 0, // 170
-        0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 5, 5, 0, 0, 0, 0, 0, // 187
-        0, 0, 0, 3, 1, 1, 1, 1, 6, 1, 5, 0, 0, 0, 0, 0, 0, // 204
-        0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, // 221
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 238
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 255
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 272
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 289
-    ];
+    internal readonly int[] InitialSurroundings = ConvertSurroundings((
+        "                 " +
+        "                 " +
+        "                 " +
+        "    ########     " +
+        "   #........#    " +
+        "   #........#    " +
+        "   #........#    " +
+        "   #........#    " +
+        "   #....p..p#    " +
+        "   #........#    " +
+        "   #......DD     " +
+        "   #....k.D      " +
+        "    ######       " +
+        "                 " +
+        "                 " +
+        "                 " +
+        "                 ").Replace('D', doorColor).Replace('k', char.ToLower(doorColor)));
 
     [SetUp]
     public override void SetUp()
@@ -42,8 +46,11 @@ internal class DoorTests : GameTestBase
     [Test]
     public void WithoutKeyDoorCannotBeOpened()
     {
-        Assert.That(game.State.Player1, Is.Not.Null);
-        Assert.That(game.State.Player2, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+            Assert.That(game.State.Player2, Is.Not.Null);
+        });
 
         // Move towards door, no change expected except for player itself.
 
@@ -72,8 +79,11 @@ internal class DoorTests : GameTestBase
     [Test]
     public void OpenDoorWithKeys()
     {
-        Assert.That(game.State.Player1, Is.Not.Null);
-        Assert.That(game.State.Player2, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+            Assert.That(game.State.Player2, Is.Not.Null);
+        });
 
         // Move towards key, no change expected except for player itself.
         Act(Server.Action.Move, Direction.South);
@@ -99,8 +109,8 @@ internal class DoorTests : GameTestBase
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
             Assert.That(changes, Has.Count.EqualTo(2));
             Assert.That(changes[(7, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(8, 5)], Is.EqualTo((6, 2)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(1));
+            Assert.That(changes[(8, 5)], Is.EqualTo((KeyValue, 2)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(InventoryValue));
         });
 
         // Move to door
@@ -113,6 +123,29 @@ internal class DoorTests : GameTestBase
             Assert.That(changes, Has.Count.EqualTo(2));
             Assert.That(changes[(8, 5)], Is.EqualTo((2, 1)));
             Assert.That(changes[(8, 6)], Is.EqualTo((1, 2)));
+        });
+
+        // Open door
+        Assert.That(game.State.Player1.Inventory, Is.EqualTo(InventoryValue));
+        Act(Server.Action.Use, Direction.East);
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((8, 6)));
+            Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0)); // Key removed from inventory
+            Assert.That(changes, Has.Count.EqualTo(8));
+            // Doors opened
+            Assert.That(changes[(7, 7)], Is.EqualTo((DoorValue, 1)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((DoorValue, 1)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((DoorValue, 1)));
+            // Exit became visible
+            Assert.That(changes[(8, 8)], Is.EqualTo((0, 4)));
+            // Some walls became visible
+            Assert.That(changes[(7, 9)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(8, 9)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(9, 7)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((0, 3)));
         });
     }
 
@@ -139,15 +172,52 @@ internal class DoorTests : GameTestBase
         }
 
         map[8, 8] = Cell.Exit;
-        map[8, 7] = Cell.DoorRedClosed;
-        map[7, 7] = Cell.DoorRedClosed;
-        map[7, 8] = Cell.DoorRedClosed;
 
-        map[8, 5] = Cell.KeyRed;
+        map[8, 7] = DoorCell;
+        map[7, 7] = DoorCell;
+        map[7, 8] = DoorCell;
+
+        map[8, 5] = KeyCell;
 
         map.Player1.Position = (5, 5);
         map.Player2.Position = (5, 8);
 
         return map.ToMap();
     }
+
+    private int DoorValue => doorColor switch
+    {
+        'R' => 5,
+        'G' => 7,
+        'B' => 9,
+        _ => throw new NotImplementedException(),
+    };
+    private int KeyValue => doorColor switch
+    {
+        'R' => 6,
+        'G' => 8,
+        'B' => 10,
+        _ => throw new NotImplementedException(),
+    };
+    private int InventoryValue => doorColor switch
+    {
+        'R' => 1,
+        'G' => 2,
+        'B' => 3,
+        _ => throw new NotImplementedException(),
+    };
+    private Cell DoorCell => doorColor switch
+    {
+        'R' => Cell.DoorRedClosed,
+        'G' => Cell.DoorGreenClosed,
+        'B' => Cell.DoorBlueClosed,
+        _ => throw new NotImplementedException()
+    };
+    private Cell KeyCell = doorColor switch
+    {
+        'R' => Cell.KeyRed,
+        'G' => Cell.KeyGreen,
+        'B' => Cell.KeyBlue,
+        _ => throw new NotImplementedException()
+    };
 }

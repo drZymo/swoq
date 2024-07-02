@@ -6,7 +6,7 @@
   - [X] place on empty
   - [X] place on pressure plate
   - [ ] Boulders => Boulder
-- [ ] Unit tests
+- [?] Unit tests
 - [ ] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -35,6 +35,9 @@
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
 - [ ] Extend .editorconfig
+
+## Improvements
+- [ ] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 
 ## Done
 
@@ -287,12 +290,12 @@ Placed on pressure plate will leave it pressed.
 ## Unit tests
 
 - [ ] Combat
-  - [ ] 1 player without health cannot win
-  - [ ] 1 player with health can win
+  - [X] 1 player without health cannot win
+  - [X] 1 player with health can win
   - [ ] 2 player vs 1 enemy no extra health can win
 - [ ] Doors
-  - [ ] Door cannot be opened without key
-  - [ ] Door can be opened with key
+  - [X] Door cannot be opened without key
+  - [X] Door can be opened with key
 - [ ] Pressure plate
   - [ ] Stand will open, leave will close
   - [ ] Boulder will open, remove will close
