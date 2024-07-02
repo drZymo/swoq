@@ -122,7 +122,8 @@ internal class OnePlayerCombatTests : GameTestBase
             Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
         });
 
-        // Attack some times
+        // Attack some times, one extra because enemy skipped one action
+        Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
@@ -234,7 +235,7 @@ internal class OnePlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(2)); // health reduced
+            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // health reduced, one skipped
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
         });
 
@@ -244,7 +245,7 @@ internal class OnePlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(2)); // health no longer reduced
+            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // health no longer reduced
             Assert.That(changes, Has.Count.EqualTo(1));
             Assert.That(changes[(5, 6)], Is.EqualTo((14, 1))); // enemy died
         });

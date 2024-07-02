@@ -292,7 +292,7 @@ Placed on pressure plate will leave it pressed.
 - [ ] Combat
   - [X] 1 player without health cannot win
   - [X] 1 player with health can win
-  - [ ] 2 player vs 1 enemy no extra health can win
+  - [X] 2 player vs 1 enemy no extra health can win
 - [ ] Doors
   - [X] Door cannot be opened without key
   - [X] Door can be opened with key

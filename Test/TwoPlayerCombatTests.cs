@@ -47,7 +47,7 @@ internal class TwoPlayerCombatTests : GameTestBase
     public override void SetUp()
     {
         // Setup random with seed
-        Rnd.SetSeed(1337);
+        Rnd.SetSeed(1234);
 
         base.SetUp();
         Assert.That(game.State.Player1, Is.Not.Null);
@@ -158,9 +158,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(2)); // player 1 is attacked twice more
+            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is attacked twice more
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(5));
+            Assert.That(game.State.Player2.Health, Is.EqualTo(4)); // player 2 is also attacked
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
         });
 
@@ -170,9 +170,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(2)); // player 1 is no longer attacked
+            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is no longer attacked
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(5));
+            Assert.That(game.State.Player2.Health, Is.EqualTo(4)); // player 2 is no longer attacked
             Assert.That(changes, Has.Count.EqualTo(1));
             // Enemy died
             Assert.That(changes[(4, 6)], Is.EqualTo((14, 1)));

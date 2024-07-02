@@ -450,8 +450,10 @@ public class Game : IGame
         if (Rnd.Next(0, 100) < 10) return;
 
         // Is there a player near by?
-        var closestPlayer = FindClosestVisiblePlayer(enemy.Position, Parameters.EnemyVisibilityRange);
-        if (closestPlayer == null) return;
+        var closestPlayers = FindClosestVisiblePlayers(enemy.Position, Parameters.EnemyVisibilityRange);
+        if (closestPlayers.Count == 0) return;
+        // Pick a random if there are more than 1
+        var closestPlayer = closestPlayers.PickOne();
 
         // Attack if adjacent, chase otherwise
         var dy = closestPlayer.Position.y - enemy.Position.y;
@@ -475,36 +477,37 @@ public class Game : IGame
         }
     }
 
-    private Player? FindClosestVisiblePlayer(Position fromPos, int visibilityRange)
+    private IImmutableList<Player> FindClosestVisiblePlayers(Position fromPos, int visibilityRange)
     {
-        // Find closest visible player
         double minDist = double.PositiveInfinity;
-        Player? closestPlayer = null;
+        ImmutableList<Player> closestPlayers = [];
 
-        if (player1 != null)
+        Player?[] players = [player1, player2];
+        foreach (var player in players)
         {
-            var dist = player1.Position.DistanceTo(fromPos);
-            if (dist <= visibilityRange &&
-                IsVisible(fromPos, player1.Position) &&
-                dist < minDist)
+            if (player == null) continue;
+
+            // Compute distance and check if it is visible from the given position
+            var dist = player.Position.DistanceTo(fromPos);
+            if (dist > visibilityRange ||
+                !IsVisible(fromPos, player.Position))
+            {
+                continue;
+            }
+
+            // Is it closest or equally close?
+            if (dist < minDist)
             {
                 minDist = dist;
-                closestPlayer = player1;
+                closestPlayers = [player];
             }
-        }
-
-        if (player2 != null)
-        {
-            var dist = player2.Position.DistanceTo(fromPos);
-            if (dist <= visibilityRange &&
-                IsVisible(fromPos, player2.Position) &&
-                dist < minDist)
+            else if (dist == minDist)
             {
-                closestPlayer = player2;
+                closestPlayers = closestPlayers.Add(player);
             }
         }
 
-        return closestPlayer;
+        return closestPlayers;
     }
 
     private void DealDamage<T>(ref T character, int damage) where T : Character
