@@ -1,6 +1,7 @@
 # TODO
 
 - [ ] Fix bug in later levels with combat. Use not allowed.
+- [ ] Levels
 - [ ] Boulders.
   - [X] pickup
   - [X] place on empty
@@ -16,10 +17,10 @@
 - [ ] Remove player registration from proto (move to portal)
 - [ ] Order: width/height, x/y
 - [ ] Colored pressure plates & black key
-- [ ] Levels
 - [ ] Level not available => insufficient player level
 - [ ] Hardcode dashboard colors
 - [ ] Lore in the proto files
+- [ ] Tileset matching lore (exit should not be treasure)
 - [ ] Zip file for ReplayViewer
 - [ ] Example bot Python
 - [ ] Example bot C#
@@ -38,6 +39,7 @@
 
 ## Improvements
 - [ ] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
+- [ ] Enemy keeps on following even if player out of sight, but with more idle actions.
 
 ## Done
 
@@ -289,18 +291,19 @@ Placed on pressure plate will leave it pressed.
 
 ## Unit tests
 
-- [ ] Combat
+- [X] Combat
   - [X] 1 player without health cannot win
   - [X] 1 player with health can win
   - [X] 2 player vs 1 enemy no extra health can win
-- [ ] Doors
+- [X] Doors
   - [X] Door cannot be opened without key
   - [X] Door can be opened with key
 - [ ] Pressure plate
-  - [ ] Stand will open, leave will close
-  - [ ] Boulder will open, remove will close
+  - [X] Stand will open, leave will close
+  - [X] Boulder will open, remove will close
   - [ ] Close door kills player
-
+- [ ] Inactive time
+- [ ] 
 
 # Lore in the proto files
 

@@ -15,7 +15,7 @@ public class Program
         builder.Services.Configure<ReplayStorageSettings>(builder.Configuration.GetSection("ReplayStorage"));
         builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabase>();
         //builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabaseInMemory>();
-        builder.Services.AddSingleton<IMapGenerator, MapGenerator>();
+        builder.Services.AddSingleton<IMapGenerator, MapGenerator>(_ => new MapGenerator(Parameters.MapHeight, Parameters.MapWidth));
         builder.Services.AddSingleton<GameServicePostman>();
         builder.Services.AddSingleton<ReplaySaver>();
         builder.Services.AddSingleton<GameServer>();

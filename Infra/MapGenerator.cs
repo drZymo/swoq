@@ -2,6 +2,7 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using Position = (int y, int x);
 
 public class MapGenerator : IMapGenerator
@@ -9,12 +10,12 @@ public class MapGenerator : IMapGenerator
     private class MapGeneratorException(string message) : Exception(message) { }
 
     private static readonly char[] Directions = ['N', 'E', 'S', 'W'];
+    private const int MaxRetries = 10;
 
     private readonly int height;
     private readonly int width;
 
     private readonly IImmutableSet<Position> allPositions = ImmutableHashSet<Position>.Empty;
-
     private MutableMap map;
 
     private Position exitPosition;
@@ -54,29 +55,41 @@ public class MapGenerator : IMapGenerator
 
     public Map Generate(int level)
     {
-        Reset(level);
+        int tries = 0;
+        while (true)
+        {
+            try
+            {
+                Reset(level);
 
-        if (level == 0) GenerateLevel0();
-        if (level == 1) GenerateLevel1();
-        if (level == 2) GenerateLevel2();
-        if (level == 3) GenerateLevel3();
-        if (level == 4) GenerateLevel4();
-        if (level == 5) GenerateLevel5();
-        if (level == 6) GenerateLevel6();
-        if (level == 7) GenerateLevel7();
-        if (level == 8) GenerateLevel8();
-        if (level == 9) GenerateLevel9();
-        if (level == 10) GenerateLevel10();
-        if (level == 11) GenerateLevel11();
-        if (level == 12) GenerateLevel12();
-        if (level == 13) GenerateLevel13();
+                if (level == 0) GenerateLevel0();
+                if (level == 1) GenerateLevel1();
+                if (level == 2) GenerateLevel2();
+                if (level == 3) GenerateLevel3();
+                if (level == 4) GenerateLevel4();
+                if (level == 5) GenerateLevel5();
+                if (level == 6) GenerateLevel6();
+                if (level == 7) GenerateLevel7();
+                if (level == 8) GenerateLevel8();
+                if (level == 9) GenerateLevel9();
+                if (level == 10) GenerateLevel10();
+                if (level == 11) GenerateLevel11();
+                if (level == 12) GenerateLevel12();
+                if (level == 13) GenerateLevel13();
 
-        RemoveInnerWalls();
+                RemoveInnerWalls();
 
-        if (map.Player1.Position.IsValid() && map[map.Player1.Position] != Cell.Empty) throw new MapGeneratorException("Player 1 position invalid");
-        if (map.Player2.Position.IsValid() && map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
+                if (map.Player1.Position.IsValid() && map[map.Player1.Position] != Cell.Empty) throw new MapGeneratorException("Player 1 position invalid");
+                if (map.Player2.Position.IsValid() && map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
 
-        return map.ToMap();
+                return map.ToMap();
+            }
+            catch
+            {
+                if (tries >= MaxRetries) throw;
+                tries++;
+            }
+        }
     }
 
     private void Reset(int level)

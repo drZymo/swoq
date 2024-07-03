@@ -167,6 +167,12 @@ class GamePlayer:
 
 
     def act(self):
+        # Once in a while player 2 will not move, to break cycles
+        if np.random.uniform() < 0.05:
+            print(f' player 2 skipped')
+            self.action2 = None
+            self.direction2 = None
+            
         print(f'{self.action1=}, {self.action2=}')
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, direction1=self.direction1, action2=self.action2, direction2=self.direction2))
 
