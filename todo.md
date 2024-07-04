@@ -42,6 +42,7 @@
 - [ ] Enemy keeps on following even if player out of sight, but with more idle actions.
 
 ## Bugs
+- [ ] Health and sword could be one same location overwriting eachother.
 - [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
 
 ## Done

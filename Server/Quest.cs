@@ -68,6 +68,9 @@ internal class Quest : IGame
                 player.QuestLengthSeconds = Math.Min(lengthSeconds, player.QuestLengthSeconds);
             }
 
+            // Sync database
+            database.UpdatePlayerAsync(player);
+
             // Create a new game if this was not the last level
             if (Level <= Parameters.FinalLevel)
             {
@@ -79,9 +82,6 @@ internal class Quest : IGame
                 Console.WriteLine($"{player.Name} finished the quest"); // TODO: Report to dashboard
                 state = new GameState(ticks, Level, true);
             }
-
-            // Sync database
-            database.UpdatePlayerAsync(player);
         }
 
         // Overwrite single game ticks with whole quest ticks
