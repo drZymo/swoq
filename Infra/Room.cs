@@ -11,10 +11,14 @@ internal record Room(int Y, int X, int Height, int Width)
     public int Left => X - Width / 2;
     public int Right => Left + Width;
 
-    public Position RandomPosition(int margin)
+    public IEnumerable<Position> GetPositions(int margin = 0)
     {
-        var y = Rnd.Next(Top + margin, Bottom - margin);
-        var x = Rnd.Next(Left + margin, Right - margin);
-        return (y, x);
+        for (var y = Top + margin; y < Bottom - margin; y++)
+        {
+            for (var x = Left + margin; x < Right - margin; x++)
+            {
+                yield return (y, x);
+            }
+        }
     }
 }
