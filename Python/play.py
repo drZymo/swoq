@@ -299,14 +299,14 @@ class GamePlayer:
         doors = np.argwhere(self.map == door)
         if np.any(doors):
             door_pos = tuple(doors[0])
-            if self.can_act1() and self.player1_inventory == item:
+            if self.can_act1() and self.player1_inventory == item and get_direction(self.player1_pos, door_pos, self.player1_distances, self.player1_paths) is not None:
                 if are_adjacent(self.player1_pos, door_pos):
                     print('use_door1')
                     self.use_1(door_pos)
                 else:
                     print('move_door1')
                     self.move_to_1(door_pos)
-            elif self.can_act2() and self.player2_inventory == item:
+            elif self.can_act2() and self.player2_inventory == item and get_direction(self.player2_pos, door_pos, self.player2_distances, self.player2_paths) is not None:
                 if are_adjacent(self.player2_pos, door_pos):
                     print('use_door2')
                     self.use_2(door_pos)
