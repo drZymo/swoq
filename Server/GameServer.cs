@@ -122,6 +122,11 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
             lock (gamesWriteMutex)
             {
                 games = games.RemoveRange(idsToRemove);
+
+                if (currentQuestId.HasValue && !games.ContainsKey(currentQuestId.Value))
+                {
+                    currentQuestId = null;
+                }
             }
         }
     }
