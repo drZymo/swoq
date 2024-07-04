@@ -39,8 +39,8 @@
 - [ ] Extend .editorconfig
 
 ## Improvements
-- [ ] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
-- [ ] Enemy keeps on following even if player out of sight, but with more idle actions.
+- [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
+- [X] Enemy keeps on following even if player out of sight, but with more idle actions.
 
 ## Bugs
 - [ ] Health and sword could be one same location overwriting eachother.

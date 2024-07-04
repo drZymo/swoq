@@ -12,8 +12,24 @@ internal enum GameCharacterId
     Enemy2,
 }
 
-internal abstract record GameCharacter(GameCharacterId Id, Position Position, Inventory Inventory, int Health);
-internal record GamePlayer(GameCharacterId Id, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false)
+internal abstract record GameCharacter(
+    GameCharacterId Id,
+    Position Position,
+    Inventory Inventory,
+    int Health);
+
+internal record GamePlayer(
+    GameCharacterId Id,
+    Position Position,
+    Inventory Inventory = Inventory.None,
+    int Health = Parameters.PlayerHealth,
+    bool HasSword = false)
     : GameCharacter(Id, Position, Inventory, Health);
-internal record GameEnemy(GameCharacterId Id, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth)
+
+internal record GameEnemy(
+    GameCharacterId Id,
+    Position Position,
+    Inventory Inventory = Inventory.None,
+    int Health = Parameters.EnemyHealth,
+    bool IsTriggered = false)
     : GameCharacter(Id, Position, Inventory, Health);

@@ -457,67 +457,134 @@ public class Game : IGame
         if (!enemy.Position.IsValid()) return;
         if (enemy.Health <= 0) return;
 
+        if (!TryEnemyAttackAdjacentPlayer(ref enemy, prevPlayer1, prevPlayer2))
+        {
+            MoveEnemyToClosestPlayer(ref enemy);
+        }
+    }
+
+    private bool TryEnemyAttackAdjacentPlayer(ref GameEnemy enemy, GamePlayer? prevPlayer1, GamePlayer? prevPlayer2)
+    {
         // Are there players adjacent to the enemy?
         var currentAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
         if (player1 != null && AraAdjacent(enemy, player1)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player1);
         if (player2 != null && AraAdjacent(enemy, player2)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player2);
+
+        // No, then cannot attack
+        if (currentAdjacentPlayers.Count == 0) return false;
+
+        // Are there players that were adjacent in the previous tick as well?
         var previousAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
         if (prevPlayer1 != null && AraAdjacent(enemy, prevPlayer1)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player1);
         if (prevPlayer2 != null && AraAdjacent(enemy, prevPlayer2)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player2);
-
-        // Is there a player adjacent for more than 1 tick?, then attack one randomly.
         var adjacentPlayers = currentAdjacentPlayers.Intersect(previousAdjacentPlayers);
+
+        // Yes, then attack
         if (adjacentPlayers.Count > 0)
         {
-            // Attack
             var adjacentPlayer = adjacentPlayers.PickOne();
             if (player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(ref player1, 1);
             if (player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(ref player2, 1);
         }
-        else if (currentAdjacentPlayers.Count == 0)
+
+        // Return true, even when not attacked.
+        // To prevent movement, since there are players adjacent.
+        return true;
+    }
+
+    private void MoveEnemyToClosestPlayer(ref GameEnemy enemy)
+    {
+        var enemy_ = enemy;
+
+        // Once in a while do not move
+        if (Rnd.Next(0, 100) < 10) return;
+
+        // Make a list of players, ordered by distance from enemy
+        ImmutableList<GamePlayer> players = [];
+        if (player1 != null && player1.Position.IsValid()) players = players.Add(player1);
+        if (player2 != null && player2.Position.IsValid()) players = players.Add(player2);
+        var closestPlayers = players.
+            OrderBy(p => p.Position.DistanceTo(enemy_.Position));
+
+        // Are players visible to the enemy?
+        var visiblePlayers = closestPlayers.Where(p => IsPlayerVisibleByEnemy(enemy_, p));
+        if (visiblePlayers.Any())
         {
-            // No player adjacent, so move towards closest player
-            var closestPlayers = FindClosestVisiblePlayers(enemy.Position, Parameters.EnemyVisibilityRange);
-            if (closestPlayers.Count > 0)
+            // A player became visible to the enemy, activate the enemy
+            enemy = enemy with { IsTriggered = true };
+
+            // Let it chase the closest player
+            var visiblePlayer = visiblePlayers.First();
+            MoveEnemyTowards(ref enemy, visiblePlayer.Position);
+        }
+        else if (enemy.IsTriggered)
+        {
+            // No player visible, but it was before, so simply move towards the closest player
+            // at a slower pace, by randomly skipping moves
+            if (Rnd.Next(0, 100) > 50)
             {
-                // Chase one of the closest players
-                var closestPlayer = closestPlayers.PickOne();
-                var dy = closestPlayer.Position.y - enemy.Position.y;
-                var dx = closestPlayer.Position.x - enemy.Position.x;
-                var nextPos = Math.Abs(dy) > Math.Abs(dx)
-                    ? (enemy.Position.y + Math.Sign(dy), enemy.Position.x)
-                    : (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
-                if (CanMoveTo(nextPos))
-                {
-                    // Once in a while do not move
-                    if (Rnd.Next(0, 100) < 90)
-                    {
-                        enemy = enemy with { Position = nextPos };
-                    }
-                }
+                var closestPlayer = closestPlayers.First();
+                MoveEnemyTowards(ref enemy, closestPlayer.Position);
             }
         }
     }
 
-    private ImmutableList<GamePlayer> FindClosestVisiblePlayers(Position fromPos, int visibilityRange)
+    private bool IsPlayerVisibleByEnemy(GameEnemy enemy, GamePlayer player)
     {
-        double minDist = double.PositiveInfinity;
+        var distance = enemy.Position.DistanceTo(player.Position);
+        return distance < Parameters.EnemyVisibilityRange && IsVisible(enemy.Position, player.Position);
+    }
+
+    private void MoveEnemyTowards(ref GameEnemy enemy, Position targetPosition)
+    {
+        // Dumb movement algorithm
+        // Just check if enemy needs to move vertically and horizontally.
+        // Pick one randomly.
+
+        ImmutableList<Position> nextPositions = [];
+
+        // Check vertical movement
+        var dy = targetPosition.y - enemy.Position.y;
+        if (Math.Abs(dy) > 0)
+        {
+            var nextPosY = (enemy.Position.y + Math.Sign(dy), enemy.Position.x);
+            if (CanMoveTo(nextPosY)) nextPositions = nextPositions.Add(nextPosY);
+        }
+
+        // Check horizontal movement
+        var dx = targetPosition.x - enemy.Position.x;
+        if (Math.Abs(dx) > 0)
+        {
+            var nextPosX = (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
+            if (CanMoveTo(nextPosX)) nextPositions = nextPositions.Add(nextPosX);
+        }
+
+        // Take a random move towards the player
+        if (nextPositions.Count > 0)
+        {
+            var nextPos = nextPositions.PickOne();
+            enemy = enemy with { Position = nextPos };
+        }
+    }
+
+    private ImmutableList<GamePlayer> FindClosestVisiblePlayers(Position fromPos)
+    {
+        var minDist = double.PositiveInfinity;
         ImmutableList<GamePlayer> closestPlayers = [];
 
         GamePlayer?[] players = [player1, player2];
         foreach (var player in players)
         {
-            if (player == null) continue;
+            if (player == null || !player.Position.IsValid()) continue;
 
             // Compute distance and check if it is visible from the given position
             var dist = player.Position.DistanceTo(fromPos);
-            if (dist > visibilityRange ||
-                !IsVisible(fromPos, player.Position))
+            if (dist > Parameters.EnemyVisibilityRange || !IsVisible(fromPos, player.Position))
             {
                 continue;
             }
 
-            // Is it closest or equally close?
+            // Is it the closest?
             if (dist < minDist)
             {
                 minDist = dist;

@@ -145,9 +145,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is attacked twice
+            Assert.That(game.State.Player1.Health, Is.EqualTo(5)); // player 1 is not attacked
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(5)); // player 2 is not attacked
+            Assert.That(game.State.Player2.Health, Is.EqualTo(3)); // player 2 is attacked twice
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
         });
 
@@ -157,9 +157,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is no longer attacked
+            Assert.That(game.State.Player1.Health, Is.EqualTo(5)); // player 1 is no longer attacked
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(5)); // player 2 is no longer attacked
+            Assert.That(game.State.Player2.Health, Is.EqualTo(3)); // player 2 is no longer attacked
             Assert.That(changes, Has.Count.EqualTo(1));
             // Enemy died
             Assert.That(changes[(4, 6)], Is.EqualTo((14, 1)));
