@@ -8,39 +8,33 @@ using Position = (int y, int x);
 
 public class Game : IGame
 {
-    private abstract record Character(string Name, Position Position, Inventory Inventory, int Health);
-    private record Player(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.PlayerHealth, bool HasSword = false)
-        : Character(Name, Position, Inventory, Health);
-    private record Enemy(string Name, Position Position, Inventory Inventory = Inventory.None, int Health = Parameters.EnemyHealth)
-        : Character(Name, Position, Inventory, Health);
-
     private readonly TimeSpan maxInactivityTime;
 
     private int ticks = 0;
     private int lastChangeTick = 0;
 
     private Map map;
-    private Player? player1 = null;
-    private Player? player2 = null;
-    private IImmutableList<Enemy> enemies = ImmutableList<Enemy>.Empty;
+    private GamePlayer? player1 = null;
+    private GamePlayer? player2 = null;
+    private IImmutableList<GameEnemy> enemies = ImmutableList<GameEnemy>.Empty;
 
     public Game(Map map, TimeSpan maxInactivityTime)
     {
         this.map = map;
         this.maxInactivityTime = maxInactivityTime;
 
-        player1 = new Player("Player1", map.InitialPlayer1Position);
+        player1 = new GamePlayer(GameCharacterId.Player1, map.InitialPlayer1Position);
         if (map.InitialPlayer2Position.HasValue)
         {
-            player2 = new Player("Player2", map.InitialPlayer2Position.Value);
+            player2 = new GamePlayer(GameCharacterId.Player2, map.InitialPlayer2Position.Value);
         }
         if (map.InitialEnemy1Position.HasValue)
         {
-            enemies = enemies.Add(new Enemy("Enemy1", map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
+            enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
         }
         if (map.InitialEnemy2Position.HasValue)
         {
-            enemies = enemies.Add(new Enemy("Enemy2", map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
+            enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
         }
     }
 
@@ -53,6 +47,9 @@ public class Game : IGame
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        var prevPlayer1 = player1;
+        var prevPlayer2 = player2;
+
         if (IsFinished) throw new GameFinishedException(CreateState());
 
         if (IsInactive)
@@ -113,7 +110,7 @@ public class Game : IGame
         foreach (var enemy in enemies)
         {
             var newEnemy = enemy;
-            ProcessEnemy(ref newEnemy);
+            ProcessEnemy(ref newEnemy, prevPlayer1, prevPlayer2);
             enemies = enemies.Replace(enemy, newEnemy);
         }
 
@@ -160,7 +157,7 @@ public class Game : IGame
         }
     }
 
-    private void Move(ref Player player, Direction direction)
+    private void Move(ref GamePlayer player, Direction direction)
     {
         var nextPos = GetDirectionPosition(player, direction);
 
@@ -177,7 +174,7 @@ public class Game : IGame
         EnterCell(ref player, player.Position);
     }
 
-    private void Use(ref Player player, Direction direction)
+    private void Use(ref GamePlayer player, Direction direction)
     {
         var usePos = GetDirectionPosition(player, direction);
 
@@ -240,7 +237,7 @@ public class Game : IGame
         }
     }
 
-    private Position GetDirectionPosition(Player player, Direction direction) => direction switch
+    private Position GetDirectionPosition(GamePlayer player, Direction direction) => direction switch
     {
         Direction.North => (player.Position.y - 1, player.Position.x),
         Direction.East => (player.Position.y, player.Position.x + 1),
@@ -270,7 +267,7 @@ public class Game : IGame
         }
     }
 
-    private void EnterCell(ref Player player, Position position)
+    private void EnterCell(ref GamePlayer player, Position position)
     {
         switch (map[position])
         {
@@ -310,7 +307,7 @@ public class Game : IGame
         }
     }
 
-    private void PickupInventory(ref Player player, Position position, Cell emptyCellType)
+    private void PickupInventory(ref GamePlayer player, Position position, Cell emptyCellType)
     {
         // Cannot pickup if inventory is full
         if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
@@ -326,7 +323,7 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
-    private void PickupSword(ref Player player, Position position)
+    private void PickupSword(ref GamePlayer player, Position position)
     {
         // Cannot pickup if player already has sword
         if (player.HasSword) throw new InventoryFullException(CreateState());
@@ -337,7 +334,7 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
-    private void PickupHealth(ref Player player, Position position)
+    private void PickupHealth(ref GamePlayer player, Position position)
     {
         // Add to player's health and remove from map
         player = player with { Health = player.Health + Parameters.ExtraHealth };
@@ -345,7 +342,7 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
-    private bool TryUseOnEnemy(Player player, Position usePos)
+    private bool TryUseOnEnemy(GamePlayer player, Position usePos)
     {
         foreach (var enemy in enemies)
         {
@@ -363,7 +360,7 @@ public class Game : IGame
         return false;
     }
 
-    private void PlaceBoulder(ref Player player, Position usePos, Cell placedCellType)
+    private void PlaceBoulder(ref GamePlayer player, Position usePos, Cell placedCellType)
     {
         if (player.Inventory != Inventory.Boulders) throw new UseNotAllowedException(CreateState());
 
@@ -372,7 +369,7 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
-    private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
+    private void UseKeyToOpenDoor(ref GamePlayer player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
         if (player.Inventory != item) throw new UseNotAllowedException(CreateState());
@@ -441,48 +438,73 @@ public class Game : IGame
         }
     }
 
-    private void ProcessEnemy(ref Enemy enemy)
+    private static bool AreAdjacent(Position a, Position b)
     {
+        var dy = Math.Abs(a.y - b.y);
+        var dx = Math.Abs(a.x - b.x);
+        return (dy == 1 && dx == 0) || (dy == 0 && dx == 1);
+    }
+
+    private static bool AraAdjacent(GameCharacter a, GameCharacter b)
+    {
+        return a.Position.IsValid() && b.Position.IsValid() &&
+            AreAdjacent(a.Position, b.Position);
+    }
+
+    private void ProcessEnemy(ref GameEnemy enemy, GamePlayer? prevPlayer1, GamePlayer? prevPlayer2)
+    {
+        // Is this enemy still alive?
         if (!enemy.Position.IsValid()) return;
         if (enemy.Health <= 0) return;
 
-        // Once in a while do not interact
-        if (Rnd.Next(0, 100) < 10) return;
+        // Are there players adjacent to the enemy?
+        var currentAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
+        if (player1 != null && AraAdjacent(enemy, player1)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player1);
+        if (player2 != null && AraAdjacent(enemy, player2)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player2);
+        var previousAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
+        if (prevPlayer1 != null && AraAdjacent(enemy, prevPlayer1)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player1);
+        if (prevPlayer2 != null && AraAdjacent(enemy, prevPlayer2)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player2);
 
-        // Is there a player near by?
-        var closestPlayers = FindClosestVisiblePlayers(enemy.Position, Parameters.EnemyVisibilityRange);
-        if (closestPlayers.Count == 0) return;
-        // Pick a random if there are more than 1
-        var closestPlayer = closestPlayers.PickOne();
-
-        // Attack if adjacent, chase otherwise
-        var dy = closestPlayer.Position.y - enemy.Position.y;
-        var dx = closestPlayer.Position.x - enemy.Position.x;
-        if ((Math.Abs(dy) == 1 && dx == 0) || (dy == 0 && Math.Abs(dx) == 1))
+        // Is there a player adjacent for more than 1 tick?, then attack one randomly.
+        var adjacentPlayers = currentAdjacentPlayers.Intersect(previousAdjacentPlayers);
+        if (adjacentPlayers.Count > 0)
         {
             // Attack
-            if (ReferenceEquals(closestPlayer, player1)) DealDamage(ref player1, 1);
-            if (ReferenceEquals(closestPlayer, player2)) DealDamage(ref player2, 1);
+            var adjacentPlayer = adjacentPlayers.PickOne();
+            if (player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(ref player1, 1);
+            if (player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(ref player2, 1);
         }
-        else
+        else if (currentAdjacentPlayers.Count == 0)
         {
-            // Chase
-            var nextPos = Math.Abs(dy) > Math.Abs(dx)
-                ? (enemy.Position.y + Math.Sign(dy), enemy.Position.x)
-                : (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
-            if (CanMoveTo(nextPos))
+            // No player adjacent, so move towards closest player
+            var closestPlayers = FindClosestVisiblePlayers(enemy.Position, Parameters.EnemyVisibilityRange);
+            if (closestPlayers.Count > 0)
             {
-                enemy = enemy with { Position = nextPos };
+                // Chase one of the closest players
+                var closestPlayer = closestPlayers.PickOne();
+                var dy = closestPlayer.Position.y - enemy.Position.y;
+                var dx = closestPlayer.Position.x - enemy.Position.x;
+                var nextPos = Math.Abs(dy) > Math.Abs(dx)
+                    ? (enemy.Position.y + Math.Sign(dy), enemy.Position.x)
+                    : (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
+                if (CanMoveTo(nextPos))
+                {
+                    // Once in a while do not move
+                    if (Rnd.Next(0, 100) < 90)
+                    {
+                        enemy = enemy with { Position = nextPos };
+                    }
+                }
             }
         }
     }
 
-    private IImmutableList<Player> FindClosestVisiblePlayers(Position fromPos, int visibilityRange)
+    private ImmutableList<GamePlayer> FindClosestVisiblePlayers(Position fromPos, int visibilityRange)
     {
         double minDist = double.PositiveInfinity;
-        ImmutableList<Player> closestPlayers = [];
+        ImmutableList<GamePlayer> closestPlayers = [];
 
-        Player?[] players = [player1, player2];
+        GamePlayer?[] players = [player1, player2];
         foreach (var player in players)
         {
             if (player == null) continue;
@@ -510,7 +532,7 @@ public class Game : IGame
         return closestPlayers;
     }
 
-    private void DealDamage<T>(ref T character, int damage) where T : Character
+    private void DealDamage<T>(ref T character, int damage) where T : GameCharacter
     {
         character = character with { Health = character.Health - damage };
         lastChangeTick = ticks;
@@ -618,7 +640,7 @@ public class Game : IGame
     }
 
 
-    private T CleanupDeadCharacter<T>(ref T character) where T : Character
+    private T CleanupDeadCharacter<T>(ref T character) where T : GameCharacter
     {
         if (character.Health <= 0 && character.Position.IsValid())
         {
@@ -676,7 +698,7 @@ public class Game : IGame
 
     // TODO: Move to separate class?
 
-    private PlayerState GetPlayerState(Player player)
+    private PlayerState GetPlayerState(GamePlayer player)
     {
         int[] surroundings = [];
 
@@ -701,7 +723,7 @@ public class Game : IGame
         return new PlayerState(player.Position, player.Health, ToInventoryState(player.Inventory), player.HasSword, surroundings);
     }
 
-    private int ToCellState(Player player, Position pos)
+    private int ToCellState(GamePlayer player, Position pos)
     {
         const int UNKNOWN = 0;
         const int EMPTY = 1;

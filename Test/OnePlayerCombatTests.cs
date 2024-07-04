@@ -28,7 +28,7 @@ internal class OnePlayerCombatTests : GameTestBase
     public override void SetUp()
     {
         // Setup random with seed
-        Rnd.SetSeed(1337);
+        Rnd.SetSeed(1112);
 
         base.SetUp();
         Assert.That(game.State.Player1, Is.Not.Null);
@@ -93,36 +93,25 @@ internal class OnePlayerCombatTests : GameTestBase
         // Now enemy has seen the player and will move closer
         Act(Server.Action.Move, Direction.East);
         Act(Server.Action.Move, Direction.East);
-        changes = mapCache.GetNewChanges();
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 4)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(5));
-            Assert.That(changes, Has.Count.EqualTo(4));
-            // Player pos changed
-            Assert.That(changes[(5, 2)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(5, 4)], Is.EqualTo((1, 2)));
-            // Enemy comes closer
-            Assert.That(changes[(5, 8)], Is.EqualTo((14, 1)));
-            Assert.That(changes[(5, 6)], Is.EqualTo((1, 14)));
-        });
-
-        // Move east will result in standing next to enemy,
-        // so enemy will attack immediately,
-        // it did not move.
         Act(Server.Action.Move, Direction.East);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(4)); // health reduced
-            Assert.That(changes, Has.Count.EqualTo(2));
+            Assert.That(game.State.Player1.Health, Is.EqualTo(5));
+            Assert.That(changes, Has.Count.EqualTo(4));
             // Player pos changed
-            Assert.That(changes[(5, 4)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 2)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
+            // Enemy comes closer
+            Assert.That(changes[(5, 8)], Is.EqualTo((14, 1)));
+            Assert.That(changes[(5, 6)], Is.EqualTo((1, 14)));
         });
 
-        // Attack some times, one extra because enemy skipped one action
+        // Now standing next to enemy, which has not attacked yet.
+        // Enemy has 6 health.
+
+        // Attack 4 times, enemy also attacked 4 times
         Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
@@ -136,12 +125,12 @@ internal class OnePlayerCombatTests : GameTestBase
         });
 
         // Only 1 health left
-        // Attacking now will result in player being attacked also and die.
+        // Attacking now will result in player being attacked back again and die.
         Assert.Throws<Player1DiedException>(() => Act(Server.Action.Use, Direction.East));
     }
 
     [Test]
-    public void SinglePlayerWithExtraHealthCannotDefeatEnemy()
+    public void SinglePlayerWithExtraHealthCanDefeatEnemy()
     {
         Assert.That(game.State.Player1, Is.Not.Null);
 
@@ -196,36 +185,25 @@ internal class OnePlayerCombatTests : GameTestBase
         // Now enemy has seen the player and will move closer
         Act(Server.Action.Move, Direction.East);
         Act(Server.Action.Move, Direction.East);
-        changes = mapCache.GetNewChanges();
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 4)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(8));
-            Assert.That(changes, Has.Count.EqualTo(4));
-            // Player pos changed
-            Assert.That(changes[(5, 2)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(5, 4)], Is.EqualTo((1, 2)));
-            // Enemy comes closer
-            Assert.That(changes[(5, 8)], Is.EqualTo((14, 1)));
-            Assert.That(changes[(5, 6)], Is.EqualTo((1, 14)));
-        });
-
-        // Move east will result in standing next to enemy,
-        // so enemy will attack immediately,
-        // it did not move.
         Act(Server.Action.Move, Direction.East);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(7)); // health reduced
-            Assert.That(changes, Has.Count.EqualTo(2));
+            Assert.That(game.State.Player1.Health, Is.EqualTo(8));
+            Assert.That(changes, Has.Count.EqualTo(4));
             // Player pos changed
-            Assert.That(changes[(5, 4)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 2)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
+            // Enemy comes closer
+            Assert.That(changes[(5, 8)], Is.EqualTo((14, 1)));
+            Assert.That(changes[(5, 6)], Is.EqualTo((1, 14)));
         });
 
-        // Attack some times
+        // Now standing next to enemy, which has not attacked yet.
+        // Enemy has 6 health.
+
+        // Attack 5 times. Enemy also attacks 5 times.
         Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
         Act(Server.Action.Use, Direction.East);
@@ -235,10 +213,11 @@ internal class OnePlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // health reduced, one skipped
+            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // health reduced
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
         });
 
+        // Enemy should have 1 health.
         // Attacking now will result in enemy being killed
         Act(Server.Action.Use, Direction.East);
         changes = mapCache.GetNewChanges();

@@ -47,7 +47,7 @@ internal class TwoPlayerCombatTests : GameTestBase
     public override void SetUp()
     {
         // Setup random with seed
-        Rnd.SetSeed(1234);
+        Rnd.SetSeed(1337);
 
         base.SetUp();
         Assert.That(game.State.Player1, Is.Not.Null);
@@ -116,40 +116,27 @@ internal class TwoPlayerCombatTests : GameTestBase
         // Now enemy has seen the players and will move closer
         Act(Server.Action.Move, Direction.East, Server.Action.Move, Direction.East);
         Act(Server.Action.Move, Direction.East, Server.Action.Move, Direction.East);
-        changes = mapCache.GetNewChanges();
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((3, 5)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(5));
-            Assert.That(game.State.Player2.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(5));
-            Assert.That(changes, Has.Count.EqualTo(6));
-            // Players positions changed
-            Assert.That(changes[(3, 3)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(3, 5)], Is.EqualTo((1, 2)));
-            Assert.That(changes[(5, 3)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
-            // Enemy comes closer
-            Assert.That(changes[(4, 8)], Is.EqualTo((14, 1)));
-            Assert.That(changes[(4, 6)], Is.EqualTo((1, 14)));
-        });
-
-        // Next move will put players standing next to enemy, enemy will immediately attack one of them
         Act(Server.Action.Move, Direction.East, Server.Action.Move, Direction.East);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(4)); // player 1 is attacked
+            Assert.That(game.State.Player1.Health, Is.EqualTo(5));
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
             Assert.That(game.State.Player2.Health, Is.EqualTo(5));
-            Assert.That(changes, Has.Count.EqualTo(4));
+            Assert.That(changes, Has.Count.EqualTo(6));
             // Players positions changed
-            Assert.That(changes[(3, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(3, 3)], Is.EqualTo((2, 1)));
             Assert.That(changes[(3, 6)], Is.EqualTo((1, 2)));
-            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
+            Assert.That(changes[(5, 3)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 6)], Is.EqualTo((1, 2)));
+            // Enemy comes closer
+            Assert.That(changes[(4, 8)], Is.EqualTo((14, 1)));
+            Assert.That(changes[(4, 6)], Is.EqualTo((1, 14)));
         });
+
+        // Now both players standing right next to enemy (north and south of enemy).
+        // It has not attacked yet.
 
         // Attack twice with two players (deals 4 out of 6 damage to enemy)
         Act(Server.Action.Use, Direction.South, Server.Action.Use, Direction.North);
@@ -158,9 +145,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
-            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is attacked twice more
+            Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is attacked twice
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(4)); // player 2 is also attacked
+            Assert.That(game.State.Player2.Health, Is.EqualTo(5)); // player 2 is not attacked
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
         });
 
@@ -172,7 +159,7 @@ internal class TwoPlayerCombatTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 6)));
             Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // player 1 is no longer attacked
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 6)));
-            Assert.That(game.State.Player2.Health, Is.EqualTo(4)); // player 2 is no longer attacked
+            Assert.That(game.State.Player2.Health, Is.EqualTo(5)); // player 2 is no longer attacked
             Assert.That(changes, Has.Count.EqualTo(1));
             // Enemy died
             Assert.That(changes[(4, 6)], Is.EqualTo((14, 1)));

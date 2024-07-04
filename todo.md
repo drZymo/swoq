@@ -15,6 +15,7 @@
 - [ ] Once activated enemies will always follow
 - [ ] Reorder error code for incremental features
 - [ ] Remove player registration from proto (move to portal)
+- [ ] Quest finished screen in dashboard
 - [ ] Order: width/height, x/y
 - [ ] Colored pressure plates & black key
 - [ ] Level not available => insufficient player level
