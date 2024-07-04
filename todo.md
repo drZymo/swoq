@@ -41,6 +41,9 @@
 - [ ] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 - [ ] Enemy keeps on following even if player out of sight, but with more idle actions.
 
+## Bugs
+- [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
+
 ## Done
 
 - [X] Act vs Move/Use

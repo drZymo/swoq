@@ -472,7 +472,9 @@ class GamePlayer:
                     if are_adjacent(self.player1_pos, self.plate_pos):
                         self.use_1(self.plate_pos)
                     else:
-                        self.move_to_1(self.plate_pos)
+                        # move to below plate if possible
+                        below = (self.plate_pos[0]+1, self.plate_pos[1])
+                        self.move_to_1(below if not is_wall(self.map, below) else self.plate_pos)
 
 
     def wait_at_black_door(self) -> None:
