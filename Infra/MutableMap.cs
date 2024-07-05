@@ -20,6 +20,7 @@ public class MutableMap(int level, int height, int width)
     public MutableCharacter Player2 { get; } = new();
     public MutableCharacter Enemy1 { get; } = new();
     public MutableCharacter Enemy2 { get; } = new();
+    public MutableCharacter Enemy3 { get; } = new();
 
     public Cell this[int y, int x]
     {
@@ -43,6 +44,8 @@ public class MutableMap(int level, int height, int width)
             Enemy1.Position.IsValid() ? Enemy1.Position : null,
             Enemy1.Position.IsValid() ? Enemy1.Inventory : Inventory.None,
             Enemy2.Position.IsValid() ? Enemy2.Position : null,
-            Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None);
+            Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None, 
+            Enemy3.Position.IsValid() ? Enemy3.Position : null,
+            Enemy3.Position.IsValid() ? Enemy3.Inventory : Inventory.None);
     }
 }

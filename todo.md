@@ -30,12 +30,15 @@
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
 - [ ] Extend .editorconfig
+- [ ] Refactor 3 enemy handling in maps
 
 ## Improvements
 - [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 - [X] Enemy keeps on following even if player out of sight, but with more idle actions.
-- [C] Colored pressure plates
-- [ ] Do not allow boulder in inventory when leaving level. Kills player.
+- [X] Colored pressure plates
+- [ ] Kill player on exit if boulder in inventory. Exhausting.
+- [ ] Kill player on exit of last level if no treasure in inventory. Failure.
+- [ ] Slower with boulder in inventory. 50% change movement is executed.
 
 ## Bugs
 - [ ] Health and sword could be one same location overwriting eachother.
@@ -182,7 +185,7 @@ Progressive introduction of features. When feature is introduced it is done in a
 5. Combat
 6. Two players
 7. Two player combat
-8. Boss
+8. Finale
 
 Once all features are introduced, the levels are constructed with more and more difficult combinations.
 
@@ -205,7 +208,8 @@ Once all features are introduced, the levels are constructed with more and more 
 16. **(Two player combat)** Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
 17. **(Two player combat)** Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword and health.
 18. **(Two player combat)** Boulder block. No swords, no health. Enemy in front of exit with door. Lure enemy out of room and block exit with boulder. Does this work???
-19. **(Boss)** Crush. One enemy (with lots of health and damage), swords and health in level, but still not enough to defeat boss. Corridor/room with pressure plate controlled door wall. One player must lure the boss on the plate. Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. Door is closed and kills boss. Boss loot is key for exit door and two big treasures and are placed next to closed door. Without treasure in inventory player is killed when leaving.
+19. **(Finale)** Grand desert. Double pressure plate locker room with two swords and two health. Players have to take turns getting swords and health. 2x health and boulder scattered around map. Pre-exit room with two guards. One extra guard in exit room with key for exit.
+20. **(Finale)** Crush. One enemy (with lots of health and damage), swords and health in level, but still not enough to defeat boss. Corridor/room with pressure plate controlled door wall. One player must lure the boss on the plate. Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. Door is closed and kills boss. Boss loot is key for exit door and two big treasures and are placed next to closed door. Without treasure in inventory player is killed when leaving.
 
 ### Boss
 

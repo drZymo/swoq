@@ -10,6 +10,7 @@ internal enum GameCharacterId
     Player2,
     Enemy1,
     Enemy2,
+    Enemy3,
 }
 
 internal abstract record GameCharacter(

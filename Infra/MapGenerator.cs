@@ -79,6 +79,9 @@ public class MapGenerator : IMapGenerator
                 if (level == 14) GenerateLevel14();
                 if (level == 15) GenerateLevel15();
                 if (level == 16) GenerateLevel16();
+                if (level == 17) GenerateLevel17();
+                if (level == 18) GenerateLevel18();
+                if (level == 19) GenerateLevel19();
 
                 RemoveInnerWalls();
 
@@ -571,6 +574,121 @@ public class MapGenerator : IMapGenerator
         map[sword2Pos] = Cell.Sword;
     }
 
+    private void GenerateLevel17()
+    {
+        /// Two locker rooms.
+        /// One with key for the other.
+        /// Swords and armors in the second locker.
+        /// Two enemies guarding the exit.
+        /// Could accidentally follow / attack players before they have a sword and health.
+    }
+
+    private void GenerateLevel18()
+    {
+        /// Grand desert. 
+        /// Double pressure plate locker room with two swords and two health.
+        /// Players have to take turns getting swords and health.
+        /// 2x health and boulder scattered around map.
+        /// Pre-exit room with two guards.
+        /// One extra guard in exit room with key for exit.
+
+        // Create double exit room to hold three guards
+        var exitRoom = CreateRoom(height - 4, width - 4, 6, 6);
+        var preExitRoom = CreateRoom(height - 13, width - 6, 10, 10);
+        map[height - 8, width - 2] = Cell.Empty;
+        map[height - 8, width - 3] = Cell.Empty;
+
+        // Need at least one big room where double locker can fit.
+        // Locker room is 5x5, so need at least 9x9 room to have space around
+        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 7, 5, width - 15);
+        Debug.Assert(lockerRoom != null);
+
+        // Prevent connecting exit room
+        rooms = rooms.Remove(exitRoom);
+
+        // Fill the rest with standard maze
+        CreateStandardMaze(twoPlayers: true, maxY: height - 7);
+
+        availableRooms = availableRooms.Remove(exitRoom).Remove(preExitRoom);
+
+        var (exitKeyColor, exitDoor) = AddLockAroundExit();
+
+        // Big locker room
+
+        // Make sure locker rooms is claimed
+        availableRooms = availableRooms.Remove(lockerRoom);
+
+        var (cy, cx) = lockerRoom.Center;
+
+        // Swords in inner room, blocked by boulder
+        map[cy - 1, cx - 1] = Cell.Sword;
+        map[cy - 1, cx + 1] = Cell.Sword;
+
+        // Walls of inner room
+        for (int x = cx - 2; x <= cx + 2; x++)
+        {
+            SetIfEmpty(cy - 2, x, Cell.Wall);
+            SetIfEmpty(cy, x, Cell.Wall);
+            SetIfEmpty(cy + 1, x, Cell.Wall);
+        }
+        SetIfEmpty(cy - 1, cx - 2, Cell.Wall);
+        SetIfEmpty(cy - 1, cx + 2, Cell.Wall);
+
+        // Doors of inner and outer rooms
+        var innerKeyColor = PickRandomAvailableKeyColor();
+        map[cy, cx] = ToDoor(innerKeyColor);
+
+        var outerKeyColor = PickRandomAvailableKeyColor();
+        map[cy + 1, cx] = ToDoor(outerKeyColor);
+
+        // Block outer door with boulder
+        map[cy + 2, cx] = Cell.Boulder;
+
+
+        // Place inner key in room closest to player so it can accidentally be picked up
+        var innerKeyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
+        var innerKeyPos = GetRandomEmptyPositionInRoom(innerKeyRoom, 1);
+
+        // Place outer key far from exit and player
+        var outerKeyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, exitDoor]);
+
+        // Make pressure plates to trigger doors
+        map[innerKeyPos] = ToPressurePlate(innerKeyColor);
+        map[outerKeyPos] = ToPressurePlate(outerKeyColor);
+
+        // 4 random health
+        // Players now have 2*5 + 4*3 = 22 health.
+        // Three enemies have 3*6 = 18 health
+        for (var h = 0; h < 4; h++)
+        {
+            var healthPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms);
+            map[healthPos] = Cell.Health;
+        }
+
+        // Three guards in exit rooms
+        var enemy1Pos = GetRandomEmptyPositionInRoom(preExitRoom, margin: 1);
+        map.Enemy1.Position = enemy1Pos;
+
+        var enemy2Pos = GetRandomEmptyPositionInRoom(preExitRoom, margin: 1);
+        map.Enemy2.Position = enemy2Pos;
+
+        map.Enemy3.Position = (height - 6, width - 7);
+        map.Enemy3.Inventory = ToInventory(exitKeyColor);
+    }
+
+    private void GenerateLevel19()
+    {
+        /// Crush. 
+        /// One enemy (with lots of health and damage),
+        /// swords and health in level, but still not enough to defeat boss.
+        /// Corridor/room with pressure plate controlled door wall.
+        /// One player must lure the boss on the plate.
+        /// Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. 
+        /// Door is closed and kills boss.
+        /// Boss loot is key for exit door and two big treasures and are placed next to closed door.
+        /// Without treasure in inventory player is killed when leaving.
+    }
+
     private Room CreateRoom(int y, int x, int height, int width)
     {
         var room = new Room(y, x, height, width);
@@ -713,9 +831,9 @@ public class MapGenerator : IMapGenerator
         }
     }
 
-    private void CreateStandardMaze(bool twoPlayers = false)
+    private void CreateStandardMaze(bool twoPlayers = false, int? minY = null, int? maxY = null, int? minX = null, int? maxX = null)
     {
-        CreateRandomRooms(30, 3, 15, 1);
+        CreateRandomRooms(30, 3, 15, 1, minY, maxY, minX, maxX);
         ConnectRoomsRandomly();
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
     }

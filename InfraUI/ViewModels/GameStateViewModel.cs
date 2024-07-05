@@ -117,7 +117,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         Map.Map = gameState.Map;
 
         HasPlayer2 = HasPlayer2 || (gameState.Map.InitialPlayer2Position != null);
-        HasEnemies = HasEnemies || (gameState.Map.Any(c => c == Cell.Sword) || gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null);
+        HasEnemies = HasEnemies || (gameState.Map.Any(c => c == Cell.Sword) || gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null || gameState.Map.InitialEnemy3Position != null);
         HasPickups = HasPickups || (gameState.Map.Any(RequiresInventory));
     }
 

@@ -36,6 +36,10 @@ public class Game : IGame
         {
             enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
         }
+        if (map.InitialEnemy3Position.HasValue)
+        {
+            enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy3, map.InitialEnemy3Position.Value, Inventory: map.InitialEnemy3Inventory));
+        }
     }
 
     public Guid Id { get; } = Guid.NewGuid();
