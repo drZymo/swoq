@@ -611,37 +611,31 @@ public class MapGenerator : IMapGenerator
         var rw = Rnd.Next(minSize, maxSize);
         var rh = Rnd.Next(minSize, maxSize);
 
-        var choices = allPositions.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToImmutableHashSet();
+        var choices = GetInitialRoomChoices(minY, maxY, minX, maxX);
 
         // clear out edges
         Debug.Assert(minY + 1 + rh / 2 <= maxY);
-        for (var y = minY; y < minY + 1 + rh / 2; y++)
+        for (var x = minX; x < maxX; x++)
         {
-            for (var x = minX; x < maxX; x++)
+            for (var y = minY; y < minY + 1 + rh / 2; y++)
             {
-                choices = choices.Remove((y, x));
+                choices.Remove((y, x));
             }
-        }
-        for (var y = maxY - (rh - rh / 2); y < maxY; y++)
-        {
-            for (var x = minX; x < maxX; x++)
+            for (var y = maxY - (rh - rh / 2); y < maxY; y++)
             {
-                choices = choices.Remove((y, x));
+                choices.Remove((y, x));
             }
         }
         Debug.Assert(minX + 1 + rw / 2 <= maxX);
-        for (var x = minX; x < minX + 1 + rw / 2; x++)
+        for (var y = minY; y < maxY; y++)
         {
-            for (var y = minY; y < maxY; y++)
+            for (var x = minX; x < minX + 1 + rw / 2; x++)
             {
-                choices = choices.Remove((y, x));
+                choices.Remove((y, x));
             }
-        }
-        for (var x = maxX - (rw - rw / 2); x < maxX; x++)
-        {
-            for (var y = minY; y < maxY; y++)
+            for (var x = maxX - (rw - rw / 2); x < maxX; x++)
             {
-                choices = choices.Remove((y, x));
+                choices.Remove((y, x));
             }
         }
 
@@ -657,7 +651,7 @@ public class MapGenerator : IMapGenerator
             {
                 for (var x = left; x < right; x++)
                 {
-                    choices = choices.Remove((y, x));
+                    choices.Remove((y, x));
                 }
             }
         }
@@ -671,6 +665,32 @@ public class MapGenerator : IMapGenerator
         }
 
         return newRoom;
+    }
+
+    private ImmutableHashSet<Position>? previousRoomChoices = null;
+    private int? previousRoomMinX = -1;
+    private int? previousRoomMaxX = -1;
+    private int? previousRoomMinY = -1;
+    private int? previousRoomMaxY = -1;
+
+    private HashSet<Position> GetInitialRoomChoices(int minY, int maxY, int minX, int maxX)
+    {
+        HashSet<Position> choices;
+        if (previousRoomChoices != null && previousRoomMinX == minX && previousRoomMaxX == maxX && previousRoomMinY == minY && previousRoomMaxY == maxY)
+        {
+            choices = [.. previousRoomChoices];
+        }
+        else
+        {
+            choices = allPositions.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToHashSet();
+            previousRoomChoices = [.. choices];
+            previousRoomMinX = minX;
+            previousRoomMaxX = maxX;
+            previousRoomMinY = minY;
+            previousRoomMaxY = maxY;
+        }
+
+        return choices;
     }
 
     private void ConnectRoomsRandomly()
