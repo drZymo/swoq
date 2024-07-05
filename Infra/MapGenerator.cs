@@ -237,6 +237,8 @@ public class MapGenerator : IMapGenerator
         // Fill with standard maze
         CreateStandardMaze();
 
+        var keyColor = PickRandomAvailableKeyColor();
+
         // Place wall of doors around exit
         ImmutableList<Position> doorPositions = [];
         for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
@@ -245,7 +247,7 @@ public class MapGenerator : IMapGenerator
             {
                 if (0 <= y && y < height && 0 <= x && x < width)
                 {
-                    if (SetIfEmpty(y, x, Cell.DoorBlackClosed))
+                    if (SetIfEmpty(y, x, ToDoor(keyColor)))
                     {
                         doorPositions = doorPositions.Add((y, x));
                     }
@@ -273,7 +275,7 @@ public class MapGenerator : IMapGenerator
         const int plateDistance = 5;
 
         var platePos = points.Where(kvp => kvp.Value == plateDistance).Select(kvp => kvp.Key).PickOne();
-        map[platePos] = Cell.PressurePlate;
+        map[platePos] = ToPressurePlate(keyColor);
 
         // Place several boulders around map
         for (var i = 0; i < 6; i++)
@@ -456,22 +458,23 @@ public class MapGenerator : IMapGenerator
 
         var (exitKeyColor, _) = AddLockAroundExit();
 
-        // Create a tunnel with a black door
-        var blackDoorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, Cell.DoorBlackClosed);
-        var infrontOfBlackDoor = (blackDoorPosY, middle - 1); // left side
+        // Create a tunnel with a door
+        var firstTunnelKeyColor = PickRandomAvailableKeyColor();
+        var firstTunnelDoorY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(firstTunnelKeyColor));
+        var infrontFirstTunnelDoor = (firstTunnelDoorY, middle - 1); // left side
 
         // Place a pressure plate in the left (only rooms in left can reach position in front of door)
-        var platePos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontOfBlackDoor]);
-        map[platePos] = Cell.PressurePlate;
+        var platePos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontFirstTunnelDoor]);
+        map[platePos] = ToPressurePlate(firstTunnelKeyColor);
 
         // Create another tunnel with a random door
-        var doorKeyColor = PickRandomAvailableKeyColor();
-        var otherDoorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(doorKeyColor));
-        var infronOfOtherDoor = (otherDoorPosY, middle + 1); // right side
+        var secondTunnelKeyColor = PickRandomAvailableKeyColor();
+        var secondTunnelDoorY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(secondTunnelKeyColor));
+        var infrontSecondTunnelDoor = (secondTunnelDoorY, middle + 1); // right side
 
         // Place key in right (only rooms in right can reach position in front of door).
-        var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([infronOfOtherDoor]);
-        map[keyPos] = ToKey(doorKeyColor);
+        var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontSecondTunnelDoor]);
+        map[keyPos] = ToKey(secondTunnelKeyColor);
 
         // Put exit key on random room in the left
         (int y, int x) exitKeyPos = ClaimRandomPositionInRandomAvailableRoom(roomsLeft);
@@ -809,6 +812,14 @@ public class MapGenerator : IMapGenerator
         KeyColor.Red => Cell.KeyRed,
         KeyColor.Green => Cell.KeyGreen,
         KeyColor.Blue => Cell.KeyBlue,
+        _ => throw new NotImplementedException(),
+    };
+
+    private static Cell ToPressurePlate(KeyColor color) => color switch
+    {
+        KeyColor.Red => Cell.PressurePlateRed,
+        KeyColor.Green => Cell.PressurePlateGreen,
+        KeyColor.Blue => Cell.PressurePlateBlue,
         _ => throw new NotImplementedException(),
     };
 

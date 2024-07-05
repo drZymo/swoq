@@ -21,12 +21,11 @@ internal static class TestUtils
                     'g' => 8,  // green key
                     'B' => 9,  // blue door
                     'b' => 10, // blue key
-                    '=' => 11, // black door
-                    '_' => 12, // pressur plate
-                    '!' => 13, // sword
-                    '@' => 14, // enemy
-                    '+' => 15, // health
-                    '&' => 16, // boulder
+                    '_' => 11, // pressure plate red
+                    '!' => 14, // sword
+                    '@' => 15, // enemy
+                    '+' => 16, // health
+                    '&' => 17, // boulder
                     _ => throw new NotImplementedException()
                 };
             }

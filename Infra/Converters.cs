@@ -8,7 +8,9 @@ public static class Converters
         Cell.KeyGreen => Inventory.KeyGreen,
         Cell.KeyBlue => Inventory.KeyBlue,
         Cell.Boulder => Inventory.Boulder,
-        Cell.PressurePlateWithBoulder => Inventory.Boulder,
+        Cell.PressurePlateRedWithBoulder => Inventory.Boulder,
+        Cell.PressurePlateGreenWithBoulder => Inventory.Boulder,
+        Cell.PressurePlateBlueWithBoulder => Inventory.Boulder,
         _ => Inventory.None,
     };
 
@@ -27,7 +29,6 @@ public static class Converters
         Cell.DoorRedClosed => Cell.DoorRedOpen,
         Cell.DoorGreenClosed => Cell.DoorGreenOpen,
         Cell.DoorBlueClosed => Cell.DoorBlueOpen,
-        Cell.DoorBlackClosed => Cell.DoorBlackOpen,
         _ => throw new NotImplementedException("Not a closed door"),
     };
 
@@ -36,7 +37,6 @@ public static class Converters
         Cell.DoorRedOpen => Cell.DoorRedClosed,
         Cell.DoorGreenOpen => Cell.DoorGreenClosed,
         Cell.DoorBlueOpen => Cell.DoorBlueClosed,
-        Cell.DoorBlackOpen => Cell.DoorBlackClosed,
         _ => throw new NotImplementedException("Not an open door"),
     };
 }

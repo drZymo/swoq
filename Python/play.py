@@ -48,6 +48,7 @@ class GamePlayer:
         self.print = print
 
         self.remain_on_plate_counter = 0
+        self.plate_color = None
 
         self.channel = grpc.insecure_channel('localhost:5009')
         self.stub = swoq_pb2_grpc.GameServiceStub(self.channel)
@@ -233,7 +234,7 @@ class GamePlayer:
         self.pickup_keys()
         self.explore()
         self.move_to_pressure_plate()
-        self.wait_at_black_door()
+        self.wait_at_pressure_plate_door()
         self.pickup_boulder()
         self.act()
         self.update_remain_on_plate()
@@ -386,6 +387,8 @@ class GamePlayer:
                     print('move_closer1')
                     self.move_to_1(self.player2_pos)
                     can_attack = False
+                elif self.player1_health < 3:
+                    can_attack = False
 
                 if can_attack:
                     if are_adjacent(self.player1_pos, enemy_pos):
@@ -400,6 +403,8 @@ class GamePlayer:
                 if dist_players is not None and dist_players > 4:
                     print('move_closer2')
                     self.move_to_2(self.player1_pos)
+                    can_attack = False
+                elif self.player2_health < 3:
                     can_attack = False
 
                 if can_attack:
@@ -459,12 +464,13 @@ class GamePlayer:
 
 
     def move_to_pressure_plate(self) -> None:
-        plates = np.argwhere(self.map == PRESSURE_PLATE)
+        plates = np.argwhere((self.map == PRESSURE_PLATE_RED) | (self.map == PRESSURE_PLATE_GREEN) | (self.map == PRESSURE_PLATE_BLUE))
         self.plate_pos = None
         if np.any(plates):
             self.plate_pos = tuple(plates[0])
             if self.can_act1():
                 if valid_pos(self.player2_pos): # Only with two players simply move
+                    self.plate_color = self.map[self.plate_pos]
                     print('plate1')
                     self.move_to_1(self.plate_pos)
                 elif self.player1_inventory == 4: # has boulder
@@ -477,13 +483,21 @@ class GamePlayer:
                         self.move_to_1(below if not is_wall(self.map, below) else self.plate_pos)
 
 
-    def wait_at_black_door(self) -> None:
-        black_doors = np.argwhere(self.map == DOOR_BLACK)
-        if np.any(black_doors):
-            black_door_pos = tuple(black_doors[0])
+    def wait_at_pressure_plate_door(self) -> None:
+        if self.plate_color == PRESSURE_PLATE_RED:
+            plate_doors = np.argwhere(self.map == DOOR_RED)
+        elif self.plate_color  == PRESSURE_PLATE_GREEN:
+            plate_doors = np.argwhere(self.map == DOOR_GREEN)
+        elif self.plate_color  == PRESSURE_PLATE_BLUE:
+            plate_doors = np.argwhere(self.map == DOOR_BLUE)
+        else:
+            plate_doors = []
+            
+        if np.any(plate_doors):
+            plate_door_pos = tuple(plate_doors[0])
             if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
                 print('move_black2')
-                self.move_to_2(black_door_pos)
+                self.move_to_2(plate_door_pos)
 
 
     def pickup_boulder(self) -> None:

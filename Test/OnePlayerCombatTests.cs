@@ -64,12 +64,12 @@ internal class OnePlayerCombatTests : GameTestBase
             Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 2)], Is.EqualTo((1, 2)));
             // Sword picked up
-            Assert.That(changes[(2, 1)], Is.EqualTo((13, 1)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((14, 1)));
             // Some unknown cells became visible
             Assert.That(changes[(2, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(3, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(4, 9)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(5, 8)], Is.EqualTo((0, 14))); // enemy
+            Assert.That(changes[(5, 8)], Is.EqualTo((0, 15))); // enemy
             Assert.That(changes[(5, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(6, 8)], Is.EqualTo((0, 1)));
             Assert.That(changes[(6, 9)], Is.EqualTo((0, 3)));
@@ -104,8 +104,8 @@ internal class OnePlayerCombatTests : GameTestBase
             Assert.That(changes[(5, 2)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
             // Enemy comes closer
-            Assert.That(changes[(5, 8)], Is.EqualTo((14, 1)));
-            Assert.That(changes[(5, 6)], Is.EqualTo((1, 14)));
+            Assert.That(changes[(5, 8)], Is.EqualTo((15, 1)));
+            Assert.That(changes[(5, 6)], Is.EqualTo((1, 15)));
         });
 
         // Now standing next to enemy, which has not attacked yet.
@@ -154,14 +154,14 @@ internal class OnePlayerCombatTests : GameTestBase
             Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 2)], Is.EqualTo((1, 2)));
             // Sword picked up
-            Assert.That(changes[(2, 1)], Is.EqualTo((13, 1)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((14, 1)));
             // Health picked up
-            Assert.That(changes[(5, 1)], Is.EqualTo((15, 1)));
+            Assert.That(changes[(5, 1)], Is.EqualTo((16, 1)));
             // Some unknown cells became visible
             Assert.That(changes[(2, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(3, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(4, 9)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(5, 8)], Is.EqualTo((0, 14))); // enemy
+            Assert.That(changes[(5, 8)], Is.EqualTo((0, 15))); // enemy
             Assert.That(changes[(5, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(6, 8)], Is.EqualTo((0, 1)));
             Assert.That(changes[(6, 9)], Is.EqualTo((0, 3)));
@@ -196,8 +196,8 @@ internal class OnePlayerCombatTests : GameTestBase
             Assert.That(changes[(5, 2)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 5)], Is.EqualTo((1, 2)));
             // Enemy comes closer
-            Assert.That(changes[(5, 8)], Is.EqualTo((14, 1)));
-            Assert.That(changes[(5, 6)], Is.EqualTo((1, 14)));
+            Assert.That(changes[(5, 8)], Is.EqualTo((15, 1)));
+            Assert.That(changes[(5, 6)], Is.EqualTo((1, 15)));
         });
 
         // Now standing next to enemy, which has not attacked yet.
@@ -226,7 +226,7 @@ internal class OnePlayerCombatTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
             Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // health no longer reduced
             Assert.That(changes, Has.Count.EqualTo(1));
-            Assert.That(changes[(5, 6)], Is.EqualTo((14, 1))); // enemy died
+            Assert.That(changes[(5, 6)], Is.EqualTo((15, 1))); // enemy died
         });
     }
 

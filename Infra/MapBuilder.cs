@@ -6,7 +6,7 @@ using Position = (int y, int x);
 
 public class MapBuilder(int height, int width, int visibilityRange)
 {
-    private const int CellStateEnemy = 14;
+    private const int CellStateEnemy = 15;
     private readonly Cell[,] mapData = new Cell[height, width];
     private readonly bool[,] visibility = new bool[height, width];
 
@@ -104,7 +104,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
     }
 
     private static Cell ToCell(int cellState) => cellState switch
-    {
+    {        
         0 => Cell.Unknown,
         1 => Cell.Empty,
         2 => Cell.Empty, // Players always stand on empty
@@ -116,12 +116,13 @@ public class MapBuilder(int height, int width, int visibilityRange)
         8 => Cell.KeyGreen,
         9 => Cell.DoorBlueClosed,
         10 => Cell.KeyBlue,
-        11 => Cell.DoorBlackClosed,
-        12 => Cell.PressurePlate,
-        13 => Cell.Sword,
+        11 => Cell.PressurePlateRed,
+        12 => Cell.PressurePlateGreen,
+        13 => Cell.PressurePlateBlue,
+        14 => Cell.Sword,
         CellStateEnemy => Cell.Empty, // Enemies always stand on empty
-        15 => Cell.Health,
-        16 => Cell.Boulder,
+        16 => Cell.Health,
+        17 => Cell.Boulder,
         _ => throw new NotImplementedException(),
     };
 }

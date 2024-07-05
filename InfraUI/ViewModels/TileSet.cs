@@ -16,12 +16,13 @@ public enum Tile
     KeyRed,
     KeyGreen,
     KeyBlue,
-    PressurePlate,
-    Sword,
     DoorRed,
     DoorGreen,
     DoorBlue,
-    DoorBlack,
+    PressurePlateRed,
+    PressurePlateGreen,
+    PressurePlateBlue,
+    Sword,
     Health,
     Boulder,
 }
@@ -74,14 +75,15 @@ public static class TileSet
         tiles = tiles.Add(Tile.KeyRed, GetTile(1, 0));
         tiles = tiles.Add(Tile.KeyGreen, GetTile(1, 1));
         tiles = tiles.Add(Tile.KeyBlue, GetTile(1, 2));
-        tiles = tiles.Add(Tile.PressurePlate, GetTile(1, 3));
         tiles = tiles.Add(Tile.Sword, GetTile(1, 4));
         tiles = tiles.Add(Tile.DoorRed, GetTile(2, 0));
         tiles = tiles.Add(Tile.DoorGreen, GetTile(2, 1));
         tiles = tiles.Add(Tile.DoorBlue, GetTile(2, 2));
-        tiles = tiles.Add(Tile.DoorBlack, GetTile(2, 3));
         tiles = tiles.Add(Tile.Health, GetTile(2, 4));
-        tiles = tiles.Add(Tile.Boulder, GetTile(3, 0));
+        tiles = tiles.Add(Tile.PressurePlateRed, GetTile(3, 0));
+        tiles = tiles.Add(Tile.PressurePlateGreen, GetTile(3, 1));
+        tiles = tiles.Add(Tile.PressurePlateBlue, GetTile(3, 2));
+        tiles = tiles.Add(Tile.Boulder, GetTile(3, 4));
         return tiles;
     }
 }

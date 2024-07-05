@@ -103,8 +103,8 @@ internal class TwoPlayerCombatTests : GameTestBase
             Assert.That(changes[(7, 1)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 3)], Is.EqualTo((1, 2)));
             // Swords picked up
-            Assert.That(changes[(2, 1)], Is.EqualTo((13, 1)));
-            Assert.That(changes[(6, 1)], Is.EqualTo((13, 1)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((14, 1)));
+            Assert.That(changes[(6, 1)], Is.EqualTo((14, 1)));
             // Some unknown cells became visible
             Assert.That(changes[(2, 9)], Is.EqualTo((0, 3)));
             Assert.That(changes[(3, 9)], Is.EqualTo((0, 3)));
@@ -131,8 +131,8 @@ internal class TwoPlayerCombatTests : GameTestBase
             Assert.That(changes[(5, 3)], Is.EqualTo((2, 1)));
             Assert.That(changes[(5, 6)], Is.EqualTo((1, 2)));
             // Enemy comes closer
-            Assert.That(changes[(4, 8)], Is.EqualTo((14, 1)));
-            Assert.That(changes[(4, 6)], Is.EqualTo((1, 14)));
+            Assert.That(changes[(4, 8)], Is.EqualTo((15, 1)));
+            Assert.That(changes[(4, 6)], Is.EqualTo((1, 15)));
         });
 
         // Now both players standing right next to enemy (north and south of enemy).
@@ -162,7 +162,7 @@ internal class TwoPlayerCombatTests : GameTestBase
             Assert.That(game.State.Player2.Health, Is.EqualTo(3)); // player 2 is no longer attacked
             Assert.That(changes, Has.Count.EqualTo(1));
             // Enemy died
-            Assert.That(changes[(4, 6)], Is.EqualTo((14, 1)));
+            Assert.That(changes[(4, 6)], Is.EqualTo((15, 1)));
         });
     }
 

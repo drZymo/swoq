@@ -195,6 +195,7 @@ public class Game : IGame
                 case Cell.DoorBlueOpen:
                 case Cell.KeyBlue:
                 case Cell.Sword:
+                case Cell.Health:
                     // Cannot use on this
                     throw new UseNotAllowedException(CreateState());
 
@@ -202,20 +203,41 @@ public class Game : IGame
                     if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
                     PlaceBoulder(ref player, usePos, Cell.Boulder);
                     break;
-                case Cell.PressurePlate:
+
+                case Cell.PressurePlateRed:
                     if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.PressurePlateWithBoulder);
-                    OpenAllDoors(Cell.DoorBlackClosed);
+                    PlaceBoulder(ref player, usePos, Cell.PressurePlateRedWithBoulder);
+                    OpenAllDoors(Cell.DoorRedClosed);
+                    break;
+                case Cell.PressurePlateGreen:
+                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    PlaceBoulder(ref player, usePos, Cell.PressurePlateGreenWithBoulder);
+                    OpenAllDoors(Cell.DoorGreenClosed);
+                    break;
+                case Cell.PressurePlateBlue:
+                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    PlaceBoulder(ref player, usePos, Cell.PressurePlateBlueWithBoulder);
+                    OpenAllDoors(Cell.DoorBlueClosed);
                     break;
 
                 case Cell.Boulder:
                     if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
                     PickupInventory(ref player, usePos, Cell.Empty);
                     break;
-                case Cell.PressurePlateWithBoulder:
+                case Cell.PressurePlateRedWithBoulder:
                     if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
-                    PickupInventory(ref player, usePos, Cell.PressurePlate);
-                    CloseAllDoors(Cell.DoorBlackOpen);
+                    PickupInventory(ref player, usePos, Cell.PressurePlateRed);
+                    CloseAllDoors(Cell.DoorRedOpen);
+                    break;
+                case Cell.PressurePlateGreenWithBoulder:
+                    if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
+                    PickupInventory(ref player, usePos, Cell.PressurePlateGreen);
+                    CloseAllDoors(Cell.DoorGreenOpen);
+                    break;
+                case Cell.PressurePlateBlueWithBoulder:
+                    if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
+                    PickupInventory(ref player, usePos, Cell.PressurePlateBlue);
+                    CloseAllDoors(Cell.DoorBlueOpen);
                     break;
 
                 case Cell.DoorRedClosed:
@@ -254,12 +276,17 @@ public class Game : IGame
             case Cell.DoorRedOpen:
             case Cell.DoorGreenOpen:
             case Cell.DoorBlueOpen:
-            case Cell.DoorBlackOpen:
                 // Nothing special, just leave
                 break;
 
-            case Cell.PressurePlate:
-                CloseAllDoors(Cell.DoorBlackOpen);
+            case Cell.PressurePlateRed:
+                CloseAllDoors(Cell.DoorRedOpen);
+                break;
+            case Cell.PressurePlateGreen:
+                CloseAllDoors(Cell.DoorGreenOpen);
+                break;
+            case Cell.PressurePlateBlue:
+                CloseAllDoors(Cell.DoorBlueOpen);
                 break;
 
             default:
@@ -275,12 +302,17 @@ public class Game : IGame
             case Cell.DoorRedOpen:
             case Cell.DoorGreenOpen:
             case Cell.DoorBlueOpen:
-            case Cell.DoorBlackOpen:
                 // Nothing special, just enter
                 break;
 
-            case Cell.PressurePlate:
-                OpenAllDoors(Cell.DoorBlackClosed);
+            case Cell.PressurePlateRed:
+                OpenAllDoors(Cell.DoorRedClosed);
+                break;
+            case Cell.PressurePlateGreen:
+                OpenAllDoors(Cell.DoorGreenClosed);
+                break;
+            case Cell.PressurePlateBlue:
+                OpenAllDoors(Cell.DoorBlueClosed);
                 break;
 
             case Cell.Exit:
@@ -771,12 +803,13 @@ public class Game : IGame
         const int KEY_GREEN = 8;
         const int DOOR_BLUE = 9;
         const int KEY_BLUE = 10;
-        const int DOOR_BLACK = 11;
-        const int PRESSURE_PLATE = 12;
-        const int SWORD = 13;
-        const int ENEMY = 14;
-        const int HEALTH = 15;
-        const int BOULDER = 16;
+        const int PRESSURE_PLATE_RED = 11;
+        const int PRESSURE_PLATE_GREEN = 12;
+        const int PRESSURE_PLATE_BLUE = 13;
+        const int SWORD = 14;
+        const int ENEMY = 15;
+        const int HEALTH = 16;
+        const int BOULDER = 17;
 
         if (pos.Equals(player.Position))
         {
@@ -811,18 +844,20 @@ public class Game : IGame
                 case Cell.KeyGreen: return KEY_GREEN;
                 case Cell.DoorBlueClosed: return DOOR_BLUE;
                 case Cell.KeyBlue: return KEY_BLUE;
-                case Cell.DoorBlackClosed: return DOOR_BLACK;
-                case Cell.PressurePlate: return PRESSURE_PLATE;
+                case Cell.PressurePlateRed: return PRESSURE_PLATE_RED;
+                case Cell.PressurePlateGreen: return PRESSURE_PLATE_GREEN;
+                case Cell.PressurePlateBlue: return PRESSURE_PLATE_BLUE;
                 case Cell.Sword: return SWORD;
                 case Cell.Health: return HEALTH;
                 case Cell.Boulder: return BOULDER;
-                case Cell.PressurePlateWithBoulder: return BOULDER;
+                case Cell.PressurePlateRedWithBoulder: return BOULDER;
+                case Cell.PressurePlateGreenWithBoulder: return BOULDER;
+                case Cell.PressurePlateBlueWithBoulder: return BOULDER;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:
                 case Cell.DoorGreenOpen:
                 case Cell.DoorBlueOpen:
-                case Cell.DoorBlackOpen:
                     return EMPTY;
             }
         }

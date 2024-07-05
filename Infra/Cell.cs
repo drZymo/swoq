@@ -11,20 +11,23 @@ public enum Cell
     DoorRedClosed,
     DoorRedOpen,
     KeyRed,
+    PressurePlateRed,
+
     DoorGreenClosed,
     DoorGreenOpen,
     KeyGreen,
+    PressurePlateGreen,
+
     DoorBlueClosed,
     DoorBlueOpen,
     KeyBlue,
-
-    DoorBlackClosed,
-    DoorBlackOpen,
-    PressurePlate,
+    PressurePlateBlue,
 
     Sword,
     Health,
 
     Boulder,
-    PressurePlateWithBoulder,
+    PressurePlateRedWithBoulder,
+    PressurePlateGreenWithBoulder,
+    PressurePlateBlueWithBoulder,
 }

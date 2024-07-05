@@ -13,12 +13,13 @@ DOOR_GREEN = 7
 KEY_GREEN = 8
 DOOR_BLUE = 9
 KEY_BLUE = 10
-DOOR_BLACK = 11
-PRESSURE_PLATE = 12
-SWORD = 13
-ENEMY = 14
-HEALTH = 15
-BOULDER = 16
+PRESSURE_PLATE_RED = 11
+PRESSURE_PLATE_GREEN = 12
+PRESSURE_PLATE_BLUE = 13
+SWORD = 14
+ENEMY = 15
+HEALTH = 16
+BOULDER = 17
 
 INVENTORY_NONE = 0
 INVENTORY_KEY_RED = 1
@@ -27,23 +28,24 @@ INVENTORY_KEY_BLUE = 3
 INVENTORY_BOULDER = 3
 
 _cell_colors = {
-    UNKNOWN:        [  0,   0,   0],
-    EMPTY:          [ 64,  64,  64],
-    PLAYER:         [255,   0, 255],
-    WALL:           [147, 124,  93],
-    EXIT:           [230, 217, 177],
-    DOOR_RED:       [128,   0,   0],
-    KEY_RED:        [255,   0,   0],
-    DOOR_GREEN:     [  0, 128,   0],
-    KEY_GREEN:      [  0, 255,   0],
-    DOOR_BLUE:      [  0,   0, 128],
-    KEY_BLUE:       [  0,   0, 255],
-    DOOR_BLACK:     [ 32,  32,  32],
-    PRESSURE_PLATE: [ 48,  48,  48],
-    SWORD:          [255, 255,   0],
-    ENEMY:          [  0, 255, 255],
-    HEALTH:         [128, 128,   0],
-    BOULDER:        [ 49,  41,  31],
+    UNKNOWN:              [  0,   0,   0],
+    EMPTY:                [ 64,  64,  64],
+    PLAYER:               [255,   0, 255],
+    WALL:                 [147, 124,  93],
+    EXIT:                 [230, 217, 177],
+    DOOR_RED:             [128,   0,   0],
+    KEY_RED:              [255,   0,   0],
+    DOOR_GREEN:           [  0, 128,   0],
+    KEY_GREEN:            [  0, 255,   0],
+    DOOR_BLUE:            [  0,   0, 128],
+    KEY_BLUE:             [  0,   0, 255],
+    PRESSURE_PLATE_RED:   [ 64,  32,  32],
+    PRESSURE_PLATE_GREEN: [ 32,  64,  32],
+    PRESSURE_PLATE_BLUE:  [ 32,  32,  64],
+    SWORD:                [255, 255,   0],
+    ENEMY:                [  0, 255, 255],
+    HEALTH:               [128, 128,   0],
+    BOULDER:              [ 49,  41,  31],
 }
 
 def get_map_image(game_map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:

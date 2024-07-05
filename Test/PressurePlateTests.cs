@@ -17,8 +17,8 @@ internal class PressurePlateTests : GameTestBase
         "   #........#    " +
         "   #....p..&     " +
         "   #........#    " +
-        "   #......==     " +
-        "   #...._.=      " +
+        "   #......RR     " +
+        "   #...._.R      " +
         "    ######       " +
         "                 " +
         "                 " +
@@ -66,11 +66,11 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(changes, Has.Count.EqualTo(10));
             // Player pos has changed
             Assert.That(changes[(7, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(8, 5)], Is.EqualTo((12, 2)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((11, 2)));
             // Door has opened
-            Assert.That(changes[(8, 7)], Is.EqualTo((11, 1)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((11, 1)));
-            Assert.That(changes[(7, 8)], Is.EqualTo((11, 1)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((5, 1)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((5, 1)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((5, 1)));
             // Exit appeared
             Assert.That(changes[(8, 8)], Is.EqualTo((0, 4)));
             // Walls around exit appeared
@@ -89,11 +89,11 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(4));
             // Player pos has changed
-            Assert.That(changes[(8, 5)], Is.EqualTo((2, 12)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((2, 11)));
             Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
             // Door (only visible part) has closed
-            Assert.That(changes[(8, 7)], Is.EqualTo((1, 11)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((1, 11)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((1, 5)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((1, 5)));
         });
     }
 
@@ -125,7 +125,7 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
             Assert.That(changes, Has.Count.EqualTo(2));
             // Boulder removed
-            Assert.That(changes[(5, 8)], Is.EqualTo((16, 1)));
+            Assert.That(changes[(5, 8)], Is.EqualTo((17, 1)));
             // Wall behind visible
             Assert.That(changes[(5, 9)], Is.EqualTo((0, 3)));
         });
@@ -159,11 +159,11 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(9));
             // Plate changed
-            Assert.That(changes[(8, 5)], Is.EqualTo((12, 16)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((11, 17)));
             // Door has opened
-            Assert.That(changes[(8, 7)], Is.EqualTo((11, 1)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((11, 1)));
-            Assert.That(changes[(7, 8)], Is.EqualTo((11, 1)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((5, 1)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((5, 1)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((5, 1)));
             // Exit appeared
             Assert.That(changes[(8, 8)], Is.EqualTo((0, 4)));
             // Walls around exit appeared
@@ -183,10 +183,10 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(3));
             // Plate changed
-            Assert.That(changes[(8, 5)], Is.EqualTo((16, 12)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((17, 11)));
             // Door has closed (only visible part)
-            Assert.That(changes[(8, 7)], Is.EqualTo((1, 11)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((1, 11)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((1, 5)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((1, 5)));
         });
     }
 
@@ -213,11 +213,11 @@ internal class PressurePlateTests : GameTestBase
         }
 
         map[8, 8] = Cell.Exit;
-        map[8, 7] = Cell.DoorBlackClosed;
-        map[7, 7] = Cell.DoorBlackClosed;
-        map[7, 8] = Cell.DoorBlackClosed;
+        map[8, 7] = Cell.DoorRedClosed;
+        map[7, 7] = Cell.DoorRedClosed;
+        map[7, 8] = Cell.DoorRedClosed;
 
-        map[8, 5] = Cell.PressurePlate;
+        map[8, 5] = Cell.PressurePlateRed;
         map[5, 8] = Cell.Boulder;
 
         map.Player1.Position = (5, 5);
