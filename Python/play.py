@@ -487,7 +487,7 @@ class GamePlayer:
 
 
     def pickup_boulder(self) -> None:
-        boulders = np.argwhere(self.map == BOULDERS)
+        boulders = np.argwhere(self.map == BOULDER)
         if np.any(boulders):
             boulder_pos = tuple(boulders[0])
             if self.can_act1() and self.player1_inventory == 0:

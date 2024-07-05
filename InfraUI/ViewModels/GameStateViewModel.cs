@@ -129,7 +129,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         Cell.DoorRedClosed => true,
         Cell.DoorGreenClosed => true,
         Cell.DoorBlueClosed => true,
-        Cell.Boulders => true,
+        Cell.Boulder => true,
         _ => false,
     };
 

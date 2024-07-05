@@ -25,6 +25,6 @@ public enum Cell
     Sword,
     Health,
 
-    Boulders,
-    PressurePlateWithBoulders,
+    Boulder,
+    PressurePlateWithBoulder,
 }

@@ -2,22 +2,15 @@
 
 - [ ] Fix bug in later levels with combat. Use not allowed.
 - [ ] Levels
-- [ ] Boulders.
-  - [X] pickup
-  - [X] place on empty
-  - [X] place on pressure plate
-  - [ ] Boulders => Boulder
 - [?] Unit tests
 - [ ] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
-- [ ] Once activated enemies will always follow
-- [ ] Reorder error code for incremental features
+- [ ] Reorder proto files for incremental features
 - [ ] Remove player registration from proto (move to portal)
 - [ ] Quest finished screen in dashboard
 - [ ] Order: width/height, x/y
-- [ ] Colored pressure plates & black key
 - [ ] Level not available => insufficient player level
 - [ ] Hardcode dashboard colors
 - [ ] Lore in the proto files
@@ -41,13 +34,13 @@
 ## Improvements
 - [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 - [X] Enemy keeps on following even if player out of sight, but with more idle actions.
+- [ ] Colored pressure plates & black key
 
 ## Bugs
 - [ ] Health and sword could be one same location overwriting eachother.
 - [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
 
 ## Done
-
 - [X] Act vs Move/Use
 - [X] Door open/closed states
 - [X] Map generator
@@ -82,7 +75,7 @@
 - [X] BUG: Refresh writeable bitmap
 - [X] Full screen with Avalonia
 - [X] Reduce code duplication between dashboard and replay viewer (create game state)
-
+- [X] Boulders.
 
 # Design decisions
 
@@ -166,6 +159,8 @@ Whole map of each time step is stored as well.
         X bytes surroundings
         X bytes map
 
+Decided to store protobuf messages between server and player.
+
 ## Replay viewer
 
 Show replays step by step. Allows scrolling.
@@ -196,9 +191,13 @@ Once all features are introduced, the levels are constructed with more and more 
 4. One locker room. Key to exit door is placed in a room with another door. That key is in the open.
 5. Two locker rooms. Repeat. 3 doors in total.
 6. Double-door locker room. Two doors to enter room with exit key. Both keys are in the open. Key for inner door is close to the player at startup, so it can accidentally pick it up. Outer door key is far away from room and player.
+7. Simple maze with boulders in front of exit. Pick up
+
+
+
 7. First combat. Key in left side for door to enter right side. One sword and armor in left side. One enemy in right side. Open exit in right side, so evading can also be a strategy.
 8. Loot combat. Same setup, but exit is locked. Enemy has key.
-9. Prison. One room with a door that holds the second player. Key is somewhere on the map. Player1 must free Player2.
+9.  Prison. One room with a door that holds the second player. Key is somewhere on the map. Player1 must free Player2.
 10. Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
 11. Double-door locker room with two players.
 12. Single locker room for right side of map. One enemy on right side. One sword on the left, one sword on the right. No armor. So fighting together. Enemy has key for exit door.

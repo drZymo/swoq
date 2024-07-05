@@ -7,8 +7,8 @@ public static class Converters
         Cell.KeyRed => Inventory.KeyRed,
         Cell.KeyGreen => Inventory.KeyGreen,
         Cell.KeyBlue => Inventory.KeyBlue,
-        Cell.Boulders => Inventory.Boulders,
-        Cell.PressurePlateWithBoulders => Inventory.Boulders,
+        Cell.Boulder => Inventory.Boulder,
+        Cell.PressurePlateWithBoulder => Inventory.Boulder,
         _ => Inventory.None,
     };
 
@@ -18,7 +18,7 @@ public static class Converters
         Inventory.KeyRed => Cell.KeyRed,
         Inventory.KeyGreen => Cell.KeyGreen,
         Inventory.KeyBlue => Cell.KeyBlue,
-        Inventory.Boulders => Cell.Boulders,
+        Inventory.Boulder => Cell.Boulder,
         _ => throw new NotImplementedException(),
     };
 

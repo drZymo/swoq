@@ -18,7 +18,7 @@ PRESSURE_PLATE = 12
 SWORD = 13
 ENEMY = 14
 HEALTH = 15
-BOULDERS = 16
+BOULDER = 16
 
 INVENTORY_NONE = 0
 INVENTORY_KEY_RED = 1
@@ -43,7 +43,7 @@ _cell_colors = {
     SWORD:          [255, 255,   0],
     ENEMY:          [  0, 255, 255],
     HEALTH:         [128, 128,   0],
-    BOULDERS:       [ 49,  41,  31],
+    BOULDER:        [ 49,  41,  31],
 }
 
 def get_map_image(game_map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:
@@ -75,7 +75,7 @@ def update_map(frame, game_map):
 
 def is_wall(game_map: np.ndarray[np.int8], pos: tuple[int,int]) -> bool:
     cell = game_map[pos[0], pos[1]]
-    return cell == WALL or cell == DOOR_RED or cell == DOOR_GREEN or cell == DOOR_BLUE or cell == BOULDERS or cell == UNKNOWN
+    return cell == WALL or cell == DOOR_RED or cell == DOOR_GREEN or cell == DOOR_BLUE or cell == BOULDER or cell == UNKNOWN
 
 
 def compute_distances(game_map: np.ndarray[np.int8], from_pos: tuple[int,int], exclude_cells: set[int]=None) -> tuple[dict, dict]:

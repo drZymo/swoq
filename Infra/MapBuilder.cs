@@ -121,7 +121,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
         13 => Cell.Sword,
         CellStateEnemy => Cell.Empty, // Enemies always stand on empty
         15 => Cell.Health,
-        16 => Cell.Boulders,
+        16 => Cell.Boulder,
         _ => throw new NotImplementedException(),
     };
 }

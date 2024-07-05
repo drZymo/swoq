@@ -218,7 +218,7 @@ internal class PressurePlateTests : GameTestBase
         map[7, 8] = Cell.DoorBlackClosed;
 
         map[8, 5] = Cell.PressurePlate;
-        map[5, 8] = Cell.Boulders;
+        map[5, 8] = Cell.Boulder;
 
         map.Player1.Position = (5, 5);
 

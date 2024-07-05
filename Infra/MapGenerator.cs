@@ -110,6 +110,8 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel0()
     {
+        
+
         // TODO: subclasses per level?
         CreateRoom(32, 32, 10, 10);
         map.Player1.Position = (32 - 5, 32 - 5);
@@ -278,7 +280,7 @@ public class MapGenerator : IMapGenerator
 
         // Place wall of boulders around exit
         void PlaceWall(int y, int x) { if (map[y, x] == Cell.Empty) map[y, x] = Cell.Wall; }
-        void PlaceBoulder(int y, int x) { if (map[y, x] == Cell.Empty) map[y, x] = Cell.Boulders; }
+        void PlaceBoulder(int y, int x) { if (map[y, x] == Cell.Empty) map[y, x] = Cell.Boulder; }
 
         PlaceWall(exitPosition.y - 1, exitPosition.x - 1);
         PlaceWall(exitPosition.y - 1, exitPosition.x + 1);
@@ -339,7 +341,7 @@ public class MapGenerator : IMapGenerator
         map[platePos] = Cell.PressurePlate;
 
         var boulderPos = ClaimRandomPositionInAvailableRoomFarthestFrom(map.Player1.Position, platePos);
-        map[boulderPos] = Cell.Boulders;
+        map[boulderPos] = Cell.Boulder;
     }
 
     private void GenerateLevel9()

@@ -8,5 +8,5 @@ public enum Inventory
     KeyGreen,
     KeyBlue,
 
-    Boulders,
+    Boulder,
 }

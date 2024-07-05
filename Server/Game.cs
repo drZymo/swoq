@@ -199,20 +199,20 @@ public class Game : IGame
                     throw new UseNotAllowedException(CreateState());
 
                 case Cell.Empty:
-                    if (player.Inventory != Inventory.Boulders) throw new InventoryEmptyException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.Boulders);
+                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    PlaceBoulder(ref player, usePos, Cell.Boulder);
                     break;
                 case Cell.PressurePlate:
-                    if (player.Inventory != Inventory.Boulders) throw new InventoryEmptyException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.PressurePlateWithBoulders);
+                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    PlaceBoulder(ref player, usePos, Cell.PressurePlateWithBoulder);
                     OpenAllDoors(Cell.DoorBlackClosed);
                     break;
 
-                case Cell.Boulders:
+                case Cell.Boulder:
                     if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
                     PickupInventory(ref player, usePos, Cell.Empty);
                     break;
-                case Cell.PressurePlateWithBoulders:
+                case Cell.PressurePlateWithBoulder:
                     if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
                     PickupInventory(ref player, usePos, Cell.PressurePlate);
                     CloseAllDoors(Cell.DoorBlackOpen);
@@ -362,7 +362,7 @@ public class Game : IGame
 
     private void PlaceBoulder(ref GamePlayer player, Position usePos, Cell placedCellType)
     {
-        if (player.Inventory != Inventory.Boulders) throw new UseNotAllowedException(CreateState());
+        if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
 
         player = player with { Inventory = Inventory.None };
         map = map.Set(usePos, placedCellType);
@@ -808,7 +808,7 @@ public class Game : IGame
         const int SWORD = 13;
         const int ENEMY = 14;
         const int HEALTH = 15;
-        const int BOULDERS = 16;
+        const int BOULDER = 16;
 
         if (pos.Equals(player.Position))
         {
@@ -847,8 +847,8 @@ public class Game : IGame
                 case Cell.PressurePlate: return PRESSURE_PLATE;
                 case Cell.Sword: return SWORD;
                 case Cell.Health: return HEALTH;
-                case Cell.Boulders: return BOULDERS;
-                case Cell.PressurePlateWithBoulders: return BOULDERS;
+                case Cell.Boulder: return BOULDER;
+                case Cell.PressurePlateWithBoulder: return BOULDER;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:
@@ -868,7 +868,7 @@ public class Game : IGame
         Inventory.KeyRed => 1,
         Inventory.KeyGreen => 2,
         Inventory.KeyBlue => 3,
-        Inventory.Boulders => 4,
+        Inventory.Boulder => 4,
         _ => throw new NotImplementedException(),
     };
 
