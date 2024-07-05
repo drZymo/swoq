@@ -13,7 +13,7 @@ public class MapGeneratorTests
         mapGenerator = new(64, 64);
     }
 
-    private static readonly int[] Levels = Enumerable.Range(0, 14).ToArray();
+    private static readonly int[] Levels = Enumerable.Range(0, 17).ToArray();
 
     [TestCaseSource(nameof(Levels))]
     public void GenerateLevel(int level)

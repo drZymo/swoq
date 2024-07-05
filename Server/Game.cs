@@ -686,7 +686,6 @@ public class Game : IGame
         return true;
     }
 
-
     private void CleanupDeadCharacters()
     {
         if (player1 != null)
@@ -705,7 +704,6 @@ public class Game : IGame
             enemies = enemies.Replace(enemy, newEnemy);
         }
     }
-
 
     private T CleanupDeadCharacter<T>(ref T character) where T : GameCharacter
     {
@@ -734,7 +732,6 @@ public class Game : IGame
 
         return character;
     }
-
 
     private Position FindEmptyPosAround(Position pos)
     {

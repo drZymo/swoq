@@ -76,6 +76,9 @@ public class MapGenerator : IMapGenerator
                 if (level == 11) GenerateLevel11();
                 if (level == 12) GenerateLevel12();
                 if (level == 13) GenerateLevel13();
+                if (level == 14) GenerateLevel14();
+                if (level == 15) GenerateLevel15();
+                if (level == 16) GenerateLevel16();
 
                 RemoveInnerWalls();
 
@@ -189,25 +192,9 @@ public class MapGenerator : IMapGenerator
         /// Key for inner door is close to the player at startup, so it can accidentally pick it up.
         /// Outer door key is far away from room and player.
 
-        // Need at least one big room where double locker can fit.
-        // Inner locker is 3x3, outer locker is 7x7, so large room must be at least 9x9
-        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 5, 5, width - 5);
-        Debug.Assert(lockerRoom != null);
+        var (innerKeyPos, innerColor, outerKeyPos, outerColor) = CreateDoubleLockerRoomMaze();
 
-        // Fill the rest with standard maze
-        CreateStandardMaze();
-        var (exitKeyColor, exitDoor) = AddLockAroundExit();
-
-        // Create double locker room
-        var (innerColor, outerColor) = CreateDoubleLockerRoom(lockerRoom, exitKeyColor);
-
-        // Place inner key in room closest to player so it can accidentally be picked up
-        var innerKeyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
-        var innerKeyPos = GetRandomEmptyPositionInRoom(innerKeyRoom, 1);
         map[innerKeyPos] = ToKey(innerColor);
-
-        // Place outer key far from exit and player
-        var outerKeyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, exitDoor]);
         map[outerKeyPos] = ToKey(outerColor);
     }
 
@@ -280,9 +267,7 @@ public class MapGenerator : IMapGenerator
         // Place several boulders around map
         for (var i = 0; i < 6; i++)
         {
-            var room = availableRooms.PickOne();
-            availableRooms = availableRooms.Remove(room);
-            var boulderPos = room.GetPositions(margin: 1).PickOne();
+            var boulderPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms, margin: 1);
             map[boulderPos] = Cell.Boulder;
         }
     }
@@ -301,7 +286,7 @@ public class MapGenerator : IMapGenerator
 
         // Create tunnel between left and right with a door
         var keyColor = PickRandomAvailableKeyColor();
-        var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(keyColor));
+        var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, keyColor);
         var infrontOfDoor = (doorPosY, middle - 1);
 
         var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontOfDoor]);
@@ -429,38 +414,28 @@ public class MapGenerator : IMapGenerator
         /// With two players.
         /// Again correct key must be picked up first.
 
-        // Need at least one big room where double locker can fit.
-        // Inner locker is 3x3, outer locker is 7x7, so large room must be at least 9x9
-        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 5, 5, width - 5);
-        Debug.Assert(lockerRoom != null);
+        var (innerKeyPos, innerColor, outerKeyPos, outerColor) = CreateDoubleLockerRoomMaze(twoPlayers: true);
 
-        // Fill the rest with standard maze
-        CreateStandardMaze(twoPlayers: true);
-        var (exitKeyColor, exitDoor) = AddLockAroundExit();
-
-        // Create double locker room
-        var (innerColor, outerColor) = CreateDoubleLockerRoom(lockerRoom, exitKeyColor);
-
-        // Place inner key in room closest to player so it can accidentally be picked up
-        var innerKeyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
-        var innerKeyPos = GetRandomEmptyPositionInRoom(innerKeyRoom, 1);
         map[innerKeyPos] = ToKey(innerColor);
-
-        // Place outer key far from exit and player
-        var outerKeyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, exitDoor]);
         map[outerKeyPos] = ToKey(outerColor);
-
     }
 
     private void GenerateLevel12()
     {
+        /// Pressure plate wall. 
+        /// Two sided level with two corridors. 
+        /// One locked with pressure plate door, other with regular door. 
+        /// Pressure plate on left side, key to door on the right side. 
+        /// Must work together to open regular door. 
+        /// Exit in the open, so it is tempting to enter without helping other.
+
         var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
 
         var (exitKeyColor, _) = AddLockAroundExit();
 
         // Create a tunnel with a door
         var firstTunnelKeyColor = PickRandomAvailableKeyColor();
-        var firstTunnelDoorY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(firstTunnelKeyColor));
+        var firstTunnelDoorY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, firstTunnelKeyColor);
         var infrontFirstTunnelDoor = (firstTunnelDoorY, middle - 1); // left side
 
         // Place a pressure plate in the left (only rooms in left can reach position in front of door)
@@ -469,7 +444,7 @@ public class MapGenerator : IMapGenerator
 
         // Create another tunnel with a random door
         var secondTunnelKeyColor = PickRandomAvailableKeyColor();
-        var secondTunnelDoorY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(secondTunnelKeyColor));
+        var secondTunnelDoorY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, secondTunnelKeyColor);
         var infrontSecondTunnelDoor = (secondTunnelDoorY, middle + 1); // right side
 
         // Place key in right (only rooms in right can reach position in front of door).
@@ -486,34 +461,35 @@ public class MapGenerator : IMapGenerator
         /// Double pressure plate.
         /// Double-door locker room.
         /// Pressure plate for both doors.
-        /// Several boulders in the level.
+        /// One boulder in the level.
         /// Key for exit door in locker.
         /// One player needs to stand on pressure plate, other needs a boulder on it.
 
+        var (innerKeyPos, innerColor, outerKeyPos, outerColor) = CreateDoubleLockerRoomMaze(true);
 
-        // Need at least one big room where double locker can fit.
-        // Inner locker is 3x3, outer locker is 7x7, so large room must be at least 9x9
-        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 5, 5, width - 5);
-        Debug.Assert(lockerRoom != null);
+        // Make pressure plates to trigger doors
+        map[innerKeyPos] = ToPressurePlate(innerColor);
+        map[outerKeyPos] = ToPressurePlate(outerColor);
 
-        // Fill the rest with standard maze
-        CreateStandardMaze(twoPlayers: true);
-        var (exitKeyColor, exitDoor) = AddLockAroundExit();
-
-        // Create double locker room
-        var (innerColor, outerColor) = CreateDoubleLockerRoom(lockerRoom, exitKeyColor);
-
+        // Place one boulder
+        var boulderPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms, margin: 1);
+        map[boulderPos] = Cell.Boulder;
     }
 
     private void GenerateLevel14()
     {
+        /// Two sided maze with door.
+        /// Left side has swords, no health.
+        /// Right side has one enemy with key to exit. 
+        /// Work together to kill enemy.
+
         var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
 
         var (exitKeyColor, _) = AddLockAroundExit();
 
         // Create door in tunnel between left and right
         var keyColor = PickRandomAvailableKeyColor();
-        var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, ToDoor(keyColor));
+        var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, keyColor);
         var infrontOfDoor = (doorPosY, middle - 1);
 
         var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontOfDoor]);
@@ -535,28 +511,63 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel15()
     {
-        // Fixed room position and size for the exit
-        var exitRoom = CreateRoom(height - 5, width - 5, 8, 8);
+        /// Run for sword.
+        /// No more left/right sides.
+        /// Enemy is in the room next to the spawn point, swords are far away on the map.
+        /// Enemy has key for exit door.
+
         CreateStandardMaze(twoPlayers: true);
 
         var (exitKeyColor, _) = AddLockAroundExit();
 
-        var enemy1Pos = GetRandomEmptyPositionInRoom(exitRoom);
+        var enemyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
+        var enemyPos = GetRandomEmptyPositionInRoom(enemyRoom, margin: 1);
+        map.Enemy1.Position = enemyPos;
+        map.Enemy1.Inventory = ToInventory(exitKeyColor);
+
+        var sword1Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, enemyPos]);
+        map[sword1Pos] = Cell.Sword;
+        var sword2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player2.Position, enemyPos, sword1Pos]);
+        map[sword2Pos] = Cell.Sword;
+    }
+
+    private void GenerateLevel16()
+    {
+        /// Two enemies.
+        /// One enemy on left side, which has the key for right side.
+        /// Right enemy has key for exit.
+        /// One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
+
+        var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
+
+        var tunnelKeyColor = PickRandomAvailableKeyColor();
+        var tunnelPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, tunnelKeyColor);
+        var infrontTunnelDoorLeft = (tunnelPosY, middle - 1);
+        var infrontTunnelDoorRight = (tunnelPosY, middle + 1);
+
+        var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
+
+        // Enemies close to doors
+        var enemy1Room = ClaimClosestAvailableRoomFrom(infrontTunnelDoorLeft);
+        var enemy1Pos = GetRandomEmptyPositionInRoom(enemy1Room);
         map.Enemy1.Position = enemy1Pos;
-        var enemy2Pos = GetRandomEmptyPositionInRoom(exitRoom);
+        map.Enemy1.Inventory = ToInventory(tunnelKeyColor);
+
+        var enemy2Room = ClaimClosestAvailableRoomFrom(exitDoorPos);
+        var enemy2Pos = GetRandomEmptyPositionInRoom(enemy2Room);
         map.Enemy2.Position = enemy2Pos;
         map.Enemy2.Inventory = ToInventory(exitKeyColor);
 
+        // One health and sword left
         var health1Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, map.Enemy1.Position]);
         map[health1Pos] = Cell.Health;
-
-        var health2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player2.Position, map.Enemy2.Position, health1Pos]);
-        map[health2Pos] = Cell.Health;
-
-        var sword1Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, map.Enemy1.Position, health1Pos, health2Pos]);
+        var sword1Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, map.Enemy1.Position]);
         map[sword1Pos] = Cell.Sword;
 
-        var sword2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player2.Position, map.Enemy2.Position, health1Pos, health2Pos, sword1Pos]);
+        // One health and sword right
+        var health2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontTunnelDoorRight, map.Enemy2.Position]);
+        map[health2Pos] = Cell.Health;
+        var sword2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontTunnelDoorRight, map.Enemy2.Position]);
         map[sword2Pos] = Cell.Sword;
     }
 
@@ -709,7 +720,30 @@ public class MapGenerator : IMapGenerator
         availableRooms = availableRooms.Remove(exitRoom);
         exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
         map[exitPosition] = Cell.Exit;
+    }
 
+    private (Position innerKeyPos, KeyColor innerColor, Position outerKeyPos, KeyColor outerColor) CreateDoubleLockerRoomMaze(bool twoPlayers = false)
+    {
+        // Need at least one big room where double locker can fit.
+        // Inner locker is 3x3, outer locker is 7x7, so large room must be at least 9x9
+        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 5, 5, width - 5);
+        Debug.Assert(lockerRoom != null);
+
+        // Fill the rest with standard maze
+        CreateStandardMaze(twoPlayers: twoPlayers);
+        var (exitKeyColor, exitDoor) = AddLockAroundExit();
+
+        // Create double locker room
+        var (innerColor, outerColor) = CreateDoubleLockerRoom(lockerRoom, exitKeyColor);
+
+        // Place inner key in room closest to player so it can accidentally be picked up
+        var innerKeyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
+        var innerKeyPos = GetRandomEmptyPositionInRoom(innerKeyRoom, 1);
+
+        // Place outer key far from exit and player
+        var outerKeyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, exitDoor]);
+
+        return (innerKeyPos, innerColor, outerKeyPos, outerColor);
     }
 
     private void DrawHLine(int y, int x1, int x2, int dir, Cell value = Cell.Empty)
@@ -929,7 +963,7 @@ public class MapGenerator : IMapGenerator
         return bestRooms.PickOne();
     }
 
-    private (int y, int x) ClaimRandomPositionInRandomAvailableRoom(ImmutableList<Room> rooms, int margin = 0)
+    private (int y, int x) ClaimRandomPositionInRandomAvailableRoom(IEnumerable<Room> rooms, int margin = 0)
     {
         var room = rooms.Where(r => availableRooms.Contains(r)).PickOne();
         availableRooms = availableRooms.Remove(room);
@@ -1022,7 +1056,7 @@ public class MapGenerator : IMapGenerator
         return (middle, roomsLeft, roomsRight);
     }
 
-    private int ConnectLeftAndRightWithDoor(int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight, Cell door)
+    private int ConnectLeftAndRightWithDoor(int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight, KeyColor doorColor)
     {
         // Connect left and right rooms closest to each other
         var minDist = double.PositiveInfinity;
@@ -1049,6 +1083,7 @@ public class MapGenerator : IMapGenerator
         availableRooms = availableRooms.Remove(minLeft).Remove(minRight);
 
         // Create door in tunnel between left and right
+        var door = ToDoor(doorColor);
         var doorPositions = ImmutableList<int>.Empty;
         var top = Math.Min(minLeft.Top, minRight.Top);
         var bottom = Math.Max(minLeft.Bottom, minRight.Bottom);
@@ -1116,6 +1151,9 @@ public class MapGenerator : IMapGenerator
 
     private (KeyColor innerKeyColor, KeyColor outerKeyColor) CreateDoubleLockerRoom(Room lockerRoom, KeyColor lockedKeyColor)
     {
+        // Make sure locker room is claimed
+        availableRooms = availableRooms.Remove(lockerRoom);
+
         var (cy, cx) = lockerRoom.Center;
 
         map[cy, cx] = ToKey(lockedKeyColor);

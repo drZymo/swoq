@@ -1,9 +1,9 @@
 # TODO
 
-- [ ] Fix bug in later levels with combat. Use not allowed.
-- [ ] Levels
-- [?] Unit tests
-- [ ] Player portal
+- [?] Fix bug in later levels with combat. Use not allowed.
+- [.] Levels
+- [.] Unit tests
+- [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
@@ -34,7 +34,7 @@
 ## Improvements
 - [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 - [X] Enemy keeps on following even if player out of sight, but with more idle actions.
-- [ ] Colored pressure plates & black key
+- [C] Colored pressure plates
 - [ ] Do not allow boulder in inventory when leaving level. Kills player.
 
 ## Bugs
@@ -204,7 +204,7 @@ Once all features are introduced, the levels are constructed with more and more 
 15. **(Two player combat)** Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
 16. **(Two player combat)** Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
 17. **(Two player combat)** Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword and health.
-18. **(Two player combat)** Boulder block. No swords, no health. Enemy in front of exit with door. Lure enemy out of room and block exit with boulder.
+18. **(Two player combat)** Boulder block. No swords, no health. Enemy in front of exit with door. Lure enemy out of room and block exit with boulder. Does this work???
 19. **(Boss)** Crush. One enemy (with lots of health and damage), swords and health in level, but still not enough to defeat boss. Corridor/room with pressure plate controlled door wall. One player must lure the boss on the plate. Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. Door is closed and kills boss. Boss loot is key for exit door and two big treasures and are placed next to closed door. Without treasure in inventory player is killed when leaving.
 
 ### Boss

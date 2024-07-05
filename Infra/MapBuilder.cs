@@ -104,7 +104,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
     }
 
     private static Cell ToCell(int cellState) => cellState switch
-    {        
+    {
         0 => Cell.Unknown,
         1 => Cell.Empty,
         2 => Cell.Empty, // Players always stand on empty
