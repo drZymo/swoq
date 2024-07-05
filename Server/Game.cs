@@ -567,38 +567,6 @@ public class Game : IGame
         }
     }
 
-    private ImmutableList<GamePlayer> FindClosestVisiblePlayers(Position fromPos)
-    {
-        var minDist = double.PositiveInfinity;
-        ImmutableList<GamePlayer> closestPlayers = [];
-
-        GamePlayer?[] players = [player1, player2];
-        foreach (var player in players)
-        {
-            if (player == null || !player.Position.IsValid()) continue;
-
-            // Compute distance and check if it is visible from the given position
-            var dist = player.Position.DistanceTo(fromPos);
-            if (dist > Parameters.EnemyVisibilityRange || !IsVisible(fromPos, player.Position))
-            {
-                continue;
-            }
-
-            // Is it the closest?
-            if (dist < minDist)
-            {
-                minDist = dist;
-                closestPlayers = [player];
-            }
-            else if (dist == minDist)
-            {
-                closestPlayers = closestPlayers.Add(player);
-            }
-        }
-
-        return closestPlayers;
-    }
-
     private void DealDamage<T>(ref T character, int damage) where T : GameCharacter
     {
         character = character with { Health = character.Health - damage };

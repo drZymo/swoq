@@ -35,6 +35,7 @@
 - [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 - [X] Enemy keeps on following even if player out of sight, but with more idle actions.
 - [ ] Colored pressure plates & black key
+- [ ] Do not allow boulder in inventory when leaving level. Kills player.
 
 ## Bugs
 - [ ] Health and sword could be one same location overwriting eachother.
@@ -180,44 +181,35 @@ Progressive introduction of features. When feature is introduced it is done in a
 4. Pressure plate with boulders
 5. Combat
 6. Two players
-7. Combat two players
-8. Pressure plate with two players
+7. Two player combat
+8. Boss
 
 Once all features are introduced, the levels are constructed with more and more difficult combinations.
 
-1. Simple one room map. One player, no doors.
-2. More difficult map with maze. One player, no doors.
-3. Maze with door in front of exit. Key is placed far away from player and door.
-4. One locker room. Key to exit door is placed in a room with another door. That key is in the open.
-5. Two locker rooms. Repeat. 3 doors in total.
-6. Double-door locker room. Two doors to enter room with exit key. Both keys are in the open. Key for inner door is close to the player at startup, so it can accidentally pick it up. Outer door key is far away from room and player.
-7. Simple maze with boulders in front of exit. Pick up
+0. **(Maze)** Simple one room map. One player, no doors.
+1. **(Maze)** More difficult map with maze. One player, no doors. (Standard maze.)
+2. **(Doors)** Maze with door in front of exit. Key is placed far away from player and door.
+3. **(Doors)** One locker room. Key to exit door is placed in a room with another door. That key is in the open.
+4. **(Doors)** Two locker rooms. Repeat. 3 doors in total.
+5. **(Doors)** Double-door locker room. Two doors to enter room with exit key. Both keys are in the open. Key for inner door is close to the player at startup, so it can be picked up accidentally. Outer door key is far away from room and player.
+6. **(Boulders)** Standard maze with boulders in front of exit. Pick up boulder to reach exit. But drop it before exiting.
+7. **(Pressure plate with boulders)** Pressure plate in front of exit with door. Several boulders scattered through maze. Door is visible from pressure plate, so it can be observed to open.
+8. **(Combat)** First combat. Key in left side for door to enter right side. One sword and armor in left side. One enemy in right side. Exit is locked. Enemy has key.
+9.  **(Two players)** Prison. One room with a door that holds the second player. Door is guarded by an enemy. Sword and health somewhere in map. Enemy has key for door. Exit is open, so it tempted to leave without freeing second player.
+10. **(Two players)** Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
+11. **(Two players)** Double-door locker room. With two players. Again right key must be picked up first.
+12. **(Two players)** Pressure plate wall. Two sided level with two corridors. One locked with pressure plate door, other with regular door. Pressure plate on left side, key to door on the right side. Must work together to open regular door. Exit in the open, so it is tempting to enter without helping other.
+13. **(Two players)** Double pressure plate. Double-door locker room. Pressure plate for both doors. One boulder in the level. Key for exit door in locker. One player needs to stand on pressure plate, other needs a boulder on it.
+14. **(Two player combat)** Two sided maze with door. Left side has swords, no health. Right side has one enemy. Work together to kill enemy with key to exit.
+15. **(Two player combat)** Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
+16. **(Two player combat)** Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
+17. **(Two player combat)** Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword and health.
+18. **(Two player combat)** Boulder block. No swords, no health. Enemy in front of exit with door. Lure enemy out of room and block exit with boulder.
+19. **(Boss)** Crush. One enemy (with lots of health and damage), swords and health in level, but still not enough to defeat boss. Corridor/room with pressure plate controlled door wall. One player must lure the boss on the plate. Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. Door is closed and kills boss. Boss loot is key for exit door and two big treasures and are placed next to closed door. Without treasure in inventory player is killed when leaving.
 
+### Boss
 
-
-7. First combat. Key in left side for door to enter right side. One sword and armor in left side. One enemy in right side. Open exit in right side, so evading can also be a strategy.
-8. Loot combat. Same setup, but exit is locked. Enemy has key.
-9.  Prison. One room with a door that holds the second player. Key is somewhere on the map. Player1 must free Player2.
-10. Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
-11. Double-door locker room with two players.
-12. Single locker room for right side of map. One enemy on right side. One sword on the left, one sword on the right. No armor. So fighting together. Enemy has key for exit door.
-13. Pressure plate locker room. Single locker room with a pressure plate door. One exit door, one key in locker room.
-14. Double pressure plate wall. Level split in two. Pressure plate in left part for one door, plate in right part for other door. Exit in the open, so it is tempting to enter without helping other.
-15. Double pressure plate wall with second pressure plate in locked room.
-16. Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
-17.  Double pressure plate with two lockers. First pressure plate to enter right part of map. Second plate to let second player enter right part. Then a locker room with a key for a locker on the left part of the map that contains the exit door key.
-18. Two enemies. One enemy on left side, which has the key for right side. Right enemy has key for exit. One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
-19. Two locker rooms. One with key for the other. Swords and armors in the second locker. Two enemies guarding the exit. Could accidentally follow / attack players before they have a sword.
-20. Lure. One enemy (120 health) but no swords, so players cannot attack. Pressure plate room with two doors opposite to each other. Plate controls both doors. Enemy must be lured by one player into the room while other player controls the pressure plate. Leave room in time to lock the enemy. Entire room is pressure plate for exit door.
-
-
-### Pressure plate locker
-
-A locker room with the exit key. Door to the locker room can only be opened with a pressure plate. One player has to move to the plate while the other gets the key.
-
-### Double pressure plate
-
-Level is split in two. In left half there is a pressure plate that opens the door to the right half. Then one of the two players can enter. In the right half there is another pressure plate to open another door on the other side of the map where the other player can enter.
+Boss moves only once every odd tick, so it is slower than normal. It is extra strong. Two players with extra health cannot kill it. One attack kills player instantly. So, 100 health and 20 damage.
 
 
 ## Replay viewer

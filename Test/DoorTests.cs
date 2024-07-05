@@ -184,35 +184,35 @@ internal class DoorTests(char doorColor) : GameTestBase
         return map.ToMap();
     }
 
-    private int DoorValue => doorColor switch
+    private readonly int DoorValue = doorColor switch
     {
         'R' => 5,
         'G' => 7,
         'B' => 9,
         _ => throw new NotImplementedException(),
     };
-    private int KeyValue => doorColor switch
+    private readonly int KeyValue = doorColor switch
     {
         'R' => 6,
         'G' => 8,
         'B' => 10,
         _ => throw new NotImplementedException(),
     };
-    private int InventoryValue => doorColor switch
+    private readonly int InventoryValue = doorColor switch
     {
         'R' => 1,
         'G' => 2,
         'B' => 3,
         _ => throw new NotImplementedException(),
     };
-    private Cell DoorCell => doorColor switch
+    private readonly Cell DoorCell = doorColor switch
     {
         'R' => Cell.DoorRedClosed,
         'G' => Cell.DoorGreenClosed,
         'B' => Cell.DoorBlueClosed,
         _ => throw new NotImplementedException()
     };
-    private Cell KeyCell = doorColor switch
+    private readonly Cell KeyCell = doorColor switch
     {
         'R' => Cell.KeyRed,
         'G' => Cell.KeyGreen,
