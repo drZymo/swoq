@@ -83,6 +83,7 @@ public class MapGenerator : IMapGenerator
                 if (level == 17) GenerateLevel17();
                 if (level == 18) GenerateLevel18();
                 if (level == 19) GenerateLevel19();
+                if (level == 20) GenerateLevel20();
 
                 // Sanity check
                 foreach (var pos in availablePositions)
@@ -353,6 +354,26 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel9()
     {
+        /// Two enemies.
+        /// First enemy drops key for room with second enemy.
+        /// Second enemy has key for exit.
+        /// First 
+
+        // maze with locked exit
+        CreateStandardMaze();
+        var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
+
+        // Place sword in any room on the left
+        var swordPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms);
+        map[swordPos] = Cell.Sword;
+
+        // Place health in any room on the left
+        var healthPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms);
+        map[healthPos] = Cell.Health;
+    }
+
+    private void GenerateLevel10()
+    {
         /// Prison
         /// One big room that holds the second player.
         /// Guard has key to prison.
@@ -433,7 +454,7 @@ public class MapGenerator : IMapGenerator
         map[healthPos] = Cell.Health;
     }
 
-    private void GenerateLevel10()
+    private void GenerateLevel11()
     {
         /// Simple two locker rooms, but now with 2 players.
         /// Correct player must pick up keys and open doors.
@@ -456,7 +477,7 @@ public class MapGenerator : IMapGenerator
         map[locker2KeyPos] = ToKey(locker2KeyColor);
     }
 
-    private void GenerateLevel11()
+    private void GenerateLevel12()
     {
         /// Double-door locker room.
         /// With two players.
@@ -468,7 +489,7 @@ public class MapGenerator : IMapGenerator
         map[outerKeyPos] = ToKey(outerColor);
     }
 
-    private void GenerateLevel12()
+    private void GenerateLevel13()
     {
         /// Pressure plate wall. 
         /// Two sided level with two corridors. 
@@ -504,7 +525,7 @@ public class MapGenerator : IMapGenerator
         map[exitKeyPos] = ToKey(exitKeyColor);
     }
 
-    private void GenerateLevel13()
+    private void GenerateLevel14()
     {
         /// Double pressure plate.
         /// Double-door locker room.
@@ -524,7 +545,7 @@ public class MapGenerator : IMapGenerator
         map[boulderPos] = Cell.Boulder;
     }
 
-    private void GenerateLevel14()
+    private void GenerateLevel15()
     {
         /// Two sided maze with door.
         /// Left side has swords, no health.
@@ -557,7 +578,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
     }
 
-    private void GenerateLevel15()
+    private void GenerateLevel16()
     {
         /// Run for sword.
         /// No more left/right sides.
@@ -579,7 +600,7 @@ public class MapGenerator : IMapGenerator
         map[sword2Pos] = Cell.Sword;
     }
 
-    private void GenerateLevel16()
+    private void GenerateLevel17()
     {
         /// Two enemies.
         /// One enemy on left side, which has the key for right side.
@@ -619,7 +640,7 @@ public class MapGenerator : IMapGenerator
         map[sword2Pos] = Cell.Sword;
     }
 
-    private void GenerateLevel17()
+    private void GenerateLevel18()
     {
         /// Two locker rooms.
         /// One with key for the other.
@@ -628,7 +649,7 @@ public class MapGenerator : IMapGenerator
         /// Could accidentally follow / attack players before they have a sword and health.
     }
 
-    private void GenerateLevel18()
+    private void GenerateLevel19()
     {
         /// Grand desert. 
         /// Double pressure plate locker room with two swords and two health.
@@ -725,7 +746,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy3.Inventory = ToInventory(exitKeyColor);
     }
 
-    private void GenerateLevel19()
+    private void GenerateLevel20()
     {
         /// Crush. 
         /// One enemy (with lots of health and damage),
@@ -800,9 +821,9 @@ public class MapGenerator : IMapGenerator
         var areaWidth = rw + 2;
         var areaHeight = rh + 2;
 
-        // -1 to allow overlap of walls
-        var clearX = (areaWidth - 1) / 2;// - 1;
-        var clearY = (areaHeight - 1) / 2;// - 1;
+        // Clear positions that would not fit room
+        var clearX = (areaWidth - 1) / 2;
+        var clearY = (areaHeight - 1) / 2;
 
         // Clear X
         for (var i = 0; i < clearX; i++)
@@ -890,7 +911,7 @@ public class MapGenerator : IMapGenerator
 
     private void CreateStandardMaze(bool twoPlayers = false)
     {
-        CreateRandomRooms(30, 1, 7, 1);
+        CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 0);
         ConnectRoomsRandomly();
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
     }
@@ -1209,8 +1230,13 @@ public class MapGenerator : IMapGenerator
 
     private (KeyColor lockerKeyColor, (int y, int x) infrontDoorPos) AddLocker(Position lockerCenter, KeyColor keyColor)
     {
+        return AddLocker(lockerCenter, ToKey(keyColor));
+    }
+
+    private (KeyColor lockerKeyColor, (int y, int x) infrontDoorPos) AddLocker(Position lockerCenter, Cell content)
+    {
         // Create locker room (3x3) with center at given position
-        map[lockerCenter] = ToKey(keyColor);
+        map[lockerCenter] = content;
         for (var y = lockerCenter.y - 1; y <= lockerCenter.y + 1; y++)
         {
             for (var x = lockerCenter.x - 1; x <= lockerCenter.x + 1; x++)

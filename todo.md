@@ -1,7 +1,11 @@
 # TODO
 
-- [?] Fix bug in later levels with combat. Use not allowed.
 - [.] Levels
+  - [ ] Loot drop sword
+  - [ ] Big boss
+  - [ ] Boulder exit kill
+  - [ ] Treasure
+  - [ ] Treasure exit
 - [.] Unit tests
 - [.] Player portal
   - [ ] Proto file hosting per level
@@ -36,8 +40,6 @@
 - [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
 - [X] Enemy keeps on following even if player out of sight, but with more idle actions.
 - [X] Colored pressure plates
-- [ ] Kill player on exit if boulder in inventory. Exhausting.
-- [ ] Kill player on exit of last level if no treasure in inventory. Failure.
 - [ ] Slower with boulder in inventory. 50% change movement is executed.
 
 ## Bugs
@@ -198,7 +200,7 @@ Once all features are introduced, the levels are constructed with more and more 
 6. **(Boulders)** Standard maze with boulders in front of exit. Pick up boulder to reach exit. But drop it before exiting.
 7. **(Pressure plate with boulders)** Pressure plate in front of exit with door. Several boulders scattered through maze. Door is visible from pressure plate, so it can be observed to open.
 8. **(Combat)** First combat. Key in left side for door to enter right side. One sword and armor in left side. One enemy in right side. Exit is locked. Enemy has key.
-9. **(Combat)** Two enemies, First enemy drops key for room with extra health. Needed to defeat second enemy.
+9. **(Combat)** Two enemies. .. TODO
 10. **(Two players)** Prison. One room with a door that holds the second player. Door is guarded by an enemy. Sword and health somewhere in map. Enemy has key for door. Exit is open, so it tempted to leave without freeing second player.
 11. **(Two players)** Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
 12. **(Two players)** Double-door locker room. With two players. Again right key must be picked up first.
