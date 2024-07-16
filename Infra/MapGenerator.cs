@@ -357,19 +357,34 @@ public class MapGenerator : IMapGenerator
         /// Two enemies.
         /// First enemy drops key for room with second enemy.
         /// Second enemy has key for exit.
-        /// First 
+        /// 3 health needed to win from two enemies.
 
         // maze with locked exit
         CreateStandardMaze();
         var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
 
-        // Place sword in any room on the left
+        // Put enemy with key to exit in a room
+        var chamberPos = ClaimRandomPositionInAvailableRoomFarthestFrom([exitDoorPos, map.Player1.Position], margin: 3, minRoomHeight: 9, minRoomWidth: 9);
+        var chamberKeyColor = CreateChamber(chamberPos, 5, 5);
+        map.Enemy1.Position = chamberPos;
+        map.Enemy1.Inventory = ToInventory(exitKeyColor);
+
+        // Add enemy with key to room near exit
+        var enemy2Room = ClaimClosestAvailableRoomFrom(exitDoorPos);
+        var enemy2Pos = GetRandomEmptyPositionInRoom(enemy2Room);
+        map.Enemy2.Position = enemy2Pos;
+        map.Enemy2.Inventory = ToInventory(chamberKeyColor);
+
+        // Place sword on a random position
         var swordPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms);
         map[swordPos] = Cell.Sword;
 
-        // Place health in any room on the left
-        var healthPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms);
-        map[healthPos] = Cell.Health;
+        // Place 3 health on random positions
+        for (var i = 0; i < 3; i++)
+        {
+            var healthPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms);
+            map[healthPos] = Cell.Health;
+        }
     }
 
     private void GenerateLevel10()
@@ -1357,6 +1372,49 @@ public class MapGenerator : IMapGenerator
     {
         map[pos] = value;
         availablePositions = availablePositions.Remove(pos);
+    }
+
+    private KeyColor CreateChamber(Position center, int height, int width)
+    {
+        var top = center.y - height / 2;
+        var bottom = top + height - 1;
+        var left = center.x - width / 2;
+        var right = left + width - 1;
+
+        for (var x = left; x <= right; x++)
+        {
+            SetIfEmpty(top, x, Cell.Wall);
+            SetIfEmpty(bottom, x, Cell.Wall);
+        }
+        for (var y = top; y <= bottom; y++)
+        {
+            SetIfEmpty(y, left, Cell.Wall);
+            SetIfEmpty(y, right, Cell.Wall);
+        }
+
+        var chamberKeyColor = PickRandomAvailableKeyColor();
+
+        var doorCell = ToDoor(chamberKeyColor);
+        int direction = Directions.PickOne();
+        switch (direction)
+        {
+            case 'N':
+                for (var x = left + 1; x < right; x++) map[top, x] = doorCell;
+                break;
+            case 'E':
+                for (var y = top + 1; y < bottom; y++) map[y, right] = doorCell;
+                break;
+            case 'S':
+                for (var x = left + 1; x < right; x++) map[bottom, x] = doorCell;
+                break;
+            case 'W':
+                for (var y = top + 1; y < bottom; y++) map[y, left] = doorCell;
+                break;
+
+            default: throw new InvalidOperationException();
+        }
+
+        return chamberKeyColor;
     }
 
     private (KeyColor innerKeyColor, KeyColor outerKeyColor) CreateDoubleLockerRoom(Room lockerRoom, KeyColor lockedKeyColor)
