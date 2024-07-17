@@ -845,7 +845,8 @@ public class MapGenerator : IMapGenerator
         {
             // Bounds check not needed, because there is a wall around the whole map
             var remove = roomPositions.
-                Where(pos => !roomPositions.Contains((pos.y, pos.x - 1)) || !roomPositions.Contains((pos.y, pos.x + 1)));
+                Where(pos => !roomPositions.Contains((pos.y, pos.x - 1)) || !roomPositions.Contains((pos.y, pos.x + 1))).
+                ToList();
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
@@ -857,7 +858,8 @@ public class MapGenerator : IMapGenerator
         {
             // Bounds check not needed, because there is a wall around the whole map
             var remove = roomPositions.
-                Where(pos => !roomPositions.Contains((pos.y - 1, pos.x)) || !roomPositions.Contains((pos.y + 1, pos.x)));
+                Where(pos => !roomPositions.Contains((pos.y - 1, pos.x)) || !roomPositions.Contains((pos.y + 1, pos.x))).
+                ToList();
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
@@ -926,7 +928,7 @@ public class MapGenerator : IMapGenerator
 
     private void CreateStandardMaze(bool twoPlayers = false)
     {
-        CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 0);
+        CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 1);
         ConnectRoomsRandomly();
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
     }
@@ -1283,14 +1285,14 @@ public class MapGenerator : IMapGenerator
         // Create left and right rooms
         rooms = [];
         RestrictAvailablePositions(maxX: middle);
-        CreateRandomRooms(15, 1, 5, 2);
+        CreateRandomRooms(maxRooms: 100, minSize: 1, maxSize: 5, margin: 1);
         RestoreAvailablePositions();
         ConnectRoomsRandomly();
         var roomsLeft = rooms;
 
         rooms = [];
         RestrictAvailablePositions(minX: middle + 1);
-        CreateRandomRooms(15, 1, 5, 2);
+        CreateRandomRooms(maxRooms: 100, minSize: 1, maxSize: 5, margin: 1);
         RestoreAvailablePositions();
         ConnectRoomsRandomly();
         var roomsRight = rooms;
