@@ -30,7 +30,7 @@
 
         <Grid Grid.Row="0" Grid.RowSpan="2" Background="Black" Opacity="0.7"
               IsVisible="{Binding IsLoading, Mode=OneWay}">
-            <TextBlock Foreground="White" FontSize="20" 
+            <TextBlock Foreground="White" FontSize="20"
                        TextAlignment="Center"
                        VerticalAlignment="Center" HorizontalAlignment="Center">
                 Loading, please wait ...

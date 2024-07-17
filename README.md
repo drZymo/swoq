@@ -11,6 +11,6 @@ There are training levels available.
 
 ## Architecture
 
-A game can be started with the 
+A game can be started with the
 
 Game history is not maintained by the server. Once a game is finished a replay is written to disk and the game process is stopped.

@@ -21,6 +21,7 @@ public static class Converters
         Inventory.KeyGreen => Cell.KeyGreen,
         Inventory.KeyBlue => Cell.KeyBlue,
         Inventory.Boulder => Cell.Boulder,
+        Inventory.LootSword => Cell.Sword,
         _ => throw new NotImplementedException(),
     };
 

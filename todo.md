@@ -271,7 +271,7 @@ If a game does not proceeed in a certain time it has to stop. In particular ques
 ## Remember health at start of level
 
 Instead of resetting health at start of a level use the health at the end of the previous level.
-Remember these healths of the best quest, and use that during training as well. 
+Remember these healths of the best quest, and use that during training as well.
 This way it becomes important to not lose too much health in order to reach the end.
 
 Each enemy has 5 health, so it can deal 5 damage. Total player health plus all health that can be obtained must sum up to total damage that can be dealt plus some margin.
@@ -306,7 +306,7 @@ Placed on pressure plate will leave it pressed.
   - [X] Boulder will open, remove will close
   - [ ] Close door kills player
 - [ ] Inactive time
-- [ ] 
+- [ ]
 
 # Lore in the proto files
 
@@ -317,3 +317,13 @@ Secondary character: Male, son of miner. Likes to explore caves. Went missing 2 
 Prisoner: Duke of town.
 Final enemy: Younger brother of duke.
 
+
+
+# Performance
+
+# 2024-07-17
+
+| Method         | Mean      | Error    | StdDev   |
+|--------------- |----------:|---------:|---------:|
+| GenerateAll    | 756.28 ms | 5.250 ms | 4.099 ms |
+| GenerateLevel1 |  37.83 ms | 0.686 ms | 0.641 ms |

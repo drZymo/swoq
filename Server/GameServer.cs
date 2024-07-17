@@ -34,7 +34,7 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
         {
             games = games.Add(game.Id, game);
         }
-        // and remove old games        
+        // and remove old games
         CleanupOldGames();
 
         return new StartResult(player.Name, game.Id, game.State);

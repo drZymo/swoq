@@ -71,7 +71,7 @@ class GamePlayer:
         if self.print:
             result = _result_strings[startResponse.result]
             print(f'{result=}')
-        
+
         while startResponse.result == swoq_pb2.QUEST_QUEUED:
             sleep(1)
             startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=self.player_id, level=level))
@@ -173,7 +173,7 @@ class GamePlayer:
             print(f' player 2 skipped')
             self.action2 = None
             self.direction2 = None
-            
+
         print(f'{self.action1=}, {self.action2=}')
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, direction1=self.direction1, action2=self.action2, direction2=self.direction2))
 
@@ -340,7 +340,7 @@ class GamePlayer:
         exits = np.argwhere(self.map == EXIT)
         if np.any(exits):
             exit_pos = tuple(exits[0])
-            
+
             # Only move when both players can reach the exit (or each other)
             can_reach = False
             if valid_pos(self.player1_pos) and valid_pos(self.player2_pos):
@@ -352,7 +352,7 @@ class GamePlayer:
                 can_reach = get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None
             elif valid_pos(self.player2_pos):
                 can_reach = get_direction(self.player2_pos, exit_pos, self.player2_distances, self.player2_paths) is not None
-                
+
             if can_reach:
                 if self.can_act1():
                     print('exit1')
@@ -492,7 +492,7 @@ class GamePlayer:
             plate_doors = np.argwhere(self.map == DOOR_BLUE)
         else:
             plate_doors = []
-            
+
         if np.any(plate_doors):
             plate_door_pos = tuple(plate_doors[0])
             if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
@@ -510,16 +510,16 @@ class GamePlayer:
                     self.use_1(boulder_pos)
                 else:
                     print('move_boulder1')
-                    self.move_to_1(boulder_pos)                
+                    self.move_to_1(boulder_pos)
             if self.can_act2() and self.player2_inventory == 0:
                 if are_adjacent(self.player2_pos, boulder_pos):
                     print('use_boulder2')
                     self.use_2(boulder_pos)
                 else:
                     print('move_boulder2')
-                    self.move_to_2(boulder_pos)                
+                    self.move_to_2(boulder_pos)
 
-                
+
     def update_remain_on_plate(self) -> None:
         if self.plate_pos is not None and self.player1_pos[0] == self.plate_pos[0] and self.player1_pos[1] == self.plate_pos[1]:
             print(f'Reset {self.remain_on_plate_counter=}')

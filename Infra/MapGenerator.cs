@@ -15,10 +15,12 @@ public class MapGenerator : IMapGenerator
     private readonly int height;
     private readonly int width;
 
-    private readonly ImmutableHashSet<Position> allPositions = ImmutableHashSet<Position>.Empty;
+    private readonly ImmutableHashSet<Position> allPositions = [];
     private ImmutableHashSet<Position> availablePositions = [];
     private MutableMap map;
 
+    private Room playerRoom = new(-1, -1, -1, -1);
+    private Room exitRoom = new(-1, -1, -1, -1);
     private Position exitPosition;
 
     private ImmutableList<Room> rooms = [];
@@ -506,11 +508,11 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel13()
     {
-        /// Pressure plate wall. 
-        /// Two sided level with two corridors. 
-        /// One locked with pressure plate door, other with regular door. 
-        /// Pressure plate on left side, key to door on the right side. 
-        /// Must work together to open regular door. 
+        /// Pressure plate wall.
+        /// Two sided level with two corridors.
+        /// One locked with pressure plate door, other with regular door.
+        /// Pressure plate on left side, key to door on the right side.
+        /// Must work together to open regular door.
         /// Exit in the open, so it is tempting to enter without helping other.
 
         var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
@@ -564,7 +566,7 @@ public class MapGenerator : IMapGenerator
     {
         /// Two sided maze with door.
         /// Left side has swords, no health.
-        /// Right side has one enemy with key to exit. 
+        /// Right side has one enemy with key to exit.
         /// Work together to kill enemy.
 
         var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
@@ -618,41 +620,38 @@ public class MapGenerator : IMapGenerator
     private void GenerateLevel17()
     {
         /// Two enemies.
-        /// One enemy on left side, which has the key for right side.
-        /// Right enemy has key for exit.
-        /// One sword and armor on the left side (one player has to catch them both and attack), one sword and armor on the right side, which the other players has to get and use.
+        /// One enemy on left side in tunnel to right side.
+        /// Other in front of exit door.
+        /// No door in tunnel.
+        /// One sword and health in left side.
+        /// Extra heath in right side.
+        /// First enemy drops sword for second player.
+        /// Second enemy drops key for exit door.
+        /// One player needs to collect sword and health first then kill enemy so second player can grab the sword.
 
         var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
+        var tunnelPositions = ConnectLeftAndRight(middle, roomsLeft, roomsRight);
+        var (exitKeyColor, _) = AddLockAroundExit();
 
-        var tunnelKeyColor = PickRandomAvailableKeyColor();
-        var tunnelPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, tunnelKeyColor);
-        var infrontTunnelDoorLeft = (tunnelPosY, middle - 1);
-        var infrontTunnelDoorRight = (tunnelPosY, middle + 1);
-
-        var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
-
-        // Enemies close to doors
-        var enemy1Room = ClaimClosestAvailableRoomFrom(infrontTunnelDoorLeft);
-        var enemy1Pos = GetRandomEmptyPositionInRoom(enemy1Room);
+        // One enemy in the tunnel
+        var enemy1Pos = tunnelPositions.PickOne();
         map.Enemy1.Position = enemy1Pos;
-        map.Enemy1.Inventory = ToInventory(tunnelKeyColor);
+        map.Enemy1.Inventory = Inventory.LootSword;
 
-        var enemy2Room = ClaimClosestAvailableRoomFrom(exitDoorPos);
-        var enemy2Pos = GetRandomEmptyPositionInRoom(enemy2Room);
+        // Other enemy near exit
+        var enemy2Pos = GetRandomEmptyPositionInRoom(exitRoom);
         map.Enemy2.Position = enemy2Pos;
         map.Enemy2.Inventory = ToInventory(exitKeyColor);
 
-        // One health and sword left
-        var health1Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, map.Enemy1.Position]);
+        // One health and sword in left side
+        var health1Pos = ClaimRandomPositionInRoomFarthestFrom(roomsLeft, [map.Player1.Position, map.Player2.Position, map.Enemy1.Position]);
         map[health1Pos] = Cell.Health;
-        var sword1Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, map.Enemy1.Position]);
+        var sword1Pos = ClaimRandomPositionInRoomFarthestFrom(roomsLeft, [map.Player1.Position, map.Player2.Position, map.Enemy1.Position]);
         map[sword1Pos] = Cell.Sword;
 
-        // One health and sword right
-        var health2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontTunnelDoorRight, map.Enemy2.Position]);
+        // One health on right side
+        var health2Pos = ClaimRandomPositionInRoomFarthestFrom(roomsRight, [map.Enemy1.Position, map.Enemy2.Position]);
         map[health2Pos] = Cell.Health;
-        var sword2Pos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontTunnelDoorRight, map.Enemy2.Position]);
-        map[sword2Pos] = Cell.Sword;
     }
 
     private void GenerateLevel18()
@@ -666,7 +665,7 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel19()
     {
-        /// Grand desert. 
+        /// Grand desert.
         /// Double pressure plate locker room with two swords and two health.
         /// Players have to take turns getting swords and health.
         /// 2x health and boulder scattered around map.
@@ -674,7 +673,7 @@ public class MapGenerator : IMapGenerator
         /// One extra guard in exit room with key for exit.
 
         // Create double exit room to hold three guards
-        var exitRoom = CreateRoom(height - 4, width - 4, 6, 6);
+        exitRoom = CreateRoom(height - 4, width - 4, 6, 6);
         var preExitRoom = CreateRoom(height - 13, width - 6, 10, 10);
         SetAndMakeUnavailable((height - 8, width - 2), Cell.Empty);
         SetAndMakeUnavailable((height - 8, width - 3), Cell.Empty);
@@ -763,12 +762,12 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel20()
     {
-        /// Crush. 
+        /// Crush.
         /// One enemy (with lots of health and damage),
         /// swords and health in level, but still not enough to defeat boss.
         /// Corridor/room with pressure plate controlled door wall.
         /// One player must lure the boss on the plate.
-        /// Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. 
+        /// Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position.
         /// Door is closed and kills boss.
         /// Boss loot is key for exit door and two big treasures and are placed next to closed door.
         /// Without treasure in inventory player is killed when leaving.
@@ -937,7 +936,7 @@ public class MapGenerator : IMapGenerator
     {
         // place player in top left room
         // and exit in bottom right
-        var playerRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((0, 0))).First();
+        playerRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((0, 0))).First();
         availableRooms = availableRooms.Remove(playerRoom);
         if (twoPlayers)
         {
@@ -949,7 +948,7 @@ public class MapGenerator : IMapGenerator
             map.Player1.Position = playerRoom.Center;
         }
 
-        var exitRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((height, width))).First();
+        exitRoom = availableRooms.OrderBy(r => r.Center.DistanceTo((height, width))).First();
         availableRooms = availableRooms.Remove(exitRoom);
         exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
         map[exitPosition] = Cell.Exit;

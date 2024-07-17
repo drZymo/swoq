@@ -44,7 +44,7 @@ public class MutableMap(int level, int height, int width)
             Enemy1.Position.IsValid() ? Enemy1.Position : null,
             Enemy1.Position.IsValid() ? Enemy1.Inventory : Inventory.None,
             Enemy2.Position.IsValid() ? Enemy2.Position : null,
-            Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None, 
+            Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None,
             Enemy3.Position.IsValid() ? Enemy3.Position : null,
             Enemy3.Position.IsValid() ? Enemy3.Inventory : Inventory.None);
     }

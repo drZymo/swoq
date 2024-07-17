@@ -16,7 +16,7 @@ internal class MapImage(int mapHeight, int mapWidth)
     {
         var currentDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
             ?? AppDomain.CurrentDomain.BaseDirectory;
-        tileSet =TileSet.FromImageFile(Path.Combine(currentDir, "tiles.png"));
+        tileSet = TileSet.FromImageFile(Path.Combine(currentDir, "tiles.png"));
     }
 
     private readonly Tile[,] tiles = new Tile[mapHeight, mapWidth];

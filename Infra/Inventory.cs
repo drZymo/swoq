@@ -9,4 +9,7 @@ public enum Inventory
     KeyBlue,
 
     Boulder,
+
+    // All items below cannot be carried by player
+    LootSword,
 }
