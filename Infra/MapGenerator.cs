@@ -620,23 +620,20 @@ public class MapGenerator : IMapGenerator
     private void GenerateLevel17()
     {
         /// Two enemies.
-        /// One enemy on left side in tunnel to right side.
-        /// Other in front of exit door.
-        /// No door in tunnel.
-        /// One sword and health in left side.
-        /// Extra heath in right side.
-        /// First enemy drops sword for second player.
-        /// Second enemy drops key for exit door.
+        /// Split maze. One enemy on left side in front of tunnel door. Other in front of exit door. 
+        /// One sword and health in left side. Extra heath in right side. 
+        /// First enemy drops sword for second player. Second enemy drops key for exit door.
+        /// Total player health = 5+3 + 5+3 = 16. Total enemy health = 12. One player total health = 5+3+3 = 11, so need two player interaction.
         /// One player needs to collect sword and health first then kill enemy so second player can grab the sword.
 
         var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
-        var tunnelPositions = ConnectLeftAndRight(middle, roomsLeft, roomsRight);
+        var tunnelDoorColor = PickRandomAvailableKeyColor();
+        var tunnelDoorPosition = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, tunnelDoorColor);
         var (exitKeyColor, _) = AddLockAroundExit();
 
-        // One enemy in the tunnel
-        var enemy1Pos = tunnelPositions.PickOne();
-        map.Enemy1.Position = enemy1Pos;
-        map.Enemy1.Inventory = Inventory.LootSword;
+        // One enemy at the door in the tunnel
+        map.Enemy1.Position = (tunnelDoorPosition, middle - 1);
+        map.Enemy1.Inventory = ToInventory(tunnelDoorColor);
 
         // Other enemy near exit
         var enemy2Pos = GetRandomEmptyPositionInRoom(exitRoom);
@@ -650,7 +647,7 @@ public class MapGenerator : IMapGenerator
         map[sword1Pos] = Cell.Sword;
 
         // One health on right side
-        var health2Pos = ClaimRandomPositionInRoomFarthestFrom(roomsRight, [map.Enemy1.Position, map.Enemy2.Position]);
+        var health2Pos = ClaimRandomPositionInRoomFarthestFrom(roomsRight, [(tunnelDoorPosition, middle + 1), map.Enemy2.Position]);
         map[health2Pos] = Cell.Health;
     }
 
