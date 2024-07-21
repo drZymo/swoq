@@ -1,7 +1,7 @@
 # TODO
 
 - [.] Levels
-  - [ ] Loot drop sword
+  - [X] Loot drop sword (auto?)
   - [ ] Big boss
   - [ ] Boulder exit kill
   - [ ] Treasure
@@ -43,7 +43,7 @@
 - [ ] Slower with boulder in inventory. 50% change movement is executed.
 
 ## Bugs
-- [ ] Health and sword could be one same location overwriting eachother.
+- [X] Health and sword could be one same location overwriting eachother.
 - [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
 
 ## Done
@@ -307,6 +307,7 @@ Placed on pressure plate will leave it pressed.
   - [ ] Close door kills player
 - [ ] Inactive time
 - [ ]
+
 
 # Lore in the proto files
 

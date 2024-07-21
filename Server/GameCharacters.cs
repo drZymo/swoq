@@ -17,7 +17,8 @@ internal abstract record GameCharacter(
     GameCharacterId Id,
     Position Position,
     Inventory Inventory,
-    int Health);
+    int Health,
+    bool HasSword);
 
 internal record GamePlayer(
     GameCharacterId Id,
@@ -25,7 +26,7 @@ internal record GamePlayer(
     Inventory Inventory = Inventory.None,
     int Health = Parameters.PlayerHealth,
     bool HasSword = false)
-    : GameCharacter(Id, Position, Inventory, Health);
+    : GameCharacter(Id, Position, Inventory, Health, HasSword);
 
 internal record GameEnemy(
     GameCharacterId Id,
@@ -33,4 +34,4 @@ internal record GameEnemy(
     Inventory Inventory = Inventory.None,
     int Health = Parameters.EnemyHealth,
     bool IsTriggered = false)
-    : GameCharacter(Id, Position, Inventory, Health);
+    : GameCharacter(Id, Position, Inventory, Health, true);

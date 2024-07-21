@@ -713,51 +713,76 @@ public class Game : IGame
     {
         if (character.Health <= 0 && character.Position.IsValid())
         {
-            // Drop loot only on empty cell
-            // This is to prevent overwriting a pressure plate
-            // Otherwise loot is simply lost
-            var dropPos = character.Position;
-            if (map[dropPos] != Cell.Empty)
-            {
-                dropPos = FindEmptyPosAround(dropPos);
-            }
-            if (dropPos.IsValid())
-            {
-                var loot = character.Inventory.ToDroppedLoot();
-                map = map.Set(dropPos, loot);
-            }
+            var position = character.Position;
 
-            // Remove loot from inventory
-            character = character with { Inventory = Inventory.None };
             // Remove character from game
             character = character with { Position = PositionEx.Invalid };
+
+            // Drop inventory
+            if (character.Inventory != Inventory.None)
+            {
+                var loot = character.Inventory.ToDroppedLoot();
+                DropItem(position, loot);
+                character = character with { Inventory = Inventory.None };
+            }
+            // Drop sword
+            if (character.HasSword)
+            {
+                DropItem(position, Cell.Sword);
+                character = character with { HasSword = false };
+            }
+
             lastChangeTick = ticks;
         }
 
         return character;
     }
 
+    private void DropItem(Position fromPosition, Cell item)
+    {
+        // Drop only on empty cell
+        // This is to prevent overwriting a pressure plate
+        var dropPos = fromPosition;
+        if (IsOccupied(dropPos))
+        {
+            dropPos = FindEmptyPosAround(dropPos);
+        }
+
+        // If no position can be found, then simply not place the item and lose it.
+        if (!dropPos.IsValid()) return;
+
+        Debug.Assert(map[dropPos] == Cell.Empty);
+        map = map.Set(dropPos, item);
+    }
+
+    private bool IsOccupied(Position pos)
+    {
+        return !pos.IsValid() ||
+            map[pos] != Cell.Empty ||
+            (player1 != null && player1.Position == pos) ||
+            (player2 != null && player2.Position == pos) ||
+            enemies.Any(e => e.Position.IsValid() && e.Position == pos);
+    }
+
     private Position FindEmptyPosAround(Position pos)
     {
-        bool IsNotOccupied(Position p) =>
-            map[p] == Cell.Empty &&
-            player1?.Position != p &&
-            player2?.Position != p &&
-            !enemies.Any(e => e.Position == p);
-
         ImmutableList<Position> choices = [];
         void AddIfNotOccupied(Position p)
         {
-            if (IsNotOccupied(p)) choices = choices.Add(p);
+            if (!IsOccupied(p)) choices = choices.Add(p);
         }
 
-        AddIfNotOccupied((pos.y - 1, pos.x - 1));
+        // First check positions adjacent
         AddIfNotOccupied((pos.y - 1, pos.x));
-        AddIfNotOccupied((pos.y - 1, pos.x + 1));
         AddIfNotOccupied((pos.y, pos.x - 1));
         AddIfNotOccupied((pos.y, pos.x + 1));
-        AddIfNotOccupied((pos.y + 1, pos.x - 1));
         AddIfNotOccupied((pos.y + 1, pos.x));
+        if (choices.Count > 0) return choices.PickOne();
+        
+        // No empty positions found yet, try diagonal
+        AddIfNotOccupied((pos.y - 1, pos.x - 1));
+        AddIfNotOccupied((pos.y - 1, pos.x + 1));
+        AddIfNotOccupied((pos.y + 1, pos.x - 1));
         AddIfNotOccupied((pos.y + 1, pos.x + 1));
         return choices.Count > 0 ? choices.PickOne() : PositionEx.Invalid;
     }

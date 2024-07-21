@@ -225,8 +225,9 @@ internal class OnePlayerCombatTests : GameTestBase
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
             Assert.That(game.State.Player1.Health, Is.EqualTo(3)); // health no longer reduced
-            Assert.That(changes, Has.Count.EqualTo(1));
-            Assert.That(changes[(5, 6)], Is.EqualTo((15, 1))); // enemy died
+            Assert.That(changes, Has.Count.EqualTo(2));
+            Assert.That(changes[(5, 6)], Is.EqualTo((15, 1))); // enemy died, removed from game
+            Assert.That(changes[(5, 7)], Is.EqualTo((1, 14))); // enemy sword dropped 
         });
     }
 
