@@ -345,7 +345,7 @@ public class MapGenerator : IMapGenerator
         /// Two enemies.
         /// First enemy drops key for room with second enemy.
         /// Second enemy has key for exit.
-        /// 3 health needed to win from two enemies.
+        /// 3 health needed to win from two enemies. Player health = 5+3*3 = 14, Enemy health = 12
 
         // maze with locked exit
         CreateStandardMaze();

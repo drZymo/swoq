@@ -93,6 +93,8 @@ class GamePlayer:
         self.direction1:swoq_pb2.Direction = None
         self.action2:swoq_pb2.Action = None
         self.direction2:swoq_pb2.Direction = None
+        
+        self.expected_enemy_health = None
 
         if self.plot:
             self._frame = plot_map(self.map)
@@ -102,20 +104,26 @@ class GamePlayer:
         self.level = state.level
         self.finished = state.finished
 
+        self.combined_health = 0
+        
         self.player1_pos = (state.player1.position.y, state.player1.position.x) if state.HasField("player1") else None
         self.player1_health = state.player1.health if state.HasField("player1") else None
         self.player1_inventory = state.player1.inventory if state.HasField("player1") else None
         self.player1_has_sword = state.player1.hasSword if state.HasField("player1") else None
+        if self.player1_health is not None:
+            self.combined_health += self.player1_health
 
         self.player2_pos = (state.player2.position.y, state.player2.position.x) if state.HasField("player2") else None
         self.player2_health = state.player2.health if state.HasField("player2") else None
         self.player2_inventory = state.player2.inventory if state.HasField("player2") else None
         self.player2_has_sword = state.player2.hasSword if state.HasField("player2") else None
+        if self.player2_health is not None:
+            self.combined_health += self.player2_health
         
         self.two_players = valid_pos(self.player1_pos) and valid_pos(self.player2_pos)
 
         if self.print:
-            print(f'finished={self.finished} level={self.level}')
+            print(f'finished={self.finished} level={self.level}, comb health={self.combined_health}')
             print(f'player1: pos={self.player1_pos}, health={self.player1_health}, inventory={self.player1_inventory}, has_sword={self.player1_has_sword}')
             print(f'player2: pos={self.player2_pos}, health={self.player2_health}, inventory={self.player2_inventory}, has_sword={self.player2_has_sword}')
 
@@ -230,11 +238,11 @@ class GamePlayer:
         if self.finished: return
 
         self.move_to_exit()
-        self.attack()
         self.pickup_health()
         self.pickup_sword()
         self.pickup_keys()
         self.explore()
+        self.attack()
         self.move_to_pressure_plate()
         self.wait_at_pressure_plate_door()
         self.pickup_boulder()
@@ -245,20 +253,24 @@ class GamePlayer:
     def get_direction_towards_closest_unknown(self, from_pos, distances, paths) -> str:
         closest_empty = None
         closest_dist = None
-
+        
         # find closest empty with UNKNOWN neighbors
-        for pos in np.argwhere(self.map == EMPTY):
-            pos = tuple(pos)
-            pos_y, pos_x = pos
-            if self.map[pos_y, pos_x-1] == UNKNOWN or \
-                    self.map[pos_y, pos_x+1] == UNKNOWN or \
-                    self.map[pos_y+1, pos_x] == UNKNOWN or \
-                    self.map[pos_y-1, pos_x] == UNKNOWN:
-                if pos in distances:
-                    dist = distances[pos]
-                    if closest_dist is None or dist < closest_dist:
-                        closest_dist = dist
-                        closest_empty = pos
+        for pos_y, pos_x in np.argwhere(self.map == UNKNOWN):
+            pos = None
+            if (pos_y, pos_x-1) in distances and self.map[pos_y, pos_x-1] == EMPTY:
+                pos = (pos_y, pos_x-1)
+            elif (pos_y, pos_x+1) in distances and self.map[pos_y, pos_x+1] == EMPTY:
+                pos = (pos_y, pos_x+1)
+            elif (pos_y-1, pos_x) in distances and self.map[pos_y-1, pos_x] == EMPTY:
+                pos = (pos_y-1, pos_x)
+            elif (pos_y+1, pos_x) in distances and self.map[pos_y+1, pos_x] == EMPTY:
+                pos = (pos_y+1, pos_x)
+
+            if pos is not None:
+                dist = distances[pos]
+                if closest_dist is None or dist < closest_dist:
+                    closest_dist = dist
+                    closest_empty = pos
 
         if closest_empty is None:
             return None
@@ -369,6 +381,9 @@ class GamePlayer:
         enemies = np.argwhere(self.map == ENEMY)
         if np.any(enemies):
             enemy_pos = tuple(enemies[0])
+            
+            if self.expected_enemy_health is None:
+                self.expected_enemy_health = 6
 
             # make sure players are close to each other so they can both attack
             dist_1_to_2 = get_dist_to_other_player(self.player1_pos, self.player2_pos, self.player1_distances) if self.player1_pos is not None else None
@@ -381,10 +396,8 @@ class GamePlayer:
                 dist_players = dist_1_to_2
             else:
                 dist_players = min(dist_1_to_2, dist_2_to_1)
-            print(f'dist: 1>2: {dist_1_to_2}, 2>1: {dist_2_to_1}')
             
-            combined_health = self.player1_health + self.player2_health
-            if combined_health >= 6:
+            if self.combined_health >= self.expected_enemy_health:
                 if self.can_act1() and self.player1_has_sword:
                     if self.player2_has_sword and dist_players is not None and dist_players > 5:
                         # Move closer to each other if both can fight
@@ -393,6 +406,7 @@ class GamePlayer:
                     elif are_adjacent(self.player1_pos, enemy_pos):
                         print('attack_use1')
                         self.use_1(enemy_pos)
+                        self.expected_enemy_health -= 1
                     else:
                         print('attack_move1')
                         self.move_to_1(enemy_pos)
@@ -405,9 +419,13 @@ class GamePlayer:
                     elif are_adjacent(self.player2_pos, enemy_pos):
                         print('attack_use2')
                         self.use_2(enemy_pos)
+                        self.expected_enemy_health -= 1
                     else:
                         print('attack_move2')
                         self.move_to_2(enemy_pos)
+
+            if self.expected_enemy_health is not None and self.expected_enemy_health <= 0:
+                self.expected_enemy_health = None
 
 
     def pickup_health(self) -> None:
@@ -417,10 +435,10 @@ class GamePlayer:
             health_pos = tuple(healths[0])
             
             # let player 1 pickup health first
-            if self.can_act1() and self.player1_health <= 5:
+            if self.can_act1() and (self.player2_health is None or self.player1_health <= self.player2_health):
                 print('health1')
                 self.move_to_1(health_pos)
-            elif self.can_act2() and self.player2_health <= 5 and self.player1_health > 5:
+            elif self.can_act2() and (self.player1_health is None or self.player1_health > self.player2_health):
                 print('health2')
                 self.move_to_2(health_pos)
 
@@ -467,7 +485,7 @@ class GamePlayer:
         if np.any(plates):
             self.plate_pos = tuple(plates[0])
             if self.can_act1():
-                if valid_pos(self.player2_pos): # Only with two players simply move
+                if self.two_players: # Only with two players simply move
                     self.plate_color = self.map[self.plate_pos]
                     print('plate1')
                     self.move_to_1(self.plate_pos)
@@ -479,6 +497,15 @@ class GamePlayer:
                         # move to below plate if possible
                         below = (self.plate_pos[0]+1, self.plate_pos[1])
                         self.move_to_1(below if not is_wall(self.map, below) else self.plate_pos)
+            if self.can_act2():
+                if self.player2_inventory == 4: # has boulder
+                    print('plate_boulder2')
+                    if are_adjacent(self.player2_pos, self.plate_pos):
+                        self.use_2(self.plate_pos)
+                    else:
+                        # move to below plate if possible
+                        below = (self.plate_pos[0]+1, self.plate_pos[1])
+                        self.move_to_2(below if not is_wall(self.map, below) else self.plate_pos)
 
 
     def wait_at_pressure_plate_door(self) -> None:
