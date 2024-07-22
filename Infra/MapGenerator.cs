@@ -323,33 +323,19 @@ public class MapGenerator : IMapGenerator
     private void GenerateLevel8()
     {
         /// First combat.
-        /// Key in left side for door to enter right side.
-        /// One sword and armor in left side.
-        /// One enemy in right side.
-        /// Enemy has key to exit door
+        /// Locked exit. One enemy with key to exit door
+        /// One sword and armor in initial room.
 
-        var (middle, roomsLeft, roomsRight) = CreateSplitMaze();
+        var playerRoom = CreateRoom(4, 4, 7, 7);
+        CreateStandardMaze();
+        var (exitKeyColor, exitDoorPos) = AddLockAroundExit();
 
-        var (exitKeyColor, _) = AddLockAroundExit();
+        // Place sword and health in initial room
+        map[playerRoom.Top, 4] = Cell.Sword;
+        map[4, playerRoom.Left] = Cell.Health;
 
-        // Create tunnel between left and right with a door
-        var keyColor = PickRandomAvailableKeyColor();
-        var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, keyColor);
-        var infrontOfDoor = (doorPosY, middle - 1);
-
-        var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontOfDoor]);
-        map[keyPos] = ToKey(keyColor);
-
-        // Place sword in any room on the left
-        var swordPos = ClaimRandomPositionInRandomAvailableRoom(roomsLeft);
-        map[swordPos] = Cell.Sword;
-
-        // Place health in any room on the left
-        var healthPos = ClaimRandomPositionInRandomAvailableRoom(roomsLeft);
-        map[healthPos] = Cell.Health;
-
-        // Place enemy in any room on the right with key to exit
-        var enemyPos = ClaimRandomPositionInRandomAvailableRoom(roomsRight);
+        // Place enemy with key to exit in a room far away
+        var enemyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, exitDoorPos]);
         map.Enemy1.Position = enemyPos;
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
     }

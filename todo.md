@@ -200,7 +200,7 @@ Once all features are introduced, the levels are constructed with more and more 
 5. **(Doors)** Double-door locker room. Two doors to enter room with exit key. Both keys are in the open. Key for inner door is close to the player at startup, so it can be picked up accidentally. Outer door key is far away from room and player.
 6. **(Boulders)** Standard maze with boulders in front of exit. Pick up boulder to reach exit. But drop it before exiting.
 7. **(Pressure plate with boulders)** Pressure plate in front of exit with door. Several boulders scattered through maze. Door is visible from pressure plate, so it can be observed to open.
-8. **(Combat)** First combat. Key in left side for door to enter right side. One sword and armor in left side. One enemy in right side. Exit is locked. Enemy has key.
+8. **(Combat)** First combat. Locked exit. One enemy with key to exit door. One sword and armor in initial room.
 9. **(Combat)** Two enemies. First enemy drops key for room with second enemy. Second enemy has key for exit. 3 health needed to win from two enemies.
 10. **(Two players)** Prison. One room with a door that holds the second player. Door is guarded by an enemy. Sword and health somewhere in map. Enemy has key for door. Exit is open, so it tempted to leave without freeing second player.
 11. **(Two players)** Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
