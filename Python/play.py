@@ -111,6 +111,8 @@ class GamePlayer:
         self.player2_health = state.player2.health if state.HasField("player2") else None
         self.player2_inventory = state.player2.inventory if state.HasField("player2") else None
         self.player2_has_sword = state.player2.hasSword if state.HasField("player2") else None
+        
+        self.two_players = valid_pos(self.player1_pos) and valid_pos(self.player2_pos)
 
         if self.print:
             print(f'finished={self.finished} level={self.level}')
@@ -380,35 +382,27 @@ class GamePlayer:
             else:
                 dist_players = min(dist_1_to_2, dist_2_to_1)
             print(f'dist: 1>2: {dist_1_to_2}, 2>1: {dist_2_to_1}')
-
-            if self.can_act1() and self.player1_has_sword:
-                can_attack = True
-                if dist_players is not None and dist_players > 5:
-                    print('move_closer1')
-                    self.move_to_1(self.player2_pos)
-                    can_attack = False
-                elif self.player1_health < 3:
-                    can_attack = False
-
-                if can_attack:
-                    if are_adjacent(self.player1_pos, enemy_pos):
+            
+            combined_health = self.player1_health + self.player2_health
+            if combined_health >= 6:
+                if self.can_act1() and self.player1_has_sword:
+                    if self.player2_has_sword and dist_players is not None and dist_players > 5:
+                        # Move closer to each other if both can fight
+                        print('move_closer1')
+                        self.move_to_1(self.player2_pos)
+                    elif are_adjacent(self.player1_pos, enemy_pos):
                         print('attack_use1')
                         self.use_1(enemy_pos)
                     else:
                         print('attack_move1')
                         self.move_to_1(enemy_pos)
 
-            if self.can_act2() and self.player2_has_sword:
-                can_attack = True
-                if dist_players is not None and dist_players > 4:
-                    print('move_closer2')
-                    self.move_to_2(self.player1_pos)
-                    can_attack = False
-                elif self.player2_health < 3:
-                    can_attack = False
-
-                if can_attack:
-                    if are_adjacent(self.player2_pos, enemy_pos):
+                if self.can_act2() and self.player2_has_sword:
+                    if self.player1_has_sword and dist_players is not None and dist_players > 4:
+                        # Move closer to each other if both can fight
+                        print('move_closer2')
+                        self.move_to_2(self.player1_pos)
+                    elif are_adjacent(self.player2_pos, enemy_pos):
                         print('attack_use2')
                         self.use_2(enemy_pos)
                     else:
@@ -421,10 +415,12 @@ class GamePlayer:
         healths = np.argwhere(self.map == HEALTH)
         if np.any(healths):
             health_pos = tuple(healths[0])
+            
+            # let player 1 pickup health first
             if self.can_act1() and self.player1_health <= 5:
                 print('health1')
                 self.move_to_1(health_pos)
-            elif self.can_act2() and self.player2_health <= 5:
+            elif self.can_act2() and self.player2_health <= 5 and self.player1_health > 5:
                 print('health2')
                 self.move_to_2(health_pos)
 
@@ -434,10 +430,12 @@ class GamePlayer:
         swords = np.argwhere(self.map == SWORD)
         if np.any(swords):
             sword_pos = tuple(swords[0])
+            
+            # let player 1 pickup sword first
             if self.can_act1() and not self.player1_has_sword:
                 print('sword1')
                 self.move_to_1(sword_pos)
-            elif self.can_act2() and not self.player2_has_sword:
+            elif self.can_act2() and not self.player2_has_sword and self.player1_has_sword:
                 print('sword2')
                 self.move_to_2(sword_pos)
 

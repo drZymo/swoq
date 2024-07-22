@@ -2,6 +2,7 @@
 
 - [.] Levels
   - [X] Loot drop sword (auto?)
+  - [ ] Test door kills enemy
   - [ ] Big boss
   - [ ] Boulder exit kill
   - [ ] Treasure
