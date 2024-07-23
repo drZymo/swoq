@@ -95,6 +95,8 @@ class GamePlayer:
         self.direction2:swoq_pb2.Direction = None
         
         self.expected_enemy_health = None
+        
+        self.plates_with_boulders = []
 
         if self.plot:
             self._frame = plot_map(self.map)
@@ -131,6 +133,7 @@ class GamePlayer:
         if self.prev_level != self.level:
             self.prev_level = self.level
             self.map = np.zeros_like(self.map)
+            self.plates_with_boulders = []
             print(f'Entered level {self.level}')
 
         if len(state.player1.surroundings) > 0:
@@ -246,6 +249,7 @@ class GamePlayer:
         self.move_to_pressure_plate()
         self.wait_at_pressure_plate_door()
         self.pickup_boulder()
+        self.wait_at_random_door()
         self.act()
         self.update_remain_on_plate()
 
@@ -493,6 +497,7 @@ class GamePlayer:
                     print('plate_boulder1')
                     if are_adjacent(self.player1_pos, self.plate_pos):
                         self.use_1(self.plate_pos)
+                        self.plates_with_boulders.append(self.plate_pos)
                     else:
                         # move to below plate if possible
                         below = (self.plate_pos[0]+1, self.plate_pos[1])
@@ -502,6 +507,7 @@ class GamePlayer:
                     print('plate_boulder2')
                     if are_adjacent(self.player2_pos, self.plate_pos):
                         self.use_2(self.plate_pos)
+                        self.plates_with_boulders.append(self.plate_pos)
                     else:
                         # move to below plate if possible
                         below = (self.plate_pos[0]+1, self.plate_pos[1])
@@ -527,6 +533,7 @@ class GamePlayer:
 
     def pickup_boulder(self) -> None:
         boulders = np.argwhere(self.map == BOULDER)
+        boulders = [b for b in boulders if tuple(b) not in self.plates_with_boulders]
         if np.any(boulders):
             boulder_pos = tuple(boulders[0])
             if self.can_act1() and self.player1_inventory == 0:
@@ -543,6 +550,18 @@ class GamePlayer:
                 else:
                     print('move_boulder2')
                     self.move_to_2(boulder_pos)
+
+
+    def wait_at_random_door(self) -> None:
+        doors = np.argwhere((self.map == DOOR_RED) | (self.map == DOOR_GREEN) | (self.map == DOOR_BLUE))
+        if np.any(doors):
+            door_pos = tuple(doors[0])
+            if self.can_act1():
+                print('move_door1')
+                self.move_to_1(door_pos)
+            elif self.can_act2():
+                print('move_door2')
+                self.move_to_2(door_pos)
 
 
     def update_remain_on_plate(self) -> None:
