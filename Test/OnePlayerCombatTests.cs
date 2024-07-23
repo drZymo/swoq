@@ -27,9 +27,6 @@ internal class OnePlayerCombatTests : GameTestBase
 
     public override void SetUp()
     {
-        // Setup random with seed
-        Rnd.SetSeed(1112);
-
         base.SetUp();
         Assert.That(game.State.Player1, Is.Not.Null);
         Assert.Multiple(() =>

@@ -14,6 +14,9 @@ internal abstract class GameTestBase
     [SetUp]
     public virtual void SetUp()
     {
+        // Make sure all tests are reproducable by fixing the random seed
+        Rnd.SetSeed(1337);
+
         var map = CreateGameMap();
         game = new Game(map, TimeSpan.FromSeconds(20));
         mapCache = new MapCache(map.Height, map.Width, 8); // TODO: Get visiblity range

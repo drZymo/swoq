@@ -46,9 +46,6 @@ internal class TwoPlayerCombatTests : GameTestBase
 
     public override void SetUp()
     {
-        // Setup random with seed
-        Rnd.SetSeed(1337);
-
         base.SetUp();
         Assert.That(game.State.Player1, Is.Not.Null);
         Assert.Multiple(() =>
