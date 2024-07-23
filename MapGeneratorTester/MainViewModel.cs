@@ -33,6 +33,7 @@ class MainViewModel : ViewModelBase
             {
                 level = value;
                 OnPropertyChanged();
+                HandleGenerate(null);
             }
         }
     }
@@ -47,6 +48,7 @@ class MainViewModel : ViewModelBase
             {
                 width = value;
                 OnPropertyChanged();
+                HandleGenerate(null);
             }
         }
     }
@@ -61,6 +63,7 @@ class MainViewModel : ViewModelBase
             {
                 height = value;
                 OnPropertyChanged();
+                HandleGenerate(null);
             }
         }
     }

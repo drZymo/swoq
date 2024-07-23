@@ -953,9 +953,8 @@ public class MapGenerator : IMapGenerator
         // Create double locker room
         var (innerColor, outerColor) = CreateDoubleLockerRoom(lockerRoom, exitKeyColor);
 
-        // Place inner key in room closest to player so it can accidentally be picked up
-        var innerKeyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
-        var innerKeyPos = GetRandomEmptyPositionInRoom(innerKeyRoom, 1);
+        // Place inner key in same room as player so it can accidentally be picked up
+        var innerKeyPos = (playerRoom.Bottom - 1, playerRoom.Right - 1);
 
         // Place outer key far from exit and player
         var outerKeyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, exitDoor]);

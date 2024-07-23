@@ -22,7 +22,9 @@
 
             <StackPanel Orientation="Vertical">
                 <TextBlock Margin="0,4,0,0">Level</TextBlock>
-                <TextBox Margin="0,0,0,4" Text="{Binding Level}"/>
+                <NumericUpDown Value="{Binding Level}" Margin="0,0,0,4" VerticalAlignment="Center"
+                               Minimum="0" Maximum="99"
+                               FormatString="0"/>
                 <TextBlock Margin="0,4,0,0">Width</TextBlock>
                 <TextBox Margin="0,0,0,4" Text="{Binding Width}"/>
                 <TextBlock Margin="0,4,0,0">Height</TextBlock>
