@@ -778,7 +778,7 @@ public class Game : IGame
         AddIfNotOccupied((pos.y, pos.x + 1));
         AddIfNotOccupied((pos.y + 1, pos.x));
         if (choices.Count > 0) return choices.PickOne();
-        
+
         // No empty positions found yet, try diagonal
         AddIfNotOccupied((pos.y - 1, pos.x - 1));
         AddIfNotOccupied((pos.y - 1, pos.x + 1));

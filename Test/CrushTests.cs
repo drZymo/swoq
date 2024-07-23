@@ -1,6 +1,5 @@
 ﻿using Swoq.Infra;
 using Swoq.Server;
-using System.Text;
 using static Swoq.Test.TestUtils;
 
 namespace Swoq.Test;
