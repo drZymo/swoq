@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Protos\swoq.proto" />
+    <None Remove="swoq.proto" />
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\swoq.proto" />
+    <Protobuf Include="swoq.proto" />
   </ItemGroup>
 
   <ItemGroup>
