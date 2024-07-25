@@ -5,31 +5,59 @@ import "google/protobuf/empty.proto";
 package Swoq.Interface;
 
 enum Result {
-	OK = 0;
-	
-	INTERNAL_ERROR = 1;
-	PLAYER_ALREADY_REGISTERED = 2;
-	UNKNOWN_PLAYER = 3;
-	UNKNOWN_GAME_ID = 4;
-	LEVEL_NOT_AVAILABLE = 5;
-	QUEST_QUEUED = 6;
+	RESULT_OK = 0;
 
-	MOVE_NOT_ALLOWED = 10;
-	USE_NOT_ALLOWED = 11;
-	UNKNOWN_ACTION = 12;
-	UNKNOWN_DIRECTION = 13;
-	GAME_FINISHED = 14;
-	PLAYER1_NOT_PRESENT = 15;
-	PLAYER2_NOT_PRESENT = 16;
-	INVENTORY_FULL = 17;
-	INVENTORY_EMPTY = 18;
-	NO_SWORD = 19;
-	PLAYER1_DIED = 20;
-	PLAYER2_DIED = 21;
-	NO_PROGRESS = 22;
-	GAME_TIMEOUT = 23;
+	RESULT_INTERNAL_ERROR = 1;
+	RESULT_PLAYER_ALREADY_REGISTERED = 2;
+	RESULT_UNKNOWN_PLAYER = 3;
+	RESULT_UNKNOWN_GAME_ID = 4;
+	RESULT_LEVEL_NOT_AVAILABLE = 5;
+	RESULT_QUEST_QUEUED = 6;
+
+	RESULT_MOVE_NOT_ALLOWED = 10;
+	RESULT_USE_NOT_ALLOWED = 11;
+	RESULT_UNKNOWN_ACTION = 12;
+	RESULT_UNKNOWN_DIRECTION = 13;
+	RESULT_GAME_FINISHED = 14;
+	RESULT_PLAYER1_NOT_PRESENT = 15;
+	RESULT_PLAYER2_NOT_PRESENT = 16;
+	RESULT_INVENTORY_FULL = 17;
+	RESULT_INVENTORY_EMPTY = 18;
+	RESULT_NO_SWORD = 19;
+	RESULT_PLAYER1_DIED = 20;
+	RESULT_PLAYER2_DIED = 21;
+	RESULT_NO_PROGRESS = 22;
+	RESULT_GAME_TIMEOUT = 23;
 }
 
+enum Tile {
+	TILE_UNKNOWN = 0;
+	TILE_EMPTY = 1;
+	TILE_PLAYER = 2;
+	TILE_WALL = 3;
+	TILE_EXIT = 4;
+	TILE_DOOR_RED = 5;
+	TILE_KEY_RED = 6;
+	TILE_DOOR_GREEN = 7;
+	TILE_KEY_GREEN = 8;
+	TILE_DOOR_BLUE = 9;
+	TILE_KEY_BLUE = 10;
+	TILE_PRESSURE_PLATE_RED = 11;
+	TILE_PRESSURE_PLATE_GREEN = 12;
+	TILE_PRESSURE_PLATE_BLUE = 13;
+	TILE_SWORD = 14;
+	TILE_ENEMY = 15;
+	TILE_HEALTH = 16;
+	TILE_BOULDER = 17;
+}
+
+enum Inventory {
+	INVENTORY_NONE = 0;
+	INVENTORY_KEY_RED = 1;
+	INVENTORY_KEY_GREEN = 2;
+	INVENTORY_KEY_BLUE = 3;
+	INVENTORY_BOULDER = 4;
+}
 
 service PlayerService {
 	rpc Register(RegisterRequest) returns (RegisterResponse);
@@ -62,13 +90,6 @@ service GameService {
 	rpc Act(ActionRequest) returns (ActionResponse);
 }
 
-enum Direction {
-	NORTH = 0;
-	EAST = 1;
-	SOUTH = 2;
-	WEST = 3;
-}
-
 message Position {
 	int32 x = 1;
 	int32 y = 2;
@@ -76,8 +97,8 @@ message Position {
 
 message PlayerState {
 	Position position = 1;
-	repeated int32 surroundings = 2;
-	int32 inventory = 3;
+	repeated Tile surroundings = 2;
+	Inventory inventory = 3;
 	int32 health = 4;
 	bool hasSword = 5;
 }
@@ -105,8 +126,15 @@ message StartResponse {
 }
 
 enum Action {
-	MOVE = 0;
-	USE = 1;
+	ACTION_MOVE = 0;
+	ACTION_USE = 1;
+}
+
+enum Direction {
+	DIRECTION_NORTH = 0;
+	DIRECTION_EAST = 1;
+	DIRECTION_SOUTH = 2;
+	DIRECTION_WEST = 3;
 }
 
 message ActionRequest {

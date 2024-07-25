@@ -1,5 +1,6 @@
 namespace Swoq.Infra;
 
+using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Position = (int y, int x);

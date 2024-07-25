@@ -2,13 +2,19 @@
 using Swoq.Infra;
 using Swoq.InfraUI.Models;
 using Swoq.Interface;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
 public class GameStateBuilder(int height, int width, int visibilityRange, string playerName)
 {
-    private static readonly string[] InventoryNames = ["-", "Red key", "Green key", "Blue key", "Boulder"];
+    private static readonly IImmutableDictionary<Inventory, string> InventoryNames = ImmutableDictionary<Inventory, string>.Empty.
+        Add(Inventory.None, "-").
+        Add(Inventory.KeyRed, "Red key").
+        Add(Inventory.KeyGreen, "Green key").
+        Add(Inventory.KeyBlue, "Blue key").
+        Add(Inventory.Boulder, "Boulder");
 
     private readonly MapBuilder mapBuilder = new(height, width, visibilityRange);
     private readonly string playerName = playerName;

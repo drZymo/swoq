@@ -56,20 +56,4 @@ internal static class ServiceUtil
         state.Surroundings.AddRange(playerState.Surroundings);
         return state;
     }
-
-    public static Action Convert(this Interface.Action action) => action switch
-    {
-        Interface.Action.Move => Action.Move,
-        Interface.Action.Use => Action.Use,
-        _ => throw new NotImplementedException(),
-    };
-
-    public static Direction Convert(this Interface.Direction direction) => direction switch
-    {
-        Interface.Direction.North => Direction.North,
-        Interface.Direction.East => Direction.East,
-        Interface.Direction.South => Direction.South,
-        Interface.Direction.West => Direction.West,
-        _ => throw new NotImplementedException(),
-    };
 }

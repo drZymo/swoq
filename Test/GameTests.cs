@@ -33,7 +33,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.False);
         });
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
 
         Assert.Multiple(() =>
         {
@@ -49,7 +49,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.False);
         });
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
 
         Assert.Multiple(() =>
         {
@@ -77,7 +77,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.False);
         });
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
 
         Assert.Multiple(() =>
         {
@@ -93,7 +93,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.True);
         });
 
-        Assert.Throws<GameTimeoutException>(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+        Assert.Throws<GameTimeoutException>(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
 
         Assert.Multiple(() =>
         {
@@ -101,7 +101,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.True);
         });
 
-        Assert.Throws<GameFinishedException>(() => game.Act(new DirectedAction(Server.Action.Move, Direction.East)));
+        Assert.Throws<GameFinishedException>(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
 
         Assert.Multiple(() =>
         {

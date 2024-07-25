@@ -1,5 +1,5 @@
 ﻿using Swoq.Infra;
-using Swoq.Server;
+using Swoq.Interface;
 using static Swoq.Test.TestUtils;
 
 namespace Swoq.Test;
@@ -7,7 +7,7 @@ namespace Swoq.Test;
 [TestFixture]
 internal class CrushTests : GameTestBase
 {
-    internal readonly int[] InitialSurroundings = ConvertSurroundings(
+    internal readonly Tile[] InitialSurroundings = ConvertSurroundings(
         "                 " +
         "                 " +
         "                 " +
@@ -34,7 +34,7 @@ internal class CrushTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(game.State.Player1.Surroundings, Has.Length.EqualTo(17 * 17));
             Assert.That(game.State.Player1.Surroundings, Is.EqualTo(InitialSurroundings));
         });
@@ -49,65 +49,65 @@ internal class CrushTests : GameTestBase
         });
 
         // Go south, pickup boulder and move back
-        Act(Server.Action.Move, Direction.South);
-        Act(Server.Action.Move, Direction.South);
-        Act(Server.Action.Move, Direction.South);
-        Act(Server.Action.Use, Direction.South);
-        Act(Server.Action.Move, Direction.North);
-        Act(Server.Action.Move, Direction.North);
-        Act(Server.Action.Move, Direction.North);
+        Act(Interface.Action.Move, Direction.South);
+        Act(Interface.Action.Move, Direction.South);
+        Act(Interface.Action.Move, Direction.South);
+        Act(Interface.Action.Use, Direction.South);
+        Act(Interface.Action.Move, Direction.North);
+        Act(Interface.Action.Move, Direction.North);
+        Act(Interface.Action.Move, Direction.North);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(4));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder));
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(9, 5)], Is.EqualTo((17, 1))); // boulder picked up
-            Assert.That(changes[(10, 5)], Is.EqualTo((0, 3))); // hidden wall revealed
+            Assert.That(changes[(9, 5)], Is.EqualTo((Tile.Boulder, Tile.Empty))); // boulder picked up
+            Assert.That(changes[(10, 5)], Is.EqualTo((Tile.Unknown, Tile.Wall))); // hidden wall revealed
         });
 
         // Place boulder on plate
         // Enemy moves towards player immediately
-        Act(Server.Action.Use, Direction.West);
+        Act(Interface.Action.Use, Direction.West);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0)); // boulder removed from inventory
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
             Assert.That(changes, Has.Count.EqualTo(4));
-            Assert.That(changes[(5, 4)], Is.EqualTo((11, 17))); // boulder on plate
-            Assert.That(changes[(2, 5)], Is.EqualTo((5, 15))); // door opened and enemy stepped right in
-            Assert.That(changes[(1, 5)], Is.EqualTo((0, 1))); // original enemy pos revealed
-            Assert.That(changes[(0, 5)], Is.EqualTo((0, 3))); // wall revealed
+            Assert.That(changes[(5, 4)], Is.EqualTo((Tile.PressurePlateRed, Tile.Boulder))); // boulder on plate
+            Assert.That(changes[(2, 5)], Is.EqualTo((Tile.DoorRed, Tile.Enemy))); // door opened and enemy stepped right in
+            Assert.That(changes[(1, 5)], Is.EqualTo((Tile.Unknown, Tile.Empty))); // original enemy pos revealed
+            Assert.That(changes[(0, 5)], Is.EqualTo((Tile.Unknown, Tile.Wall))); // wall revealed
         });
 
         // Enemy is now at the position of the door.
         // Pick up boulder immediately to close the door.
 
         // Pick boulder
-        Act(Server.Action.Use, Direction.West);
+        Act(Interface.Action.Use, Direction.West);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(4)); // boulder back in inventory
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder)); // boulder back in inventory
             Assert.That(changes, Has.Count.EqualTo(3));
-            Assert.That(changes[(5, 4)], Is.EqualTo((17, 11))); // boulder from plate
-            Assert.That(changes[(2, 5)], Is.EqualTo((15, 5))); // door closed on top of enemy
-            Assert.That(changes[(3, 5)], Is.EqualTo((1, 14))); // sword dropped
+            Assert.That(changes[(5, 4)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateRed))); // boulder from plate
+            Assert.That(changes[(2, 5)], Is.EqualTo((Tile.Enemy, Tile.DoorRed))); // door closed on top of enemy
+            Assert.That(changes[(3, 5)], Is.EqualTo((Tile.Empty, Tile.Sword))); // sword dropped
         });
 
         // Place boulder back on plate
         // Door should be open, and no enemy in view
-        Act(Server.Action.Use, Direction.West);
+        Act(Interface.Action.Use, Direction.West);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0)); // boulder removed from inventory
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(5, 4)], Is.EqualTo((11, 17))); // boulder on plate
-            Assert.That(changes[(2, 5)], Is.EqualTo((5, 1))); // door opened, no enemy visible
+            Assert.That(changes[(5, 4)], Is.EqualTo((Tile.PressurePlateRed, Tile.Boulder))); // boulder on plate
+            Assert.That(changes[(2, 5)], Is.EqualTo((Tile.DoorRed, Tile.Empty))); // door opened, no enemy visible
         });
     }
 

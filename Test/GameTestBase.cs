@@ -26,8 +26,8 @@ internal abstract class GameTestBase
     }
 
     protected void Act(
-        Server.Action action1, Server.Direction direction1,
-        Server.Action? action2 = null, Server.Direction? direction2 = null)
+        Interface.Action action1, Interface.Direction direction1,
+        Interface.Action? action2 = null, Interface.Direction? direction2 = null)
     {
         var directedAction1 = new DirectedAction(action1, direction1);
         var directedAction2 = (action2.HasValue && direction2.HasValue)

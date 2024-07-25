@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using Swoq.Interface;
+using System.Collections.Immutable;
 
 namespace Swoq.Infra;
 
@@ -6,7 +7,6 @@ using Position = (int y, int x);
 
 public class MapBuilder(int height, int width, int visibilityRange)
 {
-    private const int CellStateEnemy = 15;
     private readonly Cell[,] mapData = new Cell[height, width];
     private readonly bool[,] visibility = new bool[height, width];
 
@@ -47,43 +47,53 @@ public class MapBuilder(int height, int width, int visibilityRange)
         this.level = level;
     }
 
-    public void AddPlayerState(Position playerPosition, IReadOnlyList<int> surroundings, int playerIndex)
+    public void AddPlayerState(Position playerPosition, IEnumerable<Tile> surroundings, int playerIndex)
     {
         if (playerIndex < 1 || playerIndex > 2) throw new ArgumentOutOfRangeException(nameof(playerIndex));
 
         if (playerPosition.y < 0 || playerPosition.x < 0 ||
-            surroundings.Count <= 0)
+            !surroundings.Any())
         {
             if (playerIndex == 1) player1Position = PositionEx.Invalid;
             if (playerIndex == 2) player2Position = null;
             return;
         }
 
+        var surroundingsSize = visibilityRange * 2 + 1;
+
         var top = playerPosition.y - visibilityRange;
         var left = playerPosition.x - visibilityRange;
 
-        var i = 0;
-        for (var y = 0; y < visibilityRange * 2 + 1; y++)
+        var y = 0;
+        var x = 0;
+        foreach (var tile in surroundings)
         {
-            for (var x = 0; x < visibilityRange * 2 + 1; x++)
+            var my = top + y;
+            var mx = left + x;
+            if (0 <= my && my < height && 0 <= mx && mx < width)
             {
-                var my = top + y;
-                var mx = left + x;
-                if (0 <= my && my < height && 0 <= mx && mx < width)
+                if (tile == Tile.Enemy)
                 {
-                    int cellState = surroundings[i];
-                    if (cellState == CellStateEnemy)
-                    {
-                        enemyPositions = enemyPositions.Add((my, mx));
-                    }
-                    var cell = ToCell(cellState);
-                    if (cell != Cell.Unknown)
-                    {
-                        mapData[my, mx] = cell;
-                        visibility[my, mx] = true;
-                    }
+                    enemyPositions = enemyPositions.Add((my, mx));
                 }
-                i++;
+                var cell = ToCell(tile);
+                if (cell != Cell.Unknown)
+                {
+                    mapData[my, mx] = cell;
+                    visibility[my, mx] = true;
+                }
+            }
+
+            x++;
+            if (x >= surroundingsSize)
+            {
+                y++;
+                x = 0;
+            }
+
+            if (y >= surroundingsSize)
+            {
+                throw new InvalidOperationException();
             }
         }
 
@@ -103,26 +113,26 @@ public class MapBuilder(int height, int width, int visibilityRange)
             visibility: visibility.Cast<bool>());
     }
 
-    private static Cell ToCell(int cellState) => cellState switch
+    private static Cell ToCell(Tile tile) => tile switch
     {
-        0 => Cell.Unknown,
-        1 => Cell.Empty,
-        2 => Cell.Empty, // Players always stand on empty
-        3 => Cell.Wall,
-        4 => Cell.Exit,
-        5 => Cell.DoorRedClosed,
-        6 => Cell.KeyRed,
-        7 => Cell.DoorGreenClosed,
-        8 => Cell.KeyGreen,
-        9 => Cell.DoorBlueClosed,
-        10 => Cell.KeyBlue,
-        11 => Cell.PressurePlateRed,
-        12 => Cell.PressurePlateGreen,
-        13 => Cell.PressurePlateBlue,
-        14 => Cell.Sword,
-        CellStateEnemy => Cell.Empty, // Enemies always stand on empty
-        16 => Cell.Health,
-        17 => Cell.Boulder,
+        Tile.Unknown => Cell.Unknown,
+        Tile.Empty => Cell.Empty,
+        Tile.Player => Cell.Empty, // Players always stand on empty
+        Tile.Wall => Cell.Wall,
+        Tile.Exit => Cell.Exit,
+        Tile.DoorRed => Cell.DoorRedClosed,
+        Tile.KeyRed => Cell.KeyRed,
+        Tile.DoorGreen => Cell.DoorGreenClosed,
+        Tile.KeyGreen => Cell.KeyGreen,
+        Tile.DoorBlue => Cell.DoorBlueClosed,
+        Tile.KeyBlue => Cell.KeyBlue,
+        Tile.PressurePlateRed => Cell.PressurePlateRed,
+        Tile.PressurePlateGreen => Cell.PressurePlateGreen,
+        Tile.PressurePlateBlue => Cell.PressurePlateBlue,
+        Tile.Sword => Cell.Sword,
+        Tile.Enemy => Cell.Empty, // Enemies always stand on empty
+        Tile.Health => Cell.Health,
+        Tile.Boulder => Cell.Boulder,
         _ => throw new NotImplementedException(),
     };
 }

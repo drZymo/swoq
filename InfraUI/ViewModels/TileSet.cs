@@ -1,31 +1,10 @@
 ﻿using Avalonia;
 using Avalonia.Media.Imaging;
+using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 
 namespace Swoq.InfraUI.ViewModels;
-
-public enum Tile
-{
-    Unknown,
-    Wall,
-    Empty,
-    Player,
-    Enemy,
-    Exit,
-    KeyRed,
-    KeyGreen,
-    KeyBlue,
-    DoorRed,
-    DoorGreen,
-    DoorBlue,
-    PressurePlateRed,
-    PressurePlateGreen,
-    PressurePlateBlue,
-    Sword,
-    Health,
-    Boulder,
-}
 
 public static class TileSet
 {

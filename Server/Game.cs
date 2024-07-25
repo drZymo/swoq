@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -85,10 +86,10 @@ public class Game : IGame
         {
             switch (action1.Action)
             {
-                case Action.Move:
+                case Interface.Action.Move:
                     Move(ref player1, action1.Direction);
                     break;
-                case Action.Use:
+                case Interface.Action.Use:
                     Use(ref player1, action1.Direction);
                     break;
                 default:
@@ -100,10 +101,10 @@ public class Game : IGame
         {
             switch (action2.Action)
             {
-                case Action.Move:
+                case Interface.Action.Move:
                     Move(ref player2, action2.Direction);
                     break;
-                case Action.Use:
+                case Interface.Action.Use:
                     Use(ref player2, action2.Direction);
                     break;
                 default:
@@ -793,14 +794,14 @@ public class Game : IGame
 
     private PlayerState GetPlayerState(GamePlayer player)
     {
-        int[] surroundings = [];
+        Tile[] surroundings = [];
 
         if (player.Position.IsValid())
         {
             var width = Parameters.PlayerVisibilityRange * 2 + 1;
             var height = Parameters.PlayerVisibilityRange * 2 + 1;
 
-            surroundings = new int[height * width];
+            surroundings = new Tile[height * width];
 
             var top = player.Position.y - Parameters.PlayerVisibilityRange;
             var left = player.Position.x - Parameters.PlayerVisibilityRange;
@@ -808,38 +809,19 @@ public class Game : IGame
             {
                 for (var x = 0; x < width; x++)
                 {
-                    surroundings[y * width + x] = ToCellState(player, (top + y, left + x));
+                    surroundings[y * width + x] = ToTile(player, (top + y, left + x));
                 }
             }
         }
 
-        return new PlayerState(player.Position, player.Health, ToInventoryState(player.Inventory), player.HasSword, surroundings);
+        return new PlayerState(player.Position, player.Health, player.Inventory, player.HasSword, surroundings);
     }
 
-    private int ToCellState(GamePlayer player, Position pos)
+    private Tile ToTile(GamePlayer player, Position pos)
     {
-        const int UNKNOWN = 0;
-        const int EMPTY = 1;
-        const int PLAYER = 2;
-        const int WALL = 3;
-        const int EXIT = 4;
-        const int DOOR_RED = 5;
-        const int KEY_RED = 6;
-        const int DOOR_GREEN = 7;
-        const int KEY_GREEN = 8;
-        const int DOOR_BLUE = 9;
-        const int KEY_BLUE = 10;
-        const int PRESSURE_PLATE_RED = 11;
-        const int PRESSURE_PLATE_GREEN = 12;
-        const int PRESSURE_PLATE_BLUE = 13;
-        const int SWORD = 14;
-        const int ENEMY = 15;
-        const int HEALTH = 16;
-        const int BOULDER = 17;
-
         if (pos.Equals(player.Position))
         {
-            return PLAYER;
+            return Tile.Player;
         }
 
         if (IsVisible(player.Position, pos))
@@ -847,59 +829,51 @@ public class Game : IGame
             if ((player1 != null && pos.Equals(player1.Position)) ||
                 (player2 != null && pos.Equals(player2.Position)))
             {
-                return PLAYER;
+                return Tile.Player;
             }
 
             foreach (var enemy in enemies)
             {
                 if (pos.Equals(enemy.Position))
                 {
-                    return ENEMY;
+                    return Tile.Enemy;
                 }
             }
 
             var cell = map[pos];
             switch (cell)
             {
-                case Cell.Empty: return EMPTY;
-                case Cell.Wall: return WALL;
-                case Cell.Exit: return EXIT;
-                case Cell.DoorRedClosed: return DOOR_RED;
-                case Cell.KeyRed: return KEY_RED;
-                case Cell.DoorGreenClosed: return DOOR_GREEN;
-                case Cell.KeyGreen: return KEY_GREEN;
-                case Cell.DoorBlueClosed: return DOOR_BLUE;
-                case Cell.KeyBlue: return KEY_BLUE;
-                case Cell.PressurePlateRed: return PRESSURE_PLATE_RED;
-                case Cell.PressurePlateGreen: return PRESSURE_PLATE_GREEN;
-                case Cell.PressurePlateBlue: return PRESSURE_PLATE_BLUE;
-                case Cell.Sword: return SWORD;
-                case Cell.Health: return HEALTH;
-                case Cell.Boulder: return BOULDER;
-                case Cell.PressurePlateRedWithBoulder: return BOULDER;
-                case Cell.PressurePlateGreenWithBoulder: return BOULDER;
-                case Cell.PressurePlateBlueWithBoulder: return BOULDER;
+                case Cell.Empty: return Tile.Empty;
+                case Cell.Wall: return Tile.Wall;
+                case Cell.Exit: return Tile.Exit;
+                case Cell.DoorRedClosed: return Tile.DoorRed;
+                case Cell.KeyRed: return Tile.KeyRed;
+                case Cell.DoorGreenClosed: return Tile.DoorGreen;
+                case Cell.KeyGreen: return Tile.KeyGreen;
+                case Cell.DoorBlueClosed: return Tile.DoorBlue;
+                case Cell.KeyBlue: return Tile.KeyBlue;
+                case Cell.PressurePlateRed: return Tile.PressurePlateRed;
+                case Cell.PressurePlateGreen: return Tile.PressurePlateGreen;
+                case Cell.PressurePlateBlue: return Tile.PressurePlateBlue;
+                case Cell.Sword: return Tile.Sword;
+                case Cell.Health: return Tile.Health;
+
+                case Cell.Boulder:
+                case Cell.PressurePlateRedWithBoulder:
+                case Cell.PressurePlateGreenWithBoulder:
+                case Cell.PressurePlateBlueWithBoulder:
+                    return Tile.Boulder;
 
                 // don't show open doors
                 case Cell.DoorRedOpen:
                 case Cell.DoorGreenOpen:
                 case Cell.DoorBlueOpen:
-                    return EMPTY;
+                    return Tile.Empty;
             }
         }
 
-        return UNKNOWN;
+        return Tile.Unknown;
     }
-
-    private static int ToInventoryState(Inventory inventory) => inventory switch
-    {
-        Inventory.None => 0,
-        Inventory.KeyRed => 1,
-        Inventory.KeyGreen => 2,
-        Inventory.KeyBlue => 3,
-        Inventory.Boulder => 4,
-        _ => throw new NotImplementedException(),
-    };
 
     #endregion
 }

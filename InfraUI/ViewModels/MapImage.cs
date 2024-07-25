@@ -2,6 +2,7 @@
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.InteropServices;

@@ -1,4 +1,6 @@
-﻿namespace Swoq.InfraUI.ViewModels;
+﻿using Swoq.Interface;
+
+namespace Swoq.InfraUI.ViewModels;
 
 public abstract class LockedMapImage : IDisposable
 {

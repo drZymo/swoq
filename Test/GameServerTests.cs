@@ -47,7 +47,7 @@ public class GameServerTests
 
         // Act on it
         now += TimeSpan.FromSeconds(1);
-        Assert.DoesNotThrow(() => gameServer.Act(result.GameId, new DirectedAction(Server.Action.Move, Direction.South)));
+        Assert.DoesNotThrow(() => gameServer.Act(result.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.South)));
     }
 
     [Test]
@@ -69,7 +69,7 @@ public class GameServerTests
 
         // Act on player 1 quest should be possible
         now += TimeSpan.FromSeconds(1);
-        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.South)));
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.South)));
     }
 
     [Test]
@@ -87,10 +87,10 @@ public class GameServerTests
 
         // Let both players keep responding for a while
         now += TimeSpan.FromSeconds(4);
-        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.South)));
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.South)));
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
         now += TimeSpan.FromSeconds(4);
-        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.North)));
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.North)));
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
 
         // Stop responding with player 1 so it times out but keep responding with player 2
@@ -107,7 +107,7 @@ public class GameServerTests
         Assert.That(result2, Is.Not.Null);
 
         // Acting on 1 should now fail on timeout
-        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.South)));
+        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.South)));
     }
 
     [Test]
@@ -128,10 +128,10 @@ public class GameServerTests
 
         // Let player 1 and 3 keep responding for a while
         now += TimeSpan.FromSeconds(4);
-        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.South)));
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.South)));
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
         now += TimeSpan.FromSeconds(4);
-        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.North)));
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.North)));
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
 
         // Stop responding with player 1 so it times out but keep responding with player 3
@@ -161,20 +161,20 @@ public class GameServerTests
         Assert.DoesNotThrow(() => result1 = gameServer.Start("p1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
-        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.South)));
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.South)));
         now += TimeSpan.FromSeconds(20);
-        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.North)));
-        Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.North)));
+        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.North)));
+        Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.North)));
 
         // Start training for player 2 and let it timeout
         GameServer.StartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("p2", 0));
         Assert.That(result2, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
-        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, new DirectedAction(Server.Action.Move, Direction.East)));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
         now += TimeSpan.FromSeconds(70);
-        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result2.GameId, new DirectedAction(Server.Action.Move, Direction.West)));
-        Assert.Throws<GameFinishedException>(() => gameServer.Act(result2.GameId, new DirectedAction(Server.Action.Move, Direction.West)));
+        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result2.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.West)));
+        Assert.Throws<GameFinishedException>(() => gameServer.Act(result2.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.West)));
 
         // Wait a while
         now += TimeSpan.FromMinutes(11);
@@ -185,8 +185,8 @@ public class GameServerTests
         Assert.That(result3, Is.Not.Null);
 
         // Oldest two games should now be removed
-        Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result1.GameId, new DirectedAction(Server.Action.Move, Direction.North)));
-        Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result2.GameId, new DirectedAction(Server.Action.Move, Direction.West)));
+        Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result1.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.North)));
+        Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result2.GameId, new DirectedAction(Interface.Action.Move, Interface.Direction.West)));
     }
 
 

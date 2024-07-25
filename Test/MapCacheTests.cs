@@ -1,4 +1,4 @@
-﻿using Swoq.Server;
+﻿using Swoq.Interface;
 using static Swoq.Test.TestUtils;
 
 namespace Swoq.Test;
@@ -11,7 +11,7 @@ public class MapCacheTests
     {
         // Initial state
         MapCache cache = new(8, 8, 2);
-        var playerState = new PlayerState(
+        var playerState = new Server.PlayerState(
             (1, 1), 5, 0, false, ConvertSurroundings(
                 "     " +
                 " ####" +
@@ -34,7 +34,7 @@ public class MapCacheTests
     {
         // Initial state
         MapCache cache = new(8, 8, 2);
-        var playerState1 = new PlayerState(
+        var playerState1 = new Server.PlayerState(
             (1, 1), 5, 0, false, ConvertSurroundings(
                 "     " +
                 " ####" +
@@ -45,7 +45,7 @@ public class MapCacheTests
         cache.GetNewChanges();
 
         // Add move east
-        var playerState2 = new PlayerState(
+        var playerState2 = new Server.PlayerState(
             (1, 2), 5, 0, false, ConvertSurroundings(
                 "     " +
                 "#####" +
@@ -61,13 +61,13 @@ public class MapCacheTests
             Assert.That(changes, Is.Not.Empty);
             Assert.That(changes, Has.Count.EqualTo(6));
             // Player pos changed
-            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(1, 2)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(1, 2)], Is.EqualTo((Tile.Empty, Tile.Player)));
             // Right column appeared
-            Assert.That(changes[(0, 4)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(1, 4)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(2, 4)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(3, 4)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(0, 4)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(1, 4)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(2, 4)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(3, 4)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
         });
     }
 
@@ -76,7 +76,7 @@ public class MapCacheTests
     {
         // Initial state
         MapCache cache = new(8, 8, 2);
-        var playerState1 = new PlayerState(
+        var playerState1 = new Server.PlayerState(
             (1, 1), 5, 0, false, ConvertSurroundings(
                 "     " +
                 " ####" +
@@ -87,7 +87,7 @@ public class MapCacheTests
         cache.GetNewChanges();
 
         // Add move south
-        var playerState2 = new PlayerState(
+        var playerState2 = new Server.PlayerState(
             (2, 1), 5, 0, false, ConvertSurroundings(
                 " ####" +
                 " #..." +
@@ -104,14 +104,14 @@ public class MapCacheTests
             Assert.That(changes, Has.Count.EqualTo(6));
 
             // Player pos changed
-            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(2, 1)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.Empty, Tile.Player)));
 
             // Bottom row appeared
-            Assert.That(changes[(4, 0)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(4, 1)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(4, 2)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(4, 3)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(4, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(4, 1)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(4, 2)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(4, 3)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
         });
     }
 
@@ -123,7 +123,7 @@ public class MapCacheTests
 
         // Initial state
         MapCache cache = new(8, 8, 2);
-        var playerState1 = new PlayerState(
+        var playerState1 = new Server.PlayerState(
             (1, 1), 5, 0, false, ConvertSurroundings(
                 "     " +
                 " ####" +
@@ -134,7 +134,7 @@ public class MapCacheTests
         cache.GetNewChanges();
 
         // Move south with corner out of view
-        var playerState2 = new PlayerState(
+        var playerState2 = new Server.PlayerState(
             (2, 1), 5, 0, false, ConvertSurroundings(
                 " ### " +
                 " #..." +
@@ -151,16 +151,16 @@ public class MapCacheTests
             Assert.That(changes, Has.Count.EqualTo(6));
 
             // Player pos changed
-            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(2, 1)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.Empty, Tile.Player)));
 
             // Bottom row (excl corner) appeared
-            Assert.That(changes[(4, 0)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(4, 1)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(4, 2)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(4, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(4, 1)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(4, 2)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
 
             // Earlier invisible bottom right corner became visible
-            Assert.That(changes[(3, 3)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(3, 3)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
         });
     }
 
@@ -169,7 +169,7 @@ public class MapCacheTests
     {
         // Initial state
         MapCache cache = new(8, 8, 2);
-        var playerState1 = new PlayerState(
+        var playerState1 = new Server.PlayerState(
             (1, 1), 5, 0, false, ConvertSurroundings(
                 "     " +
                 " ####" +
@@ -180,7 +180,7 @@ public class MapCacheTests
         cache.GetNewChanges();
 
         // Move east twice
-        var playerState2 = new PlayerState(
+        var playerState2 = new Server.PlayerState(
             (1, 2), 5, 0, false, ConvertSurroundings(
                 "     " +
                 "#####" +
@@ -188,7 +188,7 @@ public class MapCacheTests
                 "#...." +
                 "#...."));
         cache.AddPlayerStates(playerState2, null);
-        var playerState3 = new PlayerState(
+        var playerState3 = new Server.PlayerState(
             (1, 3), 5, 0, false, ConvertSurroundings(
                 "     " +
                 "#####" +
@@ -205,18 +205,18 @@ public class MapCacheTests
             Assert.That(changes, Is.Not.Empty);
             Assert.That(changes, Has.Count.EqualTo(10));
             // Player pos changed
-            Assert.That(changes[(1, 1)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(1, 3)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(1, 3)], Is.EqualTo((Tile.Empty, Tile.Player)));
             // Column 1 appeared
-            Assert.That(changes[(0, 4)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(1, 4)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(2, 4)], Is.EqualTo((0, 1)));
-            Assert.That(changes[(3, 4)], Is.EqualTo((0, 1)));
+            Assert.That(changes[(0, 4)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(1, 4)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(2, 4)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
+            Assert.That(changes[(3, 4)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
             // Column 2 appeared
-            Assert.That(changes[(0, 5)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(1, 5)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(2, 5)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(3, 5)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(0, 5)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(1, 5)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(2, 5)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(3, 5)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
         });
     }
 

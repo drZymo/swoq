@@ -3,12 +3,14 @@ using System.Collections.Immutable;
 
 namespace Swoq.Test;
 
+using Tile = Swoq.Interface.Tile;
+
 internal class MapCache(int height, int width, int visibilityRange)
 {
-    private readonly int[] cache = new int[height * width];
-    private ImmutableDictionary<(int, int), (int from, int to)> changes = ImmutableDictionary<(int, int), (int from, int to)>.Empty;
+    private readonly Tile[] cache = new Tile[height * width];
+    private ImmutableDictionary<(int, int), (Tile from, Tile to)> changes = ImmutableDictionary<(int, int), (Tile from, Tile to)>.Empty;
 
-    public int this[int y, int x]
+    public Tile this[int y, int x]
     {
         get
         {
@@ -25,10 +27,10 @@ internal class MapCache(int height, int width, int visibilityRange)
         AddPlayerState(playerState2);
     }
 
-    public ImmutableDictionary<(int, int), (int from, int to)> GetNewChanges()
+    public ImmutableDictionary<(int, int), (Tile from, Tile to)> GetNewChanges()
     {
         var currentChanges = changes;
-        changes = ImmutableDictionary<(int, int), (int from, int to)>.Empty;
+        changes = ImmutableDictionary<(int, int), (Tile from, Tile to)>.Empty;
         return currentChanges;
     }
 
@@ -56,21 +58,21 @@ internal class MapCache(int height, int width, int visibilityRange)
         }
     }
 
-    private void Change(int y, int x, int newValue)
+    private void Change(int y, int x, Tile newTile)
     {
-        if (newValue == 0) return;
+        if (newTile == 0) return;
 
         var cacheIndex = y * width + x;
 
-        if (cache[cacheIndex] == newValue) return;
+        if (cache[cacheIndex] == newTile) return;
 
         var oldValue = cache[cacheIndex];
-        cache[cacheIndex] = newValue;
+        cache[cacheIndex] = newTile;
 
         var key = (y, x);
         if (changes.TryGetValue(key, out var oldChange))
         {
-            if (newValue == oldChange.from)
+            if (newTile == oldChange.from)
             {
                 // Earlier changes undone, so remove it
                 changes = changes.Remove(key);
@@ -78,13 +80,13 @@ internal class MapCache(int height, int width, int visibilityRange)
             else
             {
                 // Earlier changes overwritten
-                changes = changes.SetItem(key, (oldChange.from, newValue));
+                changes = changes.SetItem(key, (oldChange.from, newTile));
             }
         }
         else
         {
             // New change
-            changes = changes.Add(key, (oldValue, newValue));
+            changes = changes.Add(key, (oldValue, newTile));
         }
     }
 }

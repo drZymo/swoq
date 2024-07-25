@@ -7,4 +7,8 @@
     <RootNamespace>Swoq.Infra</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Interface\Interface.csproj" />
+  </ItemGroup>
+
 </Project>

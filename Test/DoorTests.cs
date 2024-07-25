@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using Swoq.Interface;
 using Swoq.Server;
 using static Swoq.Test.TestUtils;
 
@@ -9,7 +10,7 @@ namespace Swoq.Test;
 [TestFixture('B')]
 internal class DoorTests(char doorColor) : GameTestBase
 {
-    internal readonly int[] InitialSurroundings = ConvertSurroundings((
+    internal readonly Tile[] InitialSurroundings = ConvertSurroundings((
         "                 " +
         "                 " +
         "                 " +
@@ -36,7 +37,7 @@ internal class DoorTests(char doorColor) : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(game.State.Player1.Surroundings, Has.Length.EqualTo(17 * 17));
             Assert.That(game.State.Player1.Surroundings, Is.EqualTo(InitialSurroundings));
         });
@@ -53,9 +54,9 @@ internal class DoorTests(char doorColor) : GameTestBase
 
         // Move towards door, no change expected except for player itself.
 
-        Act(Server.Action.Move, Direction.South);
-        Act(Server.Action.Move, Direction.South);
-        Act(Server.Action.Move, Direction.East);
+        Act(Interface.Action.Move, Direction.South);
+        Act(Interface.Action.Move, Direction.South);
+        Act(Interface.Action.Move, Direction.East);
 
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
@@ -63,16 +64,16 @@ internal class DoorTests(char doorColor) : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 6)));
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(7, 6)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(7, 6)], Is.EqualTo((Tile.Empty, Tile.Player)));
         });
 
         // Now in front of door
         // No key in inventory
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
+        Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
 
         // Use should fail
-        Assert.Throws<InventoryEmptyException>(() => Act(Server.Action.Use, Direction.East));
+        Assert.Throws<InventoryEmptyException>(() => Act(Interface.Action.Use, Direction.East));
     }
 
     [Test]
@@ -85,8 +86,8 @@ internal class DoorTests(char doorColor) : GameTestBase
         });
 
         // Move towards key, no change expected except for player itself.
-        Act(Server.Action.Move, Direction.South);
-        Act(Server.Action.Move, Direction.South);
+        Act(Interface.Action.Move, Direction.South);
+        Act(Interface.Action.Move, Direction.South);
 
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
@@ -94,57 +95,57 @@ internal class DoorTests(char doorColor) : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(5, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(7, 5)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(7, 5)], Is.EqualTo((Tile.Empty, Tile.Player)));
         });
 
         // Pickup key
-        Assert.That(game.State.Player1.Inventory, Is.EqualTo(0));
-        Act(Server.Action.Move, Direction.South);
+        Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+        Act(Interface.Action.Move, Direction.South);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((8, 5)));
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(7, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(8, 5)], Is.EqualTo((KeyValue, 2)));
+            Assert.That(changes[(7, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((KeyTile, Tile.Player)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(InventoryValue));
         });
 
         // Move to door
-        Act(Server.Action.Move, Direction.East);
+        Act(Interface.Action.Move, Direction.East);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((8, 6)));
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
             Assert.That(changes, Has.Count.EqualTo(2));
-            Assert.That(changes[(8, 5)], Is.EqualTo((2, 1)));
-            Assert.That(changes[(8, 6)], Is.EqualTo((1, 2)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(8, 6)], Is.EqualTo((Tile.Empty, Tile.Player)));
         });
 
         // Open door
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(InventoryValue));
-        Act(Server.Action.Use, Direction.East);
+        Act(Interface.Action.Use, Direction.East);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((8, 6)));
             Assert.That(game.State.Player2.Position, Is.EqualTo((5, 8)));
-            Assert.That(game.State.Player1.Inventory, Is.EqualTo(0)); // Key removed from inventory
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // Key removed from inventory
             Assert.That(changes, Has.Count.EqualTo(8));
             // Doors opened
-            Assert.That(changes[(7, 7)], Is.EqualTo((DoorValue, 1)));
-            Assert.That(changes[(7, 8)], Is.EqualTo((DoorValue, 1)));
-            Assert.That(changes[(8, 7)], Is.EqualTo((DoorValue, 1)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((DoorTile, Tile.Empty)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((DoorTile, Tile.Empty)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((DoorTile, Tile.Empty)));
             // Exit became visible
-            Assert.That(changes[(8, 8)], Is.EqualTo((0, 4)));
+            Assert.That(changes[(8, 8)], Is.EqualTo((Tile.Unknown, Tile.Exit)));
             // Some walls became visible
-            Assert.That(changes[(7, 9)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(8, 9)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(9, 7)], Is.EqualTo((0, 3)));
-            Assert.That(changes[(9, 8)], Is.EqualTo((0, 3)));
+            Assert.That(changes[(7, 9)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(8, 9)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(9, 7)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
         });
     }
 
@@ -184,25 +185,25 @@ internal class DoorTests(char doorColor) : GameTestBase
         return map.ToMap();
     }
 
-    private readonly int DoorValue = doorColor switch
+    private readonly Tile DoorTile = doorColor switch
     {
-        'R' => 5,
-        'G' => 7,
-        'B' => 9,
+        'R' => Tile.DoorRed,
+        'G' => Tile.DoorGreen,
+        'B' => Tile.DoorBlue,
         _ => throw new NotImplementedException(),
     };
-    private readonly int KeyValue = doorColor switch
+    private readonly Tile KeyTile = doorColor switch
     {
-        'R' => 6,
-        'G' => 8,
-        'B' => 10,
+        'R' => Tile.KeyRed,
+        'G' => Tile.KeyGreen,
+        'B' => Tile.KeyBlue,
         _ => throw new NotImplementedException(),
     };
-    private readonly int InventoryValue = doorColor switch
+    private readonly Inventory InventoryValue = doorColor switch
     {
-        'R' => 1,
-        'G' => 2,
-        'B' => 3,
+        'R' => Inventory.KeyRed,
+        'G' => Inventory.KeyGreen,
+        'B' => Inventory.KeyBlue,
         _ => throw new NotImplementedException(),
     };
     private readonly Cell DoorCell = doorColor switch

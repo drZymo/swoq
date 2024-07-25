@@ -1,4 +1,6 @@
-﻿namespace Swoq.Infra;
+﻿using Swoq.Interface;
+
+namespace Swoq.Infra;
 
 public static class Converters
 {

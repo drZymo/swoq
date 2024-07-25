@@ -60,11 +60,11 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
                 gameId = id;
 
                 DirectedAction? action1 = request.HasAction1 && request.HasDirection1
-                    ? new DirectedAction(request.Action1.Convert(), request.Direction1.Convert())
+                    ? new DirectedAction(request.Action1, request.Direction1)
                     : null;
 
                 DirectedAction? action2 = request.HasAction2 && request.HasDirection2
-                    ? new DirectedAction(request.Action2.Convert(), request.Direction2.Convert())
+                    ? new DirectedAction(request.Action2, request.Direction2)
                     : null;
 
                 var state = server.Act(gameId.Value, action1, action2);
