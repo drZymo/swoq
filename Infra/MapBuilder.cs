@@ -1,5 +1,6 @@
 ﻿using Swoq.Interface;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Swoq.Infra;
 
@@ -68,6 +69,9 @@ public class MapBuilder(int height, int width, int visibilityRange)
         var x = 0;
         foreach (var tile in surroundings)
         {
+            Debug.Assert(0 <= x && x < surroundingsSize);
+            Debug.Assert(0 <= y && y < surroundingsSize);
+
             var my = top + y;
             var mx = left + x;
             if (0 <= my && my < height && 0 <= mx && mx < width)
@@ -89,11 +93,6 @@ public class MapBuilder(int height, int width, int visibilityRange)
             {
                 y++;
                 x = 0;
-            }
-
-            if (y >= surroundingsSize)
-            {
-                throw new InvalidOperationException();
             }
         }
 
