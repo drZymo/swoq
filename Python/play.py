@@ -6,38 +6,37 @@ from map_util import *
 from time import sleep
 
 to_swoq_pb2_direction = {
-    'N': swoq_pb2.NORTH,
-    'E': swoq_pb2.EAST,
-    'S': swoq_pb2.SOUTH,
-    'W': swoq_pb2.WEST,
+    'N': swoq_pb2.DIRECTION_NORTH,
+    'E': swoq_pb2.DIRECTION_EAST,
+    'S': swoq_pb2.DIRECTION_SOUTH,
+    'W': swoq_pb2.DIRECTION_WEST,
     None: None,
 }
 
-
 _result_strings  = {
-    swoq_pb2.OK: 'OK',
+    swoq_pb2.RESULT_OK: 'OK',
 
-    swoq_pb2.INTERNAL_ERROR: 'INTERNAL_ERROR',
-    swoq_pb2.PLAYER_ALREADY_REGISTERED: 'PLAYER_ALREADY_REGISTERED',
-    swoq_pb2.UNKNOWN_PLAYER: 'UNKNOWN_PLAYER',
-    swoq_pb2.UNKNOWN_GAME_ID: 'UNKNOWN_GAME_ID',
-    swoq_pb2.LEVEL_NOT_AVAILABLE: 'LEVEL_NOT_AVAILABLE',
-    swoq_pb2.QUEST_QUEUED: 'QUEST_QUEUED',
+    swoq_pb2.RESULT_INTERNAL_ERROR: 'INTERNAL_ERROR',
+    swoq_pb2.RESULT_PLAYER_ALREADY_REGISTERED: 'PLAYER_ALREADY_REGISTERED',
+    swoq_pb2.RESULT_UNKNOWN_PLAYER: 'UNKNOWN_swoq_pb2.TILE_PLAYER',
+    swoq_pb2.RESULT_UNKNOWN_GAME_ID: 'UNKNOWN_GAME_ID',
+    swoq_pb2.RESULT_LEVEL_NOT_AVAILABLE: 'LEVEL_NOT_AVAILABLE',
+    swoq_pb2.RESULT_QUEST_QUEUED: 'QUEST_QUEUED',
 
-    swoq_pb2.MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
-    swoq_pb2.USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
-    swoq_pb2.UNKNOWN_ACTION: 'UNKNOWN_ACTION',
-    swoq_pb2.UNKNOWN_DIRECTION: 'UNKNOWN_DIRECTION',
-    swoq_pb2.GAME_FINISHED: 'GAME_FINISHED',
-    swoq_pb2.PLAYER1_NOT_PRESENT: 'PLAYER1_NOT_PRESENT',
-    swoq_pb2.PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
-    swoq_pb2.INVENTORY_FULL: 'INVENTORY_FULL',
-    swoq_pb2.INVENTORY_EMPTY: 'INVENTORY_EMPTY',
-    swoq_pb2.NO_SWORD: 'NO_SWORD',
-    swoq_pb2.PLAYER1_DIED: 'PLAYER1_DIED',
-    swoq_pb2.PLAYER2_DIED: 'PLAYER2_DIED',
-    swoq_pb2.NO_PROGRESS: 'NO_PROGRESS',
-    swoq_pb2.GAME_TIMEOUT: 'GAME_TIMEOUT',
+    swoq_pb2.RESULT_MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
+    swoq_pb2.RESULT_USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
+    swoq_pb2.RESULT_UNKNOWN_ACTION: 'UNKNOWN_ACTION',
+    swoq_pb2.RESULT_UNKNOWN_DIRECTION: 'UNKNOWN_DIRECTION',
+    swoq_pb2.RESULT_GAME_FINISHED: 'GAME_FINISHED',
+    swoq_pb2.RESULT_PLAYER1_NOT_PRESENT: 'PLAYER1_NOT_PRESENT',
+    swoq_pb2.RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
+    swoq_pb2.RESULT_INVENTORY_FULL: 'swoq_pb2.INVENTORY_FULL',
+    swoq_pb2.RESULT_INVENTORY_EMPTY: 'swoq_pb2.INVENTORY_swoq_pb2.TILE_EMPTY',
+    swoq_pb2.RESULT_NO_SWORD: 'NO_swoq_pb2.TILE_SWORD',
+    swoq_pb2.RESULT_PLAYER1_DIED: 'PLAYER1_DIED',
+    swoq_pb2.RESULT_PLAYER2_DIED: 'PLAYER2_DIED',
+    swoq_pb2.RESULT_NO_PROGRESS: 'NO_PROGRESS',
+    swoq_pb2.RESULT_GAME_TIMEOUT: 'GAME_TIMEOUT',
 }
 
 class GamePlayer:
@@ -72,7 +71,7 @@ class GamePlayer:
             result = _result_strings[startResponse.result]
             print(f'{result=}')
 
-        while startResponse.result == swoq_pb2.QUEST_QUEUED:
+        while startResponse.result == swoq_pb2.RESULT_QUEST_QUEUED:
             sleep(1)
             startResponse = self.stub.Start(swoq_pb2.StartRequest(playerId=self.player_id, level=level))
             if self.print:
@@ -143,7 +142,7 @@ class GamePlayer:
             for y in range(self.visibility_range*2 + 1):
                 for x in range(self.visibility_range*2 + 1):
                     s = state.player1.surroundings[i]
-                    if s != UNKNOWN:
+                    if s != swoq_pb2.TILE_UNKNOWN:
                         map_x = left + x
                         map_y = top + y
                         if 0 <= map_y < self.map.shape[0] and 0 <= map_x < self.map.shape[1]:
@@ -157,7 +156,7 @@ class GamePlayer:
             for y in range(self.visibility_range*2 + 1):
                 for x in range(self.visibility_range*2 + 1):
                     s = state.player2.surroundings[i]
-                    if s != UNKNOWN:
+                    if s != swoq_pb2.TILE_UNKNOWN:
                         map_x = left + x
                         map_y = top + y
                         if 0 <= map_y < self.map.shape[0] and 0 <= map_x < self.map.shape[1]:
@@ -165,13 +164,13 @@ class GamePlayer:
                     i += 1
 
         # Remove all players from map
-        self.map[self.map == PLAYER] = EMPTY
+        self.map[self.map == swoq_pb2.TILE_PLAYER] = swoq_pb2.TILE_EMPTY
         if self.player1_pos is not None:
             y,x = self.player1_pos
-            if y >= 0 and x >=0: self.map[y,x] = PLAYER
+            if y >= 0 and x >=0: self.map[y,x] = swoq_pb2.TILE_PLAYER
         if self.player2_pos is not None:
             y,x = self.player2_pos
-            if y >= 0 and x >=0: self.map[y,x] = PLAYER
+            if y >= 0 and x >=0: self.map[y,x] = swoq_pb2.TILE_PLAYER
 
         if self.player1_pos is not None:
             self.player1_distances, self.player1_paths = compute_distances_quick(self.map, self.player1_pos)
@@ -212,28 +211,28 @@ class GamePlayer:
     def queue_move1(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action1 is None)
-        self.action1 = swoq_pb2.MOVE
+        self.action1 = swoq_pb2.ACTION_MOVE
         self.direction1 = to_swoq_pb2_direction[direction]
 
 
     def queue_move2(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action2 is None)
-        self.action2 = swoq_pb2.MOVE
+        self.action2 = swoq_pb2.ACTION_MOVE
         self.direction2 = to_swoq_pb2_direction[direction]
 
 
     def queue_use1(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action1 is None)
-        self.action1 = swoq_pb2.USE
+        self.action1 = swoq_pb2.ACTION_USE
         self.direction1 = to_swoq_pb2_direction[direction]
 
 
     def queue_use2(self, direction:str) -> None:
         global to_swoq_pb2_direction
         assert(self.action2 is None)
-        self.action2 = swoq_pb2.USE
+        self.action2 = swoq_pb2.ACTION_USE
         self.direction2 = to_swoq_pb2_direction[direction]
 
 
@@ -259,15 +258,15 @@ class GamePlayer:
         closest_dist = None
         
         # find closest empty with UNKNOWN neighbors
-        for pos_y, pos_x in np.argwhere(self.map == UNKNOWN):
+        for pos_y, pos_x in np.argwhere(self.map == swoq_pb2.TILE_UNKNOWN):
             pos = None
-            if (pos_y, pos_x-1) in distances and self.map[pos_y, pos_x-1] == EMPTY:
+            if (pos_y, pos_x-1) in distances and self.map[pos_y, pos_x-1] == swoq_pb2.TILE_EMPTY:
                 pos = (pos_y, pos_x-1)
-            elif (pos_y, pos_x+1) in distances and self.map[pos_y, pos_x+1] == EMPTY:
+            elif (pos_y, pos_x+1) in distances and self.map[pos_y, pos_x+1] == swoq_pb2.TILE_EMPTY:
                 pos = (pos_y, pos_x+1)
-            elif (pos_y-1, pos_x) in distances and self.map[pos_y-1, pos_x] == EMPTY:
+            elif (pos_y-1, pos_x) in distances and self.map[pos_y-1, pos_x] == swoq_pb2.TILE_EMPTY:
                 pos = (pos_y-1, pos_x)
-            elif (pos_y+1, pos_x) in distances and self.map[pos_y+1, pos_x] == EMPTY:
+            elif (pos_y+1, pos_x) in distances and self.map[pos_y+1, pos_x] == swoq_pb2.TILE_EMPTY:
                 pos = (pos_y+1, pos_x)
 
             if pos is not None:
@@ -355,7 +354,7 @@ class GamePlayer:
 
     def move_to_exit(self) -> None:
         # Move to exit if possible
-        exits = np.argwhere(self.map == EXIT)
+        exits = np.argwhere(self.map == swoq_pb2.TILE_EXIT)
         if np.any(exits):
             exit_pos = tuple(exits[0])
 
@@ -382,7 +381,7 @@ class GamePlayer:
 
     def attack(self) -> None:
         # Attack
-        enemies = np.argwhere(self.map == ENEMY)
+        enemies = np.argwhere(self.map == swoq_pb2.TILE_ENEMY)
         if np.any(enemies):
             enemy_pos = tuple(enemies[0])
             
@@ -434,7 +433,7 @@ class GamePlayer:
 
     def pickup_health(self) -> None:
         # Pickup health
-        healths = np.argwhere(self.map == HEALTH)
+        healths = np.argwhere(self.map == swoq_pb2.TILE_HEALTH)
         if np.any(healths):
             health_pos = tuple(healths[0])
             
@@ -449,7 +448,7 @@ class GamePlayer:
 
     def pickup_sword(self) -> None:
         # Pickup sword
-        swords = np.argwhere(self.map == SWORD)
+        swords = np.argwhere(self.map == swoq_pb2.TILE_SWORD)
         if np.any(swords):
             sword_pos = tuple(swords[0])
             
@@ -464,9 +463,9 @@ class GamePlayer:
 
     def pickup_keys(self) -> None:
         # Pickup keys
-        self.pickup_key_or_open_door(KEY_RED, DOOR_RED, INVENTORY_KEY_RED)
-        self.pickup_key_or_open_door(KEY_GREEN, DOOR_GREEN, INVENTORY_KEY_GREEN)
-        self.pickup_key_or_open_door(KEY_BLUE, DOOR_BLUE, INVENTORY_KEY_BLUE)
+        self.pickup_key_or_open_door(swoq_pb2.TILE_KEY_RED, swoq_pb2.TILE_DOOR_RED, swoq_pb2.INVENTORY_KEY_RED)
+        self.pickup_key_or_open_door(swoq_pb2.TILE_KEY_GREEN, swoq_pb2.TILE_DOOR_GREEN, swoq_pb2.INVENTORY_KEY_GREEN)
+        self.pickup_key_or_open_door(swoq_pb2.TILE_KEY_BLUE, swoq_pb2.TILE_DOOR_BLUE, swoq_pb2.INVENTORY_KEY_BLUE)
 
 
     def explore(self) -> None:
@@ -484,7 +483,7 @@ class GamePlayer:
 
 
     def move_to_pressure_plate(self) -> None:
-        plates = np.argwhere((self.map == PRESSURE_PLATE_RED) | (self.map == PRESSURE_PLATE_GREEN) | (self.map == PRESSURE_PLATE_BLUE))
+        plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
         self.plate_pos = None
         if np.any(plates):
             self.plate_pos = tuple(plates[0])
@@ -515,12 +514,12 @@ class GamePlayer:
 
 
     def wait_at_pressure_plate_door(self) -> None:
-        if self.plate_color == PRESSURE_PLATE_RED:
-            plate_doors = np.argwhere(self.map == DOOR_RED)
-        elif self.plate_color  == PRESSURE_PLATE_GREEN:
-            plate_doors = np.argwhere(self.map == DOOR_GREEN)
-        elif self.plate_color  == PRESSURE_PLATE_BLUE:
-            plate_doors = np.argwhere(self.map == DOOR_BLUE)
+        if self.plate_color == swoq_pb2.TILE_PRESSURE_PLATE_RED:
+            plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_RED)
+        elif self.plate_color  == swoq_pb2.TILE_PRESSURE_PLATE_GREEN:
+            plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_GREEN)
+        elif self.plate_color  == swoq_pb2.TILE_PRESSURE_PLATE_BLUE:
+            plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_BLUE)
         else:
             plate_doors = []
 
@@ -532,7 +531,7 @@ class GamePlayer:
 
 
     def pickup_boulder(self) -> None:
-        boulders = np.argwhere(self.map == BOULDER)
+        boulders = np.argwhere(self.map == swoq_pb2.TILE_BOULDER)
         boulders = [b for b in boulders if tuple(b) not in self.plates_with_boulders]
         if np.any(boulders):
             boulder_pos = tuple(boulders[0])
@@ -553,7 +552,7 @@ class GamePlayer:
 
 
     def wait_at_random_door(self) -> None:
-        doors = np.argwhere((self.map == DOOR_RED) | (self.map == DOOR_GREEN) | (self.map == DOOR_BLUE))
+        doors = np.argwhere((self.map == swoq_pb2.TILE_DOOR_RED) | (self.map == swoq_pb2.TILE_DOOR_GREEN) | (self.map == swoq_pb2.TILE_DOOR_BLUE))
         if np.any(doors):
             door_pos = tuple(doors[0])
             if self.can_act1():

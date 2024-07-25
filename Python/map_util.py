@@ -1,51 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import clear_output, display
-
-UNKNOWN = 0
-EMPTY = 1
-PLAYER = 2
-WALL = 3
-EXIT = 4
-DOOR_RED = 5
-KEY_RED = 6
-DOOR_GREEN = 7
-KEY_GREEN = 8
-DOOR_BLUE = 9
-KEY_BLUE = 10
-PRESSURE_PLATE_RED = 11
-PRESSURE_PLATE_GREEN = 12
-PRESSURE_PLATE_BLUE = 13
-SWORD = 14
-ENEMY = 15
-HEALTH = 16
-BOULDER = 17
-
-INVENTORY_NONE = 0
-INVENTORY_KEY_RED = 1
-INVENTORY_KEY_GREEN = 2
-INVENTORY_KEY_BLUE = 3
-INVENTORY_BOULDER = 4
+import swoq_pb2
 
 _cell_colors = {
-    UNKNOWN:              [  0,   0,   0],
-    EMPTY:                [ 64,  64,  64],
-    PLAYER:               [255,   0, 255],
-    WALL:                 [147, 124,  93],
-    EXIT:                 [230, 217, 177],
-    DOOR_RED:             [128,   0,   0],
-    KEY_RED:              [255,   0,   0],
-    DOOR_GREEN:           [  0, 128,   0],
-    KEY_GREEN:            [  0, 255,   0],
-    DOOR_BLUE:            [  0,   0, 128],
-    KEY_BLUE:             [  0,   0, 255],
-    PRESSURE_PLATE_RED:   [ 64,  32,  32],
-    PRESSURE_PLATE_GREEN: [ 32,  64,  32],
-    PRESSURE_PLATE_BLUE:  [ 32,  32,  64],
-    SWORD:                [255, 255,   0],
-    ENEMY:                [  0, 255, 255],
-    HEALTH:               [128, 128,   0],
-    BOULDER:              [ 49,  41,  31],
+    swoq_pb2.TILE_UNKNOWN:              [  0,   0,   0],
+    swoq_pb2.TILE_EMPTY:                [ 64,  64,  64],
+    swoq_pb2.TILE_PLAYER:               [255,   0, 255],
+    swoq_pb2.TILE_WALL:                 [147, 124,  93],
+    swoq_pb2.TILE_EXIT:                 [230, 217, 177],
+    swoq_pb2.TILE_DOOR_RED:             [128,   0,   0],
+    swoq_pb2.TILE_KEY_RED:              [255,   0,   0],
+    swoq_pb2.TILE_DOOR_GREEN:           [  0, 128,   0],
+    swoq_pb2.TILE_KEY_GREEN:            [  0, 255,   0],
+    swoq_pb2.TILE_DOOR_BLUE:            [  0,   0, 128],
+    swoq_pb2.TILE_KEY_BLUE:             [  0,   0, 255],
+    swoq_pb2.TILE_PRESSURE_PLATE_RED:   [ 64,  32,  32],
+    swoq_pb2.TILE_PRESSURE_PLATE_GREEN: [ 32,  64,  32],
+    swoq_pb2.TILE_PRESSURE_PLATE_BLUE:  [ 32,  32,  64],
+    swoq_pb2.TILE_SWORD:                [255, 255,   0],
+    swoq_pb2.TILE_ENEMY:                [  0, 255, 255],
+    swoq_pb2.TILE_HEALTH:               [128, 128,   0],
+    swoq_pb2.TILE_BOULDER:              [ 49,  41,  31],
 }
 
 def get_map_image(game_map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:
@@ -77,7 +53,12 @@ def update_map(frame, game_map):
 
 def is_wall(game_map: np.ndarray[np.int8], pos: tuple[int,int]) -> bool:
     cell = game_map[pos[0], pos[1]]
-    return cell == WALL or cell == DOOR_RED or cell == DOOR_GREEN or cell == DOOR_BLUE or cell == BOULDER or cell == UNKNOWN
+    return cell == swoq_pb2.TILE_WALL or \
+        cell == swoq_pb2.TILE_DOOR_RED or \
+        cell == swoq_pb2.TILE_DOOR_GREEN or \
+        cell == swoq_pb2.TILE_DOOR_BLUE or \
+        cell == swoq_pb2.TILE_BOULDER or \
+        cell == swoq_pb2.TILE_UNKNOWN
 
 
 def compute_distances(game_map: np.ndarray[np.int8], from_pos: tuple[int,int], exclude_cells: set[int]=None) -> tuple[dict, dict]:
@@ -129,7 +110,7 @@ def compute_distances_quick(game_map: np.ndarray[np.int8], from_pos: tuple[int,i
 
     def enqueue(cur_pos, cur_dist, next_pos):
         nonlocal game_map, distances, todo, paths
-        if next_pos not in distances and game_map[next_pos[0], next_pos[1]] == EMPTY:
+        if next_pos not in distances and game_map[next_pos[0], next_pos[1]] == swoq_pb2.TILE_EMPTY:
             distances[next_pos] = cur_dist + 1
             paths[next_pos] = cur_pos
             todo.append(next_pos)
