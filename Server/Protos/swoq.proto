@@ -13,11 +13,10 @@ service Training {
 
 enum Result {
 	OK = 0;
-	FAIL = 1;
 	
-	INTERNAL_ERROR = 2;
-	PLAYER_ALREADY_REGISTERED = 3;
-	MOVE_NOT_ALLOWED = 4;
+	INTERNAL_ERROR = 1;
+	PLAYER_ALREADY_REGISTERED = 2;
+	MOVE_NOT_ALLOWED = 3;
 }
 
 enum Direction {
@@ -27,6 +26,11 @@ enum Direction {
 	WEST = 3;
 }
 
+
+message State {
+	repeated int32 map = 2;
+	bool finished = 3;
+}
 
 message RegisterRequest {
 	string playerName = 1;
@@ -44,7 +48,9 @@ message StartRequest {
 message StartResponse {
 	Result result = 1;
 	string gameId = 2;
-	repeated int32 state = 3;
+	int32 height = 3;
+	int32 width = 4;
+	State state = 5;
 }
 
 message MoveRequest {
@@ -54,5 +60,5 @@ message MoveRequest {
 
 message MoveResponse {
 	Result result = 1;
-	repeated int32 state = 3;
+	State state = 2;
 }

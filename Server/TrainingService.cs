@@ -20,11 +20,13 @@ public class TrainingService : Training.TrainingBase
 
             try
             {
-                var (gameId, state) = server.StartGame();
+                var (gameId, height, width, map) = server.StartGame();
 
                 response.Result = Result.Ok;
                 response.GameId = gameId.ToString();
-                response.State.AddRange(state);
+                response.Height = height;
+                response.Width = width;
+                response.State = CreateState(map, false);
             }
             catch
             {
@@ -43,10 +45,10 @@ public class TrainingService : Training.TrainingBase
             try
             {
                 var gameId = Guid.Parse(request.GameId);
-                var (success, state) = server.Move(gameId, Convert(request.Direction));
+                var (success, map, finished) = server.Move(gameId, Convert(request.Direction));
 
                 response.Result = success ? Result.Ok : Result.MoveNotAllowed;
-                response.State.AddRange(state);
+                response.State = CreateState(map, finished);
             }
             catch
             {
@@ -56,7 +58,16 @@ public class TrainingService : Training.TrainingBase
         });
     }
 
-    private Swoq.Server.Direction Convert(Swoq.Interface.Direction direction)
+
+    private static State CreateState(int[] map, bool finished)
+    {
+        var state = new Interface.State();
+        state.Map.AddRange(map);
+        state.Finished = finished;
+        return state;
+    }
+
+    private static Direction Convert(Interface.Direction direction)
     {
         switch (direction)
         {

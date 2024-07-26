@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.AspNetCore.Components.Web;
+using System.Diagnostics;
 
 namespace Swoq.Server;
 
@@ -8,12 +9,14 @@ internal class Game
 {
     private const int VisibilityRange = 5;
 
-    private const int Width = 20;
-    private const int Height = 20;
+    public int Width { get; } = 20;
+    public int Height { get; } = 20;
 
     private Cell[,] map;
 
     private Position playerPos;
+
+    private bool isFinished = false;
 
     public Game()
     {
@@ -56,7 +59,7 @@ internal class Game
 
     public Guid Id { get; } = Guid.NewGuid();
 
-    public int[] GetState()
+    public (int[] map, bool finished) GetState()
     {
         var state = new int[Height * Width];
         for (var y = 0; y < Height; y++)
@@ -66,11 +69,13 @@ internal class Game
                 state[y * Width + x] = GetCellState((y, x));
             }
         }
-        return state;
+        return (state, isFinished);
     }
 
     public bool Move(Direction direction)
     {
+        if (isFinished) return false;
+
         Position nextPos = direction switch
         {
             Direction.North => (playerPos.y - 1, playerPos.x),
@@ -93,6 +98,7 @@ internal class Game
             case CellType.Exit:
                 // TODO: game finished
                 map.ClearCell(playerPos);
+                isFinished = true;
                 break;
 
             case CellType.Wall:
