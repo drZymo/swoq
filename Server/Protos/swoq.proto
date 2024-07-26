@@ -26,9 +26,18 @@ enum Direction {
 	WEST = 3;
 }
 
+// Keep synchronized with Swoq.Server.Game.GetCellState()
+enum Cell {
+	UNKNOWN = 0;
+	EMPTY = 1;
+	PLAYER = 2;
+	WALL = 3;
+	EXIT = 4;
+}
+
 
 message State {
-	repeated int32 map = 2;
+	repeated Cell map = 2;
 	bool finished = 3;
 }
 
@@ -47,10 +56,10 @@ message StartRequest {
 
 message StartResponse {
 	Result result = 1;
-	string gameId = 2;
-	int32 height = 3;
-	int32 width = 4;
-	State state = 5;
+	optional string gameId = 2;
+	optional int32 height = 3;
+	optional int32 width = 4;
+	optional State state = 5;
 }
 
 message MoveRequest {
@@ -60,5 +69,5 @@ message MoveRequest {
 
 message MoveResponse {
 	Result result = 1;
-	State state = 2;
+	optional State state = 2;
 }

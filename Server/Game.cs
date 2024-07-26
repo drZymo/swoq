@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Web;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Swoq.Server;
 
@@ -46,8 +45,8 @@ internal class Game
         map.ChangeCellType((5, 3), CellType.Wall);
         map.ChangeCellType((3, 4), CellType.Wall);
 
-        // Exit bottom right
-        map.ChangeCellType((Height - 2, Width - 2), CellType.Exit);
+        // Exit bottom right (in the wall)
+        map.ChangeCellType((Height - 2, Width - 1), CellType.Exit);
 
         // Start top left
         playerPos = (1, 1);
@@ -124,9 +123,16 @@ internal class Game
 
     private int GetCellState(Position pos)
     {
+        // Synchronized with swoq.proto
+        const int UNKNOWN = 0;
+        const int EMPTY = 1;
+        const int PLAYER = 2;
+        const int WALL = 3;
+        const int EXIT = 4;
+
         if (pos.Equals(playerPos))
         {
-            return 1; // STATE_PLAYER
+            return PLAYER;
         }
 
         var cell = map[pos.y, pos.x];
@@ -134,13 +140,13 @@ internal class Game
         {
             switch (cell.Type)
             {
-                case CellType.Empty: return 2; // STATE_EMPTY
-                case CellType.Wall: return 3; // STATE_WALL
-                case CellType.Exit: return 4; // STATE_EXIT
+                case CellType.Empty: return EMPTY;
+                case CellType.Wall: return WALL;
+                case CellType.Exit: return EXIT;
             }
         }
 
-        return 0; // STATE_UNKOWN
+        return UNKNOWN;
     }
 
     private void UpdateVisibility()

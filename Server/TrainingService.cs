@@ -62,7 +62,7 @@ public class TrainingService : Training.TrainingBase
     private static State CreateState(int[] map, bool finished)
     {
         var state = new Interface.State();
-        state.Map.AddRange(map);
+        state.Map.AddRange(map.Cast<Interface.Cell>());
         state.Finished = finished;
         return state;
     }
