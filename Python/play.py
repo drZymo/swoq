@@ -5,11 +5,15 @@ import numpy as np
 from map_util import *
 from time import sleep
 
-to_swoq_pb2_direction = {
-    'N': swoq_pb2.DIRECTION_NORTH,
-    'E': swoq_pb2.DIRECTION_EAST,
-    'S': swoq_pb2.DIRECTION_SOUTH,
-    'W': swoq_pb2.DIRECTION_WEST,
+to_swoq_pb2_action = {
+    'MN': swoq_pb2.DIRECTEDACTION_MOVE_NORTH,
+    'ME': swoq_pb2.DIRECTEDACTION_MOVE_EAST,
+    'MS': swoq_pb2.DIRECTEDACTION_MOVE_SOUTH,
+    'MW': swoq_pb2.DIRECTEDACTION_MOVE_WEST,
+    'UN': swoq_pb2.DIRECTEDACTION_USE_NORTH,
+    'UE': swoq_pb2.DIRECTEDACTION_USE_EAST,
+    'US': swoq_pb2.DIRECTEDACTION_USE_SOUTH,
+    'UW': swoq_pb2.DIRECTEDACTION_USE_WEST,
     None: None,
 }
 
@@ -88,10 +92,8 @@ class GamePlayer:
 
         self.update_global_state(startResponse.state)
 
-        self.action1:swoq_pb2.Action = None
-        self.direction1:swoq_pb2.Direction = None
-        self.action2:swoq_pb2.Action = None
-        self.direction2:swoq_pb2.Direction = None
+        self.action1:swoq_pb2.DirectedAction = None
+        self.action2:swoq_pb2.DirectedAction = None
         
         self.expected_enemy_health = None
         
@@ -184,10 +186,9 @@ class GamePlayer:
         if np.random.uniform() < 0.05:
             print(f' player 2 skipped')
             self.action2 = None
-            self.direction2 = None
 
         print(f'{self.action1=}, {self.action2=}')
-        response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, direction1=self.direction1, action2=self.action2, direction2=self.direction2))
+        response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, action2=self.action2))
 
         self.update_global_state(response.state)
 
@@ -200,40 +201,34 @@ class GamePlayer:
             print(f' finished={self.finished}')
 
         # clear for next act
-        self.action1:swoq_pb2.Action = None
-        self.direction1:swoq_pb2.Direction = None
-        self.action2:swoq_pb2.Action = None
-        self.direction2:swoq_pb2.Direction = None
+        self.action1:swoq_pb2.DirectedAction = None
+        self.action2:swoq_pb2.DirectedAction = None
 
         return response.result == 0
 
 
     def queue_move1(self, direction:str) -> None:
-        global to_swoq_pb2_direction
+        global to_swoq_pb2_action
         assert(self.action1 is None)
-        self.action1 = swoq_pb2.ACTION_MOVE
-        self.direction1 = to_swoq_pb2_direction[direction]
+        self.action1 = to_swoq_pb2_action['M'+direction]
 
 
     def queue_move2(self, direction:str) -> None:
-        global to_swoq_pb2_direction
+        global to_swoq_pb2_action
         assert(self.action2 is None)
-        self.action2 = swoq_pb2.ACTION_MOVE
-        self.direction2 = to_swoq_pb2_direction[direction]
+        self.action2 = to_swoq_pb2_action['M'+direction]
 
 
     def queue_use1(self, direction:str) -> None:
-        global to_swoq_pb2_direction
+        global to_swoq_pb2_action
         assert(self.action1 is None)
-        self.action1 = swoq_pb2.ACTION_USE
-        self.direction1 = to_swoq_pb2_direction[direction]
+        self.action1 = to_swoq_pb2_action['U'+direction]
 
 
     def queue_use2(self, direction:str) -> None:
-        global to_swoq_pb2_direction
+        global to_swoq_pb2_action
         assert(self.action2 is None)
-        self.action2 = swoq_pb2.ACTION_USE
-        self.direction2 = to_swoq_pb2_direction[direction]
+        self.action2 = to_swoq_pb2_action['U'+direction]
 
 
     def step(self) -> None:
