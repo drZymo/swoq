@@ -26,20 +26,14 @@ enum Direction {
 	WEST = 3;
 }
 
-// Keep synchronized with Swoq.Server.Game.GetCellState()
-enum Cell {
-	UNKNOWN = 0;
-	EMPTY = 1;
-	PLAYER = 2;
-	WALL = 3;
-	EXIT = 4;
-}
 
 
 message State {
-	repeated Cell map = 2;
-	bool finished = 3;
+	repeated int32 map = 1;
+	bool finished = 2;
+	int32 inventory = 3;
 }
+
 
 message RegisterRequest {
 	string playerName = 1;
