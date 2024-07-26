@@ -2,7 +2,7 @@
 
 - [.] Levels
   - [X] Loot drop sword (auto?)
-  - [ ] Test door kills enemy
+  - [X] Test door kills enemy
   - [ ] Big boss
   - [ ] Boulder exit kill
   - [ ] Treasure
@@ -329,3 +329,10 @@ Final enemy: Younger brother of duke.
 |--------------- |----------:|---------:|---------:|
 | GenerateAll    | 756.28 ms | 5.250 ms | 4.099 ms |
 | GenerateLevel1 |  37.83 ms | 0.686 ms | 0.641 ms |
+
+# 2024-07-26
+
+| Method         | Mean      | Error     | StdDev    |
+|--------------- |----------:|----------:|----------:|
+| GenerateAll    | 820.28 ms | 11.876 ms | 11.664 ms |
+| GenerateLevel1 |  38.70 ms |  0.719 ms |  0.883 ms |
