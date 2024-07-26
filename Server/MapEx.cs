@@ -4,9 +4,13 @@ using Position = (int y, int x);
 
 internal static class MapEx
 {
-    public static void MakeVisible(this Cell[,] map, Position pos)
+    public static void SetIsVisible(this Cell[,] map, Position pos, bool isVisible)
     {
-        map[pos.y, pos.x] = map[pos.y, pos.x] with { IsVisible = true };
+        var cell = map[pos.y, pos.x];
+        if (cell.IsVisible != isVisible)
+        {
+            map[pos.y, pos.x] = cell with { IsVisible = isVisible };
+        }
     }
 
     public static void ChangeCellType(this Cell[,] map, Position pos, CellType type)

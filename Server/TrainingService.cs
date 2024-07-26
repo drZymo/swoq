@@ -16,13 +16,21 @@ public class TrainingService : Training.TrainingBase
     {
         return Task.Run(() =>
         {
-            var (gameId, state) = server.StartGame();
-
-            // TODO: Exception handling
             var response = new StartResponse();
-            response.Result = Result.Ok;
-            response.GameId = gameId.ToString();
-            response.State.AddRange(state);
+
+            try
+            {
+                var (gameId, state) = server.StartGame();
+
+                response.Result = Result.Ok;
+                response.GameId = gameId.ToString();
+                response.State.AddRange(state);
+            }
+            catch
+            {
+                response.Result = Result.InternalError;
+            }
+
             return response;
         });
     }
@@ -31,14 +39,19 @@ public class TrainingService : Training.TrainingBase
     {
         return Task.Run(() =>
         {
-            var gameId = Guid.Parse(request.GameId);
-            var state = server.Move(gameId, Convert(request.Direction));
-            
-            // TODO: Move result
-            // TODO: Exception handling
             var response = new MoveResponse();
-            response.Result = Result.Ok;
-            response.State.AddRange(state);
+            try
+            {
+                var gameId = Guid.Parse(request.GameId);
+                var (success, state) = server.Move(gameId, Convert(request.Direction));
+
+                response.Result = success ? Result.Ok : Result.MoveNotAllowed;
+                response.State.AddRange(state);
+            }
+            catch
+            {
+                response.Result = Result.InternalError;
+            }
             return response;
         });
     }

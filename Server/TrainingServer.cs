@@ -4,14 +4,14 @@ namespace Swoq.Server;
 
 public class TrainingServer
 {
-    private readonly object gamesLock = new();
+    private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
 
     public (Guid gameId, int[] state) StartGame()
     {
         var game = new Game();
 
-        lock (gamesLock)
+        lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
         }
@@ -21,27 +21,15 @@ public class TrainingServer
         return (game.Id, state);
     }
 
-    public int[] Move(Guid gameId, Direction direction)
+    public (bool success, int[] state) Move(Guid gameId, Direction direction)
     {
-        var game = TryGetGame(gameId);
-        if (game == null) return [];
-
-        game.Move(direction);
-        return game.GetState();
-    }
-
-
-    private Game? TryGetGame(Guid gameId)
-    {
-        Game? game = null;
-        lock (gamesLock)
+        if (!games.TryGetValue(gameId, out var game))
         {
-            if (!games.TryGetValue(gameId, out game))
-            {
-                game = null;
-            }
+            return (false, []);
         }
 
-        return game;
+        var success = game.Move(direction);
+        var state = game.GetState();
+        return (success, state);
     }
 }

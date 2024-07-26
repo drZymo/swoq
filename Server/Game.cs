@@ -69,52 +69,40 @@ internal class Game
         return state;
     }
 
-    public void Move(Direction direction)
+    public bool Move(Direction direction)
     {
-        // TODO: Return move succeeded yes/no
-
-        Position nextPos;
-        switch (direction)
+        Position nextPos = direction switch
         {
-            case Direction.North:
-                nextPos = (playerPos.y - 1, playerPos.x);
+            Direction.North => (playerPos.y - 1, playerPos.x),
+            Direction.East => (playerPos.y, playerPos.x + 1),
+            Direction.South => (playerPos.y + 1, playerPos.x),
+            Direction.West => (playerPos.y, playerPos.x - 1),
+            _ => throw new NotImplementedException(), // Should not be possible
+        };
+
+        if (!CanMoveTo(nextPos)) return false;
+
+        playerPos = nextPos;
+
+        switch (map[playerPos.y, playerPos.x].Type)
+        {
+            case CellType.Empty:
+                // Nothing to do
                 break;
-            case Direction.East:
-                nextPos = (playerPos.y, playerPos.x + 1);
+
+            case CellType.Exit:
+                // TODO: game finished
+                map.ClearCell(playerPos);
                 break;
-            case Direction.South:
-                nextPos = (playerPos.y + 1, playerPos.x);
-                break;
-            case Direction.West:
-                nextPos = (playerPos.y, playerPos.x - 1);
-                break;
-            default:
-                return;
+
+            case CellType.Wall:
+                throw new NotImplementedException(); // Should not be possible
         }
 
-        if (CanMoveTo(nextPos))
-        {
-            playerPos = nextPos;
+        UpdateVisibility();
+        Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
 
-            switch (map[playerPos.y, playerPos.x].Type)
-            {
-                case CellType.Empty:
-                    // Nothing to do
-                    break;
-                
-                case CellType.Exit:
-                    // TODO: game finished
-                    map.ClearCell(playerPos);
-                    break;
-
-                case CellType.Wall:
-                    Debug.Fail("Cannot move to wall");
-                    return;
-            }
-
-            UpdateVisibility();
-            Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
-        }
+        return true;
     }
 
     private bool CanMoveTo(Position position)
@@ -151,20 +139,12 @@ internal class Game
 
     private void UpdateVisibility()
     {
-        var minY = Math.Clamp(playerPos.y - VisibilityRange, 0, Height - 1);
-        var maxY = Math.Clamp(playerPos.y + VisibilityRange, 0, Height - 1);
-        var minX = Math.Clamp(playerPos.x - VisibilityRange, 0, Width - 1);
-        var maxX = Math.Clamp(playerPos.x + VisibilityRange, 0, Width - 1);
-
-        for (var y = minY; y <= maxY; y++)
+        for (var y = 0; y < Height; y++)
         {
-            for (var x = minX; x <= maxX; x++)
+            for (var x = 0; x < Width; x++)
             {
                 var pos = (y, x);
-                if (IsVisible(pos))
-                {
-                    map.MakeVisible(pos);
-                }
+                map.SetIsVisible(pos, IsVisible(pos));
             }
         }
     }

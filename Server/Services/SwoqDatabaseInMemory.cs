@@ -5,7 +5,7 @@ namespace Swoq.Server.Services;
 
 public class SwoqDatabaseInMemory : ISwoqDatabase
 {
-    private readonly object playersMutex = new();
+    private readonly object playersWriteMutex = new();
     private IImmutableDictionary<string, Player> players = ImmutableDictionary<string, Player>.Empty;
 
     public SwoqDatabaseInMemory()
@@ -21,7 +21,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
             {
                 newPlayer.Id = Guid.NewGuid().ToString();
             }
-            lock (playersMutex)
+            lock (playersWriteMutex)
             {
                 players = players.Add(newPlayer.Id, newPlayer);
             }
