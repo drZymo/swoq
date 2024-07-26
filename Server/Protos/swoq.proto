@@ -8,7 +8,8 @@ service Player {
 
 service Training {
 	rpc StartGame(StartRequest) returns (StartResponse) {};
-	rpc Move(MoveRequest) returns (MoveResponse) {};
+	rpc Move(ActionRequest) returns (ActionResponse) {};
+	rpc Use(ActionRequest) returns (ActionResponse) {};
 }
 
 enum Result {
@@ -17,6 +18,7 @@ enum Result {
 	INTERNAL_ERROR = 1;
 	PLAYER_ALREADY_REGISTERED = 2;
 	MOVE_NOT_ALLOWED = 3;
+	USE_NOT_ALLOWED = 4;
 }
 
 enum Direction {
@@ -56,12 +58,12 @@ message StartResponse {
 	optional State state = 5;
 }
 
-message MoveRequest {
+message ActionRequest {
 	string gameId = 1;
 	Direction direction = 2;
 }
 
-message MoveResponse {
+message ActionResponse {
 	Result result = 1;
 	optional State state = 2;
 }

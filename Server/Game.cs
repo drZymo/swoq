@@ -119,7 +119,7 @@ internal class Game
             case CellType.KeyRed:
                 if (inventory == Inventory.None)
                 {
-                    // pickup
+                    // Put key in inventory and remove from map
                     inventory = Inventory.KeyRed;
                     map.ClearCell(nextPos);
                     processed = true;
@@ -134,6 +134,55 @@ internal class Game
         {
             playerPos = nextPos;
 
+            UpdateVisibility();
+        }
+        Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
+
+        return processed;
+    }
+
+
+    public bool Use(Direction direction)
+    {
+        if (isFinished) return false;
+        if (inventory == Inventory.None) return false;
+
+        Position usePos = direction switch
+        {
+            Direction.North => (playerPos.y - 1, playerPos.x),
+            Direction.East => (playerPos.y, playerPos.x + 1),
+            Direction.South => (playerPos.y + 1, playerPos.x),
+            Direction.West => (playerPos.y, playerPos.x - 1),
+            _ => throw new NotImplementedException(), // Should not be possible
+        };
+
+        var processed = false;
+
+        switch (map[usePos.y, usePos.x].Type)
+        {
+            case CellType.Empty:
+            case CellType.Exit:
+            case CellType.Wall:
+            case CellType.KeyRed:
+                // Cannot use on this
+                break;
+
+            case CellType.DoorRed:
+                if (inventory == Inventory.KeyRed)
+                {
+                    // Remove key from inventory and open door (by making the cell empty)
+                    inventory = Inventory.None;
+                    map.ClearCell(usePos);
+                    processed = true;
+                }
+                break;
+
+            default:
+                throw new NotImplementedException(); // Should not be possible
+        }
+
+        if (processed)
+        {
             UpdateVisibility();
         }
         Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);

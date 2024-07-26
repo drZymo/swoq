@@ -37,17 +37,38 @@ public class TrainingService : Training.TrainingBase
         });
     }
 
-    public override Task<MoveResponse> Move(MoveRequest request, ServerCallContext context)
+    public override Task<ActionResponse> Move(ActionRequest request, ServerCallContext context)
     {
         return Task.Run(() =>
         {
-            var response = new MoveResponse();
+            var response = new ActionResponse();
             try
             {
                 var gameId = Guid.Parse(request.GameId);
                 var (success, state) = server.Move(gameId, Convert(request.Direction));
 
                 response.Result = success ? Result.Ok : Result.MoveNotAllowed;
+                response.State = CreateState(state);
+            }
+            catch
+            {
+                response.Result = Result.InternalError;
+            }
+            return response;
+        });
+    }
+
+    public override Task<ActionResponse> Use(ActionRequest request, ServerCallContext context)
+    {
+        return Task.Run(() =>
+        {
+            var response = new ActionResponse();
+            try
+            {
+                var gameId = Guid.Parse(request.GameId);
+                var (success, state) = server.Use(gameId, Convert(request.Direction));
+
+                response.Result = success ? Result.Ok : Result.UseNotAllowed;
                 response.State = CreateState(state);
             }
             catch

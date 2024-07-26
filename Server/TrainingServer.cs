@@ -32,4 +32,16 @@ public class TrainingServer
         var state = game.GetState();
         return (success, state);
     }
+
+    public (bool success, GameState state) Use(Guid gameId, Direction direction)
+    {
+        if (!games.TryGetValue(gameId, out var game))
+        {
+            return (false, new GameState([], false, 0));
+        }
+
+        var success = game.Use(direction);
+        var state = game.GetState();
+        return (success, state);
+    }
 }
