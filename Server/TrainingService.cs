@@ -20,13 +20,13 @@ public class TrainingService : Training.TrainingBase
 
             try
             {
-                var (gameId, height, width, map) = server.StartGame();
+                var (gameId, height, width, state) = server.StartGame();
 
                 response.Result = Result.Ok;
                 response.GameId = gameId.ToString();
                 response.Height = height;
                 response.Width = width;
-                response.State = CreateState(map, false);
+                response.State = CreateState(state);
             }
             catch
             {
@@ -45,10 +45,10 @@ public class TrainingService : Training.TrainingBase
             try
             {
                 var gameId = Guid.Parse(request.GameId);
-                var (success, map, finished) = server.Move(gameId, Convert(request.Direction));
+                var (success, state) = server.Move(gameId, Convert(request.Direction));
 
                 response.Result = success ? Result.Ok : Result.MoveNotAllowed;
-                response.State = CreateState(map, finished);
+                response.State = CreateState(state);
             }
             catch
             {
@@ -59,23 +59,21 @@ public class TrainingService : Training.TrainingBase
     }
 
 
-    private static State CreateState(int[] map, bool finished)
+    private static State CreateState(GameState gameState)
     {
-        var state = new Interface.State();
-        state.Map.AddRange(map.Cast<Interface.Cell>());
-        state.Finished = finished;
+        var state = new State();
+        state.Map.AddRange(gameState.Map);
+        state.Finished = gameState.Finished;
+        state.Inventory = gameState.Inventory;
         return state;
     }
 
-    private static Direction Convert(Interface.Direction direction)
+    private static Direction Convert(Interface.Direction direction) => direction switch
     {
-        switch (direction)
-        {
-            case Interface.Direction.North: return Direction.North;
-            case Interface.Direction.East: return Direction.East;
-            case Interface.Direction.South: return Direction.South;
-            case Interface.Direction.West: return Direction.West;
-        }
-        return Direction.North;
-    }
+        Interface.Direction.North => Direction.North,
+        Interface.Direction.East => Direction.East,
+        Interface.Direction.South => Direction.South,
+        Interface.Direction.West => Direction.West,
+        _ => throw new NotImplementedException(),
+    };
 }

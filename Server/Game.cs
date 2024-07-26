@@ -17,6 +17,8 @@ internal class Game
 
     private bool isFinished = false;
 
+    private Inventory inventory = Inventory.None;
+
     public Game()
     {
         // Created walled square
@@ -48,6 +50,18 @@ internal class Game
         // Exit bottom right (in the wall)
         map.ChangeCellType((Height - 2, Width - 1), CellType.Exit);
 
+        // box around exit with red door
+        map.ChangeCellType((Height - 4, Width - 2), CellType.Wall);
+        map.ChangeCellType((Height - 4, Width - 3), CellType.Wall);
+        map.ChangeCellType((Height - 4, Width - 4), CellType.Wall);
+        map.ChangeCellType((Height - 4, Width - 5), CellType.Wall);
+        map.ChangeCellType((Height - 3, Width - 5), CellType.DoorRed);
+        map.ChangeCellType((Height - 2, Width - 5), CellType.Wall);
+
+        // key
+        map.ChangeCellType((4, 4), CellType.KeyRed);
+
+
         // Start top left
         playerPos = (1, 1);
 
@@ -58,7 +72,7 @@ internal class Game
 
     public Guid Id { get; } = Guid.NewGuid();
 
-    public (int[] map, bool finished) GetState()
+    public GameState GetState()
     {
         var state = new int[Height * Width];
         for (var y = 0; y < Height; y++)
@@ -68,7 +82,7 @@ internal class Game
                 state[y * Width + x] = GetCellState((y, x));
             }
         }
-        return (state, isFinished);
+        return new GameState(state, isFinished, GetInventoryState());
     }
 
     public bool Move(Direction direction)
@@ -86,28 +100,45 @@ internal class Game
 
         if (!CanMoveTo(nextPos)) return false;
 
-        playerPos = nextPos;
+        var processed = false;
 
-        switch (map[playerPos.y, playerPos.x].Type)
+        switch (map[nextPos.y, nextPos.x].Type)
         {
             case CellType.Empty:
                 // Nothing to do
+                processed = true;
                 break;
 
             case CellType.Exit:
                 // TODO: game finished
-                map.ClearCell(playerPos);
+                map.ClearCell(nextPos);
+                processed = true;
                 isFinished = true;
                 break;
 
-            case CellType.Wall:
+            case CellType.KeyRed:
+                if (inventory == Inventory.None)
+                {
+                    // pickup
+                    inventory = Inventory.KeyRed;
+                    map.ClearCell(nextPos);
+                    processed = true;
+                }
+                break;
+
+            default:
                 throw new NotImplementedException(); // Should not be possible
         }
 
-        UpdateVisibility();
+        if (processed)
+        {
+            playerPos = nextPos;
+
+            UpdateVisibility();
+        }
         Debug.Assert(map[playerPos.y, playerPos.x].Type == CellType.Empty);
 
-        return true;
+        return processed;
     }
 
     private bool CanMoveTo(Position position)
@@ -116,19 +147,28 @@ internal class Game
         if (position.y < 0 || position.y >= Height) return false;
 
         var cell = map[position.y, position.x];
-        if (cell.Type == CellType.Wall) return false;
 
-        return true;
+        return CanWalkOn(cell.Type);
     }
+
+    private static bool CanWalkOn(CellType cellType) => cellType switch
+    {
+        CellType.Empty => true,
+        CellType.Exit => true,
+        CellType.KeyRed => true,
+        _ => false,
+    };
 
     private int GetCellState(Position pos)
     {
-        // Synchronized with swoq.proto
         const int UNKNOWN = 0;
         const int EMPTY = 1;
         const int PLAYER = 2;
         const int WALL = 3;
         const int EXIT = 4;
+
+        const int DOOR_RED = 5;
+        const int KEY_RED = 6;
 
         if (pos.Equals(playerPos))
         {
@@ -143,11 +183,20 @@ internal class Game
                 case CellType.Empty: return EMPTY;
                 case CellType.Wall: return WALL;
                 case CellType.Exit: return EXIT;
+                case CellType.DoorRed: return DOOR_RED;
+                case CellType.KeyRed: return KEY_RED;
             }
         }
 
         return UNKNOWN;
     }
+
+    private int GetInventoryState() => inventory switch
+    {
+        Inventory.None => 0,
+        Inventory.KeyRed => 1,
+        _ => throw new NotImplementedException(),
+    };
 
     private void UpdateVisibility()
     {

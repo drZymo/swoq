@@ -7,7 +7,7 @@ public class TrainingServer
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, Game> games = ImmutableDictionary<Guid, Game>.Empty;
 
-    public (Guid gameId, int height, int width, int[] map) StartGame()
+    public (Guid gameId, int height, int width, GameState state) StartGame()
     {
         var game = new Game();
 
@@ -18,18 +18,18 @@ public class TrainingServer
 
         var state = game.GetState();
 
-        return (game.Id, game.Height, game.Width, state.map);
+        return (game.Id, game.Height, game.Width, state);
     }
 
-    public (bool success, int[] map, bool finished) Move(Guid gameId, Direction direction)
+    public (bool success, GameState state) Move(Guid gameId, Direction direction)
     {
         if (!games.TryGetValue(gameId, out var game))
         {
-            return (false, [], true);
+            return (false, new GameState([], false, 0));
         }
 
         var success = game.Move(direction);
         var state = game.GetState();
-        return (success, state.map, state.finished);
+        return (success, state);
     }
 }
