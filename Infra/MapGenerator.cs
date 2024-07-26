@@ -1,4 +1,4 @@
-﻿namespace Swoq.Infra;
+namespace Swoq.Infra;
 
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -1263,6 +1263,24 @@ public class MapGenerator : IMapGenerator
 
     private int ConnectLeftAndRightWithDoor(int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight, KeyColor doorColor)
     {
+        var tunnelPositions = ConnectLeftAndRight(middle, roomsLeft, roomsRight);
+
+        // Create door in tunnel between left and right
+        var door = ToDoor(doorColor);
+        foreach (var (y, x) in tunnelPositions)
+        {
+            SetIfEmpty(y, x, door);
+        }
+
+        // Return a position of the door where left and right side are both empty
+        var doorPosition = tunnelPositions.
+            Where(pos => map[pos.y, pos.x - 1] == Cell.Empty && map[pos.y, pos.x + 1] == Cell.Empty).
+            PickOne();
+        return doorPosition.y;
+    }
+
+    private ImmutableList<Position> ConnectLeftAndRight(int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight)
+    {
         // Connect left and right rooms closest to each other
         var minDist = double.PositiveInfinity;
         Room? minLeft = null;
@@ -1287,24 +1305,19 @@ public class MapGenerator : IMapGenerator
         // Don't use them for enemy or keys
         availableRooms = availableRooms.Remove(minLeft).Remove(minRight);
 
-        // Create door in tunnel between left and right
-        var door = ToDoor(doorColor);
-        var doorPositions = ImmutableList<int>.Empty;
+        // Find position of tunnel middle
+        var tunnelPositions = ImmutableList<Position>.Empty;
         var top = Math.Min(minLeft.Top, minRight.Top);
         var bottom = Math.Max(minLeft.Bottom, minRight.Bottom);
         for (var y = top; y < bottom; y++)
         {
-            if (SetIfEmpty(y, middle, door))
+            if (map[y, middle] == Cell.Empty)
             {
-                doorPositions = doorPositions.Add(y);
+                tunnelPositions = tunnelPositions.Add((y, middle));
             }
         }
 
-        // Return a position of the door where left and right side are both empty
-        int doorPosition = doorPositions.
-            Where(y => map[y, middle - 1] == Cell.Empty && map[y, middle + 1] == Cell.Empty).
-            PickOne();
-        return doorPosition;
+        return tunnelPositions;
     }
 
     bool SetIfEmpty(int y, int x, Cell value)
