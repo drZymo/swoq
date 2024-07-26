@@ -4,7 +4,7 @@ using MongoDB.Driver;
 
 namespace Swoq.Server.Services;
 
-public class SwoqDatabase
+public class SwoqDatabase : ISwoqDatabase
 {
     private readonly IMongoCollection<Player> playersCollection;
 
@@ -21,7 +21,7 @@ public class SwoqDatabase
             swoqDatabaseSettings.Value.PlayersCollectionName);
     }
 
-    public async Task<Player?> FindByNameAsync(string name) =>
+    public async Task<Player?> FindPlayerByNameAsync(string name) =>
         await playersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
 
     //public async Task<List<Player>> GetAllAsync() =>
@@ -30,7 +30,7 @@ public class SwoqDatabase
     //public async Task<Player?> GetAsync(string id) =>
     //    await playersCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
-    public async Task CreateAsync(Player newPlayer) =>
+    public async Task CreatePlayerAsync(Player newPlayer) =>
         await playersCollection.InsertOneAsync(newPlayer);
 
     //public async Task UpdateAsync(string id, Player updatedPlayer) =>

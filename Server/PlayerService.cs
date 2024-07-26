@@ -7,9 +7,9 @@ namespace Swoq.Server;
 internal class PlayerService : Player.PlayerBase
 {
     private readonly ILogger<PlayerService> logger;
-    private readonly SwoqDatabase database;
+    private readonly ISwoqDatabase database;
 
-    public PlayerService(ILogger<PlayerService> logger, SwoqDatabase database)
+    public PlayerService(ILogger<PlayerService> logger, ISwoqDatabase database)
     {
         this.logger = logger;
         this.database = database;
@@ -17,14 +17,14 @@ internal class PlayerService : Player.PlayerBase
 
     public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
     {
-        var existingPlayer = await database.FindByNameAsync(request.PlayerName);
+        var existingPlayer = await database.FindPlayerByNameAsync(request.PlayerName);
         if (existingPlayer != null)
         {
             return new RegisterResponse { Result = Result.PlayerAlreadyRegistered };
         }
 
         var player = new Models.Player { Name = request.PlayerName };
-        await database.CreateAsync(player);
+        await database.CreatePlayerAsync(player);
         logger.LogInformation($"Player {player.Name} registered with id {player.Id}");
         return new RegisterResponse { Result = Result.Ok, PlayerId = player.Id };
     }

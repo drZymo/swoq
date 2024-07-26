@@ -33,8 +33,9 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddGrpc();
 
-        builder.Services.Configure<SwoqDatabaseSettings>(builder.Configuration.GetSection("SwoqDatabase"));
-        builder.Services.AddSingleton<SwoqDatabase>();
+        //builder.Services.Configure<SwoqDatabaseSettings>(builder.Configuration.GetSection("SwoqDatabase"));
+        //builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabase>();
+        builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabaseInMemory>();
         builder.Services.AddSingleton<TrainingServer>();
 
         var app = builder.Build();
