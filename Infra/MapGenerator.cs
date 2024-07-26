@@ -1,5 +1,6 @@
 namespace Swoq.Infra;
 
+using Microsoft.AspNetCore.Builder.Extensions;
 using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -524,8 +525,9 @@ public class MapGenerator : IMapGenerator
         var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontSecondTunnelDoor]);
         map[keyPos] = ToKey(secondTunnelKeyColor);
 
-        // Put exit key on random room in the left
-        (int y, int x) exitKeyPos = ClaimRandomPositionInRandomAvailableRoom(roomsLeft);
+        // Put exit key on room in the left close to the start
+        var exitKeyRoom = ClaimClosestAvailableRoomFrom(map.Player1.Position);
+        var exitKeyPos = GetRandomEmptyPositionInRoom(exitKeyRoom);
         map[exitKeyPos] = ToKey(exitKeyColor);
     }
 
@@ -640,11 +642,129 @@ public class MapGenerator : IMapGenerator
 
     private void GenerateLevel18()
     {
-        /// Two locker rooms.
-        /// One with key for the other.
-        /// Swords and armors in the second locker.
-        /// Two enemies guarding the exit.
-        /// Could accidentally follow / attack players before they have a sword and health.
+        /// Separation
+        /// At start, pressure plate to open one door. Player1 needs to step on it so Player2 can enter next room.
+        /// In that room another pressure plate to open other door in start room. Player2 needs to step on it so Player1 can enter other room.
+        /// Now both players are in a separate part of the map, where the both have to kill their own enemy.
+        /// Each enemy leaves a key to enter the final part of the map where both players are joined again.
+        /// One final enemy with key to exit.
+
+        var playerRoomWidth = 7; // excluding walls
+        var upperHeight = height / 2;
+
+        var playerRoomHeight = Math.Min(9, upperHeight - 2); // excluding walls
+        var playerRoom = CreateRoomTopLeft(1, 1, playerRoomHeight, playerRoomWidth);
+
+        var exitRoomWidth = 8; // excluding walls
+        var exitRoomHeight = exitRoomWidth;
+        var preExitRoomWidth = exitRoomWidth;
+        var preExitRoomHeight = 5; // excluding walls
+
+        var preExitRoomLeft = (width - 1) - preExitRoomWidth;
+        var preExitRoomTop = upperHeight + 1;
+        var preExitRoom = CreateRoomTopLeft(preExitRoomTop, preExitRoomLeft, preExitRoomHeight, preExitRoomWidth);
+
+        var exitRoomLeft = (width - 1) - exitRoomWidth;
+        var exitRoomTop = preExitRoom.Bottom + 1;
+        var exitRoom = CreateRoomTopLeft(exitRoomTop, exitRoomLeft, exitRoomHeight, exitRoomWidth);
+
+        var initialRooms = rooms;
+
+        // Upper part
+        rooms = [];
+        Room upperEntryRoom, upperExitRoom;
+        {
+            var minX = playerRoomWidth + 2;
+            upperEntryRoom = CreateRoomTopLeft(1, minX, 5, 5);
+            upperExitRoom = CreateRoomTopLeft(upperHeight - 5, width - 1 - 5, 5, 5);
+            RestrictAvailablePositions(minX: minX, maxY: upperHeight);
+            CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 5, margin: 1);
+            ConnectRoomsRandomly();
+            RestoreAvailablePositions();
+        }
+        var roomsUpper = rooms;
+
+        // Lower part
+        rooms = [];
+        Room lowerEntryRoom, lowerExitRoom;
+        {
+            var maxX = preExitRoom.Left - 1;
+            lowerEntryRoom = CreateRoomTopLeft(upperHeight + 1, 1, 5, 5);
+            lowerExitRoom = CreateRoomTopLeft(upperHeight + 1, maxX - 5, 5, 5);
+            RestrictAvailablePositions(maxX: maxX, minY: upperHeight);
+            CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 5, margin: 1);
+            ConnectRoomsRandomly();
+            RestoreAvailablePositions();
+        }
+        var roomsLower = rooms;
+
+        rooms = initialRooms.AddRange(roomsUpper).AddRange(roomsLower);
+
+
+        // Connect rooms
+        ConnectRooms(playerRoom, upperEntryRoom);
+        ConnectRooms(playerRoom, lowerEntryRoom);
+        ConnectRooms(upperExitRoom, preExitRoom);
+        ConnectRooms(lowerExitRoom, preExitRoom);
+        ConnectRooms(preExitRoom, exitRoom);
+        availableRooms = availableRooms.Remove(upperEntryRoom).Remove(upperExitRoom);
+        availableRooms = availableRooms.Remove(lowerEntryRoom).Remove(lowerExitRoom);
+
+        // Add doors
+        var upperDoorColor = PickRandomAvailableKeyColor();
+        var upperDoorCell = ToDoor(upperDoorColor);
+        for (var y = playerRoom.Top; y <= playerRoom.Bottom; y++)
+        {
+            SetIfEmpty(y, playerRoom.Right, upperDoorCell);
+        }
+        for (var x = preExitRoom.Left; x <= preExitRoom.Right; x++)
+        {
+            SetIfEmpty(preExitRoom.Top - 1, x, upperDoorCell);
+        }
+
+        var lowerDoorColor = PickRandomAvailableKeyColor();
+        var lowerDoorCell = ToDoor(lowerDoorColor);
+        for (var x = playerRoom.Left; x <= playerRoom.Right; x++)
+        {
+            SetIfEmpty(playerRoom.Bottom, x, lowerDoorCell);
+        }
+        for (var y = preExitRoom.Top; y <= preExitRoom.Bottom; y++)
+        {
+            SetIfEmpty(y, preExitRoom.Left - 1, lowerDoorCell);
+        }
+
+        var upperPlatePos = GetRandomEmptyPositionInRoom(playerRoom);
+        map[upperPlatePos] = ToPressurePlate(upperDoorColor);
+
+        var lowerPlatePos = GetRandomEmptyPositionInRoom(upperEntryRoom);
+        map[lowerPlatePos] = ToPressurePlate(lowerDoorColor);
+
+        availableRooms = availableRooms.Remove(playerRoom);
+        map.Player1.Position = (1, 3);
+        map.Player2.Position = (3, 1);
+
+        availableRooms = availableRooms.Remove(exitRoom);
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
+        map[exitPosition] = Cell.Exit;
+        var (exitDoorColor, _) = AddLockAroundExit();
+
+        map.Enemy1.Position = GetRandomEmptyPositionInRoom(upperExitRoom,margin:1);
+        map.Enemy1.Inventory = ToInventory(upperDoorColor);
+
+        map.Enemy2.Position = GetRandomEmptyPositionInRoom(lowerExitRoom, margin: 1);
+        map.Enemy2.Inventory = ToInventory(lowerDoorColor);
+
+        map.Enemy3.Position = GetRandomEmptyPositionInRoom(exitRoom, margin: 1);
+        map.Enemy3.Inventory = ToInventory(exitDoorColor);
+
+        map[ClaimRandomPositionInRandomAvailableRoom(roomsLower)] = Cell.Sword;
+        map[ClaimRandomPositionInRandomAvailableRoom(roomsLower)] = Cell.Health;
+        
+        map[ClaimRandomPositionInRandomAvailableRoom(roomsUpper)] = Cell.Sword;
+        map[ClaimRandomPositionInRandomAvailableRoom(roomsUpper)] = Cell.Health;
+
+        map[GetRandomEmptyPositionInRoom(preExitRoom)] = Cell.Health;
+        map[GetRandomEmptyPositionInRoom(preExitRoom)] = Cell.Health;
     }
 
     private void GenerateLevel19()
@@ -756,6 +876,9 @@ public class MapGenerator : IMapGenerator
         /// Boss loot is key for exit door and two big treasures and are placed next to closed door.
         /// Without treasure in inventory player is killed when leaving.
     }
+
+    private Room CreateRoomTopLeft(int top, int left, int height, int width, int margin = 0)
+        => CreateRoom(top + height / 2, left + width / 2, height, width, margin);
 
     private Room CreateRoom(int y, int x, int height, int width, int margin = 0)
     {
