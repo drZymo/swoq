@@ -31,32 +31,44 @@ enum Result {
 }
 
 enum Tile {
-	TILE_UNKNOWN = 0; // L0
-	TILE_EMPTY = 1; // L0
-	TILE_PLAYER = 2; // L0
-	TILE_WALL = 3; // L0
-	TILE_EXIT = 4; // L0
-	TILE_DOOR_RED = 5; // L2
-	TILE_KEY_RED = 6; // L2
-	TILE_DOOR_GREEN = 7; // L2
-	TILE_KEY_GREEN = 8; // L2
-	TILE_DOOR_BLUE = 9; // L2
-	TILE_KEY_BLUE = 10; // L2
-	TILE_BOULDER = 11; // L6
-	TILE_PRESSURE_PLATE_RED = 12; // L7
-	TILE_PRESSURE_PLATE_GREEN = 13; // L7
-	TILE_PRESSURE_PLATE_BLUE = 14; // L7
-	TILE_SWORD = 15; // L8
-	TILE_HEALTH = 16; // L8
-	TILE_ENEMY = 17; // L8
+    // Level 0 and up:
+	TILE_UNKNOWN = 0;
+	TILE_EMPTY = 1;
+	TILE_PLAYER = 2;
+	TILE_WALL = 3;
+	TILE_EXIT = 4;
+    // Level 2 and up:
+	TILE_DOOR_RED = 5;
+	TILE_KEY_RED = 6;
+	TILE_DOOR_GREEN = 7;
+	TILE_KEY_GREEN = 8;
+	TILE_DOOR_BLUE = 9;
+	TILE_KEY_BLUE = 10;
+    // Level 6 and up:
+	TILE_BOULDER = 11;
+    // Level 7 and up:
+	TILE_PRESSURE_PLATE_RED = 12;
+	TILE_PRESSURE_PLATE_GREEN = 13;
+	TILE_PRESSURE_PLATE_BLUE = 14;
+    // Level 8 and up:
+	TILE_SWORD = 15;
+	TILE_HEALTH = 16;
+	TILE_ENEMY = 17;
+    // Level 20:
+    TILE_BOSS = 19;
+    TILE_TREASURE = 20;
 }
 
 enum Inventory {
 	INVENTORY_NONE = 0;
+    // Level 2 and up:
 	INVENTORY_KEY_RED = 1;
 	INVENTORY_KEY_GREEN = 2;
 	INVENTORY_KEY_BLUE = 3;
+    // Level 6 and up:
 	INVENTORY_BOULDER = 4;
+    // Level 20:
+    INVENTORY_TREASURE = 5;
 }
 
 service PlayerService {

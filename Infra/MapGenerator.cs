@@ -649,6 +649,7 @@ public class MapGenerator : IMapGenerator
         /// Each enemy leaves a key to enter the final part of the map where both players are joined again.
         /// One final enemy with key to exit.
 
+        // Create dedicated player and double exit rooms
         var playerRoomWidth = 7; // excluding walls
         var upperHeight = height / 2;
 
@@ -670,7 +671,7 @@ public class MapGenerator : IMapGenerator
 
         var initialRooms = rooms;
 
-        // Upper part
+        // Upper part with entry and exit rooms
         rooms = [];
         Room upperEntryRoom, upperExitRoom;
         {
@@ -684,7 +685,7 @@ public class MapGenerator : IMapGenerator
         }
         var roomsUpper = rooms;
 
-        // Lower part
+        // Lower part with entry and exit rooms
         rooms = [];
         Room lowerEntryRoom, lowerExitRoom;
         {
@@ -700,7 +701,6 @@ public class MapGenerator : IMapGenerator
 
         rooms = initialRooms.AddRange(roomsUpper).AddRange(roomsLower);
 
-
         // Connect rooms
         ConnectRooms(playerRoom, upperEntryRoom);
         ConnectRooms(playerRoom, lowerEntryRoom);
@@ -710,7 +710,7 @@ public class MapGenerator : IMapGenerator
         availableRooms = availableRooms.Remove(upperEntryRoom).Remove(upperExitRoom);
         availableRooms = availableRooms.Remove(lowerEntryRoom).Remove(lowerExitRoom);
 
-        // Add doors
+        // Add doors to entry and exit rooms
         var upperDoorColor = PickRandomAvailableKeyColor();
         var upperDoorCell = ToDoor(upperDoorColor);
         for (var y = playerRoom.Top; y <= playerRoom.Bottom; y++)
@@ -733,22 +733,26 @@ public class MapGenerator : IMapGenerator
             SetIfEmpty(y, preExitRoom.Left - 1, lowerDoorCell);
         }
 
+        // Players in player room
+        availableRooms = availableRooms.Remove(playerRoom);
+        map.Player1.Position = (1, 3);
+        map.Player2.Position = (3, 1);
+
+        // Exit in exit room
+        availableRooms = availableRooms.Remove(exitRoom);
+        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
+        map[exitPosition] = Cell.Exit;
+        var (exitDoorColor, _) = AddLockAroundExit();
+
+        // Add pressure plates for entering parts
         var upperPlatePos = GetRandomEmptyPositionInRoom(playerRoom);
         map[upperPlatePos] = ToPressurePlate(upperDoorColor);
 
         var lowerPlatePos = GetRandomEmptyPositionInRoom(upperEntryRoom);
         map[lowerPlatePos] = ToPressurePlate(lowerDoorColor);
 
-        availableRooms = availableRooms.Remove(playerRoom);
-        map.Player1.Position = (1, 3);
-        map.Player2.Position = (3, 1);
-
-        availableRooms = availableRooms.Remove(exitRoom);
-        exitPosition = (exitRoom.Bottom - 1, exitRoom.Right - 1);
-        map[exitPosition] = Cell.Exit;
-        var (exitDoorColor, _) = AddLockAroundExit();
-
-        map.Enemy1.Position = GetRandomEmptyPositionInRoom(upperExitRoom,margin:1);
+        // Enemies with keys
+        map.Enemy1.Position = GetRandomEmptyPositionInRoom(upperExitRoom, margin: 1);
         map.Enemy1.Inventory = ToInventory(upperDoorColor);
 
         map.Enemy2.Position = GetRandomEmptyPositionInRoom(lowerExitRoom, margin: 1);
@@ -757,12 +761,14 @@ public class MapGenerator : IMapGenerator
         map.Enemy3.Position = GetRandomEmptyPositionInRoom(exitRoom, margin: 1);
         map.Enemy3.Inventory = ToInventory(exitDoorColor);
 
+        // One health and swords in each part
         map[ClaimRandomPositionInRandomAvailableRoom(roomsLower)] = Cell.Sword;
         map[ClaimRandomPositionInRandomAvailableRoom(roomsLower)] = Cell.Health;
-        
+
         map[ClaimRandomPositionInRandomAvailableRoom(roomsUpper)] = Cell.Sword;
         map[ClaimRandomPositionInRandomAvailableRoom(roomsUpper)] = Cell.Health;
 
+        // Extra health in pre-exit room
         map[GetRandomEmptyPositionInRoom(preExitRoom)] = Cell.Health;
         map[GetRandomEmptyPositionInRoom(preExitRoom)] = Cell.Health;
     }
@@ -875,6 +881,60 @@ public class MapGenerator : IMapGenerator
         /// Door is closed and kills boss.
         /// Boss loot is key for exit door and two big treasures and are placed next to closed door.
         /// Without treasure in inventory player is killed when leaving.
+
+
+        var middle = width / 2;
+        var q1 = middle / 2;
+        var q3 = (middle + width) / 2;
+
+        RestrictAvailablePositions(maxX: q1);
+        var room1 = CreateRandomRoom(minSize:2, maxSize:7, margin: 0);
+        if (room1 == null) throw new MapGeneratorException("Random room did not fit");
+        RestoreAvailablePositions();
+
+        RestrictAvailablePositions(minX: q1, maxX:middle-1);
+        var room2 = CreateRandomRoom(minSize: 2, maxSize: 7, margin: 0);
+        if (room2 == null) throw new MapGeneratorException("Random room did not fit");
+        RestoreAvailablePositions();
+
+        RestrictAvailablePositions(minX: middle+1, maxX: q3);
+        var room3 = CreateRandomRoom(minSize: 2, maxSize: 7, margin: 0);
+        if (room3 == null) throw new MapGeneratorException("Random room did not fit");
+        RestoreAvailablePositions();
+
+        RestrictAvailablePositions(minX: q3);
+        var room4 = CreateRandomRoom(minSize: 2, maxSize: 7, margin: 0);
+        if (room4 == null) throw new MapGeneratorException("Random room did not fit");
+        RestoreAvailablePositions();
+
+        ConnectRooms(room1, room2);
+        ConnectRooms(room2, room3);
+        ConnectRooms(room3, room4);
+
+        var tunnelDoorColor = PickRandomAvailableKeyColor();
+        var tunnelDoorCell = ToDoor(tunnelDoorColor);
+
+        for (var y = 0; y < height; y++)
+        {
+            SetIfEmpty(y, middle, tunnelDoorCell);
+        }
+
+        //var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
+
+        //var tunnelDoorColor = PickRandomAvailableKeyColor();
+        //var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, tunnelDoorColor);
+
+        //var doorPos = (doorPosY, middle);
+
+        //// Pressure plate in room in front of door
+        //var plateRoom = ClaimClosestAvailableRoomFrom((doorPosY, middle - 1));
+
+        //var platePos = GetRandomEmptyPositionInRoom(plateRoom, margin: 1);
+
+        //map[platePos] = ToPressurePlate(tunnelDoorColor);
+
+
+
     }
 
     private Room CreateRoomTopLeft(int top, int left, int height, int width, int margin = 0)

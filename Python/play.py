@@ -234,6 +234,7 @@ class GamePlayer:
     def step(self) -> None:
         if self.finished: return
 
+        self.run_away_from_enemy()
         self.move_to_exit()
         self.pickup_health()
         self.pickup_sword()
@@ -373,7 +374,16 @@ class GamePlayer:
                     print('exit2')
                     self.move_to_2(exit_pos)
 
-
+    def run_away_from_enemy(self) -> None:
+        # if adjacent to an enemy with more health, then leave
+        if self.can_act1():
+            # TODO
+            pass
+        
+        if self.can_act2():
+            # TODO
+            pass
+        
     def attack(self) -> None:
         # Attack
         enemies = np.argwhere(self.map == swoq_pb2.TILE_ENEMY)

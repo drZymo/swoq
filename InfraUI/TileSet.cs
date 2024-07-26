@@ -4,7 +4,7 @@ using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 
-namespace Swoq.InfraUI.ViewModels;
+namespace Swoq.InfraUI;
 
 public static class TileSet
 {
@@ -63,6 +63,8 @@ public static class TileSet
         tiles = tiles.Add(Tile.PressurePlateGreen, GetTile(3, 1));
         tiles = tiles.Add(Tile.PressurePlateBlue, GetTile(3, 2));
         tiles = tiles.Add(Tile.Boulder, GetTile(3, 4));
+        tiles = tiles.Add(Tile.Boss, GetTile(0, 5));
+        tiles = tiles.Add(Tile.Treasure, GetTile(1, 5));
         return tiles;
     }
 }
