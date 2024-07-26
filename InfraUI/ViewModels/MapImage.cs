@@ -3,13 +3,21 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Swoq.InfraUI.ViewModels;
 
 internal class MapImage(int mapHeight, int mapWidth)
 {
-    private static readonly IImmutableDictionary<Tile, byte[]> tileSet = TileSet.FromImageFile("tiles.png");
+    private static readonly IImmutableDictionary<Tile, byte[]> tileSet;
+
+    static MapImage()
+    {
+        var currentDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
+            ?? AppDomain.CurrentDomain.BaseDirectory;
+        tileSet =TileSet.FromImageFile(Path.Combine(currentDir, "tiles.png"));
+    }
 
     private readonly Tile[,] tiles = new Tile[mapHeight, mapWidth];
     private readonly bool[,] visibility = new bool[mapHeight, mapWidth];

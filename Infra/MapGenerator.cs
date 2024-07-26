@@ -15,7 +15,8 @@ public class MapGenerator : IMapGenerator
     private readonly int height;
     private readonly int width;
 
-    private readonly IImmutableSet<Position> allPositions = ImmutableHashSet<Position>.Empty;
+    private readonly ImmutableHashSet<Position> allPositions = ImmutableHashSet<Position>.Empty;
+    private ImmutableHashSet<Position> availablePositions = [];
     private MutableMap map;
 
     private Position exitPosition;
@@ -83,7 +84,13 @@ public class MapGenerator : IMapGenerator
                 if (level == 18) GenerateLevel18();
                 if (level == 19) GenerateLevel19();
 
-                RemoveInnerWalls();
+                // Sanity check
+                foreach (var pos in availablePositions)
+                {
+                    Debug.Assert(map[pos] == Cell.Unknown);
+                }
+
+                AddWalls();
 
                 if (map.Player1.Position.IsValid() && map[map.Player1.Position] != Cell.Empty) throw new MapGeneratorException("Player 1 position invalid");
                 if (map.Player2.Position.IsValid() && map[map.Player2.Position] != Cell.Empty) throw new MapGeneratorException("Player 2 position invalid");
@@ -98,21 +105,56 @@ public class MapGenerator : IMapGenerator
         }
     }
 
+    private void AddWalls()
+    {
+        bool IsUnknown(Position pos)
+        {
+            return pos.y < 0 || pos.y >= height ||
+                pos.x < 0 || pos.x >= width ||
+                map[pos] == Cell.Unknown;
+        }
+
+        ImmutableList<Position> walls = [];
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                if (map[y, x] == Cell.Unknown)
+                {
+                    if (!IsUnknown((y - 1, x - 1)) || !IsUnknown((y - 1, x)) || !IsUnknown((y - 1, x + 1)) ||
+                        !IsUnknown((y, x - 1)) || !IsUnknown((y, x)) || !IsUnknown((y, x + 1)) ||
+                        !IsUnknown((y + 1, x - 1)) || !IsUnknown((y + 1, x)) || !IsUnknown((y + 1, x + 1)))
+                    {
+                        walls = walls.Add((y, x));
+                    }
+                }
+            }
+        }
+
+        foreach (var pos in walls)
+        {
+            map[pos] = Cell.Wall;
+        }
+    }
+
     private void Reset(int level)
     {
+        // Clear map with unknowns
         map = new(level, height, width);
+
+        // Fill with Unknown and make all positions unused
+        availablePositions = allPositions;
+        foreach (var pos in availablePositions)
+        {
+            map[pos] = Cell.Unknown;
+        }
 
         exitPosition = new();
 
         rooms = [];
         availableRooms = [];
         availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
-
-        // Fill with walls
-        foreach (var pos in allPositions)
-        {
-            map[pos] = Cell.Wall;
-        }
     }
 
     private void GenerateLevel0()
@@ -318,7 +360,10 @@ public class MapGenerator : IMapGenerator
         /// Health and sword spread around map.
 
         // Need at least one big room that can fit prison
-        var prisonRoom = CreateRandomRoom(11, 15, 0, 5, height - 5, 5, width - 5);
+        RestrictAvailablePositions(5, height - 5, 5, width - 5);
+        var prisonRoom = CreateRandomRoom(5, 7, 0);
+        RestoreAvailablePositions();
+
         Debug.Assert(prisonRoom != null);
         // Fill rest with standard maze
         CreateStandardMaze();
@@ -595,19 +640,23 @@ public class MapGenerator : IMapGenerator
         // Create double exit room to hold three guards
         var exitRoom = CreateRoom(height - 4, width - 4, 6, 6);
         var preExitRoom = CreateRoom(height - 13, width - 6, 10, 10);
-        map[height - 8, width - 2] = Cell.Empty;
-        map[height - 8, width - 3] = Cell.Empty;
+        SetAndMakeUnavailable((height - 8, width - 2), Cell.Empty);
+        SetAndMakeUnavailable((height - 8, width - 3), Cell.Empty);
 
         // Need at least one big room where double locker can fit.
         // Locker room is 5x5, so need at least 9x9 room to have space around
-        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 7, 5, width - 15);
+        RestrictAvailablePositions(5, height - 7, 5, width - 15);
+        var lockerRoom = CreateRandomRoom(4, 7, 1);
         Debug.Assert(lockerRoom != null);
+        RestoreAvailablePositions();
 
         // Prevent connecting exit room
         rooms = rooms.Remove(exitRoom);
 
         // Fill the rest with standard maze
-        CreateStandardMaze(twoPlayers: true, maxY: height - 7);
+        RestrictAvailablePositions(maxY: height - 7);
+        CreateStandardMaze(twoPlayers: true);
+        RestoreAvailablePositions();
 
         availableRooms = availableRooms.Remove(exitRoom).Remove(preExitRoom);
 
@@ -689,34 +738,46 @@ public class MapGenerator : IMapGenerator
         /// Without treasure in inventory player is killed when leaving.
     }
 
-    private Room CreateRoom(int y, int x, int height, int width)
+    private Room CreateRoom(int y, int x, int height, int width, int margin = 0)
     {
         var room = new Room(y, x, height, width);
 
         // Make empty
         for (var my = room.Top; my < room.Bottom; my++)
+        {
             for (var mx = room.Left; mx < room.Right; mx++)
+            {
                 map[my, mx] = Cell.Empty;
+            }
+        }
+
+        // Make room locations unavailable including margin
+        var top = Math.Max(0, room.Top - margin);
+        var bottom = Math.Min(room.Bottom + margin, this.height);
+        var left = Math.Max(0, room.Left - margin);
+        var right = Math.Min(room.Right + margin, this.width);
+        for (var my = top; my < bottom; my++)
+        {
+            for (var mx = left; mx < right; mx++)
+            {
+                availablePositions = availablePositions.Remove((my, mx));
+            }
+        }
 
         rooms = rooms.Add(room);
         availableRooms = availableRooms.Add(room);
         return room;
     }
 
-    private void CreateRandomRooms(int maxRooms, int minSize, int maxSize, int margin,
-        int? minY = null, int? maxY = null, int? minX = null, int? maxX = null)
+    private void CreateRandomRooms(int maxRooms, int minSize, int maxSize, int margin)
     {
-        var _minY = minY ?? 0;
-        var _maxY = maxY ?? height;
-        var _minX = minX ?? 0;
-        var _maxX = maxX ?? width;
-
         var currentMaxSize = maxSize;
         while (currentMaxSize > minSize && rooms.Count < maxRooms)
         {
-            Room? newRoom = CreateRandomRoom(minSize, currentMaxSize, margin, _minY, _maxY, _minX, _maxX);
+            Room? room = CreateRandomRoom(minSize, currentMaxSize, margin);
 
-            if (newRoom == null)
+            // try again with lower maxSize
+            if (room == null)
             {
                 currentMaxSize--;
                 continue;
@@ -724,91 +785,59 @@ public class MapGenerator : IMapGenerator
         }
     }
 
-    private Room? CreateRandomRoom(int minSize, int maxSize, int margin, int minY, int maxY, int minX, int maxX)
+    private Room? CreateRandomRoom(int minSize, int maxSize, int margin)
     {
-        var rw = Rnd.Next(minSize, maxSize);
-        var rh = Rnd.Next(minSize, maxSize);
+        // Regular hashset for increased performance
+        // Only used locally, so no multi-threading risk
+        var roomPositions = availablePositions.ToHashSet();
 
-        var choices = GetInitialRoomChoices(minY, maxY, minX, maxX);
+        // Choose room size
+        // always odd size, so center is really center
+        var rw = 1 + 2 * Rnd.Next(minSize, maxSize);
+        var rh = 1 + 2 * Rnd.Next(minSize, maxSize);
 
-        // clear out edges
-        Debug.Assert(minY + 1 + rh / 2 <= maxY);
-        for (var x = minX; x < maxX; x++)
+        //  Include walls around room
+        var areaWidth = rw + 2;
+        var areaHeight = rh + 2;
+
+        // -1 to allow overlap of walls
+        var clearX = (areaWidth - 1) / 2;// - 1;
+        var clearY = (areaHeight - 1) / 2;// - 1;
+
+        // Clear X
+        for (var i = 0; i < clearX; i++)
         {
-            for (var y = minY; y < minY + 1 + rh / 2; y++)
+            // Bounds check not needed, because there is a wall around the whole map
+            var remove = roomPositions.
+                Where(pos => !roomPositions.Contains((pos.y, pos.x - 1)) || !roomPositions.Contains((pos.y, pos.x + 1)));
+            foreach (var pos in remove)
             {
-                choices.Remove((y, x));
-            }
-            for (var y = maxY - (rh - rh / 2); y < maxY; y++)
-            {
-                choices.Remove((y, x));
-            }
-        }
-        Debug.Assert(minX + 1 + rw / 2 <= maxX);
-        for (var y = minY; y < maxY; y++)
-        {
-            for (var x = minX; x < minX + 1 + rw / 2; x++)
-            {
-                choices.Remove((y, x));
-            }
-            for (var x = maxX - (rw - rw / 2); x < maxX; x++)
-            {
-                choices.Remove((y, x));
+                roomPositions.Remove(pos);
             }
         }
 
-        // clear out other rooms
-        foreach (var room in rooms)
+        // Clear Y
+        for (var i = 0; i < clearY; i++)
         {
-            var top = room.Top - margin - (rh - rh / 2);
-            var bottom = room.Bottom + margin + rh / 2;
-            var left = room.Left - margin - (rw - rw / 2);
-            var right = room.Right + margin + rw / 2;
-
-            for (var y = top; y < bottom; y++)
+            // Bounds check not needed, because there is a wall around the whole map
+            var remove = roomPositions.
+                Where(pos => !roomPositions.Contains((pos.y - 1, pos.x)) || !roomPositions.Contains((pos.y + 1, pos.x)));
+            foreach (var pos in remove)
             {
-                for (var x = left; x < right; x++)
-                {
-                    choices.Remove((y, x));
-                }
+                roomPositions.Remove(pos);
             }
         }
 
-        Room? newRoom = null;
+        Room? room = null;
 
-        if (choices.Count > 0)
+        // Try to create new room
+        if (roomPositions.Count > 0)
         {
-            var (ry, rx) = choices.PickOne();
-            newRoom = CreateRoom(ry, rx, rh, rw);
+            var (ry, rx) = roomPositions.PickOne();
+            room = CreateRoom(ry, rx, rh, rw, margin);
         }
 
-        return newRoom;
-    }
-
-    private ImmutableHashSet<Position>? previousRoomChoices = null;
-    private int? previousRoomMinX = -1;
-    private int? previousRoomMaxX = -1;
-    private int? previousRoomMinY = -1;
-    private int? previousRoomMaxY = -1;
-
-    private HashSet<Position> GetInitialRoomChoices(int minY, int maxY, int minX, int maxX)
-    {
-        HashSet<Position> choices;
-        if (previousRoomChoices != null && previousRoomMinX == minX && previousRoomMaxX == maxX && previousRoomMinY == minY && previousRoomMaxY == maxY)
-        {
-            choices = [.. previousRoomChoices];
-        }
-        else
-        {
-            choices = allPositions.Where(p => minY <= p.y && p.y < maxY && minX <= p.x && p.x < maxX).ToHashSet();
-            previousRoomChoices = [.. choices];
-            previousRoomMinX = minX;
-            previousRoomMaxX = maxX;
-            previousRoomMinY = minY;
-            previousRoomMaxY = maxY;
-        }
-
-        return choices;
+        return room;
     }
 
     private void ConnectRoomsRandomly()
@@ -831,9 +860,37 @@ public class MapGenerator : IMapGenerator
         }
     }
 
-    private void CreateStandardMaze(bool twoPlayers = false, int? minY = null, int? maxY = null, int? minX = null, int? maxX = null)
+    private ImmutableHashSet<Position> previousAvailablePositions = [];
+    private ImmutableHashSet<Position> initialRestrictedPositions = [];
+
+    private void RestrictAvailablePositions(int? minY = null, int? maxY = null, int? minX = null, int? maxX = null)
     {
-        CreateRandomRooms(30, 3, 15, 1, minY, maxY, minX, maxX);
+        Debug.Assert(previousAvailablePositions.Count == 0);
+        Debug.Assert(initialRestrictedPositions.Count == 0);
+        previousAvailablePositions = availablePositions;
+
+        var _minY = minY ?? 0;
+        var _maxY = maxY ?? height;
+        var _minX = minX ?? 0;
+        var _maxX = maxX ?? width;
+        var restrictedPositions = availablePositions.Where(p => _minY <= p.y && p.y < _maxY && _minX <= p.x && p.x < _maxX).ToImmutableHashSet();
+        initialRestrictedPositions = restrictedPositions;
+        availablePositions = restrictedPositions;
+    }
+
+    private void RestoreAvailablePositions()
+    {
+        // Check what has been removed since restriction and remove it from the initial list
+        var removedPositions = initialRestrictedPositions.Except(availablePositions);
+        availablePositions = previousAvailablePositions.Except(removedPositions);
+
+        previousAvailablePositions = [];
+        initialRestrictedPositions = [];
+    }
+
+    private void CreateStandardMaze(bool twoPlayers = false)
+    {
+        CreateRandomRooms(30, 1, 7, 1);
         ConnectRoomsRandomly();
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
     }
@@ -864,8 +921,10 @@ public class MapGenerator : IMapGenerator
     {
         // Need at least one big room where double locker can fit.
         // Inner locker is 3x3, outer locker is 7x7, so large room must be at least 9x9
-        var lockerRoom = CreateRandomRoom(9, 15, 1, 5, height - 5, 5, width - 5);
+        RestrictAvailablePositions(5, height - 5, 5, width - 5);
+        var lockerRoom = CreateRandomRoom(4, 7, 1);
         Debug.Assert(lockerRoom != null);
+        RestoreAvailablePositions();
 
         // Fill the rest with standard maze
         CreateStandardMaze(twoPlayers: twoPlayers);
@@ -884,27 +943,27 @@ public class MapGenerator : IMapGenerator
         return (innerKeyPos, innerColor, outerKeyPos, outerColor);
     }
 
-    private void DrawHLine(int y, int x1, int x2, int dir, Cell value = Cell.Empty)
+    private void CreateHorizontalTunnel(int y, int x1, int x2, int dir)
     {
         if (x1 == x2) return;
         var start = Math.Min(x1, x2);
         var end = Math.Max(x1, x2);
         for (var x = start; x <= end; x++)
         {
-            map[y, x] = value;
-            map[y - dir, x] = value;
+            SetAndMakeUnavailable((y, x), Cell.Empty);
+            SetAndMakeUnavailable((y - dir, x), Cell.Empty);
         }
     }
 
-    private void DrawVLine(int y1, int y2, int x, int dir, Cell value = Cell.Empty)
+    private void CreateVerticalTunnel(int y1, int y2, int x, int dir)
     {
         if (y1 == y2) return;
         var start = Math.Min(y1, y2);
         var end = Math.Max(y1, y2);
         for (var y = start; y <= end; y++)
         {
-            map[y, x] = value;
-            map[y, x - dir] = value;
+            SetAndMakeUnavailable((y, x), Cell.Empty);
+            SetAndMakeUnavailable((y, x - dir), Cell.Empty);
         }
     }
 
@@ -915,13 +974,13 @@ public class MapGenerator : IMapGenerator
 
         if (Math.Abs(dx) > Math.Abs(dy))
         {
-            DrawHLine(room1.Y, room1.X, room2.X, Math.Sign(dx));
-            DrawVLine(room1.Y, room2.Y, room2.X, Math.Sign(dy));
+            CreateHorizontalTunnel(room1.Y, room1.X, room2.X, Math.Sign(dx));
+            CreateVerticalTunnel(room1.Y, room2.Y, room2.X, Math.Sign(dy));
         }
         else
         {
-            DrawVLine(room1.Y, room2.Y, room1.X, Math.Sign(dy));
-            DrawHLine(room2.Y, room1.X, room2.X, Math.Sign(dx));
+            CreateVerticalTunnel(room1.Y, room2.Y, room1.X, Math.Sign(dy));
+            CreateHorizontalTunnel(room2.Y, room1.X, room2.X, Math.Sign(dx));
         }
     }
 
@@ -1138,13 +1197,14 @@ public class MapGenerator : IMapGenerator
 
     private Position? GetEmptyPositionInFront(Position pos)
     {
-        if (pos.y > 0 && map[pos.y - 1, pos.x] == Cell.Empty) return (pos.y - 1, pos.x);
-        if (pos.y < height && map[pos.y + 1, pos.x] == Cell.Empty) return (pos.y + 1, pos.x);
-        if (pos.x > 0 && map[pos.y, pos.x - 1] == Cell.Empty) return (pos.y, pos.x - 1);
-        if (pos.x < width && map[pos.y, pos.x + 1] == Cell.Empty) return (pos.y, pos.x + 1);
+        ImmutableList<Position> positions = [];
 
-        // TODO: Random?
-        return null;
+        if (pos.y > 0 && map[pos.y - 1, pos.x] == Cell.Empty) positions = positions.Add((pos.y - 1, pos.x));
+        if (pos.y < height && map[pos.y + 1, pos.x] == Cell.Empty) positions = positions.Add((pos.y + 1, pos.x));
+        if (pos.x > 0 && map[pos.y, pos.x - 1] == Cell.Empty) positions = positions.Add((pos.y, pos.x - 1));
+        if (pos.x < width && map[pos.y, pos.x + 1] == Cell.Empty) positions = positions.Add((pos.y, pos.x + 1));
+
+        return positions.Count > 0 ? positions.PickOne() : null;
     }
 
     private (KeyColor lockerKeyColor, (int y, int x) infrontDoorPos) AddLocker(Position lockerCenter, KeyColor keyColor)
@@ -1177,16 +1237,23 @@ public class MapGenerator : IMapGenerator
 
     private (int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight) CreateSplitMaze(bool twoPlayers = false)
     {
-        // Create left and right rooms
         var middle = width / 2;
+
+        // Create left and right rooms
         rooms = [];
-        CreateRandomRooms(15, 3, 12, 2, maxX: middle);
+        RestrictAvailablePositions(maxX: middle);
+        CreateRandomRooms(15, 1, 5, 2);
+        RestoreAvailablePositions();
         ConnectRoomsRandomly();
         var roomsLeft = rooms;
+
         rooms = [];
-        CreateRandomRooms(15, 3, 12, 2, minX: middle + 1);
+        RestrictAvailablePositions(minX: middle + 1);
+        CreateRandomRooms(15, 1, 5, 2);
+        RestoreAvailablePositions();
         ConnectRoomsRandomly();
         var roomsRight = rooms;
+
         rooms = roomsLeft.AddRange(roomsRight);
 
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
@@ -1240,51 +1307,17 @@ public class MapGenerator : IMapGenerator
         return doorPosition;
     }
 
-    private void RemoveInnerWalls()
-    {
-        var innerWalls = ImmutableList<Position>.Empty;
-
-        for (var y = 0; y < height; y++)
-        {
-            for (var x = 0; x < width; x++)
-            {
-                var isInner = true;
-                if (y > 1)
-                {
-                    if (x > 1) isInner = isInner && (map[y - 1, x - 1] == Cell.Wall);
-                    isInner = isInner && (map[y - 1, x] == Cell.Wall);
-                    if (x < width - 1) isInner = isInner && (map[y - 1, x + 1] == Cell.Wall);
-                }
-
-                if (x > 1) isInner = isInner && (map[y, x - 1] == Cell.Wall);
-                isInner = isInner && (map[y, x] == Cell.Wall);
-                if (x < width - 1) isInner = isInner && (map[y, x + 1] == Cell.Wall);
-
-                if (y < height - 1)
-                {
-                    if (x > 1) isInner = isInner && (map[y + 1, x - 1] == Cell.Wall);
-                    isInner = isInner && (map[y + 1, x] == Cell.Wall);
-                    if (x < width - 1) isInner = isInner && (map[y + 1, x + 1] == Cell.Wall);
-                }
-
-                if (isInner)
-                {
-                    innerWalls = innerWalls.Add((y, x));
-                }
-            }
-        }
-
-        foreach (var (y, x) in innerWalls)
-        {
-            map[y, x] = Cell.Unknown;
-        }
-    }
-
     bool SetIfEmpty(int y, int x, Cell value)
     {
         if (map[y, x] != Cell.Empty) return false;
         map[y, x] = value;
         return true;
+    }
+
+    void SetAndMakeUnavailable(Position pos, Cell value)
+    {
+        map[pos] = value;
+        availablePositions = availablePositions.Remove(pos);
     }
 
     private (KeyColor innerKeyColor, KeyColor outerKeyColor) CreateDoubleLockerRoom(Room lockerRoom, KeyColor lockedKeyColor)

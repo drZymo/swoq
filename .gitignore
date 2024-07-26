@@ -11,3 +11,4 @@ examples/
 **/*.pem
 level*.bin
 **/Properties/launchSettings.json
+**/BenchmarkDotNet.Artifacts/
