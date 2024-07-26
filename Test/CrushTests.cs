@@ -49,13 +49,13 @@ internal class CrushTests : GameTestBase
         });
 
         // Go south, pickup boulder and move back
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Use, Direction.South);
-        Act(Interface.Action.Move, Direction.North);
-        Act(Interface.Action.Move, Direction.North);
-        Act(Interface.Action.Move, Direction.North);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.UseSouth);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -68,7 +68,7 @@ internal class CrushTests : GameTestBase
 
         // Place boulder on plate
         // Enemy moves towards player immediately
-        Act(Interface.Action.Use, Direction.West);
+        Act(DirectedAction.UseWest);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -85,7 +85,7 @@ internal class CrushTests : GameTestBase
         // Pick up boulder immediately to close the door.
 
         // Pick boulder
-        Act(Interface.Action.Use, Direction.West);
+        Act(DirectedAction.UseWest);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -99,7 +99,7 @@ internal class CrushTests : GameTestBase
 
         // Place boulder back on plate
         // Door should be open, and no enemy in view
-        Act(Interface.Action.Use, Direction.West);
+        Act(DirectedAction.UseWest);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {

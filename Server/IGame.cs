@@ -1,4 +1,6 @@
-﻿namespace Swoq.Server;
+﻿using Swoq.Interface;
+
+namespace Swoq.Server;
 
 internal interface IGame
 {

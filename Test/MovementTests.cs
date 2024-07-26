@@ -78,7 +78,7 @@ internal class MovementTests : GameTestBase
         Assert.That(game.State.Player1.HasSword, Is.False);
 
         // Move south to pickup first sword
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveSouth);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -92,7 +92,7 @@ internal class MovementTests : GameTestBase
         });
 
         // Another move south would pickup second sword, which is not allowed
-        Assert.Throws<InventoryFullException>(() => Act(Interface.Action.Move, Direction.South));
+        Assert.Throws<InventoryFullException>(() => Act(DirectedAction.MoveSouth));
 
         // Nothing changed
         Assert.That(mapCache.GetNewChanges(), Is.Empty);
@@ -108,7 +108,7 @@ internal class MovementTests : GameTestBase
         });
 
         // Move player 1 east so it would overlap with player 2, which is not allowed
-        Assert.Throws<MoveNotAllowedException>(() => Act(Interface.Action.Move, Direction.East));
+        Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveEast));
 
         // Nothing changed
         Assert.That(mapCache.GetNewChanges(), Is.Empty);
@@ -123,8 +123,8 @@ internal class MovementTests : GameTestBase
         });
 
         // Move towards enemy
-        Act(Interface.Action.Move, Direction.North);
-        Act(Interface.Action.Move, Direction.North);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -140,7 +140,7 @@ internal class MovementTests : GameTestBase
         });
 
         // Another move north will overlap with enemy, which is not be allowed
-        Assert.Throws<MoveNotAllowedException>(() => Act(Interface.Action.Move, Direction.North));
+        Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveNorth));
 
         // Nothing changed
         Assert.That(mapCache.GetNewChanges(), Is.Empty);

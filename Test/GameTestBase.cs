@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using Swoq.Interface;
 using Swoq.Server;
 
 namespace Swoq.Test;
@@ -25,15 +26,9 @@ internal abstract class GameTestBase
         mapCache.GetNewChanges();
     }
 
-    protected void Act(
-        Interface.Action action1, Interface.Direction direction1,
-        Interface.Action? action2 = null, Interface.Direction? direction2 = null)
+    protected void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        var directedAction1 = new DirectedAction(action1, direction1);
-        var directedAction2 = (action2.HasValue && direction2.HasValue)
-            ? new DirectedAction(action2.Value, direction2.Value)
-            : null;
-        game.Act(directedAction1, directedAction2);
+        game.Act(action1, action2);
         mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
     }
 }

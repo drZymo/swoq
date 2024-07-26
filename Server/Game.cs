@@ -82,30 +82,46 @@ public class Game : IGame
             if (player2.Health <= 0) throw new Player2DiedException(CreateState());
         }
 
-        if (action1 != null && player1 != null)
+        if (action1.HasValue && player1 != null)
         {
-            switch (action1.Action)
+            var actionPos = GetDirectedActionPosition(player1, action1.Value);
+
+            switch (action1.Value)
             {
-                case Interface.Action.Move:
-                    Move(ref player1, action1.Direction);
+                case DirectedAction.MoveNorth:
+                case DirectedAction.MoveEast:
+                case DirectedAction.MoveSouth:
+                case DirectedAction.MoveWest:
+                    Move(ref player1, actionPos);
                     break;
-                case Interface.Action.Use:
-                    Use(ref player1, action1.Direction);
+                case DirectedAction.UseNorth:
+                case DirectedAction.UseEast:
+                case DirectedAction.UseSouth:
+                case DirectedAction.UseWest:
+                    Use(ref player1, actionPos);
                     break;
                 default:
                     throw new UnknownActionException(CreateState());
             }
         }
 
-        if (action2 != null && player2 != null)
+        if (action2.HasValue && player2 != null)
         {
-            switch (action2.Action)
+            var actionPos = GetDirectedActionPosition(player2, action2.Value);
+
+            switch (action2.Value)
             {
-                case Interface.Action.Move:
-                    Move(ref player2, action2.Direction);
+                case DirectedAction.MoveNorth:
+                case DirectedAction.MoveEast:
+                case DirectedAction.MoveSouth:
+                case DirectedAction.MoveWest:
+                    Move(ref player2, actionPos);
                     break;
-                case Interface.Action.Use:
-                    Use(ref player2, action2.Direction);
+                case DirectedAction.UseNorth:
+                case DirectedAction.UseEast:
+                case DirectedAction.UseSouth:
+                case DirectedAction.UseWest:
+                    Use(ref player2, actionPos);
                     break;
                 default:
                     throw new UnknownActionException(CreateState());
@@ -162,27 +178,23 @@ public class Game : IGame
         }
     }
 
-    private void Move(ref GamePlayer player, Direction direction)
+    private void Move(ref GamePlayer player, Position movePos)
     {
-        var nextPos = GetDirectionPosition(player, direction);
-
-        if (!CanMoveTo(nextPos))
+        if (!CanMoveTo(movePos))
         {
             throw new MoveNotAllowedException(CreateState());
         }
 
         LeaveCell(player.Position);
 
-        player = player with { Position = nextPos };
+        player = player with { Position = movePos };
         Debug.Assert(map[player.Position].CanWalkOn());
 
         EnterCell(ref player, player.Position);
     }
 
-    private void Use(ref GamePlayer player, Direction direction)
+    private void Use(ref GamePlayer player, Position usePos)
     {
-        var usePos = GetDirectionPosition(player, direction);
-
         if (TryUseOnEnemy(player, usePos))
         {
             // It was an enemy, do nothing more.
@@ -264,12 +276,20 @@ public class Game : IGame
         }
     }
 
-    private Position GetDirectionPosition(GamePlayer player, Direction direction) => direction switch
+    private Position GetDirectedActionPosition(GamePlayer player, DirectedAction action) => action switch
     {
-        Direction.North => (player.Position.y - 1, player.Position.x),
-        Direction.East => (player.Position.y, player.Position.x + 1),
-        Direction.South => (player.Position.y + 1, player.Position.x),
-        Direction.West => (player.Position.y, player.Position.x - 1),
+        DirectedAction.MoveNorth => (player.Position.y - 1, player.Position.x),
+        DirectedAction.UseNorth => (player.Position.y - 1, player.Position.x),
+
+        DirectedAction.MoveEast => (player.Position.y, player.Position.x + 1),
+        DirectedAction.UseEast => (player.Position.y, player.Position.x + 1),
+
+        DirectedAction.MoveSouth => (player.Position.y + 1, player.Position.x),
+        DirectedAction.UseSouth => (player.Position.y + 1, player.Position.x),
+
+        DirectedAction.MoveWest => (player.Position.y, player.Position.x - 1),
+        DirectedAction.UseWest => (player.Position.y, player.Position.x - 1),
+
         _ => throw new UnknownDirectionException(CreateState()),
     };
 

@@ -54,9 +54,9 @@ internal class DoorTests(char doorColor) : GameTestBase
 
         // Move towards door, no change expected except for player itself.
 
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveEast);
 
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
@@ -73,7 +73,7 @@ internal class DoorTests(char doorColor) : GameTestBase
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
 
         // Use should fail
-        Assert.Throws<InventoryEmptyException>(() => Act(Interface.Action.Use, Direction.East));
+        Assert.Throws<InventoryEmptyException>(() => Act(DirectedAction.UseEast));
     }
 
     [Test]
@@ -86,8 +86,8 @@ internal class DoorTests(char doorColor) : GameTestBase
         });
 
         // Move towards key, no change expected except for player itself.
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
 
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
@@ -101,7 +101,7 @@ internal class DoorTests(char doorColor) : GameTestBase
 
         // Pickup key
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveSouth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -114,7 +114,7 @@ internal class DoorTests(char doorColor) : GameTestBase
         });
 
         // Move to door
-        Act(Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -127,7 +127,7 @@ internal class DoorTests(char doorColor) : GameTestBase
 
         // Open door
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(InventoryValue));
-        Act(Interface.Action.Use, Direction.East);
+        Act(DirectedAction.UseEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {

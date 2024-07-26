@@ -80,10 +80,10 @@ internal class TwoPlayerCombatTests : GameTestBase
         });
 
         // Move towards enemy without picking up health
-        Act(Interface.Action.Move, Direction.South, Interface.Action.Move, Direction.North); // pickup sword
-        Act(Interface.Action.Move, Direction.South, Interface.Action.Move, Direction.North);
-        Act(Interface.Action.Move, Direction.East, Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East, Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveSouth, DirectedAction.MoveNorth); // pickup sword
+        Act(DirectedAction.MoveSouth, DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveEast, DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast, DirectedAction.MoveEast);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -111,9 +111,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         });
 
         // Now enemy has seen the players and will move closer
-        Act(Interface.Action.Move, Direction.East, Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East, Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East, Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveEast, DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast, DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast, DirectedAction.MoveEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -136,8 +136,8 @@ internal class TwoPlayerCombatTests : GameTestBase
         // It has not attacked yet.
 
         // Attack twice with two players (deals 4 out of 6 damage to enemy)
-        Act(Interface.Action.Use, Direction.South, Interface.Action.Use, Direction.North);
-        Act(Interface.Action.Use, Direction.South, Interface.Action.Use, Direction.North);
+        Act(DirectedAction.UseSouth, DirectedAction.UseNorth);
+        Act(DirectedAction.UseSouth, DirectedAction.UseNorth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -149,7 +149,7 @@ internal class TwoPlayerCombatTests : GameTestBase
         });
 
         // Last attack will deal 2 more damage killing enemy
-        Act(Interface.Action.Use, Direction.South, Interface.Action.Use, Direction.North);
+        Act(DirectedAction.UseSouth, DirectedAction.UseNorth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {

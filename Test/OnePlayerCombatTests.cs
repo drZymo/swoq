@@ -46,12 +46,12 @@ internal class OnePlayerCombatTests : GameTestBase
 
         // Move towards enemy without picking up health
         Assert.That(game.State.Player1.HasSword, Is.False);
-        Act(Interface.Action.Move, Direction.South); // pickup sword
+        Act(DirectedAction.MoveSouth); // pickup sword
         Assert.That(game.State.Player1.HasSword, Is.True);
-        Act(Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -89,9 +89,9 @@ internal class OnePlayerCombatTests : GameTestBase
         });
 
         // Now enemy has seen the player and will move closer
-        Act(Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -110,10 +110,10 @@ internal class OnePlayerCombatTests : GameTestBase
         // Enemy has 6 health.
 
         // Attack 4 times, enemy also attacked 4 times
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -124,7 +124,7 @@ internal class OnePlayerCombatTests : GameTestBase
 
         // Only 1 health left
         // Attacking now will result in player being attacked back again and die.
-        Assert.Throws<Player1DiedException>(() => Act(Interface.Action.Use, Direction.East));
+        Assert.Throws<Player1DiedException>(() => Act(DirectedAction.UseEast));
     }
 
     [Test]
@@ -134,14 +134,14 @@ internal class OnePlayerCombatTests : GameTestBase
 
         // Move towards enemy without picking up health
         Assert.That(game.State.Player1.HasSword, Is.False);
-        Act(Interface.Action.Move, Direction.South); // pickup sword
+        Act(DirectedAction.MoveSouth); // pickup sword
         Assert.That(game.State.Player1.HasSword, Is.True);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
         Assert.That(game.State.Player1.Health, Is.EqualTo(5));
-        Act(Interface.Action.Move, Direction.South); // pickup health
+        Act(DirectedAction.MoveSouth); // pickup health
         Assert.That(game.State.Player1.Health, Is.EqualTo(8));
-        Act(Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveEast);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -181,9 +181,9 @@ internal class OnePlayerCombatTests : GameTestBase
         });
 
         // Now enemy has seen the player and will move closer
-        Act(Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -202,11 +202,11 @@ internal class OnePlayerCombatTests : GameTestBase
         // Enemy has 6 health.
 
         // Attack 5 times. Enemy also attacks 5 times.
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
-        Act(Interface.Action.Use, Direction.East);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
+        Act(DirectedAction.UseEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -217,7 +217,7 @@ internal class OnePlayerCombatTests : GameTestBase
 
         // Enemy should have 1 health.
         // Attacking now will result in enemy being killed
-        Act(Interface.Action.Use, Direction.East);
+        Act(DirectedAction.UseEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {

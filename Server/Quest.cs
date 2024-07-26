@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using Swoq.Interface;
 using Swoq.Server.Data;
 
 namespace Swoq.Server;

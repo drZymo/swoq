@@ -3,7 +3,6 @@ using Swoq.Infra;
 using Swoq.InfraUI.Models;
 using Swoq.Interface;
 using System.Collections.Immutable;
-using System.Text;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
@@ -40,7 +39,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         if (state.Player1 != null)
         {
             var action1 = request != null
-                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null, request.HasDirection1 ? request.Direction1 : null)
+                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null)
                 : "Start";
             player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
         }
@@ -49,7 +48,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         if (state.Player2 != null)
         {
             var action2 = request != null
-                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null, request.HasDirection2 ? request.Direction2 : null)
+                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
                 : "Start";
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
@@ -59,19 +58,11 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         return gameState;
     }
 
-    private static string GetPlayerAction(Interface.Action? action, Interface.Direction? direction)
+    private static string GetPlayerAction(DirectedAction? action)
     {
         if (!action.HasValue) return "None";
 
-        var playerAction = new StringBuilder();
-
-        playerAction.Append(action.Value.ConvertToString());
-        if (direction.HasValue)
-        {
-            playerAction.Append(' ');
-            playerAction.Append(direction.Value.ConvertToString());
-        }
-        return playerAction.ToString();
+        return action.Value.ConvertToString();
     }
 
     private static (int y, int x) Convert(Position? position) => position == null ? PositionEx.Invalid : (position.Y, position.X);

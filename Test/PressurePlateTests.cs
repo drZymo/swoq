@@ -44,8 +44,8 @@ internal class PressurePlateTests : GameTestBase
         Assert.That(game.State.Player1, Is.Not.Null);
 
         // Move towards plate, no change expected except for player itself.
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -58,7 +58,7 @@ internal class PressurePlateTests : GameTestBase
         // Player north from plate and doors around exit closed.
 
         // Move on plate
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveSouth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -81,7 +81,7 @@ internal class PressurePlateTests : GameTestBase
         });
 
         // Move off plate
-        Act(Interface.Action.Move, Direction.North);
+        Act(DirectedAction.MoveNorth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -103,8 +103,8 @@ internal class PressurePlateTests : GameTestBase
         Assert.That(game.State.Player1, Is.Not.Null);
 
         // Move besides boulder
-        Act(Interface.Action.Move, Direction.East);
-        Act(Interface.Action.Move, Direction.East);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveEast);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -117,7 +117,7 @@ internal class PressurePlateTests : GameTestBase
         });
 
         // Pickup boulder
-        Act(Interface.Action.Use, Direction.East);
+        Act(DirectedAction.UseEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -131,10 +131,10 @@ internal class PressurePlateTests : GameTestBase
         });
 
         // Move besides plate
-        Act(Interface.Action.Move, Direction.West);
-        Act(Interface.Action.Move, Direction.West);
-        Act(Interface.Action.Move, Direction.South);
-        Act(Interface.Action.Move, Direction.South);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -151,7 +151,7 @@ internal class PressurePlateTests : GameTestBase
 
         // Place boulder
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder));
-        Act(Interface.Action.Use, Direction.South);
+        Act(DirectedAction.UseSouth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
@@ -175,7 +175,7 @@ internal class PressurePlateTests : GameTestBase
 
         // Pick boulder
         Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
-        Act(Interface.Action.Use, Direction.South);
+        Act(DirectedAction.UseSouth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {

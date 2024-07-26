@@ -125,24 +125,21 @@ message StartResponse {
 	optional State state = 6;
 }
 
-enum Action {
-	ACTION_MOVE = 0;
-	ACTION_USE = 1;
-}
-
-enum Direction {
-	DIRECTION_NORTH = 0;
-	DIRECTION_EAST = 1;
-	DIRECTION_SOUTH = 2;
-	DIRECTION_WEST = 3;
+enum DirectedAction {
+    DIRECTEDACTION_MOVE_NORTH = 0;
+    DIRECTEDACTION_MOVE_EAST = 1;
+    DIRECTEDACTION_MOVE_SOUTH = 2;
+    DIRECTEDACTION_MOVE_WEST = 3;
+    DIRECTEDACTION_USE_NORTH = 4;
+    DIRECTEDACTION_USE_EAST = 5;
+    DIRECTEDACTION_USE_SOUTH = 6;
+    DIRECTEDACTION_USE_WEST = 7;
 }
 
 message ActionRequest {
 	string gameId = 1;
-	optional Action action1 = 2;
-	optional Direction direction1 = 3;
-	optional Action action2 = 4;
-	optional Direction direction2 = 5;
+	optional DirectedAction action1 = 2;
+	optional DirectedAction action2 = 3;
 }
 
 message ActionResponse {

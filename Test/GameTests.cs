@@ -1,4 +1,5 @@
 ﻿using Swoq.Infra;
+using Swoq.Interface;
 using Swoq.Server;
 
 namespace Swoq.Test;
@@ -33,7 +34,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.False);
         });
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
+        Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
         Assert.Multiple(() =>
         {
@@ -49,7 +50,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.False);
         });
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
+        Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
         Assert.Multiple(() =>
         {
@@ -77,7 +78,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.False);
         });
 
-        Assert.DoesNotThrow(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
+        Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
         Assert.Multiple(() =>
         {
@@ -93,7 +94,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.True);
         });
 
-        Assert.Throws<GameTimeoutException>(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
+        Assert.Throws<GameTimeoutException>(() => game.Act(DirectedAction.MoveEast));
 
         Assert.Multiple(() =>
         {
@@ -101,7 +102,7 @@ public class GameTests
             Assert.That(game.IsInactive, Is.True);
         });
 
-        Assert.Throws<GameFinishedException>(() => game.Act(new DirectedAction(Interface.Action.Move, Interface.Direction.East)));
+        Assert.Throws<GameFinishedException>(() => game.Act(DirectedAction.MoveEast));
 
         Assert.Multiple(() =>
         {

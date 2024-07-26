@@ -28,19 +28,16 @@ public static class Converters
         _ => "Unknown",
     };
 
-    public static string ConvertToString(this Action action) => action switch
+    public static string ConvertToString(this DirectedAction action) => action switch
     {
-        Action.Use => "Use",
-        Action.Move => "Move",
-        _ => "Unknown",
-    };
-
-    public static string ConvertToString(this Direction direction) => direction switch
-    {
-        Direction.North => "North",
-        Direction.East => "East",
-        Direction.South => "South",
-        Direction.West => "West",
+        DirectedAction.MoveNorth => "Move North",
+        DirectedAction.MoveEast => "Move East",
+        DirectedAction.MoveSouth => "Move South",
+        DirectedAction.MoveWest => "Move West",
+        DirectedAction.UseNorth => "Use North",
+        DirectedAction.UseEast => "Use East",
+        DirectedAction.UseSouth => "Use South",
+        DirectedAction.UseWest => "Use West",
         _ => "Unknown",
     };
 }
