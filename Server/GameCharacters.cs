@@ -34,10 +34,6 @@ internal record GameEnemy(
     Position Position,
     Inventory Inventory = Inventory.None,
     int Health = Parameters.EnemyHealth,
+    int Damage = Parameters.EnemyDamage,
     bool IsTriggered = false)
     : GameCharacter(Id, Position, Inventory, Health, true);
-
-internal record GameBoss(
-    Position Position,
-    bool IsTriggered = false)
-    : GameCharacter(GameCharacterId.Boss, Position, Inventory.Treasure, Parameters.BossHealth, true);

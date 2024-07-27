@@ -7,6 +7,7 @@ public class MutableCharacter
 {
     public Position Position { get; set; } = PositionEx.Invalid;
     public Inventory Inventory { get; set; } = Inventory.None;
+    public bool IsBoss { get; set; } = false;
 }
 
 public class MutableMap(int level, int height, int width)
@@ -44,6 +45,7 @@ public class MutableMap(int level, int height, int width)
             Player2.Position.IsValid() ? Player2.Position : null,
             Enemy1.Position.IsValid() ? Enemy1.Position : null,
             Enemy1.Position.IsValid() ? Enemy1.Inventory : Inventory.None,
+            Enemy1.IsBoss,
             Enemy2.Position.IsValid() ? Enemy2.Position : null,
             Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None,
             Enemy3.Position.IsValid() ? Enemy3.Position : null,

@@ -14,6 +14,7 @@ public class Map(
     Position? initialPlayer2Position = null,
     Position? initialEnemy1Position = null,
     Inventory initialEnemy1Inventory = Inventory.None,
+    bool isEnemy1Boss = false,
     Position? initialEnemy2Position = null,
     Inventory initialEnemy2Inventory = Inventory.None,
     Position? initialEnemy3Position = null,
@@ -33,6 +34,7 @@ public class Map(
     public Position? InitialPlayer2Position { get; } = initialPlayer2Position;
     public Position? InitialEnemy1Position { get; } = initialEnemy1Position;
     public Inventory InitialEnemy1Inventory { get; } = initialEnemy1Inventory;
+    public bool IsEnemy1Boss { get; } = isEnemy1Boss;
     public Position? InitialEnemy2Position { get; } = initialEnemy2Position;
     public Inventory InitialEnemy2Inventory { get; } = initialEnemy2Inventory;
     public Position? InitialEnemy3Position { get; } = initialEnemy3Position;
@@ -58,6 +60,7 @@ public class Map(
             InitialPlayer2Position,
             InitialEnemy1Position,
             InitialEnemy1Inventory,
+            IsEnemy1Boss,
             InitialEnemy2Position,
             InitialEnemy2Inventory,
             InitialEnemy3Position,

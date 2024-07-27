@@ -94,8 +94,11 @@ public class MapViewModel : ViewModelBase
                 {
                     tile = Tile.Player;
                 }
-                else if ((map.InitialEnemy1Position != null && map.InitialEnemy1Position.Value.Equals(pos)) ||
-                    (map.InitialEnemy2Position != null && map.InitialEnemy2Position.Value.Equals(pos)) ||
+                else if (map.InitialEnemy1Position != null && map.InitialEnemy1Position.Value.Equals(pos))
+                {
+                    tile = map.IsEnemy1Boss ? Tile.Boss : Tile.Enemy;
+                }
+                else if ((map.InitialEnemy2Position != null && map.InitialEnemy2Position.Value.Equals(pos)) ||
                     (map.InitialEnemy3Position != null && map.InitialEnemy3Position.Value.Equals(pos)))
                 {
                     tile = Tile.Enemy;

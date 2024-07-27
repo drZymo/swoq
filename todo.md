@@ -8,6 +8,7 @@
   - [ ] Treasure
   - [ ] Treasure exit
 - [.] Unit tests
+  - [ ] Boss health and damage
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level

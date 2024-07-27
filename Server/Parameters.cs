@@ -9,7 +9,9 @@ internal static class Parameters
 
     public const int PlayerHealth = 5;
     public const int EnemyHealth = 6;
+    public const int EnemyDamage = 1;
     public const int BossHealth = 100;
+    public const int BossDamage = 100;
 
     public const int ExtraHealth = 3;
 

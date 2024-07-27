@@ -31,7 +31,18 @@ public class Game : IGame
         }
         if (map.InitialEnemy1Position.HasValue)
         {
-            enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
+            if (map.IsEnemy1Boss)
+            {
+                enemies = enemies.Add(new GameEnemy(GameCharacterId.Boss,
+                    map.InitialEnemy1Position.Value,
+                    Inventory: map.InitialEnemy1Inventory,
+                    Health: Parameters.BossHealth,
+                    Damage: Parameters.BossDamage));
+            }
+            else
+            {
+                enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
+            }
         }
         if (map.InitialEnemy2Position.HasValue)
         {
@@ -540,8 +551,8 @@ public class Game : IGame
         if (adjacentPlayers.Count > 0)
         {
             var adjacentPlayer = adjacentPlayers.PickOne();
-            if (player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(ref player1, 1);
-            if (player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(ref player2, 1);
+            if (player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(ref player1, enemy.Damage);
+            if (player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(ref player2, enemy.Damage);
         }
 
         // Return true, even when not attacked.
@@ -856,7 +867,7 @@ public class Game : IGame
             {
                 if (pos.Equals(enemy.Position))
                 {
-                    return Tile.Enemy;
+                    return enemy.Id == GameCharacterId.Boss ? Tile.Boss : Tile.Enemy;
                 }
             }
 

@@ -1,6 +1,5 @@
 namespace Swoq.Infra;
 
-using Microsoft.AspNetCore.Builder.Extensions;
 using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -881,60 +880,77 @@ public class MapGenerator : IMapGenerator
         /// Door is closed and kills boss.
         /// Boss loot is key for exit door and two big treasures and are placed next to closed door.
         /// Without treasure in inventory player is killed when leaving.
+        /// Lots of health, swords, boulders and random keys arround map.
 
+        // Big room for boss near exit
 
-        var middle = width / 2;
-        var q1 = middle / 2;
-        var q3 = (middle + width) / 2;
+        var x2 = width / 2;
+        var x1 = x2 / 2;
+        var x3 = (x2 + width) / 2;
 
-        RestrictAvailablePositions(maxX: q1);
-        var room1 = CreateRandomRoom(minSize:2, maxSize:7, margin: 0);
-        if (room1 == null) throw new MapGeneratorException("Random room did not fit");
+        var y2 = height / 2;
+        var y1 = y2 / 2;
+        var y3 = (y2 + height) / 2;
+
+        RestrictAvailablePositions(minY: y1, maxY: y3, minX: x1, maxX: x3);
+        var bossRoom = CreateRandomRoom(minSize: 6, maxSize: 6, margin: 1);
+        if (bossRoom == null) throw new MapGeneratorException("Random room did not fit");
+        var pp = availablePositions;
         RestoreAvailablePositions();
 
-        RestrictAvailablePositions(minX: q1, maxX:middle-1);
-        var room2 = CreateRandomRoom(minSize: 2, maxSize: 7, margin: 0);
-        if (room2 == null) throw new MapGeneratorException("Random room did not fit");
-        RestoreAvailablePositions();
+        CreateStandardMaze(twoPlayers: true, maxSize: 4);
 
-        RestrictAvailablePositions(minX: middle+1, maxX: q3);
-        var room3 = CreateRandomRoom(minSize: 2, maxSize: 7, margin: 0);
-        if (room3 == null) throw new MapGeneratorException("Random room did not fit");
-        RestoreAvailablePositions();
+        // Place boss in room
+        map.Enemy1.Position = bossRoom.Center;
+        map.Enemy1.IsBoss = true;
+        availableRooms = availableRooms.Remove(bossRoom);
 
-        RestrictAvailablePositions(minX: q3);
-        var room4 = CreateRandomRoom(minSize: 2, maxSize: 7, margin: 0);
-        if (room4 == null) throw new MapGeneratorException("Random room did not fit");
-        RestoreAvailablePositions();
-
-        ConnectRooms(room1, room2);
-        ConnectRooms(room2, room3);
-        ConnectRooms(room3, room4);
-
-        var tunnelDoorColor = PickRandomAvailableKeyColor();
-        var tunnelDoorCell = ToDoor(tunnelDoorColor);
-
-        for (var y = 0; y < height; y++)
+        // Find or create tunnels on both left and right side of bossRoom
+        var leftTunnelPosY = FindHorizontalTunnel(bossRoom.Top, bossRoom.Bottom, bossRoom.Left - 1);
+        if (!leftTunnelPosY.HasValue)
         {
-            SetIfEmpty(y, middle, tunnelDoorCell);
+            var bossRoomLeft = rooms.Where(r => r.Right < bossRoom.Left).OrderBy(r => r.Center.DistanceTo(bossRoom.Center)).First();
+            ConnectRooms(bossRoom, bossRoomLeft);
+            leftTunnelPosY = FindHorizontalTunnel(bossRoom.Top, bossRoom.Bottom, bossRoom.Left - 1);
         }
 
-        //var (middle, roomsLeft, roomsRight) = CreateSplitMaze(twoPlayers: true);
+        var rightTunnelPosY = FindHorizontalTunnel(bossRoom.Top, bossRoom.Bottom, bossRoom.Right);
+        if (!rightTunnelPosY.HasValue)
+        {
+            var bossRoomRight = rooms.Where(r => r.Left > bossRoom.Right).OrderBy(r => r.Center.DistanceTo(bossRoom.Center)).First();
+            ConnectRooms(bossRoom, bossRoomRight);
+            rightTunnelPosY = FindHorizontalTunnel(bossRoom.Top, bossRoom.Bottom, bossRoom.Right);
+        }
 
-        //var tunnelDoorColor = PickRandomAvailableKeyColor();
-        //var doorPosY = ConnectLeftAndRightWithDoor(middle, roomsLeft, roomsRight, tunnelDoorColor);
+        Position[] tunnelPositions;
+        if (leftTunnelPosY.HasValue && rightTunnelPosY.HasValue)
+        {
+            tunnelPositions = [(leftTunnelPosY.Value, bossRoom.Left - 1), (rightTunnelPosY.Value, bossRoom.Right)];
+        }
+        else if (leftTunnelPosY.HasValue)
+        {
+            tunnelPositions = [(leftTunnelPosY.Value, bossRoom.Left - 1)];
+        }
+        else if (rightTunnelPosY.HasValue)
+        {
+            tunnelPositions = [(rightTunnelPosY.Value, bossRoom.Right)];
+        }
+        else
+        {
+            throw new MapGeneratorException("No tunnel to boss room");
+        }
 
-        //var doorPos = (doorPosY, middle);
+        // Place a door in the tunnel
+        var tunnelDoorPos = tunnelPositions.PickOne();
+        var tunnelDoorColor = PickRandomAvailableKeyColor();
+        var tunnelDoorCell = ToDoor(tunnelDoorColor);
+        SetIfEmpty(tunnelDoorPos.y, tunnelDoorPos.x, tunnelDoorCell);
+        SetIfEmpty(tunnelDoorPos.y + 1, tunnelDoorPos.x, tunnelDoorCell);
 
-        //// Pressure plate in room in front of door
-        //var plateRoom = ClaimClosestAvailableRoomFrom((doorPosY, middle - 1));
-
-        //var platePos = GetRandomEmptyPositionInRoom(plateRoom, margin: 1);
-
-        //map[platePos] = ToPressurePlate(tunnelDoorColor);
-
-
-
+        // Pressure plate in a room close by
+        var plateRoom = ClaimClosestAvailableRoomFrom(tunnelDoorPos);
+        var platePos = GetRandomEmptyPositionInRoom(plateRoom, margin: 1);
+        map[platePos] = ToPressurePlate(tunnelDoorColor);
     }
 
     private Room CreateRoomTopLeft(int top, int left, int height, int width, int margin = 0)
@@ -1092,9 +1108,9 @@ public class MapGenerator : IMapGenerator
         initialRestrictedPositions = [];
     }
 
-    private void CreateStandardMaze(bool twoPlayers = false)
+    private void CreateStandardMaze(bool twoPlayers = false, int minSize = 1, int maxSize = 7)
     {
-        CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 1);
+        CreateRandomRooms(maxRooms: 200, minSize: minSize, maxSize: maxSize, margin: 1);
         ConnectRoomsRandomly();
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
     }
@@ -1625,5 +1641,19 @@ public class MapGenerator : IMapGenerator
         var keyColor = availableKeyColors.PickOne();
         availableKeyColors = availableKeyColors.Remove(keyColor);
         return keyColor;
+    }
+
+    private int? FindHorizontalTunnel(int y1, int y2, int x)
+    {
+        for (var y = y1; y < y2; y++)
+        {
+            if (map[y, x] == Cell.Unknown && map[y + 1, x] == Cell.Empty &&
+                map[y + 2, x] == Cell.Empty && map[y + 3, x] == Cell.Unknown)
+            {
+                return y + 1;
+            }
+        }
+
+        return null;
     }
 }
