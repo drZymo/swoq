@@ -34,6 +34,7 @@ internal record GameEnemy(
     Position Position,
     Inventory Inventory = Inventory.None,
     int Health = Parameters.EnemyHealth,
+    bool HasSword = true,
     int Damage = Parameters.EnemyDamage,
     bool IsTriggered = false)
-    : GameCharacter(Id, Position, Inventory, Health, true);
+    : GameCharacter(Id, Position, Inventory, Health, HasSword);

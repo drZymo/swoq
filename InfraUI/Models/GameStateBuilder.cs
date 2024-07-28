@@ -13,7 +13,8 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         Add(Inventory.KeyRed, "Red key").
         Add(Inventory.KeyGreen, "Green key").
         Add(Inventory.KeyBlue, "Blue key").
-        Add(Inventory.Boulder, "Boulder");
+        Add(Inventory.Boulder, "Boulder").
+        Add(Inventory.Treasure, "Treasure");
 
     private readonly MapBuilder mapBuilder = new(height, width, visibilityRange);
     private readonly string playerName = playerName;

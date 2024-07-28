@@ -30,4 +30,6 @@ public enum Cell
     PressurePlateRedWithBoulder,
     PressurePlateGreenWithBoulder,
     PressurePlateBlueWithBoulder,
+
+    Treasure,
 }

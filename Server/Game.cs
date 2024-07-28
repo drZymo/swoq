@@ -37,7 +37,8 @@ public class Game : IGame
                     map.InitialEnemy1Position.Value,
                     Inventory: map.InitialEnemy1Inventory,
                     Health: Parameters.BossHealth,
-                    Damage: Parameters.BossDamage));
+                    Damage: Parameters.BossDamage,
+                    HasSword: false));
             }
             else
             {
@@ -763,6 +764,12 @@ public class Game : IGame
                 DropItem(position, Cell.Sword);
                 character = character with { HasSword = false };
             }
+            // Boss drops two treasures
+            if (character.Id == GameCharacterId.Boss)
+            {
+                DropItem(position, Cell.Treasure);
+                DropItem(position, Cell.Treasure);
+            }
 
             lastChangeTick = ticks;
         }
@@ -888,6 +895,7 @@ public class Game : IGame
                 case Cell.PressurePlateBlue: return Tile.PressurePlateBlue;
                 case Cell.Sword: return Tile.Sword;
                 case Cell.Health: return Tile.Health;
+                case Cell.Treasure: return Tile.Treasure;
 
                 case Cell.Boulder:
                 case Cell.PressurePlateRedWithBoulder:

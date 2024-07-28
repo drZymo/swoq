@@ -132,6 +132,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
         Tile.Enemy => Cell.Empty, // Enemies always stand on empty
         Tile.Health => Cell.Health,
         Tile.Boulder => Cell.Boulder,
+        Tile.Treasure => Cell.Treasure,
         _ => throw new NotImplementedException(),
     };
 }

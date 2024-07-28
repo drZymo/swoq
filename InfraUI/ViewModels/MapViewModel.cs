@@ -139,6 +139,7 @@ public class MapViewModel : ViewModelBase
             Cell.PressurePlateRedWithBoulder => Tile.Boulder,
             Cell.PressurePlateGreenWithBoulder => Tile.Boulder,
             Cell.PressurePlateBlueWithBoulder => Tile.Boulder,
+            Cell.Treasure => Tile.Treasure,
             _ => Tile.Unknown,
         };
     }

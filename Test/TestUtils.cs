@@ -28,6 +28,7 @@ internal static class TestUtils
                     '@' => Tile.Enemy,
                     '+' => Tile.Health,
                     '&' => Tile.Boulder,
+                    '$' => Tile.Boss,
                     _ => throw new NotImplementedException()
                 };
             }
