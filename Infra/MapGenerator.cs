@@ -5,7 +5,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using Position = (int y, int x);
 
-// TODO: subclasses per level?
 public class MapGenerator : IMapGenerator
 {
     private class MapGeneratorException(string message) : Exception(message) { }
@@ -112,6 +111,29 @@ public class MapGenerator : IMapGenerator
         }
     }
 
+    private void Reset(int level)
+    {
+        // Clear map with unknowns
+        map = new(level, height, width);
+
+        // Fill with Unknown and make all positions unused
+        foreach (var pos in allPositions)
+        {
+            map[pos] = Cell.Unknown;
+        }
+        availablePositions = allPositions;
+
+        // Reset all members
+        playerRoom = new(-1, -1, -1, -1);
+        exitRoom = new(-1, -1, -1, -1);
+        exitPosition = new();
+        rooms = [];
+        availableRooms = [];
+        availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
+        previousAvailablePositions = [];
+        initialRestrictedPositions = [];
+    }
+
     private void AddWalls()
     {
         bool IsUnknown(Position pos)
@@ -143,29 +165,6 @@ public class MapGenerator : IMapGenerator
         {
             map[pos] = Cell.Wall;
         }
-    }
-
-    private void Reset(int level)
-    {
-        // Clear map with unknowns
-        map = new(level, height, width);
-
-        // Fill with Unknown and make all positions unused
-        availablePositions = allPositions;
-        foreach (var pos in availablePositions)
-        {
-            map[pos] = Cell.Unknown;
-        }
-
-        // Reset all members
-        playerRoom = new(-1, -1, -1, -1);
-        exitRoom = new(-1, -1, -1, -1);
-        exitPosition = new();
-        rooms = [];
-        availableRooms = [];
-        availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
-        previousAvailablePositions = [];
-        initialRestrictedPositions = [];
     }
 
     private void GenerateLevel0()
@@ -215,7 +214,6 @@ public class MapGenerator : IMapGenerator
         // Place key farthest away from player and locker room
         var lockerKeyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontLockerDoorPos]);
         map[lockerKeyPos] = ToKey(lockerKeyColor);
-
     }
 
     private void GenerateLevel4()
@@ -1005,6 +1003,12 @@ public class MapGenerator : IMapGenerator
         // Regular hashset for increased performance
         // Only used locally, so no multi-threading risk
         var roomPositions = availablePositions.ToHashSet();
+        // Extra map for faster lookup
+        var roomPositionsMap = new bool[height, width];
+        foreach (var (y, x) in availablePositions)
+        {
+            roomPositionsMap[y, x] = true;
+        }
 
         // Choose room size
         // always odd size, so center is really center
@@ -1022,26 +1026,26 @@ public class MapGenerator : IMapGenerator
         // Clear X
         for (var i = 0; i < clearX; i++)
         {
-            // Bounds check not needed, because there is a wall around the whole map
             var remove = roomPositions.
-                Where(pos => !roomPositions.Contains((pos.y, pos.x - 1)) || !roomPositions.Contains((pos.y, pos.x + 1))).
+                Where(pos => (pos.x <= 0) || !roomPositionsMap[pos.y, pos.x - 1] || (pos.x >= width - 1) || !roomPositionsMap[pos.y, pos.x + 1]).
                 ToList();
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
+                roomPositionsMap[pos.y, pos.x] = false;
             }
         }
 
         // Clear Y
         for (var i = 0; i < clearY; i++)
         {
-            // Bounds check not needed, because there is a wall around the whole map
             var remove = roomPositions.
-                Where(pos => !roomPositions.Contains((pos.y - 1, pos.x)) || !roomPositions.Contains((pos.y + 1, pos.x))).
+                Where(pos => (pos.y <= 0) || !roomPositionsMap[pos.y - 1, pos.x] || (pos.y >= height - 1) || !roomPositionsMap[pos.y + 1, pos.x]).
                 ToList();
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
+                roomPositionsMap[pos.y, pos.x] = false;
             }
         }
 
@@ -1277,9 +1281,10 @@ public class MapGenerator : IMapGenerator
 
     private (IImmutableDictionary<Position, int> distances, IImmutableDictionary<Position, Position> paths) ComputeDistancesFrom(Position fromPos)
     {
-        var distances = ImmutableDictionary<Position, int>.Empty;
-        var paths = ImmutableDictionary<Position, Position>.Empty;
-        var todo = ImmutableQueue<Position>.Empty;
+        // Regular containers for performance
+        var distances = new Dictionary<Position, int>();
+        var paths = new Dictionary<Position, Position>();
+        var todo = new Queue<Position>();
 
         void CheckAndAdd(Position currentPos, int currentDist, Position nextPos)
         {
@@ -1288,18 +1293,17 @@ public class MapGenerator : IMapGenerator
             var nextDist = distances.TryGetValue(nextPos, out var d) ? d : int.MaxValue;
             if (currentDist + 1 < nextDist)
             {
-                distances = distances.SetItem(nextPos, currentDist + 1);
-                paths = paths.SetItem(nextPos, currentPos);
-                todo = todo.Enqueue(nextPos);
+                distances[nextPos] = currentDist + 1;
+                paths[nextPos] = currentPos;
+                todo.Enqueue(nextPos);
             }
         }
 
-        distances = distances.Add(fromPos, 0);
-        todo = todo.Enqueue(fromPos);
+        distances.Add(fromPos, 0);
+        todo.Enqueue(fromPos);
 
-        while (!todo.IsEmpty)
+        while (todo.TryDequeue(out var currentPos))
         {
-            todo = todo.Dequeue(out var currentPos);
             var currentDist = distances[currentPos];
 
             if (currentPos.y > 0) CheckAndAdd(currentPos, currentDist, (currentPos.y - 1, currentPos.x));
@@ -1308,7 +1312,7 @@ public class MapGenerator : IMapGenerator
             if (currentPos.x < width - 1) CheckAndAdd(currentPos, currentDist, (currentPos.y, currentPos.x + 1));
         }
 
-        return (distances, paths);
+        return (distances.ToImmutableDictionary(), paths.ToImmutableDictionary());
     }
 
     private Position ClaimRandomPositionInAvailableRoomFarthestFrom(Position[] inputPositions, int margin = 0, int minRoomHeight = 1, int minRoomWidth = 1)

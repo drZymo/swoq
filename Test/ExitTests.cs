@@ -79,7 +79,7 @@ internal class ExitTests : GameTestBase
             Assert.That(game.State.Player1.Health, Is.EqualTo(5)); // Health has not changed
             Assert.That(game.State.Player1.Surroundings, Is.Empty); // No more surroundings
             Assert.That(changes, Is.Empty); // No more map updates
-    });
+        });
 
         // No more interactions allowed
         Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveNorth));

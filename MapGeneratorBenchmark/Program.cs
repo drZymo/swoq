@@ -22,9 +22,25 @@ public class Benchmarks
     {
         generator.Generate(1);
     }
+
+    [Benchmark]
+    public void GenerateLevel4()
+    {
+        generator.Generate(4);
+    }
 }
 
 public static class Program
 {
-    public static void Main(string[] args) => BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+    public static void Main(string[] args)
+    {
+        if (args.Length == 1 && args[0] == "all")
+        {
+            new Benchmarks().GenerateAll();
+        }
+        else
+        {
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+        }
+    }
 }
