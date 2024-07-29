@@ -1,15 +1,6 @@
 # TODO
 
-- [.] Levels
-  - [X] Loot drop sword (auto?)
-  - [X] Test door kills enemy
-  - [X] Big boss
-  - [X] Boulder exit kill
-  - [X] Treasure
-  - [X] Treasure exit
-- [.] Unit tests
-  - [X] Boss health and damage
-  - [X] Exit tests
+- [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -17,18 +8,18 @@
 - [ ] Reorder proto files for incremental features
 - [ ] Remove player registration from proto (move to portal)
 - [ ] Quest finished screen in dashboard
-- [ ] Order: width/height, x/y
 - [ ] Level not available => insufficient player level
 - [ ] Hardcode dashboard colors
-- [ ] Lore in the proto files
-- [ ] Tileset matching lore (exit should not be treasure)
+- [ ] Order: width/height, x/y in proto
 - [ ] Zip file for ReplayViewer
 - [ ] Example bot Python
 - [ ] Example bot C#
-- [ ] tiles.png path relative to exe
 - [ ] Distinguish player in game and player on interface. Knight vs Player?
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
-- [ ] Remember health at start of level
+- [ ] Lore in the proto files
+- [ ] Tileset matching lore (exit should not be treasure)
+- [?] Slower with boulder in inventory. 50% change movement is executed.
+- [?] Remember health at start of level
 - [ ] Autotile in map viewer
 - [ ] Single build output/publish folder for server and questdashboard
 - [ ] Auto start dashboard from server
@@ -38,16 +29,6 @@
 - [ ] Show player2 info in replay viewer from start
 - [ ] Extend .editorconfig
 - [ ] Refactor 3 enemy handling in maps
-
-## Improvements
-- [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
-- [X] Enemy keeps on following even if player out of sight, but with more idle actions.
-- [X] Colored pressure plates
-- [ ] Slower with boulder in inventory. 50% change movement is executed.
-
-## Bugs
-- [X] Health and sword could be one same location overwriting eachother.
-- [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
 
 ## Done
 - [X] Act vs Move/Use
@@ -85,6 +66,21 @@
 - [X] Full screen with Avalonia
 - [X] Reduce code duplication between dashboard and replay viewer (create game state)
 - [X] Boulders.
+- [X] Levels
+  - [X] Loot drop sword (auto?)
+  - [X] Test door kills enemy
+  - [X] Big boss
+  - [X] Boulder exit kill
+  - [X] Treasure
+  - [X] Treasure exit
+- [X] Unit tests
+  - [X] Boss health and damage
+  - [X] Exit tests
+- [X] Health and sword could be one same location overwriting eachother.
+- [X] Enemy does not attack immediately when first standing next to player. Will make it possible to run past enemy without being attacked.
+- [X] Enemy keeps on following even if player out of sight, but with more idle actions.
+- [X] Colored pressure plates
+- [X] tiles.png path relative to exe
 
 # Design decisions
 
