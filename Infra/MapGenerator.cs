@@ -941,9 +941,9 @@ public class MapGenerator : IMapGenerator
 
         // Random swords, health, and boulders
         // Leave margin of 1 so always a path around is possible.
-        for (var i = 0; i < 4; i++) PlaceRandomly(Cell.Sword);
-        for (var i = 0; i < 10; i++) PlaceRandomly(Cell.Health);
-        for (var i = 0; i < 10; i++) PlaceRandomly(Cell.Boulder);
+        for (var i = 0; i < 5; i++) PlaceRandomly(Cell.Sword);
+        for (var i = 0; i < 20; i++) PlaceRandomly(Cell.Health);
+        for (var i = 0; i < 5; i++) PlaceRandomly(Cell.Boulder);
 
         // Place a the last key somewhere, just for confusion, not needed.
         var unusedKeyColor = PickRandomAvailableKeyColor();
