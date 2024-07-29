@@ -117,6 +117,7 @@ internal class OnePlayerCombatTests : GameTestBase
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
+            Assert.That(game.IsFinished, Is.False);
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 5)));
             Assert.That(game.State.Player1.Health, Is.EqualTo(1)); // health reduced
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
@@ -125,6 +126,17 @@ internal class OnePlayerCombatTests : GameTestBase
         // Only 1 health left
         // Attacking now will result in player being attacked back again and die.
         Assert.Throws<Player1DiedException>(() => Act(DirectedAction.UseEast));
+
+        // Game is finished now
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Player1.Position, Is.EqualTo((-1, -1)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(game.State.Player1.Health, Is.EqualTo(0));
+            Assert.That(changes, Is.Empty);
+        });
     }
 
     [Test]

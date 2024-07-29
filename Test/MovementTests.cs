@@ -12,12 +12,12 @@ internal class MovementTests : GameTestBase
         "                 " +
         "                 " +
         "    #########    " +
-        "   #....@....#   " +
+        "   #....e....#   " +
         "   #.........#   " +
         "   #.........#   " +
         "   #.........#   " +
         "   #.........#   " +
-        "   #....pp...#   " +
+        "    &...pp...#   " +
         "   #....!....#   " +
         "   #....!....#   " +
         "   #.........#   " +
@@ -31,12 +31,12 @@ internal class MovementTests : GameTestBase
         "                 " +
         "                 " +
         "   #########     " +
-        "  #....@....#    " +
+        "  #....e....#    " +
         "  #.........#    " +
         "  #.........#    " +
         "  #.........#    " +
         "  #.........#    " +
-        "  #....pp...#    " +
+        "   &...pp...#    " +
         "  #....!....#    " +
         "  #....!....#    " +
         "  #.........#    " +
@@ -146,6 +146,36 @@ internal class MovementTests : GameTestBase
         Assert.That(mapCache.GetNewChanges(), Is.Empty);
     }
 
+    [Test]
+    public void PlayerAndBoulderCannotOverlap()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Move towards boulder
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 2)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(6, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(6, 2)], Is.EqualTo((Tile.Empty, Tile.Player)));
+        });
+
+        // Another move west will overlap with boulder, which is not allowed
+        Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveWest));
+
+        // Nothing changed
+        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+    }
+
     protected override Map CreateGameMap()
     {
         var width = 11;
@@ -170,15 +200,19 @@ internal class MovementTests : GameTestBase
             }
         }
 
-        // Players in center
+        // Two players in center
         map.Player1.Position = ((height - 1) / 2, (width - 1) / 2);
         map.Player2.Position = ((height - 1) / 2, (width - 1) / 2 + 1);
 
-        // Two swords
+        // Two swords near
         map[map.Player1.Position.y + 1, map.Player1.Position.x] = Cell.Sword;
         map[map.Player1.Position.y + 2, map.Player1.Position.x] = Cell.Sword;
 
+        // One enemy in top
         map.Enemy1.Position = (1, (width - 1) / 2);
+
+        // Boulder in left
+        map[map.Player1.Position.y, 1] = Cell.Boulder;
 
         return map.ToMap();
     }

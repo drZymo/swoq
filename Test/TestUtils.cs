@@ -25,10 +25,11 @@ internal static class TestUtils
                     'b' => Tile.KeyBlue,
                     '_' => Tile.PressurePlateRed,
                     '!' => Tile.Sword,
-                    '@' => Tile.Enemy,
                     '+' => Tile.Health,
+                    'e' => Tile.Enemy,
+                    'E' => Tile.Boss,
                     '&' => Tile.Boulder,
-                    '$' => Tile.Boss,
+                    '$' => Tile.Treasure,
                     _ => throw new NotImplementedException()
                 };
             }

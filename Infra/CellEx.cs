@@ -9,16 +9,17 @@ public static class CellEx
             case Cell.Empty:
             case Cell.Exit:
             case Cell.DoorRedOpen:
-            case Cell.KeyRed:
-            case Cell.PressurePlateRed:
             case Cell.DoorGreenOpen:
-            case Cell.KeyGreen:
-            case Cell.PressurePlateGreen:
             case Cell.DoorBlueOpen:
+            case Cell.KeyRed:
+            case Cell.KeyGreen:
             case Cell.KeyBlue:
+            case Cell.PressurePlateRed:
+            case Cell.PressurePlateGreen:
             case Cell.PressurePlateBlue:
             case Cell.Sword:
             case Cell.Health:
+            case Cell.Treasure:
                 return true;
 
             case Cell.Wall:

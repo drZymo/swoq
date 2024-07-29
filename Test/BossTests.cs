@@ -132,6 +132,7 @@ internal class BossTests : GameTestBase
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
+            Assert.That(game.IsFinished, Is.False);
             Assert.That(game.State.Player1.Position, Is.EqualTo((3, 14)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(game.State.Player1.HasSword, Is.True);
@@ -148,6 +149,17 @@ internal class BossTests : GameTestBase
 
         // Attack will not work, boss kills in one strike
         Assert.Throws<Player1DiedException>(() => Act(DirectedAction.UseEast));
+
+        // Game is finished
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Player1.Position, Is.EqualTo((-1, -1)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(game.State.Player1.Health, Is.EqualTo(0));
+            Assert.That(changes, Is.Empty);
+        });
     }
 
     protected override Map CreateGameMap()

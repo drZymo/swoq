@@ -225,6 +225,7 @@ public class Game : IGame
                 case Cell.KeyBlue:
                 case Cell.Sword:
                 case Cell.Health:
+                case Cell.Treasure:
                     // Cannot use on this
                     throw new UseNotAllowedException(CreateState());
 
@@ -353,13 +354,13 @@ public class Game : IGame
                 break;
 
             case Cell.Exit:
-                // Reomve player from game
-                player = player with { Position = PositionEx.Invalid };
+                ExitMap(ref player);
                 break;
 
             case Cell.KeyRed:
             case Cell.KeyGreen:
             case Cell.KeyBlue:
+            case Cell.Treasure:
                 PickupInventory(ref player, position, Cell.Empty);
                 break;
 
@@ -484,6 +485,25 @@ public class Game : IGame
                 }
             }
         }
+    }
+
+    private void ExitMap(ref GamePlayer player)
+    {
+        var cannotExit =
+            // Cannot carry boulder when exiting
+            (player.Inventory == Inventory.Boulder) ||
+            // In last level, treasure is needed when exiting
+            (map.Level == Parameters.FinalLevel && player.Inventory != Inventory.Treasure);
+
+        if (cannotExit)
+        {
+            player = player with { Health = 0 };
+            CleanupDeadCharacter(ref player);
+            return;
+        }
+
+        // Remove player from game, with health intact
+        player = player with { Position = PositionEx.Invalid };
     }
 
     private void KillCharacterAtPosition(Position pos)
@@ -638,7 +658,7 @@ public class Game : IGame
 
     private void DealDamage<T>(ref T character, int damage) where T : GameCharacter
     {
-        character = character with { Health = character.Health - damage };
+        character = character with { Health = Math.Max(0, character.Health - damage) };
         lastChangeTick = ticks;
         character = CleanupDeadCharacter(ref character);
     }

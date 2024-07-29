@@ -42,17 +42,20 @@ internal class MapCache(int height, int width, int visibilityRange)
         var left = playerState.Position.x - visibilityRange;
         var surroundingsSize = visibilityRange * 2 + 1;
 
-        for (int sy = 0; sy < surroundingsSize; sy++)
+        if (playerState.Surroundings.Length > 0)
         {
-            var my = top + sy;
-            for (int sx = 0; sx < surroundingsSize; sx++)
+            for (int sy = 0; sy < surroundingsSize; sy++)
             {
-                var mx = left + sx;
-
-                if (0 <= my && my < height && 0 <= mx && mx < width)
+                var my = top + sy;
+                for (int sx = 0; sx < surroundingsSize; sx++)
                 {
-                    var newValue = playerState.Surroundings[sy * surroundingsSize + sx];
-                    Change(my, mx, newValue);
+                    var mx = left + sx;
+
+                    if (0 <= my && my < height && 0 <= mx && mx < width)
+                    {
+                        var newValue = playerState.Surroundings[sy * surroundingsSize + sx];
+                        Change(my, mx, newValue);
+                    }
                 }
             }
         }

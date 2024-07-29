@@ -18,7 +18,7 @@ internal class TwoPlayerCombatTests : GameTestBase
         "       #p.......#" +
         "       #!....... " +
         "       #........ " +
-        "       #+......@ " +
+        "       #+......e " +
         "       #.......  " +
         "       #!......  " +
         "       #p.....   " +
@@ -31,7 +31,7 @@ internal class TwoPlayerCombatTests : GameTestBase
         "       #p.....   " +
         "       #!......  " +
         "       #.......  " +
-        "       #+......@ " +
+        "       #+......e " +
         "       #........ " +
         "       #!....... " +
         "       #p......X#" +

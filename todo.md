@@ -4,11 +4,12 @@
   - [X] Loot drop sword (auto?)
   - [X] Test door kills enemy
   - [X] Big boss
-  - [ ] Boulder exit kill
+  - [X] Boulder exit kill
   - [X] Treasure
-  - [ ] Treasure exit
+  - [X] Treasure exit
 - [.] Unit tests
   - [X] Boss health and damage
+  - [X] Exit tests
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
