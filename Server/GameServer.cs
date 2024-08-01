@@ -44,7 +44,7 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
     private Game StartTraining(Player player, int level)
     {
         // Check if player can play this level
-        if (level < 0 || level > player.Level) throw new LevelNotAvailableException();
+        if (level < 0 || player.Level < level) throw new PlayerLevelTooLowException();
 
         var map = mapGenerator.Generate(level);
 

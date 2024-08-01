@@ -83,14 +83,12 @@ public class Game : IGame
         // Pre conditions
         if (action1 != null)
         {
-            if (player1 == null) throw new Player1NotPresentException(CreateState());
-            if (!player1.Position.IsValid()) throw new Player1NotPresentException(CreateState());
+            if (player1 == null || !player1.Position.IsValid()) throw new Player1NotPresentException(CreateState());
             if (player1.Health <= 0) throw new Player1DiedException(CreateState());
         }
         if (action2 != null)
         {
-            if (player2 == null) throw new Player2NotPresentException(CreateState());
-            if (!player2.Position.IsValid()) throw new Player2NotPresentException(CreateState());
+            if (player2 == null || !player2.Position.IsValid()) throw new Player2NotPresentException(CreateState());
             if (player2.Health <= 0) throw new Player2DiedException(CreateState());
         }
 
@@ -170,18 +168,18 @@ public class Game : IGame
             IsFinished = true;
             throw new Player1DiedException(CreateState());
         }
-        else if (player2 != null && player2.Health <= 0)
+        if (player2 != null && player2.Health <= 0)
         {
             IsFinished = true;
             throw new Player2DiedException(CreateState());
         }
-        else if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
+        if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
         {
             // Time since last change was too long ago
             IsFinished = true;
             throw new NoProgressException(CreateState());
         }
-        else if ((player1 == null || (!player1.Position.IsValid() && player1.Health > 0)) &&
+        if ((player1 == null || (!player1.Position.IsValid() && player1.Health > 0)) &&
             (player2 == null || (!player2.Position.IsValid() && player2.Health > 0)))
         {
             // Both players exited the map alive
@@ -303,7 +301,7 @@ public class Game : IGame
         DirectedAction.MoveWest => (player.Position.y, player.Position.x - 1),
         DirectedAction.UseWest => (player.Position.y, player.Position.x - 1),
 
-        _ => throw new UnknownDirectionException(CreateState()),
+        _ => throw new UnknownActionException(CreateState()),
     };
 
     private void LeaveCell(Position position)

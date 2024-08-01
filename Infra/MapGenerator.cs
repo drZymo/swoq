@@ -1005,7 +1005,7 @@ public class MapGenerator : IMapGenerator
         var roomPositions = availablePositions.ToHashSet();
         // Extra map for faster lookup
         var roomPositionsMap = new bool[height, width];
-        foreach (var (y, x) in availablePositions)
+        foreach (var (y, x) in roomPositions)
         {
             roomPositionsMap[y, x] = true;
         }

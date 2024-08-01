@@ -2,10 +2,9 @@
 
 public abstract class SwoqException : Exception;
 
-public class PlayerAlreadyRegisteredException : SwoqException;
 public class UnknownPlayerException : SwoqException;
 public class UnknownGameIdException : SwoqException;
-public class LevelNotAvailableException : SwoqException;
+public class PlayerLevelTooLowException : SwoqException;
 public class QuestQueuedException : SwoqException;
 
 public abstract class SwoqGameException(GameState state) : SwoqException
@@ -16,7 +15,6 @@ public abstract class SwoqGameException(GameState state) : SwoqException
 public class MoveNotAllowedException(GameState state) : SwoqGameException(state);
 public class UseNotAllowedException(GameState state) : SwoqGameException(state);
 public class UnknownActionException(GameState state) : SwoqGameException(state);
-public class UnknownDirectionException(GameState state) : SwoqGameException(state);
 public class GameFinishedException(GameState state) : SwoqGameException(state);
 public class Player1NotPresentException(GameState state) : SwoqGameException(state);
 public class Player2NotPresentException(GameState state) : SwoqGameException(state);

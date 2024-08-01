@@ -29,10 +29,10 @@ public class GameServerTests
     }
 
     [Test]
-    public void LevelNotAvailable()
+    public void PlayerLevelTooLow()
     {
         GivenPlayerRegistered();
-        Assert.Throws<LevelNotAvailableException>(() => gameServer.Start("p1", 2));
+        Assert.Throws<PlayerLevelTooLowException>(() => gameServer.Start("p1", 2));
     }
 
     [Test]

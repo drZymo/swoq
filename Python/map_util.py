@@ -15,13 +15,15 @@ _cell_colors = {
     swoq_pb2.TILE_KEY_GREEN:            [  0, 255,   0],
     swoq_pb2.TILE_DOOR_BLUE:            [  0,   0, 128],
     swoq_pb2.TILE_KEY_BLUE:             [  0,   0, 255],
+    swoq_pb2.TILE_BOULDER:              [ 49,  41,  31],
     swoq_pb2.TILE_PRESSURE_PLATE_RED:   [ 64,  32,  32],
     swoq_pb2.TILE_PRESSURE_PLATE_GREEN: [ 32,  64,  32],
     swoq_pb2.TILE_PRESSURE_PLATE_BLUE:  [ 32,  32,  64],
     swoq_pb2.TILE_SWORD:                [255, 255,   0],
-    swoq_pb2.TILE_ENEMY:                [  0, 255, 255],
     swoq_pb2.TILE_HEALTH:               [128, 128,   0],
-    swoq_pb2.TILE_BOULDER:              [ 49,  41,  31],
+    swoq_pb2.TILE_ENEMY:                [  0, 192, 192],
+    swoq_pb2.TILE_BOSS:                 [  0, 255, 255],
+    swoq_pb2.TILE_TREASURE:             [255, 255, 255],
 }
 
 def get_map_image(game_map: np.ndarray[np.int8]) -> np.ndarray[np.float32]:

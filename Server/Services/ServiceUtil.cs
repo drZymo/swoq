@@ -8,14 +8,12 @@ internal static class ServiceUtil
     {
         switch (ex)
         {
-            case PlayerAlreadyRegisteredException: return Result.PlayerAlreadyRegistered;
             case UnknownPlayerException: return Result.UnknownPlayer;
             case UnknownGameIdException: return Result.UnknownGameId;
-            case LevelNotAvailableException: return Result.LevelNotAvailable;
+            case PlayerLevelTooLowException: return Result.PlayerLevelTooLow;
             case MoveNotAllowedException: return Result.MoveNotAllowed;
             case UseNotAllowedException: return Result.UseNotAllowed;
             case UnknownActionException: return Result.UnknownAction;
-            case UnknownDirectionException: return Result.UnknownDirection;
             case GameFinishedException: return Result.GameFinished;
             case Player1NotPresentException: return Result.Player1NotPresent;
             case Player2NotPresentException: return Result.Player2NotPresent;
