@@ -6,6 +6,7 @@
   - [ ] Current level
   - [ ] API description
 - [ ] Reorder proto files for incremental features
+  - [ ] Player state optional fields
 - [ ] Remove player registration from proto (move to portal)
 - [ ] Quest finished screen in dashboard
 - [ ] Level not available => insufficient player level

@@ -8,10 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="monitor.proto" />
+    <None Remove="player.proto" />
+    <None Remove="replay.proto" />
     <None Remove="swoq.proto" />
   </ItemGroup>
 
   <ItemGroup>
+    <Protobuf Include="monitor.proto" />
+    <Protobuf Include="replay.proto" />
+    <Protobuf Include="player.proto" />
     <Protobuf Include="swoq.proto" />
   </ItemGroup>
 

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package Swoq.Interface;
+
+message ReplayHeader {
+	string playerName = 1;
+	string dateTime = 2;
+}

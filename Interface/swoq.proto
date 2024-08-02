@@ -1,34 +1,34 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 package Swoq.Interface;
 
 enum Result {
 	RESULT_OK = 0;
-
-	RESULT_INTERNAL_ERROR = 1; // L0
-	RESULT_UNKNOWN_PLAYER = 2; // L0
-	RESULT_UNKNOWN_GAME_ID = 3; // L0
-	RESULT_PLAYER_LEVEL_TOO_LOW = 4; // L0
-	RESULT_QUEST_QUEUED = 5; // L0
-	RESULT_MOVE_NOT_ALLOWED = 6; // L0
-	RESULT_NO_PROGRESS = 7; // L0
-	RESULT_GAME_TIMEOUT = 8; // L0
-	RESULT_UNKNOWN_ACTION = 9; // L0
-	RESULT_GAME_FINISHED = 10; // L0
-	RESULT_PLAYER1_NOT_PRESENT = 11; // L0
-    RESULT_USE_NOT_ALLOWED = 12; // L2
-	RESULT_INVENTORY_FULL = 13; // L2
-	RESULT_INVENTORY_EMPTY = 14; // L2
-	RESULT_PLAYER1_DIED = 15; // L6
-	RESULT_NO_SWORD = 16; // L8
-	RESULT_PLAYER2_NOT_PRESENT = 17; // L10
-	RESULT_PLAYER2_DIED = 18; // L10
+	RESULT_INTERNAL_ERROR = 1;
+	RESULT_UNKNOWN_PLAYER = 2;
+	RESULT_UNKNOWN_GAME_ID = 3;
+	RESULT_PLAYER_LEVEL_TOO_LOW = 4;
+	RESULT_QUEST_QUEUED = 5;
+	RESULT_MOVE_NOT_ALLOWED = 6;
+	RESULT_NO_PROGRESS = 7;
+	RESULT_GAME_TIMEOUT = 8;
+	RESULT_UNKNOWN_ACTION = 9;
+	RESULT_GAME_FINISHED = 10;
+	RESULT_PLAYER1_NOT_PRESENT = 11;
+    // Level 2 and up:
+    RESULT_USE_NOT_ALLOWED = 12;
+	RESULT_INVENTORY_FULL = 13;
+	RESULT_INVENTORY_EMPTY = 14;
+    // Level 6 and up:
+	RESULT_PLAYER1_DIED = 15;
+    // Level 8 and up:
+	RESULT_NO_SWORD = 16;
+    // Level 10 and up:
+	RESULT_PLAYER2_NOT_PRESENT = 17;
+	RESULT_PLAYER2_DIED = 18;
 }
 
 enum Tile {
-    // Level 0 and up:
 	TILE_UNKNOWN = 0;
 	TILE_EMPTY = 1;
 	TILE_PLAYER = 2;
@@ -68,21 +68,17 @@ enum Inventory {
     INVENTORY_TREASURE = 5;
 }
 
-service PlayerService {
-	rpc GetScores(google.protobuf.Empty) returns(Scores);
+enum DirectedAction {
+    DIRECTEDACTION_MOVE_NORTH = 0;
+    DIRECTEDACTION_MOVE_EAST = 1;
+    DIRECTEDACTION_MOVE_SOUTH = 2;
+    DIRECTEDACTION_MOVE_WEST = 3;
+    // Level 2 and up:
+    DIRECTEDACTION_USE_NORTH = 4;
+    DIRECTEDACTION_USE_EAST = 5;
+    DIRECTEDACTION_USE_SOUTH = 6;
+    DIRECTEDACTION_USE_WEST = 7;
 }
-
-message Score {
-	string playerName = 1;
-	int32 level = 2;
-	int32 lengthTicks = 3;
-	int32 lengthSeconds = 4;
-}
-
-message Scores {
-	repeated Score scores = 1;
-}
-
 
 service GameService {
 	rpc Start(StartRequest) returns (StartResponse);
@@ -97,7 +93,9 @@ message Position {
 message PlayerState {
 	Position position = 1;
 	repeated Tile surroundings = 2;
+    // Level 2 and up:
 	Inventory inventory = 3;
+    // Level 8 and up:
 	int32 health = 4;
 	bool hasSword = 5;
 }
@@ -107,6 +105,7 @@ message State {
 	int32 level = 2;
 	bool finished = 3;
 	optional PlayerState player1 = 4;
+    // Level 10 and up:
 	optional PlayerState player2 = 5;
 }
 
@@ -124,61 +123,14 @@ message StartResponse {
 	optional State state = 6;
 }
 
-enum DirectedAction {
-    DIRECTEDACTION_MOVE_NORTH = 0;
-    DIRECTEDACTION_MOVE_EAST = 1;
-    DIRECTEDACTION_MOVE_SOUTH = 2;
-    DIRECTEDACTION_MOVE_WEST = 3;
-    DIRECTEDACTION_USE_NORTH = 4;
-    DIRECTEDACTION_USE_EAST = 5;
-    DIRECTEDACTION_USE_SOUTH = 6;
-    DIRECTEDACTION_USE_WEST = 7;
-}
-
 message ActionRequest {
 	string gameId = 1;
 	optional DirectedAction action1 = 2;
+    // Level 10 and up:
 	optional DirectedAction action2 = 3;
 }
 
 message ActionResponse {
 	Result result = 1;
 	optional State state = 2;
-}
-
-
-
-service QuestMonitorService {
-	rpc Monitor(google.protobuf.Empty) returns (stream QuestUpdate);
-}
-
-message QuestStarted {
-	string gameId = 1;
-	string player = 2;
-	StartRequest request = 3;
-	StartResponse response = 4;
-}
-
-message QuestActed {
-	string gameId = 1;
-	ActionRequest request = 2;
-	ActionResponse response = 3;
-}
-
-message QueueUpdate {
-	repeated string queuedPlayers = 1;
-}
-
-message QuestUpdate {
-	optional QuestStarted started = 1;
-	optional QuestActed acted = 2;
-	optional QueueUpdate queueUpdate = 3;
-}
-
-
-
-
-message ReplayHeader {
-	string playerName = 1;
-	string dateTime = 2;
 }

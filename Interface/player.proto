@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package Swoq.Interface;
+
+service PlayerService {
+	rpc GetScores(google.protobuf.Empty) returns(Scores);
+}
+
+message Score {
+	string playerName = 1;
+	int32 level = 2;
+	int32 lengthTicks = 3;
+	int32 lengthSeconds = 4;
+}
+
+message Scores {
+	repeated Score scores = 1;
+}
