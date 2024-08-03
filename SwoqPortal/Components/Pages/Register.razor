@@ -38,7 +38,7 @@
 		{
 			Database.CreatePlayer(player);
 			var playerId = player.Id;
-			NavigationManager.NavigateTo($"/player/{playerId}", forceLoad: true);
+			NavigationManager.NavigateTo($"/player/{playerId}?welcome=true", forceLoad: true);
 		}
 		catch (Exception ex) when (ex is not NavigationException)
 		{

@@ -16,7 +16,7 @@
 
 <p>Current level: @Player?.Level (reached in @Player?.QuestLengthTicks ticks)</p>
 
-<ProtoFile />
+<ProtoFile Level="Player?.Level ?? 0" />
 
 @code {
 	[Parameter]

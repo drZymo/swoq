@@ -2,178 +2,157 @@
 
 <p>This proto file describes the interface you should use to communicate with the game server. For more information on setting up the connection and starting a game, go the general documention. (TODO).</p>
 
-<pre class="code"><code class="language-protobuf">@GetFileContent();</code></pre>
+<pre class="code"><code class="language-protobuf">@GetFileContent()</code></pre>
 
 @code {
 
-	int level = 0;
+	[Parameter]
+	public int Level { get; set; } = 0;
 
 	string GetFileContent()
 	{
 		var content = @"syntax = ""proto3"";
 
-import ""google/protobuf/empty.proto"";
-
 package Swoq.Interface;
 
 enum Result {
-	OK = 0;
-
-	INTERNAL_ERROR = 1;
-	PLAYER_ALREADY_REGISTERED = 2;
-	UNKNOWN_PLAYER = 3;
-	UNKNOWN_GAME_ID = 4;
-	LEVEL_NOT_AVAILABLE = 5;
-	QUEST_QUEUED = 6;
-	MOVE_NOT_ALLOWED = 10;
-	USE_NOT_ALLOWED = 11;
-	UNKNOWN_ACTION = 12;
-	UNKNOWN_DIRECTION = 13;
-	GAME_FINISHED = 14;
-	PLAYER1_NOT_PRESENT = 15;
-	PLAYER2_NOT_PRESENT = 16;
-	INVENTORY_FULL = 17;
-	INVENTORY_EMPTY = 18;
-	NO_SWORD = 19;
-	PLAYER1_DIED = 20;
-	PLAYER2_DIED = 21;
-	NO_PROGRESS = 22;
-	GAME_TIMEOUT = 23;
+    RESULT_OK = 0;
+    RESULT_INTERNAL_ERROR = 1;
+    RESULT_UNKNOWN_PLAYER = 2;
+    RESULT_UNKNOWN_GAME_ID = 3;
+    RESULT_PLAYER_LEVEL_TOO_LOW = 4;
+    RESULT_QUEST_QUEUED = 5;
+    RESULT_MOVE_NOT_ALLOWED = 6;
+    RESULT_NO_PROGRESS = 7;
+    RESULT_GAME_TIMEOUT = 8;
+    RESULT_UNKNOWN_ACTION = 9;
+    RESULT_GAME_FINISHED = 10;
+    RESULT_PLAYER1_NOT_PRESENT = 11;";
+		if (Level >= 2) content += @"
+    RESULT_USE_NOT_ALLOWED = 12;
+    RESULT_INVENTORY_FULL = 13;
+    RESULT_INVENTORY_EMPTY = 14;";
+		if (Level >= 6) content += @"
+    RESULT_PLAYER1_DIED = 15;";
+		if (Level >= 8) content += @"
+    RESULT_NO_SWORD = 16;";
+		if (Level >= 10) content += @"
+    RESULT_PLAYER2_NOT_PRESENT = 17;
+    RESULT_PLAYER2_DIED = 18;";
+		content += @"
 }
 
-
-service PlayerService {
-	rpc Register(RegisterRequest) returns (RegisterResponse);
-	rpc GetScores(google.protobuf.Empty) returns(Scores);
+enum Tile {
+    TILE_UNKNOWN = 0;
+    TILE_EMPTY = 1;
+    TILE_PLAYER = 2;
+    TILE_WALL = 3;
+    TILE_EXIT = 4;";
+		if (Level >= 2) content += @"
+    TILE_DOOR_RED = 5;
+    TILE_KEY_RED = 6;
+    TILE_DOOR_GREEN = 7;
+    TILE_KEY_GREEN = 8;
+    TILE_DOOR_BLUE = 9;
+    TILE_KEY_BLUE = 10;";
+		if (Level >= 6) content += @"
+    TILE_BOULDER = 11;";
+		if (Level >= 7) content += @"
+    TILE_PRESSURE_PLATE_RED = 12;
+    TILE_PRESSURE_PLATE_GREEN = 13;
+    TILE_PRESSURE_PLATE_BLUE = 14;";
+		if (Level >= 8) content += @"
+    TILE_SWORD = 15;
+    TILE_HEALTH = 16;
+    TILE_ENEMY = 17;";
+		if (Level >= 20) content += @"
+    TILE_BOSS = 19;
+    TILE_TREASURE = 20;";
+		content += @"
 }
 
-message RegisterRequest {
-	string playerName = 1;
+enum Inventory {
+    INVENTORY_NONE = 0;";
+		if (Level >= 2) content += @"
+    INVENTORY_KEY_RED = 1;
+    INVENTORY_KEY_GREEN = 2;
+    INVENTORY_KEY_BLUE = 3;";
+		if (Level >= 6) content += @"
+    INVENTORY_BOULDER = 4;";
+		if (Level >= 20) content += @"
+    INVENTORY_TREASURE = 5;";
+		content += @"
 }
 
-message RegisterResponse {
-	Result result = 1;
-	optional string playerId = 2;
+enum DirectedAction {
+    DIRECTEDACTION_MOVE_NORTH = 0;
+    DIRECTEDACTION_MOVE_EAST = 1;
+    DIRECTEDACTION_MOVE_SOUTH = 2;
+    DIRECTEDACTION_MOVE_WEST = 3;";
+		if (Level >= 2) content += @"
+    DIRECTEDACTION_USE_NORTH = 4;
+    DIRECTEDACTION_USE_EAST = 5;
+    DIRECTEDACTION_USE_SOUTH = 6;
+    DIRECTEDACTION_USE_WEST = 7;";
+		content += @"
 }
-
-message Score {
-	string playerName = 1;
-	int32 level = 2;
-	int32 lengthTicks = 3;
-	int32 lengthSeconds = 4;
-}
-
-message Scores {
-	repeated Score scores = 1;
-}
-
 
 service GameService {
-	rpc Start(StartRequest) returns (StartResponse);
-	rpc Act(ActionRequest) returns (ActionResponse);
-}
-
-enum Direction {
-	NORTH = 0;
-	EAST = 1;
-	SOUTH = 2;
-	WEST = 3;
+    rpc Start(StartRequest) returns (StartResponse);
+    rpc Act(ActionRequest) returns (ActionResponse);
 }
 
 message Position {
-	int32 x = 1;
-	int32 y = 2;
+    int32 x = 1;
+    int32 y = 2;
 }
 
 message PlayerState {
-	Position position = 1;";
-
-		if (level > 5)
-		{
-
-			content += @"int32 health = 2;
-	int32 inventory = 3;
-	bool hasSword = 4;
-";
-		}
-		content += @"repeated int32 surroundings = 5;
+    Position position = 1;
+    repeated Tile surroundings = 2;";
+		if (Level >= 2) content += @"
+    optional Inventory inventory = 3;";
+		if (Level >= 8) content += @"
+    optional int32 health = 4;
+    optional bool hasSword = 5;";
+		content += @"
 }
 
 message State {
-	int32 tick = 1;
-	int32 level = 2;
-	bool finished = 3;
-	optional PlayerState player1 = 4;
-	optional PlayerState player2 = 5;
+    int32 tick = 1;
+    int32 level = 2;
+    bool finished = 3;
+    optional PlayerState player1 = 4;";
+		if (Level >= 10) content += @"
+    optional PlayerState player2 = 5;";
+		content += @"
 }
 
 message StartRequest {
-	string playerId = 1;
-	optional int32 level = 2;
+    string playerId = 1;
+    optional int32 level = 2;
 }
 
 message StartResponse {
-	Result result = 1;
-	optional string gameId = 2;
-	optional int32 width = 3;
-	optional int32 height = 4;
-	optional int32 visibilityRange = 5;
-	optional State state = 6;
-}
-
-enum Action {
-	MOVE = 0;
-	USE = 1;
+    Result result = 1;
+    optional string gameId = 2;
+    optional int32 width = 3;
+    optional int32 height = 4;
+    optional int32 visibilityRange = 5;
+    optional State state = 6;
 }
 
 message ActionRequest {
-	string gameId = 1;
-	optional Action action1 = 2;
-	optional Direction direction1 = 3;
-	optional Action action2 = 4;
-	optional Direction direction2 = 5;
+    string gameId = 1;
+    optional DirectedAction action1 = 2;";
+		if (Level >= 10) content += @"
+    optional DirectedAction action2 = 3;";
+		content += @"
 }
 
 message ActionResponse {
-	Result result = 1;
-	optional State state = 2;
-}
-
-
-
-service QuestMonitorService {
-	rpc Monitor(google.protobuf.Empty) returns (stream QuestUpdate);
-}
-
-message QuestStarted {
-	string gameId = 1;
-	string player = 2;
-	StartRequest request = 3;
-	StartResponse response = 4;
-}
-
-message QuestActed {
-	string gameId = 1;
-	ActionRequest request = 2;
-	ActionResponse response = 3;
-}
-
-message QueueUpdate {
-	repeated string queuedPlayers = 1;
-}
-
-message QuestUpdate {
-	optional QuestStarted started = 1;
-	optional QuestActed acted = 2;
-	optional QueueUpdate queueUpdate = 3;
-}
-
-
-
-
-message ReplayHeader {
-	string playerName = 1;
-	string dateTime = 2;
+    Result result = 1;
+    optional State state = 2;
 }";
 		return content;
 	}

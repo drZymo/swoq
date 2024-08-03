@@ -6,28 +6,28 @@ import "swoq.proto";
 package Swoq.Interface;
 
 service QuestMonitorService {
-	rpc Monitor(google.protobuf.Empty) returns (stream QuestUpdate);
+    rpc Monitor(google.protobuf.Empty) returns (stream QuestUpdate);
 }
 
 message QuestStarted {
-	string gameId = 1;
-	string player = 2;
-	StartRequest request = 3;
-	StartResponse response = 4;
+    string gameId = 1;
+    string player = 2;
+    StartRequest request = 3;
+    StartResponse response = 4;
 }
 
 message QuestActed {
-	string gameId = 1;
-	ActionRequest request = 2;
-	ActionResponse response = 3;
+    string gameId = 1;
+    ActionRequest request = 2;
+    ActionResponse response = 3;
 }
 
 message QueueUpdate {
-	repeated string queuedPlayers = 1;
+    repeated string queuedPlayers = 1;
 }
 
 message QuestUpdate {
-	optional QuestStarted started = 1;
-	optional QuestActed acted = 2;
-	optional QueueUpdate queueUpdate = 3;
+    optional QuestStarted started = 1;
+    optional QuestActed acted = 2;
+    optional QueueUpdate queueUpdate = 3;
 }
