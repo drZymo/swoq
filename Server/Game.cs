@@ -16,7 +16,9 @@ public class Game : IGame
 
     private Map map;
     private GamePlayer? player1 = null;
+    private ImmutableList<Position> player1Positions = [];
     private GamePlayer? player2 = null;
+    private ImmutableList<Position> player2Positions = [];
     private IImmutableList<GameEnemy> enemies = ImmutableList<GameEnemy>.Empty;
 
     public Game(Map map, TimeSpan maxInactivityTime)
@@ -58,7 +60,6 @@ public class Game : IGame
     public Guid Id { get; } = Guid.NewGuid();
     public GameState State => CreateState();
     public DateTime LastActionTime { get; private set; } = Clock.Now;
-    public bool IsInactive => (Clock.Now - LastActionTime) > maxInactivityTime;
 
     public bool IsFinished { get; private set; } = false;
 
@@ -69,7 +70,7 @@ public class Game : IGame
 
         if (IsFinished) throw new GameFinishedException(CreateState());
 
-        if (IsInactive)
+        if (!CheckIsActive())
         {
             IsFinished = true;
             throw new GameTimeoutException(CreateState());
@@ -145,10 +146,33 @@ public class Game : IGame
             enemies = enemies.Replace(enemy, newEnemy);
         }
 
-        // Cleanup dead characters
         CleanupDeadCharacters();
 
+        // Store current positions
+        StorePlayerPosition(player1, ref player1Positions);
+        StorePlayerPosition(player2, ref player2Positions);
+
         UpdateGameStatus();
+    }
+
+    public bool CheckIsActive()
+    {
+        if ((Clock.Now - LastActionTime) > maxInactivityTime)
+        {
+            return false;
+        }
+
+        if (ticks > 0)
+        {
+            var player1Active = IsPlayerActive(player1, player1Positions);
+            var player2Active = IsPlayerActive(player2, player2Positions);
+            if (!player1Active && !player2Active)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private GameState CreateState()
@@ -185,6 +209,20 @@ public class Game : IGame
             // Both players exited the map alive
             IsFinished = true;
             // This is expected, so no exception
+        }
+    }
+
+    private static void StorePlayerPosition(GamePlayer? player, ref ImmutableList<Position> playerPositions)
+    {
+        // Only store positions of active players
+        if (player == null || !player.Position.IsValid()) return;
+
+        // Store current position
+        playerPositions = playerPositions.Add(player.Position);
+        // Cleanup old entries
+        while (playerPositions.Count > Parameters.MaxIdleTicks)
+        {
+            playerPositions = playerPositions.RemoveAt(0);
         }
     }
 
@@ -842,6 +880,37 @@ public class Game : IGame
         AddIfNotOccupied((pos.y + 1, pos.x - 1));
         AddIfNotOccupied((pos.y + 1, pos.x + 1));
         return choices.Count > 0 ? choices.PickOne() : PositionEx.Invalid;
+    }
+
+    private static bool IsPlayerActive(GamePlayer? player, ImmutableList<Position> playerPositions)
+    {
+        // Only check players that are alive
+        if (player == null || !player.Position.IsValid())
+        {
+            return false;
+        }
+
+        // If there was no activity at all, then player is inactive
+        if (playerPositions.Count == 0)
+        {
+            return false;
+        }
+
+        if (playerPositions.Count == Parameters.MaxIdleTicks)
+        {
+            // Check if min and max positions have changed at all
+            var minY = playerPositions.Min(p => p.y);
+            var maxY = playerPositions.Max(p => p.y);
+            var minX = playerPositions.Min(p => p.x);
+            var maxX = playerPositions.Max(p => p.x);
+            if ((maxY - minY) < Parameters.MinIdleMoveDistance &&
+                (maxX - minX) < Parameters.MinIdleMoveDistance)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     #region State

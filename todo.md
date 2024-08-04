@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Idle detection when placing/picking up boulder does not work. Add position change check.
+- [.] Idle detection when placing/picking up boulder does not work. Add position change check.
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level

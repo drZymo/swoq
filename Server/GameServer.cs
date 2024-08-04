@@ -64,7 +64,7 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
             if (currentQuestId.HasValue)
             {
                 var currentQuest = games[currentQuestId.Value];
-                if (currentQuest.State.Finished || currentQuest.IsInactive)
+                if (currentQuest.State.Finished || !currentQuest.CheckIsActive())
                 {
                     currentQuestId = null;
                 }
