@@ -108,7 +108,7 @@ public class GameServerTests
         Assert.That(result2, Is.Not.Null);
 
         // Acting on 1 should now fail on timeout
-        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.Throws<NoProgressException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
     }
 
     [Test]
@@ -164,7 +164,7 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         now += TimeSpan.FromSeconds(20);
-        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
+        Assert.Throws<NoProgressException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
         Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
 
         // Start training for player 2 and let it timeout
@@ -174,7 +174,7 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
         now += TimeSpan.FromSeconds(70);
-        Assert.Throws<GameTimeoutException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.Throws<NoProgressException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
         Assert.Throws<GameFinishedException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
 
         // Wait a while

@@ -24,5 +24,4 @@ public class NoSwordException(GameState state) : SwoqGameException(state);
 public class Player1DiedException(GameState state) : SwoqGameException(state);
 public class Player2DiedException(GameState state) : SwoqGameException(state);
 public class NoProgressException(GameState state) : SwoqGameException(state);
-public class GameTimeoutException(GameState state) : SwoqGameException(state);
 

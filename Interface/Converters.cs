@@ -22,7 +22,6 @@ public static class Converters
         Result.Player1Died => "Player1Died",
         Result.Player2Died => "Player2Died",
         Result.NoProgress => "NoProgress",
-        Result.GameTimeout => "GameTimeout",
         _ => "Unknown",
     };
 

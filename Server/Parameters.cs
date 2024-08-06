@@ -24,9 +24,14 @@ internal static class Parameters
     public static readonly TimeSpan MaxQuestInactivityTime = TimeSpan.FromSeconds(10);
 
     /// <summary>
-    /// Maximum number of ticks that a game is allowed to not have progress, i.e. player is idle.
+    /// Maximum number of ticks that a game is allowed to not have progress, i.e. nothing changed on the map.
     /// </summary>
-    public const int MaxIdleTicks = 500;
+    public const int MaxNoProgressTicks = 1000;
+
+    /// <summary>
+    /// Maximum number of ticks that a player is allowed to not move around, i.e. player is idle.
+    /// </summary>
+    public const int MaxInactivityTicks = 500;
 
     public const int MinIdleMoveDistance = 5;
 }

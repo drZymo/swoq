@@ -73,7 +73,7 @@ public class Game : IGame
         if (!CheckIsActive())
         {
             IsFinished = true;
-            throw new GameTimeoutException(CreateState());
+            throw new NoProgressException(CreateState());
         }
 
         LastActionTime = Clock.Now;
@@ -197,7 +197,7 @@ public class Game : IGame
             IsFinished = true;
             throw new Player2DiedException(CreateState());
         }
-        if ((ticks - lastChangeTick) > Parameters.MaxIdleTicks)
+        if ((ticks - lastChangeTick) > Parameters.MaxNoProgressTicks)
         {
             // Time since last change was too long ago
             IsFinished = true;
@@ -220,7 +220,7 @@ public class Game : IGame
         // Store current position
         playerPositions = playerPositions.Add(player.Position);
         // Cleanup old entries
-        while (playerPositions.Count > Parameters.MaxIdleTicks)
+        while (playerPositions.Count > Parameters.MaxInactivityTicks)
         {
             playerPositions = playerPositions.RemoveAt(0);
         }
@@ -896,7 +896,7 @@ public class Game : IGame
             return false;
         }
 
-        if (playerPositions.Count == Parameters.MaxIdleTicks)
+        if (playerPositions.Count == Parameters.MaxInactivityTicks)
         {
             // Check if min and max positions have changed at all
             var minY = playerPositions.Min(p => p.y);

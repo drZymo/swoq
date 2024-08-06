@@ -1,6 +1,6 @@
 # TODO
 
-- [.] Idle detection when placing/picking up boulder does not work. Add position change check.
+- [ ] Fix boulder handling in bot
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -82,6 +82,7 @@
 - [X] Enemy keeps on following even if player out of sight, but with more idle actions.
 - [X] Colored pressure plates
 - [X] tiles.png path relative to exe
+- [X] Idle detection when placing/picking up boulder does not work. Add position change check.
 
 # Design decisions
 

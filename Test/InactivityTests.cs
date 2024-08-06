@@ -46,6 +46,102 @@ internal class InactivityTests : GameTestBase
     }
 
     [Test]
+    public void ActiveAfterAct()
+    {
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        now += TimeSpan.FromSeconds(10);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        now += TimeSpan.FromSeconds(9);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        now += TimeSpan.FromSeconds(2);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+    }
+
+    [Test]
+    public void InactiveAfterNoAction()
+    {
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.True);
+        });
+
+        now += TimeSpan.FromSeconds(21);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.CheckIsActive(), Is.False);
+        });
+
+        Assert.Throws<NoProgressException>(() => game.Act(DirectedAction.MoveEast));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.CheckIsActive(), Is.False);
+        });
+
+        Assert.Throws<GameFinishedException>(() => game.Act(DirectedAction.MoveEast));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.CheckIsActive(), Is.False);
+        });
+    }
+
+    [Test]
     public void PickupAndPlaceBoulderIsInactivity()
     {
         Assert.Multiple(() =>
@@ -53,7 +149,7 @@ internal class InactivityTests : GameTestBase
             Assert.That(game.State.Player1, Is.Not.Null);
         });
 
-        // Pickup boulder and move to exit
+        // Pickup boulder
         Act(DirectedAction.MoveSouth);
         Act(DirectedAction.MoveSouth);
         Act(DirectedAction.MoveSouth);
@@ -90,7 +186,153 @@ internal class InactivityTests : GameTestBase
         // Increase time a little
         now += TimeSpan.FromSeconds(2);
         // Place boulder should now trigger inactivity
-        Assert.Throws<GameTimeoutException>(() => Act(DirectedAction.UseWest));
+        Assert.Throws<NoProgressException>(() => Act(DirectedAction.UseWest));
+    }
+
+    [Test]
+    public void WalkingAroundPickingUpBouldersIsActivity()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Pickup boulder
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.UseWest); // Pickup boulder
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((9, 2)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder)); // boulder picked up
+            Assert.That(changes, Has.Count.EqualTo(5));
+            // Player moved
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(9, 2)], Is.EqualTo((Tile.Empty, Tile.Player)));
+            // Boulder picked up
+            Assert.That(changes[(9, 1)], Is.EqualTo((Tile.Boulder, Tile.Empty)));
+            // Map revealed
+            Assert.That(changes[(9, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(10, 1)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+        });
+
+        // Repeat walking around in circles, picking up and placing boulders.
+        // Should never fail.
+        for (var j = 0; j < 100; j++)
+        {
+            // Place and pickup boulder to trigger map changes
+            Act(DirectedAction.UseWest);
+            Act(DirectedAction.UseWest);
+            WalkCircle();
+        }
+    }
+
+    [Test]
+    public void OnlyWalkingAroundIsNoProgress()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Walk around
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((9, 2)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(9, 2)], Is.EqualTo((Tile.Empty, Tile.Player)));
+        });
+
+        // Repeat walking around in circles for a while, not picking up anything
+        // Results in no progress
+        for (var j = 0; j < (1000 - 7) / 28; j++)
+        {
+            WalkCircle();
+        }
+
+        // One more circle will trigger no progress
+        Assert.Throws<NoProgressException>(() => WalkCircle());
+    }
+
+    [Test]
+    public void OnlyWalkingAroundInSmallCirtcleIsInactivity()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Walk around
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((9, 2)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(9, 2)], Is.EqualTo((Tile.Empty, Tile.Player)));
+        });
+
+        // Repeat walking around in circles for a while, not picking up anything
+        // Results in no progress
+        for (var j = 0; j < (500 - 7) / 16; j++)
+        {
+            WalkCircle(small: true);
+            // Full circle, nothing changed
+            Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        }
+
+        // One more circle will trigger no progress
+        Assert.Throws<NoProgressException>(() => WalkCircle(small: true));
+    }
+
+    private void WalkCircle(bool small = false)
+    {
+        int vertical = (small ? 4 : 8);
+        int horizontal = (small ? 4 : 6);
+        for (var i = 0; i < vertical; i++)
+        {
+            Act(DirectedAction.MoveNorth);
+        }
+        for (var i = 0; i < horizontal; i++)
+        {
+            Act(DirectedAction.MoveEast);
+        }
+        for (var i = 0; i < vertical; i++)
+        {
+            Act(DirectedAction.MoveSouth);
+        }
+        for (var i = 0; i < horizontal; i++)
+        {
+            Act(DirectedAction.MoveWest);
+        }
+        // Full circle, nothing changed
+        Assert.That(mapCache.GetNewChanges(), Is.Empty);
     }
 
     protected override Map CreateGameMap()
