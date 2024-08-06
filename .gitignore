@@ -12,3 +12,5 @@ examples/
 level*.bin
 **/Properties/launchSettings.json
 **/BenchmarkDotNet.Artifacts/
+coveragereport/
+Test/TestResults/

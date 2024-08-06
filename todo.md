@@ -1,6 +1,7 @@
 # TODO
 
 - [ ] Fix boulder handling in bot
+- [ ] Test invalid uses
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -83,6 +84,7 @@
 - [X] Colored pressure plates
 - [X] tiles.png path relative to exe
 - [X] Idle detection when placing/picking up boulder does not work. Add position change check.
+- [X] Test other colored pressure plates
 
 # Design decisions
 

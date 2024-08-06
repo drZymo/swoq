@@ -4,9 +4,12 @@ using static Swoq.Test.TestUtils;
 
 namespace Swoq.Test;
 
-internal class PressurePlateTests : GameTestBase
+[TestFixture('R')]
+[TestFixture('G')]
+[TestFixture('B')]
+internal class PressurePlateTests(char color) : GameTestBase
 {
-    internal static readonly Tile[] InitialSurroundings = ConvertSurroundings(
+    internal readonly Tile[] InitialSurroundings = ConvertSurroundings(
         "                 " +
         "                 " +
         "                 " +
@@ -23,7 +26,10 @@ internal class PressurePlateTests : GameTestBase
         "                 " +
         "                 " +
         "                 " +
-        "                 ");
+        "                 ").
+        Select(t => t == Tile.DoorRed ? ToDoorTile(color) : t).
+        Select(t => t == Tile.PressurePlateRed ? ToPressurePlateTile(color) : t).
+        ToArray();
 
     public override void SetUp()
     {
@@ -66,11 +72,11 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(changes, Has.Count.EqualTo(10));
             // Player pos has changed
             Assert.That(changes[(7, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
-            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.PressurePlateRed, Tile.Player)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((PressurePlateTile, Tile.Player)));
             // Door has opened
-            Assert.That(changes[(8, 7)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-            Assert.That(changes[(7, 8)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((DoorTile, Tile.Empty)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((DoorTile, Tile.Empty)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((DoorTile, Tile.Empty)));
             // Exit appeared
             Assert.That(changes[(8, 8)], Is.EqualTo((Tile.Unknown, Tile.Exit)));
             // Walls around exit appeared
@@ -89,11 +95,11 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(4));
             // Player pos has changed
-            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.Player, Tile.PressurePlateRed)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.Player, PressurePlateTile)));
             Assert.That(changes[(7, 5)], Is.EqualTo((Tile.Empty, Tile.Player)));
             // Door (only visible part) has closed
-            Assert.That(changes[(8, 7)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((Tile.Empty, DoorTile)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((Tile.Empty, DoorTile)));
         });
     }
 
@@ -159,11 +165,11 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(9));
             // Plate changed
-            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.PressurePlateRed, Tile.Boulder)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((PressurePlateTile, Tile.Boulder)));
             // Door has opened
-            Assert.That(changes[(8, 7)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-            Assert.That(changes[(7, 8)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((DoorTile, Tile.Empty)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((DoorTile, Tile.Empty)));
+            Assert.That(changes[(7, 8)], Is.EqualTo((DoorTile, Tile.Empty)));
             // Exit appeared
             Assert.That(changes[(8, 8)], Is.EqualTo((Tile.Unknown, Tile.Exit)));
             // Walls around exit appeared
@@ -183,10 +189,10 @@ internal class PressurePlateTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
             Assert.That(changes, Has.Count.EqualTo(3));
             // Plate changed
-            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateRed)));
+            Assert.That(changes[(8, 5)], Is.EqualTo((Tile.Boulder, PressurePlateTile)));
             // Door has closed (only visible part)
-            Assert.That(changes[(8, 7)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
-            Assert.That(changes[(7, 7)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
+            Assert.That(changes[(8, 7)], Is.EqualTo((Tile.Empty, DoorTile)));
+            Assert.That(changes[(7, 7)], Is.EqualTo((Tile.Empty, DoorTile)));
         });
     }
 
@@ -212,16 +218,51 @@ internal class PressurePlateTests : GameTestBase
             }
         }
 
-        map[8, 8] = Cell.Exit;
-        map[8, 7] = Cell.DoorRedClosed;
-        map[7, 7] = Cell.DoorRedClosed;
-        map[7, 8] = Cell.DoorRedClosed;
-
-        map[8, 5] = Cell.PressurePlateRed;
-        map[5, 8] = Cell.Boulder;
-
         map.Player1.Position = (5, 5);
+        map[8, 8] = Cell.Exit;
+
+        var doorCell = color switch
+        {
+            'R' => Cell.DoorRedClosed,
+            'G' => Cell.DoorGreenClosed,
+            'B' => Cell.DoorBlueClosed,
+            _ => throw new NotImplementedException(),
+        };
+        map[8, 7] = doorCell;
+        map[7, 7] = doorCell;
+        map[7, 8] = doorCell;
+
+        var pressurePlateCell = color switch
+        {
+            'R' => Cell.PressurePlateRed,
+            'G' => Cell.PressurePlateGreen,
+            'B' => Cell.PressurePlateBlue,
+            _ => throw new NotImplementedException(),
+        };
+        map[8, 5] = pressurePlateCell;
+
+        map[5, 8] = Cell.Boulder;
 
         return map.ToMap();
     }
+
+    private Tile DoorTile => ToDoorTile(color);
+
+    private static Tile ToDoorTile(char d) => d switch
+    {
+        'R' => Tile.DoorRed,
+        'G' => Tile.DoorGreen,
+        'B' => Tile.DoorBlue,
+        _ => throw new NotImplementedException(),
+    };
+
+    private Tile PressurePlateTile => ToPressurePlateTile(color);
+
+    private static Tile ToPressurePlateTile(char d) => d switch
+    {
+        'R' => Tile.PressurePlateRed,
+        'G' => Tile.PressurePlateGreen,
+        'B' => Tile.PressurePlateBlue,
+        _ => throw new NotImplementedException(),
+    };
 }

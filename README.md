@@ -14,3 +14,9 @@ There are training levels available.
 A game can be started with the
 
 Game history is not maintained by the server. Once a game is finished a replay is written to disk and the game process is stopped.
+
+
+## Run coverage
+
+    dotnet test --collect:"Code Coverage;Format=Cobertura"
+    reportgenerator -reports:<path to.cobertura.xml -targetdir:coveragereport
