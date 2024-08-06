@@ -10,16 +10,6 @@ internal class MapCache(int height, int width, int visibilityRange)
     private readonly Tile[] cache = new Tile[height * width];
     private ImmutableDictionary<(int, int), (Tile from, Tile to)> changes = ImmutableDictionary<(int, int), (Tile from, Tile to)>.Empty;
 
-    public Tile this[int y, int x]
-    {
-        get
-        {
-            if (y < 0 || y >= height) throw new ArgumentOutOfRangeException(nameof(y));
-            if (x < 0 || x >= width) throw new ArgumentOutOfRangeException(nameof(x));
-            return cache[y * width + x];
-        }
-    }
-
     public void AddPlayerStates(
         PlayerState? playerState1, PlayerState? playerState2)
     {

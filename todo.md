@@ -1,7 +1,11 @@
 # TODO
 
 - [ ] Fix boulder handling in bot
-- [ ] Test invalid uses
+- [ ] More tests
+  - [ ] invalid uses
+  - [ ] enemy chasing out of view
+  - [ ] player crushed by door
+  - [ ] quest progress
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
