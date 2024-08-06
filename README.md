@@ -19,4 +19,4 @@ Game history is not maintained by the server. Once a game is finished a replay i
 ## Run coverage
 
     dotnet test --collect:"Code Coverage;Format=Cobertura"
-    reportgenerator -reports:<path to.cobertura.xml -targetdir:coveragereport
+    reportgenerator -targetdir:coveragereport -reports:<path to.cobertura.xml>

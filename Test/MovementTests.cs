@@ -18,8 +18,8 @@ internal class MovementTests : GameTestBase
         "   #.........#   " +
         "   #.........#   " +
         "    &...pp...#   " +
-        "   #....!....#   " +
-        "   #....!....#   " +
+        "   #....!r...#   " +
+        "   #....!b...#   " +
         "   #.........#   " +
         "   #.........#   " +
         "   #.........#   " +
@@ -37,8 +37,8 @@ internal class MovementTests : GameTestBase
         "  #.........#    " +
         "  #.........#    " +
         "   &...pp...#    " +
-        "  #....!....#    " +
-        "  #....!....#    " +
+        "  #....!r...#    " +
+        "  #....!b...#    " +
         "  #.........#    " +
         "  #.........#    " +
         "  #.........#    " +
@@ -99,6 +99,35 @@ internal class MovementTests : GameTestBase
     }
 
     [Test]
+    public void NoSecondKeyPickupAllowed()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player2, Is.Not.Null);
+        });
+        Assert.That(game.State.Player2.Inventory, Is.EqualTo(Inventory.None));
+
+        // Move south to pickup first key
+        Act(action2: DirectedAction.MoveSouth);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player2.Position, Is.EqualTo((7, 6)));
+            Assert.That(game.State.Player2.Inventory, Is.EqualTo(Inventory.KeyRed));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(6, 6)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(7, 6)], Is.EqualTo((Tile.KeyRed, Tile.Player)));
+        });
+
+        // Another move south would pickup second key, which is not allowed
+        Assert.Throws<InventoryFullException>(() => Act(action2: DirectedAction.MoveSouth));
+
+        // Nothing changed
+        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+    }
+
+    [Test]
     public void PlayersCannotOverlap()
     {
         Assert.Multiple(() =>
@@ -108,7 +137,9 @@ internal class MovementTests : GameTestBase
         });
 
         // Move player 1 east so it would overlap with player 2, which is not allowed
-        Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveEast));
+        Assert.Throws<MoveNotAllowedException>(() => Act(action1: DirectedAction.MoveEast));
+        // Move player 2 west so it would overlap with player 1, which is not allowed
+        Assert.Throws<MoveNotAllowedException>(() => Act(action2: DirectedAction.MoveWest));
 
         // Nothing changed
         Assert.That(mapCache.GetNewChanges(), Is.Empty);
@@ -204,9 +235,13 @@ internal class MovementTests : GameTestBase
         map.Player1.Position = ((height - 1) / 2, (width - 1) / 2);
         map.Player2.Position = ((height - 1) / 2, (width - 1) / 2 + 1);
 
-        // Two swords near
+        // Two swords near player 1
         map[map.Player1.Position.y + 1, map.Player1.Position.x] = Cell.Sword;
         map[map.Player1.Position.y + 2, map.Player1.Position.x] = Cell.Sword;
+
+        // Two swords near player 2
+        map[map.Player2.Position.y + 1, map.Player2.Position.x] = Cell.KeyRed;
+        map[map.Player2.Position.y + 2, map.Player2.Position.x] = Cell.KeyBlue;
 
         // One enemy in top
         map.Enemy1.Position = (1, (width - 1) / 2);

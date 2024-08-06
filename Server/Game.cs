@@ -162,7 +162,7 @@ public class Game : IGame
             return false;
         }
 
-        if (ticks > 0)
+        if (player1Positions.Count > 0 || player2Positions.Count > 0)
         {
             var player1Active = IsPlayerActive(player1, player1Positions);
             var player2Active = IsPlayerActive(player2, player2Positions);
@@ -243,7 +243,7 @@ public class Game : IGame
 
     private void Use(ref GamePlayer player, Position usePos)
     {
-        if (TryUseOnEnemy(player, usePos))
+        if (TryUseOnEnemyOrPlayer(player, usePos))
         {
             // It was an enemy, do nothing more.
         }
@@ -266,22 +266,26 @@ public class Game : IGame
                     throw new UseNotAllowedException(CreateState());
 
                 case Cell.Empty:
-                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
                     PlaceBoulder(ref player, usePos, Cell.Boulder);
                     break;
 
                 case Cell.PressurePlateRed:
-                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
                     PlaceBoulder(ref player, usePos, Cell.PressurePlateRedWithBoulder);
                     OpenAllDoors(Cell.DoorRedClosed);
                     break;
                 case Cell.PressurePlateGreen:
-                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
                     PlaceBoulder(ref player, usePos, Cell.PressurePlateGreenWithBoulder);
                     OpenAllDoors(Cell.DoorGreenClosed);
                     break;
                 case Cell.PressurePlateBlue:
-                    if (player.Inventory != Inventory.Boulder) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
                     PlaceBoulder(ref player, usePos, Cell.PressurePlateBlueWithBoulder);
                     OpenAllDoors(Cell.DoorBlueClosed);
                     break;
@@ -448,7 +452,7 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
-    private bool TryUseOnEnemy(GamePlayer player, Position usePos)
+    private bool TryUseOnEnemyOrPlayer(GamePlayer player, Position usePos)
     {
         foreach (var enemy in enemies)
         {
@@ -461,6 +465,19 @@ public class Game : IGame
                 enemies = enemies.Replace(enemy, newEnemy);
                 return true;
             }
+        }
+
+        if (player1 != null && usePos.Equals(player1.Position))
+        {
+            if (!player.HasSword) throw new NoSwordException(CreateState());
+            DealDamage(ref player1, 1);
+            return true;
+        }
+        if (player2 != null && usePos.Equals(player2.Position))
+        {
+            if (!player.HasSword) throw new NoSwordException(CreateState());
+            DealDamage(ref player2, 1);
+            return true;
         }
 
         return false;
@@ -570,7 +587,7 @@ public class Game : IGame
         return (dy == 1 && dx == 0) || (dy == 0 && dx == 1);
     }
 
-    private static bool AraAdjacent(GameCharacter a, GameCharacter b)
+    private static bool AreAdjacent(GameCharacter a, GameCharacter b)
     {
         return a.Position.IsValid() && b.Position.IsValid() &&
             AreAdjacent(a.Position, b.Position);
@@ -592,16 +609,16 @@ public class Game : IGame
     {
         // Are there players adjacent to the enemy?
         var currentAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
-        if (player1 != null && AraAdjacent(enemy, player1)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player1);
-        if (player2 != null && AraAdjacent(enemy, player2)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player2);
+        if (player1 != null && AreAdjacent(enemy, player1)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player1);
+        if (player2 != null && AreAdjacent(enemy, player2)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player2);
 
         // No, then cannot attack
         if (currentAdjacentPlayers.Count == 0) return false;
 
         // Are there players that were adjacent in the previous tick as well?
         var previousAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
-        if (prevPlayer1 != null && AraAdjacent(enemy, prevPlayer1)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player1);
-        if (prevPlayer2 != null && AraAdjacent(enemy, prevPlayer2)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player2);
+        if (prevPlayer1 != null && AreAdjacent(enemy, prevPlayer1)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player1);
+        if (prevPlayer2 != null && AreAdjacent(enemy, prevPlayer2)) previousAdjacentPlayers = previousAdjacentPlayers.Add(GameCharacterId.Player2);
         var adjacentPlayers = currentAdjacentPlayers.Intersect(previousAdjacentPlayers);
 
         // Yes, then attack
