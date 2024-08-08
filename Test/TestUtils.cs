@@ -24,6 +24,8 @@ internal static class TestUtils
                     'B' => Tile.DoorBlue,
                     'b' => Tile.KeyBlue,
                     '_' => Tile.PressurePlateRed,
+                    '-' => Tile.PressurePlateBlue,
+                    '=' => Tile.PressurePlateGreen,
                     '!' => Tile.Sword,
                     '+' => Tile.Health,
                     'e' => Tile.Enemy,

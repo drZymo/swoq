@@ -241,6 +241,12 @@ internal class OnePlayerCombatTests : GameTestBase
         });
     }
 
+    [Test]
+    public void SecondPlayerActionNotAllowed()
+    {
+        Assert.Throws<Player2NotPresentException>(() => Act(action2: DirectedAction.MoveWest));
+    }
+
     protected override Map CreateGameMap()
     {
         const int height = 10;
