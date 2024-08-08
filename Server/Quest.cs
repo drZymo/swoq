@@ -4,7 +4,7 @@ using Swoq.Server.Data;
 
 namespace Swoq.Server;
 
-internal class Quest : IGame
+public class Quest : IGame
 {
     private readonly Player player;
     private readonly ISwoqDatabase database;
@@ -35,7 +35,7 @@ internal class Quest : IGame
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (State.Finished) return;
+        if (State.Finished) throw new GameFinishedException(State);
 
         LastAction = Clock.Now;
         ticks++;
