@@ -56,7 +56,6 @@ public class Quest : IGame
             {
                 // If this level was not reached before,
                 // unlock the level and remember the length.
-                Console.WriteLine($"{player.Name} unlocked level {Level}");
                 player.Level = Level;
                 player.QuestLengthTicks = ticks;
                 player.QuestLengthSeconds = lengthSeconds;
@@ -79,7 +78,7 @@ public class Quest : IGame
             }
             else
             {
-                Console.WriteLine($"{player.Name} finished the quest"); // TODO: Report to dashboard
+                // TODO: Report to dashboard
                 state = new GameState(ticks, Level, true);
             }
         }

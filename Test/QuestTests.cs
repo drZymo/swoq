@@ -13,58 +13,144 @@ internal class QuestTests
     private Quest quest;
     private string playerId;
 
+    private DateTime now = DateTime.Now;
+
     [SetUp]
     public void SetUp()
     {
+        Clock.Setup(() => now);
+
         var player = new Player() { Level = 0, Name = "McFly" };
         database.CreatePlayerAsync(player).Wait();
         Assert.That(player.Id, Is.Not.Null);
         playerId = player.Id;
 
         quest = new Quest(player, database, mapGenerator);
-        Assert.That(quest.State.Finished, Is.False);
-        Assert.That(quest.State.Level, Is.EqualTo(0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(quest.State.Finished, Is.False);
+            Assert.That(quest.State.Level, Is.EqualTo(0));
+        });
     }
 
     [Test]
     public void FinishLevelIncreasesPlayerLevel()
     {
-        Assert.That(Player.Level, Is.EqualTo(0));
-        quest.Act(DirectedAction.MoveEast);
-        Assert.That(Player.Level, Is.EqualTo(1));
+        Assert.That(CurrentPlayer.Level, Is.EqualTo(0));
 
-        Assert.That(quest.State.Finished, Is.False);
-        Assert.That(quest.State.Level, Is.EqualTo(1));
+        now += TimeSpan.FromSeconds(5);
+        quest.Act(DirectedAction.MoveEast);
+        Assert.Multiple(() =>
+        {
+            Assert.That(CurrentPlayer.Level, Is.EqualTo(1));
+            Assert.That(quest.State.Finished, Is.False);
+            Assert.That(quest.State.Level, Is.EqualTo(1));
+        });
     }
 
     [Test]
     public void FinishAllLevelsFinishesQuest()
     {
         // Finish 20 levels to reach last one
-        Assert.That(Player.Level, Is.EqualTo(0));
+        Assert.That(CurrentPlayer.Level, Is.EqualTo(0));
         for (var i = 0; i < 20; i++)
         {
+            now += TimeSpan.FromSeconds(5);
             quest.Act(DirectedAction.MoveEast);
         }
-        Assert.That(Player.Level, Is.EqualTo(20));
-        Assert.That(quest.State.Finished, Is.False);
-        Assert.That(quest.State.Level, Is.EqualTo(20));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(CurrentPlayer.Level, Is.EqualTo(20));
+            Assert.That(quest.State.Finished, Is.False);
+            Assert.That(quest.State.Level, Is.EqualTo(20));
+        });
 
         // Finish last by fist picking up treasure
         quest.Act(DirectedAction.MoveWest);
         quest.Act(DirectedAction.MoveEast);
         quest.Act(DirectedAction.MoveEast);
-        Assert.That(Player.Level, Is.EqualTo(21));
+        Assert.That(CurrentPlayer.Level, Is.EqualTo(21));
 
         // Quest finished now
-        Assert.That(quest.State.Finished, Is.True);
-        Assert.That(quest.State.Level, Is.EqualTo(21));
+        Assert.Multiple(() =>
+        {
+            Assert.That(quest.State.Finished, Is.True);
+            Assert.That(quest.State.Level, Is.EqualTo(21));
+        });
 
         // No more actions allowed
         Assert.Throws<GameFinishedException>(() => quest.Act(DirectedAction.MoveEast));
     }
 
-    private Player Player
+
+    [Test]
+    public void FinishLevelFasterWillUpdateScore()
+    {
+        // Finish 5 levels in 5*10 seconds, with some dummy actions
+        Assert.That(CurrentPlayer.Level, Is.EqualTo(0));
+        for (var i = 0; i < 5; i++)
+        {
+            now += TimeSpan.FromSeconds(5);
+            quest.Act();// dummy action
+            now += TimeSpan.FromSeconds(5);
+            quest.Act(DirectedAction.MoveEast);
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(CurrentPlayer.Level, Is.EqualTo(5));
+            Assert.That(CurrentPlayer.QuestLengthSeconds, Is.EqualTo(50));
+            Assert.That(CurrentPlayer.QuestLengthTicks, Is.EqualTo(10));
+            Assert.That(quest.State.Finished, Is.False);
+            Assert.That(quest.State.Level, Is.EqualTo(5));
+        });
+
+        // Do it faster with same amount of ticks
+        {
+            // in a new quest
+            var newQuest = new Quest(CurrentPlayer, database, mapGenerator);
+            for (var i = 0; i < 5; i++)
+            {
+                now += TimeSpan.FromSeconds(5);
+                newQuest.Act();// dummy action
+                newQuest.Act(DirectedAction.MoveEast);
+            }
+
+            // Scores should be updated
+            Assert.Multiple(() =>
+            {
+                Assert.That(CurrentPlayer.Level, Is.EqualTo(5));
+                Assert.That(CurrentPlayer.QuestLengthSeconds, Is.EqualTo(25)); // Faster
+                Assert.That(CurrentPlayer.QuestLengthTicks, Is.EqualTo(10)); // Same
+                Assert.That(newQuest.State.Finished, Is.False);
+                Assert.That(newQuest.State.Level, Is.EqualTo(5));
+            });
+        }
+
+        // Do it faster with less ticks
+        {
+            // in a new quest
+            var newQuest = new Quest(CurrentPlayer, database, mapGenerator);
+            for (var i = 0; i < 5; i++)
+            {
+                now += TimeSpan.FromSeconds(5);
+                newQuest.Act(DirectedAction.MoveEast);
+            }
+
+            // Scores should be updated
+            Assert.Multiple(() =>
+            {
+                Assert.That(CurrentPlayer.Level, Is.EqualTo(5));
+                Assert.That(CurrentPlayer.QuestLengthSeconds, Is.EqualTo(25)); // Faster
+                Assert.That(CurrentPlayer.QuestLengthTicks, Is.EqualTo(5)); // Faster
+                Assert.That(newQuest.State.Finished, Is.False);
+                Assert.That(newQuest.State.Level, Is.EqualTo(5));
+            });
+        }
+    }
+
+    private Player CurrentPlayer
     {
         get
         {

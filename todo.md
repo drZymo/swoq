@@ -2,10 +2,10 @@
 
 - [ ] Fix boulder handling in bot
 - [ ] More tests
-  - [ ] invalid uses
-  - [ ] enemy chasing out of view
+  - [X] invalid uses
+  - [X] enemy chasing out of view
   - [ ] player crushed by door
-  - [ ] quest progress
+  - [.] quest progress (replay with quicker time improves stats)
 - [.] Player portal
   - [ ] Proto file hosting per level
   - [ ] Current level
