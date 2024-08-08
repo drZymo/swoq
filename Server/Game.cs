@@ -19,7 +19,7 @@ public class Game : IGame
     private ImmutableList<Position> player1Positions = [];
     private GamePlayer? player2 = null;
     private ImmutableList<Position> player2Positions = [];
-    private IImmutableList<GameEnemy> enemies = ImmutableList<GameEnemy>.Empty;
+    private ImmutableDictionary<GameCharacterId, GameEnemy> enemies = ImmutableDictionary<GameCharacterId, GameEnemy>.Empty;
 
     public Game(Map map, TimeSpan maxInactivityTime)
     {
@@ -35,7 +35,7 @@ public class Game : IGame
         {
             if (map.IsEnemy1Boss)
             {
-                enemies = enemies.Add(new GameEnemy(GameCharacterId.Boss,
+                enemies = enemies.Add(GameCharacterId.Boss, new GameEnemy(GameCharacterId.Boss,
                     map.InitialEnemy1Position.Value,
                     Inventory: map.InitialEnemy1Inventory,
                     Health: Parameters.BossHealth,
@@ -44,16 +44,16 @@ public class Game : IGame
             }
             else
             {
-                enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
+                enemies = enemies.Add(GameCharacterId.Enemy1, new GameEnemy(GameCharacterId.Enemy1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory));
             }
         }
         if (map.InitialEnemy2Position.HasValue)
         {
-            enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
+            enemies = enemies.Add(GameCharacterId.Enemy2, new GameEnemy(GameCharacterId.Enemy2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory));
         }
         if (map.InitialEnemy3Position.HasValue)
         {
-            enemies = enemies.Add(new GameEnemy(GameCharacterId.Enemy3, map.InitialEnemy3Position.Value, Inventory: map.InitialEnemy3Inventory));
+            enemies = enemies.Add(GameCharacterId.Enemy3, new GameEnemy(GameCharacterId.Enemy3, map.InitialEnemy3Position.Value, Inventory: map.InitialEnemy3Inventory));
         }
     }
 
@@ -93,57 +93,15 @@ public class Game : IGame
             if (player2.Health <= 0) throw new Player2DiedException(CreateState());
         }
 
-        if (action1.HasValue && player1 != null)
-        {
-            var actionPos = GetDirectedActionPosition(player1, action1.Value);
+        PerformPlayerAction(action1, ref player1);
+        PerformPlayerAction(action2, ref player2);
 
-            switch (action1.Value)
-            {
-                case DirectedAction.MoveNorth:
-                case DirectedAction.MoveEast:
-                case DirectedAction.MoveSouth:
-                case DirectedAction.MoveWest:
-                    Move(ref player1, actionPos);
-                    break;
-                case DirectedAction.UseNorth:
-                case DirectedAction.UseEast:
-                case DirectedAction.UseSouth:
-                case DirectedAction.UseWest:
-                    Use(ref player1, actionPos);
-                    break;
-                default:
-                    throw new UnknownActionException(CreateState());
-            }
-        }
-
-        if (action2.HasValue && player2 != null)
-        {
-            var actionPos = GetDirectedActionPosition(player2, action2.Value);
-
-            switch (action2.Value)
-            {
-                case DirectedAction.MoveNorth:
-                case DirectedAction.MoveEast:
-                case DirectedAction.MoveSouth:
-                case DirectedAction.MoveWest:
-                    Move(ref player2, actionPos);
-                    break;
-                case DirectedAction.UseNorth:
-                case DirectedAction.UseEast:
-                case DirectedAction.UseSouth:
-                case DirectedAction.UseWest:
-                    Use(ref player2, actionPos);
-                    break;
-                default:
-                    throw new UnknownActionException(CreateState());
-            }
-        }
-
-        foreach (var enemy in enemies)
+        // Process enemies using previous positions of players
+        foreach (var enemy in enemies.Values)
         {
             var newEnemy = enemy;
             ProcessEnemy(ref newEnemy, prevPlayer1, prevPlayer2);
-            enemies = enemies.Replace(enemy, newEnemy);
+            enemies = enemies.SetItem(newEnemy.Id, newEnemy);
         }
 
         CleanupDeadCharacters();
@@ -226,105 +184,28 @@ public class Game : IGame
         }
     }
 
-    private void Move(ref GamePlayer player, Position movePos)
+    private void PerformPlayerAction(DirectedAction? action, ref GamePlayer? player)
     {
-        if (!CanMoveTo(movePos))
+        if (action.HasValue && player != null)
         {
-            throw new MoveNotAllowedException(CreateState());
-        }
+            var actionPos = GetDirectedActionPosition(player, action.Value);
 
-        LeaveCell(player.Position);
-
-        player = player with { Position = movePos };
-        Debug.Assert(map[player.Position].CanWalkOn());
-
-        EnterCell(ref player, player.Position);
-    }
-
-    private void Use(ref GamePlayer player, Position usePos)
-    {
-        if (TryUseOnEnemyOrPlayer(player, usePos))
-        {
-            // It was an enemy, do nothing more.
-        }
-        else
-        {
-            switch (map[usePos])
+            switch (action.Value)
             {
-                case Cell.Exit:
-                case Cell.Wall:
-                case Cell.DoorRedOpen:
-                case Cell.KeyRed:
-                case Cell.DoorGreenOpen:
-                case Cell.KeyGreen:
-                case Cell.DoorBlueOpen:
-                case Cell.KeyBlue:
-                case Cell.Sword:
-                case Cell.Health:
-                case Cell.Treasure:
-                    // Cannot use on this
-                    throw new UseNotAllowedException(CreateState());
-
-                case Cell.Empty:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.Boulder);
+                case DirectedAction.MoveNorth:
+                case DirectedAction.MoveEast:
+                case DirectedAction.MoveSouth:
+                case DirectedAction.MoveWest:
+                    Move(ref player, actionPos);
                     break;
-
-                case Cell.PressurePlateRed:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.PressurePlateRedWithBoulder);
-                    OpenAllDoors(Cell.DoorRedClosed);
+                case DirectedAction.UseNorth:
+                case DirectedAction.UseEast:
+                case DirectedAction.UseSouth:
+                case DirectedAction.UseWest:
+                    Use(ref player, actionPos);
                     break;
-                case Cell.PressurePlateGreen:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.PressurePlateGreenWithBoulder);
-                    OpenAllDoors(Cell.DoorGreenClosed);
-                    break;
-                case Cell.PressurePlateBlue:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
-                    PlaceBoulder(ref player, usePos, Cell.PressurePlateBlueWithBoulder);
-                    OpenAllDoors(Cell.DoorBlueClosed);
-                    break;
-
-                case Cell.Boulder:
-                    if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
-                    PickupInventory(ref player, usePos, Cell.Empty);
-                    break;
-                case Cell.PressurePlateRedWithBoulder:
-                    if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
-                    PickupInventory(ref player, usePos, Cell.PressurePlateRed);
-                    CloseAllDoors(Cell.DoorRedOpen);
-                    break;
-                case Cell.PressurePlateGreenWithBoulder:
-                    if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
-                    PickupInventory(ref player, usePos, Cell.PressurePlateGreen);
-                    CloseAllDoors(Cell.DoorGreenOpen);
-                    break;
-                case Cell.PressurePlateBlueWithBoulder:
-                    if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
-                    PickupInventory(ref player, usePos, Cell.PressurePlateBlue);
-                    CloseAllDoors(Cell.DoorBlueOpen);
-                    break;
-
-                case Cell.DoorRedClosed:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
-                    break;
-                case Cell.DoorGreenClosed:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyGreen);
-                    break;
-                case Cell.DoorBlueClosed:
-                    if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-                    UseKeyToOpenDoor(ref player, usePos, Inventory.KeyBlue);
-                    break;
-
                 default:
-                    throw new NotImplementedException(); // Should not be possible
+                    throw new UnknownActionException(CreateState());
             }
         }
     }
@@ -345,6 +226,21 @@ public class Game : IGame
 
         _ => throw new UnknownActionException(CreateState()),
     };
+
+    private void Move(ref GamePlayer player, Position movePos)
+    {
+        if (!CanMoveTo(movePos))
+        {
+            throw new MoveNotAllowedException(CreateState());
+        }
+
+        LeaveCell(player.Position);
+
+        player = player with { Position = movePos };
+        Debug.Assert(map[player.Position].CanWalkOn());
+
+        EnterCell(ref player, player.Position);
+    }
 
     private void LeaveCell(Position position)
     {
@@ -417,6 +313,70 @@ public class Game : IGame
         }
     }
 
+    private void Use(ref GamePlayer player, Position usePos)
+    {
+        if (TryUseOnEnemyOrPlayer(player, usePos))
+        {
+            return;
+        }
+
+        switch (map[usePos])
+        {
+            case Cell.Exit:
+            case Cell.Wall:
+            case Cell.DoorRedOpen:
+            case Cell.KeyRed:
+            case Cell.DoorGreenOpen:
+            case Cell.KeyGreen:
+            case Cell.DoorBlueOpen:
+            case Cell.KeyBlue:
+            case Cell.Sword:
+            case Cell.Health:
+            case Cell.Treasure:
+                // Cannot use on this
+                throw new UseNotAllowedException(CreateState());
+
+            case Cell.Empty:
+                PlaceBoulderOnEmpty(ref player, usePos, Cell.Boulder);
+                break;
+            case Cell.PressurePlateRed:
+                PlaceBoulderOnPressurePlate(ref player, usePos, Cell.PressurePlateRedWithBoulder, Cell.DoorRedClosed);
+                break;
+            case Cell.PressurePlateGreen:
+                PlaceBoulderOnPressurePlate(ref player, usePos, Cell.PressurePlateGreenWithBoulder, Cell.DoorGreenClosed);
+                break;
+            case Cell.PressurePlateBlue:
+                PlaceBoulderOnPressurePlate(ref player, usePos, Cell.PressurePlateBlueWithBoulder, Cell.DoorBlueClosed);
+                break;
+
+            case Cell.Boulder:
+                PickupInventory(ref player, usePos, Cell.Empty);
+                break;
+            case Cell.PressurePlateRedWithBoulder:
+                PickupBoulderFromPressurePlate(ref player, usePos, Cell.PressurePlateRed, Cell.DoorRedOpen);
+                break;
+            case Cell.PressurePlateGreenWithBoulder:
+                PickupBoulderFromPressurePlate(ref player, usePos, Cell.PressurePlateGreen, Cell.DoorGreenOpen);
+                break;
+            case Cell.PressurePlateBlueWithBoulder:
+                PickupBoulderFromPressurePlate(ref player, usePos, Cell.PressurePlateBlue, Cell.DoorBlueOpen);
+                break;
+
+            case Cell.DoorRedClosed:
+                UseKeyToOpenDoor(ref player, usePos, Inventory.KeyRed);
+                break;
+            case Cell.DoorGreenClosed:
+                UseKeyToOpenDoor(ref player, usePos, Inventory.KeyGreen);
+                break;
+            case Cell.DoorBlueClosed:
+                UseKeyToOpenDoor(ref player, usePos, Inventory.KeyBlue);
+                break;
+
+            default:
+                throw new NotImplementedException(); // Should not be possible
+        }
+    }
+
     private void PickupInventory(ref GamePlayer player, Position position, Cell emptyCellType)
     {
         // Cannot pickup if inventory is full
@@ -454,37 +414,21 @@ public class Game : IGame
 
     private bool TryUseOnEnemyOrPlayer(GamePlayer player, Position usePos)
     {
-        foreach (var enemy in enemies)
+        foreach (var character in GetAliveCharacters())
         {
-            if (usePos.Equals(enemy.Position))
+            if (usePos.Equals(character.Position))
             {
                 if (!player.HasSword) throw new NoSwordException(CreateState());
-
-                var newEnemy = enemy;
-                DealDamage(ref newEnemy, 1);
-                enemies = enemies.Replace(enemy, newEnemy);
+                DealDamage(character.Id, 1);
                 return true;
             }
         }
-
-        if (player1 != null && usePos.Equals(player1.Position))
-        {
-            if (!player.HasSword) throw new NoSwordException(CreateState());
-            DealDamage(ref player1, 1);
-            return true;
-        }
-        if (player2 != null && usePos.Equals(player2.Position))
-        {
-            if (!player.HasSword) throw new NoSwordException(CreateState());
-            DealDamage(ref player2, 1);
-            return true;
-        }
-
         return false;
     }
 
-    private void PlaceBoulder(ref GamePlayer player, Position usePos, Cell placedCellType)
+    private void PlaceBoulderOnEmpty(ref GamePlayer player, Position usePos, Cell placedCellType)
     {
+        if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
         if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
 
         player = player with { Inventory = Inventory.None };
@@ -492,12 +436,28 @@ public class Game : IGame
         lastChangeTick = ticks;
     }
 
+    private void PlaceBoulderOnPressurePlate(ref GamePlayer player, Position usePos, Cell plateWithBoulderCell, Cell closedDoorCell)
+    {
+        if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
+        if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
+
+        PlaceBoulderOnEmpty(ref player, usePos, plateWithBoulderCell);
+        OpenAllDoors(closedDoorCell);
+    }
+
+    private void PickupBoulderFromPressurePlate(ref GamePlayer player, Position usePos, Cell plateCell, Cell openDoorCell)
+    {
+        PickupInventory(ref player, usePos, plateCell);
+        CloseAllDoors(openDoorCell);
+    }
+
     private void UseKeyToOpenDoor(ref GamePlayer player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
+        if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
         if (player.Inventory != item) throw new UseNotAllowedException(CreateState());
 
-        // Oopen all the doors of the same type
+        // Open all the doors of the same color
         var closedDoor = map[usePosition];
         OpenAllDoors(closedDoor);
 
@@ -561,21 +521,11 @@ public class Game : IGame
 
     private void KillCharacterAtPosition(Position pos)
     {
-        if (player1 != null && player1.Position.IsValid() && pos.Equals(player1.Position))
+        foreach (var character in GetAliveCharacters())
         {
-            DealDamage(ref player1, player1.Health);
-        }
-        if (player2 != null && player2.Position.IsValid() && pos.Equals(player2.Position))
-        {
-            DealDamage(ref player2, player2.Health);
-        }
-        foreach (var enemy in enemies)
-        {
-            var newEnemy = enemy;
-            if (newEnemy.Position.IsValid() && pos.Equals(newEnemy.Position))
+            if (pos.Equals(character.Position))
             {
-                DealDamage(ref newEnemy, newEnemy.Health);
-                enemies = enemies.Replace(enemy, newEnemy);
+                DealDamage(character.Id, character.Health);
             }
         }
     }
@@ -709,11 +659,38 @@ public class Game : IGame
         }
     }
 
-    private void DealDamage<T>(ref T character, int damage) where T : GameCharacter
+    private void DealDamage<T>(ref T? character, int damage) where T : GameCharacter
     {
+        if (character == null) return;
         character = character with { Health = Math.Max(0, character.Health - damage) };
         lastChangeTick = ticks;
         character = CleanupDeadCharacter(ref character);
+    }
+
+    private void DealDamage(GameCharacterId characterId, int damage)
+    {
+        switch (characterId)
+        {
+            case GameCharacterId.Player1:
+                DealDamage(ref player1, damage);
+                break;
+            case GameCharacterId.Player2:
+                DealDamage(ref player2, damage);
+                break;
+            case GameCharacterId.Enemy1:
+            case GameCharacterId.Enemy2:
+            case GameCharacterId.Enemy3:
+            case GameCharacterId.Boss:
+                {
+                    var newEnemy = enemies[characterId];
+                    DealDamage(ref newEnemy, damage);
+                    if (newEnemy != null)
+                    {
+                        enemies = enemies.SetItem(newEnemy.Id, newEnemy);
+                    }
+                }
+                break;
+        }
     }
 
     private bool CanMoveTo(Position position)
@@ -723,12 +700,9 @@ public class Game : IGame
         if (position.y < 0 || position.y >= map.Height) return false;
 
         // Check collisions with players and enemies.
-        if (player1 != null && player1.Position.IsValid() && position.Equals(player1.Position)) return false;
-        if (player2 != null && player2.Position.IsValid() && position.Equals(player2.Position)) return false;
-
-        foreach (var enemy in enemies)
+        foreach (var character in GetAliveCharacters())
         {
-            if (enemy.Position.IsValid() && position.Equals(enemy.Position)) return false;
+            if (position.Equals(character.Position)) return false;
         }
 
         // Check if cell is walkable
@@ -807,11 +781,11 @@ public class Game : IGame
             CleanupDeadCharacter(ref player2);
         }
 
-        foreach (var enemy in enemies)
+        foreach (var enemy in enemies.Values)
         {
             var newEnemy = enemy;
             CleanupDeadCharacter(ref newEnemy);
-            enemies = enemies.Replace(enemy, newEnemy);
+            enemies = enemies.SetItem(newEnemy.Id, newEnemy);
         }
     }
 
@@ -871,9 +845,7 @@ public class Game : IGame
     {
         return !pos.IsValid() ||
             map[pos] != Cell.Empty ||
-            (player1 != null && player1.Position == pos) ||
-            (player2 != null && player2.Position == pos) ||
-            enemies.Any(e => e.Position.IsValid() && e.Position == pos);
+            GetAliveCharacters().Any(c => c.Position == pos);
     }
 
     private Position FindEmptyPosAround(Position pos)
@@ -930,6 +902,25 @@ public class Game : IGame
         return true;
     }
 
+    private IEnumerable<GameCharacter> GetAliveCharacters()
+    {
+        if (player1 != null && player1.Health > 0 && player1.Position.IsValid())
+        {
+            yield return player1;
+        }
+        if (player2 != null && player2.Health > 0 && player2.Position.IsValid())
+        {
+            yield return player2;
+        }
+        foreach (var enemy in enemies.Values)
+        {
+            if (enemy != null && enemy.Health > 0 && enemy.Position.IsValid())
+            {
+                yield return enemy;
+            }
+        }
+    }
+
     #region State
 
     // TODO: Move to separate class?
@@ -966,56 +957,58 @@ public class Game : IGame
             return Tile.Player;
         }
 
-        if (IsVisible(player.Position, pos))
+        if (!IsVisible(player.Position, pos))
         {
-            if ((player1 != null && pos.Equals(player1.Position)) ||
-                (player2 != null && pos.Equals(player2.Position)))
-            {
-                return Tile.Player;
-            }
+            return Tile.Unknown;
+        }
 
-            foreach (var enemy in enemies)
+        foreach (var character in GetAliveCharacters())
+        {
+            if (pos.Equals(character.Position))
             {
-                if (pos.Equals(enemy.Position))
+                return character.Id switch
                 {
-                    return enemy.Id == GameCharacterId.Boss ? Tile.Boss : Tile.Enemy;
-                }
-            }
-
-            var cell = map[pos];
-            switch (cell)
-            {
-                case Cell.Empty: return Tile.Empty;
-                case Cell.Wall: return Tile.Wall;
-                case Cell.Exit: return Tile.Exit;
-                case Cell.DoorRedClosed: return Tile.DoorRed;
-                case Cell.KeyRed: return Tile.KeyRed;
-                case Cell.DoorGreenClosed: return Tile.DoorGreen;
-                case Cell.KeyGreen: return Tile.KeyGreen;
-                case Cell.DoorBlueClosed: return Tile.DoorBlue;
-                case Cell.KeyBlue: return Tile.KeyBlue;
-                case Cell.PressurePlateRed: return Tile.PressurePlateRed;
-                case Cell.PressurePlateGreen: return Tile.PressurePlateGreen;
-                case Cell.PressurePlateBlue: return Tile.PressurePlateBlue;
-                case Cell.Sword: return Tile.Sword;
-                case Cell.Health: return Tile.Health;
-                case Cell.Treasure: return Tile.Treasure;
-
-                case Cell.Boulder:
-                case Cell.PressurePlateRedWithBoulder:
-                case Cell.PressurePlateGreenWithBoulder:
-                case Cell.PressurePlateBlueWithBoulder:
-                    return Tile.Boulder;
-
-                // don't show open doors
-                case Cell.DoorRedOpen:
-                case Cell.DoorGreenOpen:
-                case Cell.DoorBlueOpen:
-                    return Tile.Empty;
+                    GameCharacterId.Player1 => Tile.Player,
+                    GameCharacterId.Player2 => Tile.Player,
+                    GameCharacterId.Enemy1 => Tile.Enemy,
+                    GameCharacterId.Enemy2 => Tile.Enemy,
+                    GameCharacterId.Enemy3 => Tile.Enemy,
+                    GameCharacterId.Boss => Tile.Boss,
+                    _ => throw new NotImplementedException(),
+                };
             }
         }
 
-        return Tile.Unknown;
+        return map[pos] switch
+        {
+            Cell.Unknown => Tile.Unknown,
+            Cell.Empty => Tile.Empty,
+            Cell.Wall => Tile.Wall,
+            Cell.Exit => Tile.Exit,
+            Cell.DoorRedClosed => Tile.DoorRed,
+            Cell.KeyRed => Tile.KeyRed,
+            Cell.DoorGreenClosed => Tile.DoorGreen,
+            Cell.KeyGreen => Tile.KeyGreen,
+            Cell.DoorBlueClosed => Tile.DoorBlue,
+            Cell.KeyBlue => Tile.KeyBlue,
+            Cell.PressurePlateRed => Tile.PressurePlateRed,
+            Cell.PressurePlateGreen => Tile.PressurePlateGreen,
+            Cell.PressurePlateBlue => Tile.PressurePlateBlue,
+            Cell.Sword => Tile.Sword,
+            Cell.Health => Tile.Health,
+            Cell.Treasure => Tile.Treasure,
+
+            Cell.Boulder => Tile.Boulder,
+            Cell.PressurePlateRedWithBoulder => Tile.Boulder,
+            Cell.PressurePlateGreenWithBoulder => Tile.Boulder,
+            Cell.PressurePlateBlueWithBoulder => Tile.Boulder,
+
+            // don't show open doors
+            Cell.DoorRedOpen => Tile.Empty,
+            Cell.DoorGreenOpen => Tile.Empty,
+            Cell.DoorBlueOpen => Tile.Empty,
+            _ => throw new NotImplementedException(),
+        };
     }
 
     #endregion
