@@ -17,7 +17,7 @@
 
         <StackPanel Grid.Column="1" Orientation="Vertical" IsVisible="{Binding IsLoaded, Mode=OneWay}">
 
-            <TextBlock VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding PlayerName}"
+            <TextBlock VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding UserName}"
                        FontSize="{DynamicResource TabItemHeaderFontSize}"
                        FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}"/>
 

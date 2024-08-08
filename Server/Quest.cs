@@ -6,7 +6,7 @@ namespace Swoq.Server;
 
 public class Quest : IGame
 {
-    private readonly Player player;
+    private readonly User user;
     private readonly ISwoqDatabase database;
     private readonly IMapGenerator mapGenerator;
     private readonly DateTime startTime;
@@ -14,9 +14,9 @@ public class Quest : IGame
     private Game currentGame;
     private int ticks = 0;
 
-    public Quest(Player player, ISwoqDatabase database, IMapGenerator mapGenerator)
+    public Quest(User user, ISwoqDatabase database, IMapGenerator mapGenerator)
     {
-        this.player = player;
+        this.user = user;
         this.database = database;
         this.mapGenerator = mapGenerator;
         this.startTime = Clock.Now;
@@ -50,25 +50,25 @@ public class Quest : IGame
         {
             Level++;
 
-            // Update player stats
+            // Update user stats
             var lengthSeconds = (int)Math.Round((LastAction - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
-            if (player.Level < Level)
+            if (user.Level < Level)
             {
                 // If this level was not reached before,
                 // unlock the level and remember the length.
-                player.Level = Level;
-                player.QuestLengthTicks = ticks;
-                player.QuestLengthSeconds = lengthSeconds;
+                user.Level = Level;
+                user.QuestLengthTicks = ticks;
+                user.QuestLengthSeconds = lengthSeconds;
             }
-            else if (player.Level == Level)
+            else if (user.Level == Level)
             {
                 // If this level was the highest level reached before, then update the duration if it improved.
-                player.QuestLengthTicks = ticks < player.QuestLengthTicks ? ticks : player.QuestLengthTicks;
-                player.QuestLengthSeconds = Math.Min(lengthSeconds, player.QuestLengthSeconds);
+                user.QuestLengthTicks = ticks < user.QuestLengthTicks ? ticks : user.QuestLengthTicks;
+                user.QuestLengthSeconds = Math.Min(lengthSeconds, user.QuestLengthSeconds);
             }
 
             // Sync database
-            database.UpdatePlayerAsync(player);
+            database.UpdateUserAsync(user);
 
             // Create a new game if this was not the last level
             if (Level <= Parameters.FinalLevel)

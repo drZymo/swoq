@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
-public class GameStateBuilder(int height, int width, int visibilityRange, string playerName)
+public class GameStateBuilder(int height, int width, int visibilityRange, string userName)
 {
     private static readonly IImmutableDictionary<Inventory, string> InventoryNames = ImmutableDictionary<Inventory, string>.Empty.
         Add(Inventory.None, "-").
@@ -17,7 +17,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         Add(Inventory.Treasure, "Treasure");
 
     private readonly MapBuilder mapBuilder = new(height, width, visibilityRange);
-    private readonly string playerName = playerName;
+    private readonly string userName = userName;
     private GameState? previous = null;
 
     public GameState BuildNext(ActionRequest? request, State state, Result actionResult, Dispatcher createDispatcher)
@@ -54,7 +54,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
         }
 
-        var gameState = createDispatcher.Invoke(() => new GameState(playerName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State));
+        var gameState = createDispatcher.Invoke(() => new GameState(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State));
         previous = gameState;
         return gameState;
     }

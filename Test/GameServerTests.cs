@@ -23,28 +23,28 @@ public class GameServerTests
     }
 
     [Test]
-    public void UnknownPlayer()
+    public void UnknownUser()
     {
-        Assert.Throws<UnknownPlayerException>(() => gameServer.Start("p1", 0));
+        Assert.Throws<UnknownUserException>(() => gameServer.Start("u1", 0));
     }
 
     [Test]
-    public void PlayerLevelTooLow()
+    public void UserLevelTooLow()
     {
-        GivenPlayerRegistered();
-        Assert.Throws<PlayerLevelTooLowException>(() => gameServer.Start("p1", 2));
+        GivenUserRegistered();
+        Assert.Throws<UserLevelTooLowException>(() => gameServer.Start("u1", 2));
     }
 
     [Test]
     public void SingleQuestCanStartAndAct()
     {
-        GivenPlayerRegistered();
+        GivenUserRegistered();
 
         // Start a quest
         GameServer.StartResult? result = null;
-        Assert.DoesNotThrow(() => result = gameServer.Start("p1", null));
+        Assert.DoesNotThrow(() => result = gameServer.Start("u1", null));
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.PlayerName, Is.EqualTo("Player1"));
+        Assert.That(result.UserName, Is.EqualTo("User1"));
 
         // Act on it
         now += TimeSpan.FromSeconds(1);
@@ -54,21 +54,21 @@ public class GameServerTests
     [Test]
     public void SecondQuestStartIsQueued()
     {
-        GivenPlayerRegistered(id: "p1", name: "Player1");
-        GivenPlayerRegistered(id: "p2", name: "Player2");
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
 
-        // Start quest for player 1
+        // Start quest for user 1
         GameServer.StartResult? result1 = null;
-        Assert.DoesNotThrow(() => result1 = gameServer.Start("p1", null));
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
 
-        // Start quest for player 2, it should be queued
+        // Start quest for user 2, it should be queued
         now += TimeSpan.FromSeconds(1);
         GameServer.StartResult? result2 = null;
-        Assert.Throws<QuestQueuedException>(() => result2 = gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => result2 = gameServer.Start("u2", null));
         Assert.That(result2, Is.Null);
 
-        // Act on player 1 quest should be possible
+        // Act on user 1 quest should be possible
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
     }
@@ -76,35 +76,35 @@ public class GameServerTests
     [Test]
     public void TimeoutOnQuestWillFinishItAndAllowsNextInQueueToStart()
     {
-        GivenPlayerRegistered(id: "p1", name: "Player1");
-        GivenPlayerRegistered(id: "p2", name: "Player2");
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
 
-        // Start quest for player 1 and 2
+        // Start quest for user 1 and 2
         GameServer.StartResult? result1 = null;
-        Assert.DoesNotThrow(() => result1 = gameServer.Start("p1", null));
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
 
-        // Let both players keep responding for a while
+        // Let both users keep responding for a while
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
 
-        // Stop responding with player 1 so it times out but keep responding with player 2
+        // Stop responding with user 1 so it times out but keep responding with user 2
         now += TimeSpan.FromSeconds(4);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
         now += TimeSpan.FromSeconds(4);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
 
-        // Player 1 quest is inactive and was stopped
-        // Player 2 is now first in line and can start the quest
+        // User 1 quest is inactive and was stopped
+        // User 2 is now first in line and can start the quest
         now += TimeSpan.FromSeconds(4);
         GameServer.StartResult? result2 = null;
-        Assert.DoesNotThrow(() => result2 = gameServer.Start("p2", null));
+        Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
         Assert.That(result2, Is.Not.Null);
 
         // Acting on 1 should now fail on timeout
@@ -112,22 +112,22 @@ public class GameServerTests
     }
 
     [Test]
-    public void PlayerIsRemovedFromQuestQueueWhenItStopsCallingStart()
+    public void UserIsRemovedFromQuestQueueWhenItStopsCallingStart()
     {
-        GivenPlayerRegistered(id: "p1", name: "Player1");
-        GivenPlayerRegistered(id: "p2", name: "Player2");
-        GivenPlayerRegistered(id: "p3", name: "Player3");
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
+        GivenUserRegistered(id: "p3", name: "User3");
 
-        // Start quest for player 1, 2 and 3
+        // Start quest for user 1, 2 and 3
         GameServer.StartResult? result1 = null;
-        Assert.DoesNotThrow(() => result1 = gameServer.Start("p1", null));
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p2", null));
+        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
         now += TimeSpan.FromSeconds(1);
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
 
-        // Let player 1 and 3 keep responding for a while
+        // Let user 1 and 3 keep responding for a while
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
@@ -135,15 +135,15 @@ public class GameServerTests
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
 
-        // Stop responding with player 1 so it times out but keep responding with player 3
+        // Stop responding with user 1 so it times out but keep responding with user 3
         now += TimeSpan.FromSeconds(4);
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
         now += TimeSpan.FromSeconds(4);
         Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
 
-        // Player 1 quest is inactive and was stopped
-        // Player 2 has been removed from the queue
-        // Player 3 is now first in line and can start the quest
+        // User 1 quest is inactive and was stopped
+        // User 2 has been removed from the queue
+        // User 3 is now first in line and can start the quest
         now += TimeSpan.FromSeconds(4);
         GameServer.StartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("p3", null));
@@ -154,12 +154,12 @@ public class GameServerTests
     [Test]
     public void OldGamesAreCleanedUpAfterAWhile()
     {
-        GivenPlayerRegistered(id: "p1", name: "Player1");
-        GivenPlayerRegistered(id: "p2", name: "Player2");
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
 
-        // Start quest for player 1 and let it timeout
+        // Start quest for user 1 and let it timeout
         GameServer.StartResult? result1 = null;
-        Assert.DoesNotThrow(() => result1 = gameServer.Start("p1", null));
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
@@ -167,9 +167,9 @@ public class GameServerTests
         Assert.Throws<NoProgressException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
         Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
 
-        // Start training for player 2 and let it timeout
+        // Start training for user 2 and let it timeout
         GameServer.StartResult? result2 = null;
-        Assert.DoesNotThrow(() => result2 = gameServer.Start("p2", 0));
+        Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", 0));
         Assert.That(result2, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
@@ -182,7 +182,7 @@ public class GameServerTests
 
         // Start a new training
         GameServer.StartResult? result3 = null;
-        Assert.DoesNotThrow(() => result3 = gameServer.Start("p1", 0));
+        Assert.DoesNotThrow(() => result3 = gameServer.Start("u1", 0));
         Assert.That(result3, Is.Not.Null);
 
         // Oldest two games should now be removed
@@ -193,9 +193,9 @@ public class GameServerTests
 
     #region Primitives
 
-    private void GivenPlayerRegistered(string id = "p1", string name = "Player1", int level = 1)
+    private void GivenUserRegistered(string id = "u1", string name = "User1", int level = 1)
     {
-        database.CreatePlayerAsync(new Player { Id = id, Name = name, Level = level }).Wait();
+        database.CreateUserAsync(new User { Id = id, Name = name, Level = level }).Wait();
     }
 
     #endregion

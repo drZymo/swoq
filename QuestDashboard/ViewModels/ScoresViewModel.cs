@@ -28,7 +28,7 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
         pollThread.Join();
     }
 
-    public record Score(string PlayerName, int Level, int LengthTicks, int LengthSeconds);
+    public record Score(string UserName, int Level, int LengthTicks, int LengthSeconds);
 
 
     private readonly ObservableCollection<Score> scores = [];
@@ -57,13 +57,13 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
 
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-                var client = new Interface.PlayerService.PlayerServiceClient(channel);
+                var client = new Interface.UserService.UserServiceClient(channel);
 
                 while (!cancellationTokenSource.IsCancellationRequested)
                 {
                     var orderedScores = client.GetScores(new Google.Protobuf.WellKnownTypes.Empty(), callOptions).
                         Scores_.
-                        Select(s => new Score(s.PlayerName, s.Level, s.LengthTicks, s.LengthSeconds)).
+                        Select(s => new Score(s.UserName, s.Level, s.LengthTicks, s.LengthSeconds)).
                         OrderByDescending(s => s.Level).
                         ThenBy(s => s.LengthTicks).
                         ThenBy(s => s.LengthSeconds).

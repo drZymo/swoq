@@ -21,7 +21,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding PlayerName}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding UserName}"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
                                     <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
                                     <Run Text="{Binding LengthTicks}"/>
@@ -38,7 +38,7 @@
 
             <infraui:GroupBox Grid.Row="1" Header="Queue">
                 <StackPanel Orientation="Vertical" DataContext="{Binding GameStateMonitor}">
-                    <ItemsControl ItemsSource="{Binding QueuedPlayers}">
+                    <ItemsControl ItemsSource="{Binding QueueUsers}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}"/>

@@ -1,43 +1,43 @@
-﻿@page "/player/{PlayerId}"
+﻿@page "/user/{UserId}"
 @using Swoq.Server.Data
 @inject ISwoqDatabase Database
 @inject ILogger<Home> Logger
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hi @Player?.Name</h1>
+<h1>Hi @User?.Name</h1>
 
 @if (Welcome)
 {
 	<div class="alert alert-success" role="alert">
-		Welcome. Your player ID is: <b>@PlayerId</b>
+		Welcome. Your user ID is: <b>@UserId</b>
 	</div>
 }
 
-<p>Current level: @Player?.Level (reached in @Player?.QuestLengthTicks ticks)</p>
+<p>Current level: @User?.Level (reached in @User?.QuestLengthTicks ticks)</p>
 
-<ProtoFile Level="Player?.Level ?? 0" />
+<ProtoFile Level="User?.Level ?? 0" />
 
 @code {
 	[Parameter]
-	public string PlayerId { get; set; } = string.Empty;
+	public string UserId { get; set; } = string.Empty;
 
 	[SupplyParameterFromQuery]
 	public bool Welcome { get; set; } = false;
 
-	public Swoq.Server.Data.Player? Player { get; set; } = null;
+	public Swoq.Server.Data.User? User { get; set; } = null;
 
 	protected override async Task OnParametersSetAsync()
 	{
-		if (!String.IsNullOrEmpty(PlayerId))
+		if (!String.IsNullOrEmpty(UserId))
 		{
 			try
 			{
-				Player = await Database.FindPlayerByIdAsync(PlayerId);
+				User = await Database.FindUserByIdAsync(UserId);
 			}
 			catch
 			{
-				Player = null;
+				User = null;
 			}
 		}
 

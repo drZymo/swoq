@@ -11,7 +11,7 @@ service QuestMonitorService {
 
 message QuestStarted {
     string gameId = 1;
-    string player = 2;
+    string userName = 2;
     StartRequest request = 3;
     StartResponse response = 4;
 }
@@ -23,7 +23,7 @@ message QuestActed {
 }
 
 message QueueUpdate {
-    repeated string queuedPlayers = 1;
+    repeated string queuedUsers = 1;
 }
 
 message QuestUpdate {

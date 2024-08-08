@@ -72,7 +72,7 @@ internal class ReplayViewModel : ViewModelBase
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
             var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
-            var builder = new GameStateBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange, header.PlayerName);
+            var builder = new GameStateBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange, header.UserName);
 
             var gameState = builder.BuildNext(null, startResponse.State, startResponse.Result, Dispatcher.UIThread);
             gameStates = gameStates.Add(gameState);

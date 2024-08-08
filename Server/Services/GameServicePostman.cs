@@ -4,11 +4,11 @@ namespace Swoq.Server.Services;
 
 public class GameServicePostman
 {
-    public void RaiseStarted(string playerName, Guid gameId, StartRequest request, StartResponse response)
+    public void RaiseStarted(string userName, Guid gameId, StartRequest request, StartResponse response)
     {
-        Started?.Invoke(this, (playerName, gameId, request, response));
+        Started?.Invoke(this, (userName, gameId, request, response));
     }
-    public event EventHandler<(string playerName, Guid gameId, StartRequest request, StartResponse response)>? Started;
+    public event EventHandler<(string userName, Guid gameId, StartRequest request, StartResponse response)>? Started;
 
     public void RaiseActed(Guid gameId, ActionRequest request, ActionResponse response)
     {

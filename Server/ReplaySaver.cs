@@ -48,17 +48,17 @@ internal class ReplaySaver : IDisposable
     private readonly SemaphoreSlim messagesSemaphore = new(0);
     private readonly ConcurrentQueue<Message> messages = new();
 
-    private void OnGameStarted(object? sender, (string playerName, Guid gameId, StartRequest request, StartResponse response) e)
+    private void OnGameStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
     {
         // Register filename for this game id
         string filename;
         if (e.request.HasLevel)
         {
-            filename = Path.Combine(replayStorageSettings.TrainingFolder, e.playerName, $"level {e.request.Level} - {e.gameId}.bin");
+            filename = Path.Combine(replayStorageSettings.TrainingFolder, e.userName, $"level {e.request.Level} - {e.gameId}.bin");
         }
         else
         {
-            filename = Path.Combine(replayStorageSettings.QuestFolder, $"{e.playerName} - {e.gameId}.bin");
+            filename = Path.Combine(replayStorageSettings.QuestFolder, $"{e.userName} - {e.gameId}.bin");
         }
 
         lock (filenamesWriteMutex)
@@ -68,7 +68,7 @@ internal class ReplaySaver : IDisposable
 
         logger.LogInformation("New replay started at {path}", filename);
 
-        var header = new ReplayHeader { PlayerName = e.playerName, DateTime = Clock.Now.ToString("s") };
+        var header = new ReplayHeader { UserName = e.userName, DateTime = Clock.Now.ToString("s") };
         Enqueue(e.gameId, header);
 
         Enqueue(e.gameId, e.request);

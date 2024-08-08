@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Swoq.Server.Data;
 
-public class Player
+public class User
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]

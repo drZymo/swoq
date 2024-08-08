@@ -4,18 +4,18 @@
 @inject NavigationManager NavigationManager
 @inject ISwoqDatabase Database
 
-<PageTitle>Player registration</PageTitle>
+<PageTitle>User registration</PageTitle>
 
 <h1>Sioux Weekend of Quest</h1>
 
-<p>Register a new player.</p>
+<p>Register a new user.</p>
 
 <form method="post" @onsubmit="Submit" @formname="register-plain-form">
 	<AntiforgeryToken />
 	<div>
 		<label>
-			Player name:
-			<InputText @bind-Value="PlayerName" />
+			User name:
+			<InputText @bind-Value="UserName" />
 		</label>
 	</div>
 	<div>
@@ -27,18 +27,18 @@
 
 @code {
 	[SupplyParameterFromForm]
-	public string PlayerName { get; set; } = string.Empty;
+	public string UserName { get; set; } = string.Empty;
 
 	public string ErrorMessage { get; set; } = string.Empty;
 
 	private void Submit()
 	{
-		var player = new Player() { Name = PlayerName };
+		var user = new User() { Name = UserName };
 		try
 		{
-			Database.CreatePlayer(player);
-			var playerId = player.Id;
-			NavigationManager.NavigateTo($"/player/{playerId}?welcome=true", forceLoad: true);
+			Database.CreateUser(user);
+			var userId = user.Id;
+			NavigationManager.NavigateTo($"/user/{userId}?welcome=true", forceLoad: true);
 		}
 		catch (Exception ex) when (ex is not NavigationException)
 		{

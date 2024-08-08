@@ -11,7 +11,7 @@ internal class QuestTests
     private readonly DummyGenerator mapGenerator = new();
     private readonly SwoqDatabaseInMemory database = new();
     private Quest quest;
-    private string playerId;
+    private string userId;
 
     private DateTime now = DateTime.Now;
 
@@ -20,12 +20,12 @@ internal class QuestTests
     {
         Clock.Setup(() => now);
 
-        var player = new Player() { Level = 0, Name = "McFly" };
-        database.CreatePlayerAsync(player).Wait();
-        Assert.That(player.Id, Is.Not.Null);
-        playerId = player.Id;
+        var user = new User() { Level = 0, Name = "McFly" };
+        database.CreateUserAsync(user).Wait();
+        Assert.That(user.Id, Is.Not.Null);
+        userId = user.Id;
 
-        quest = new Quest(player, database, mapGenerator);
+        quest = new Quest(user, database, mapGenerator);
         Assert.Multiple(() =>
         {
             Assert.That(quest.State.Finished, Is.False);
@@ -34,15 +34,15 @@ internal class QuestTests
     }
 
     [Test]
-    public void FinishLevelIncreasesPlayerLevel()
+    public void FinishLevelIncreasesUserLevel()
     {
-        Assert.That(CurrentPlayer.Level, Is.EqualTo(0));
+        Assert.That(CurrentUser.Level, Is.EqualTo(0));
 
         now += TimeSpan.FromSeconds(5);
         quest.Act(DirectedAction.MoveEast);
         Assert.Multiple(() =>
         {
-            Assert.That(CurrentPlayer.Level, Is.EqualTo(1));
+            Assert.That(CurrentUser.Level, Is.EqualTo(1));
             Assert.That(quest.State.Finished, Is.False);
             Assert.That(quest.State.Level, Is.EqualTo(1));
         });
@@ -52,7 +52,7 @@ internal class QuestTests
     public void FinishAllLevelsFinishesQuest()
     {
         // Finish 20 levels to reach last one
-        Assert.That(CurrentPlayer.Level, Is.EqualTo(0));
+        Assert.That(CurrentUser.Level, Is.EqualTo(0));
         for (var i = 0; i < 20; i++)
         {
             now += TimeSpan.FromSeconds(5);
@@ -61,7 +61,7 @@ internal class QuestTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(CurrentPlayer.Level, Is.EqualTo(20));
+            Assert.That(CurrentUser.Level, Is.EqualTo(20));
             Assert.That(quest.State.Finished, Is.False);
             Assert.That(quest.State.Level, Is.EqualTo(20));
         });
@@ -70,7 +70,7 @@ internal class QuestTests
         quest.Act(DirectedAction.MoveWest);
         quest.Act(DirectedAction.MoveEast);
         quest.Act(DirectedAction.MoveEast);
-        Assert.That(CurrentPlayer.Level, Is.EqualTo(21));
+        Assert.That(CurrentUser.Level, Is.EqualTo(21));
 
         // Quest finished now
         Assert.Multiple(() =>
@@ -88,7 +88,7 @@ internal class QuestTests
     public void FinishLevelFasterWillUpdateScore()
     {
         // Finish 5 levels in 5*10 seconds, with some dummy actions
-        Assert.That(CurrentPlayer.Level, Is.EqualTo(0));
+        Assert.That(CurrentUser.Level, Is.EqualTo(0));
         for (var i = 0; i < 5; i++)
         {
             now += TimeSpan.FromSeconds(5);
@@ -99,9 +99,9 @@ internal class QuestTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(CurrentPlayer.Level, Is.EqualTo(5));
-            Assert.That(CurrentPlayer.QuestLengthSeconds, Is.EqualTo(50));
-            Assert.That(CurrentPlayer.QuestLengthTicks, Is.EqualTo(10));
+            Assert.That(CurrentUser.Level, Is.EqualTo(5));
+            Assert.That(CurrentUser.QuestLengthSeconds, Is.EqualTo(50));
+            Assert.That(CurrentUser.QuestLengthTicks, Is.EqualTo(10));
             Assert.That(quest.State.Finished, Is.False);
             Assert.That(quest.State.Level, Is.EqualTo(5));
         });
@@ -109,7 +109,7 @@ internal class QuestTests
         // Do it faster with same amount of ticks
         {
             // in a new quest
-            var newQuest = new Quest(CurrentPlayer, database, mapGenerator);
+            var newQuest = new Quest(CurrentUser, database, mapGenerator);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -120,9 +120,9 @@ internal class QuestTests
             // Scores should be updated
             Assert.Multiple(() =>
             {
-                Assert.That(CurrentPlayer.Level, Is.EqualTo(5));
-                Assert.That(CurrentPlayer.QuestLengthSeconds, Is.EqualTo(25)); // Faster
-                Assert.That(CurrentPlayer.QuestLengthTicks, Is.EqualTo(10)); // Same
+                Assert.That(CurrentUser.Level, Is.EqualTo(5));
+                Assert.That(CurrentUser.QuestLengthSeconds, Is.EqualTo(25)); // Faster
+                Assert.That(CurrentUser.QuestLengthTicks, Is.EqualTo(10)); // Same
                 Assert.That(newQuest.State.Finished, Is.False);
                 Assert.That(newQuest.State.Level, Is.EqualTo(5));
             });
@@ -131,7 +131,7 @@ internal class QuestTests
         // Do it faster with less ticks
         {
             // in a new quest
-            var newQuest = new Quest(CurrentPlayer, database, mapGenerator);
+            var newQuest = new Quest(CurrentUser, database, mapGenerator);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -141,22 +141,22 @@ internal class QuestTests
             // Scores should be updated
             Assert.Multiple(() =>
             {
-                Assert.That(CurrentPlayer.Level, Is.EqualTo(5));
-                Assert.That(CurrentPlayer.QuestLengthSeconds, Is.EqualTo(25)); // Faster
-                Assert.That(CurrentPlayer.QuestLengthTicks, Is.EqualTo(5)); // Faster
+                Assert.That(CurrentUser.Level, Is.EqualTo(5));
+                Assert.That(CurrentUser.QuestLengthSeconds, Is.EqualTo(25)); // Faster
+                Assert.That(CurrentUser.QuestLengthTicks, Is.EqualTo(5)); // Faster
                 Assert.That(newQuest.State.Finished, Is.False);
                 Assert.That(newQuest.State.Level, Is.EqualTo(5));
             });
         }
     }
 
-    private Player CurrentPlayer
+    private User CurrentUser
     {
         get
         {
-            var player = database.FindPlayerByIdAsync(playerId).Result;
-            Assert.That(player, Is.Not.Null);
-            return player;
+            var user = database.FindUserByIdAsync(userId).Result;
+            Assert.That(user, Is.Not.Null);
+            return user;
         }
     }
 

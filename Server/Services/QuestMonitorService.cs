@@ -52,7 +52,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
 
     private Guid currentQuestGameId = Guid.Empty;
 
-    private void OnStarted(object? sender, (string playerName, Guid gameId, StartRequest request, StartResponse response) e)
+    private void OnStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
     {
         var isQuest = !e.request.HasLevel;
         if (isQuest)
@@ -64,7 +64,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
                 Started = new QuestStarted
                 {
                     GameId = e.gameId.ToString(),
-                    Player = e.playerName,
+                    UserName = e.userName,
                     Request = e.request,
                     Response = e.response
                 },
@@ -100,7 +100,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
         {
             QueueUpdate = new()
         };
-        update.QueueUpdate.QueuedPlayers.AddRange(queue);
+        update.QueueUpdate.QueuedUsers.AddRange(queue);
 
         updates.Enqueue(update);
         updatesCount.Release();

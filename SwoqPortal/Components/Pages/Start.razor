@@ -6,16 +6,16 @@
 
 <h1>Sioux Weekend of Quest</h1>
 
-Please sign in with your Player ID.
+Please sign in with your user ID.
 
-If you do not have a player ID yet, then <NavLink href="register">register here</NavLink> first.
+If you do not have a user ID yet, then <NavLink href="register">register here</NavLink> first.
 
 <form method="post" @onsubmit="Submit" @formname="signin-plain-form">
     <AntiforgeryToken />
     <div>
         <label>
-            Player ID:
-            <InputText @bind-Value="PlayerId" />
+            User ID:
+            <InputText @bind-Value="UserId" />
         </label>
     </div>
     <div>
@@ -25,10 +25,10 @@ If you do not have a player ID yet, then <NavLink href="register">register here<
 
 @code {
     [SupplyParameterFromForm]
-    public string PlayerId { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
 
     private void Submit()
     {
-        NavigationManager.NavigateTo($"/player/{PlayerId}");
+        NavigationManager.NavigateTo($"/user/{UserId}");
     }
 }

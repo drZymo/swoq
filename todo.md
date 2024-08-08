@@ -14,13 +14,15 @@
   - [ ] Player state optional fields
 - [ ] Remove player registration from proto (move to portal)
 - [ ] Quest finished screen in dashboard
-- [ ] Level not available => insufficient player level
 - [ ] Hardcode dashboard colors
 - [ ] Order: width/height, x/y in proto
 - [ ] Zip file for ReplayViewer
 - [ ] Example bot Python
 - [ ] Example bot C#
-- [ ] Distinguish player in game and player on interface. Knight vs Player?
+- [.] Distinguish player in game and player on interface. User vs Player
+  - Player -> User
+  - GamePlayer -> Player, GameEnemy -> Enemy
+- [ ] Reuse database stuff betwen portal and server
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
@@ -89,6 +91,7 @@
 - [X] tiles.png path relative to exe
 - [X] Idle detection when placing/picking up boulder does not work. Add position change check.
 - [X] Test other colored pressure plates
+- [X] Level not available => insufficient player level
 
 # Design decisions
 

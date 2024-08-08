@@ -8,7 +8,7 @@ namespace Swoq.Server;
 
 public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
 {
-    public record StartResult(string PlayerName, Guid GameId, GameState State);
+    public record StartResult(string UserName, Guid GameId, GameState State);
 
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
@@ -24,13 +24,13 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
         remove => questQueue.Updated -= value;
     }
 
-    public StartResult Start(string playerId, int? level)
+    public StartResult Start(string userId, int? level)
     {
-        // Get player object
-        var player = database.FindPlayerByIdAsync(playerId).Result ?? throw new UnknownPlayerException();
+        // Get user object
+        var user = database.FindUserByIdAsync(userId).Result ?? throw new UnknownUserException();
 
         // Create a new game
-        IGame game = level.HasValue ? StartTraining(player, level.Value) : StartQuest(player);
+        IGame game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
         lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
@@ -38,13 +38,13 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
         // and remove old games
         CleanupOldGames();
 
-        return new StartResult(player.Name, game.Id, game.State);
+        return new StartResult(user.Name, game.Id, game.State);
     }
 
-    private Game StartTraining(Player player, int level)
+    private Game StartTraining(User user, int level)
     {
-        // Check if player can play this level
-        if (level < 0 || player.Level < level) throw new PlayerLevelTooLowException();
+        // Check if user can play this level
+        if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
         var map = mapGenerator.Generate(level);
 
@@ -52,9 +52,9 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
         return new Game(map, Parameters.MaxTrainingInactivityTime);
     }
 
-    private Quest StartQuest(Player player)
+    private Quest StartQuest(User user)
     {
-        if (player.Id == null) throw new ArgumentNullException(nameof(player));
+        if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
         lock (currentQuestMutex)
         {
@@ -70,8 +70,8 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
                 }
             }
 
-            // Queue (or update entry) player
-            questQueue.Enqueue(player);
+            // Queue (or update entry) user
+            questQueue.Enqueue(user);
 
             // Do not allow starting another quest when current quest is active.
             if (currentQuestId.HasValue)
@@ -79,19 +79,19 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
                 throw new QuestQueuedException();
             }
 
-            // Is this player the first entry in the queue?
-            if (questQueue.FrontPlayerId != player.Id)
+            // Is this user the first entry in the queue?
+            if (questQueue.FrontUserId != user.Id)
             {
                 throw new QuestQueuedException();
             }
-            var (frontPlayerId, frontPlayerName) = questQueue.Dequeue();
-            Debug.Assert(frontPlayerId == player.Id);
-            Debug.Assert(frontPlayerName == player.Name);
+            var (frontUserId, frontUserName) = questQueue.Dequeue();
+            Debug.Assert(frontUserId == user.Id);
+            Debug.Assert(frontUserName == user.Name);
 
             // No quest active
-            // Player first in queue
+            // User first in queue
             // Start a new game
-            var quest = new Quest(player, database, mapGenerator);
+            var quest = new Quest(user, database, mapGenerator);
             currentQuestId = quest.Id;
             return quest;
         }

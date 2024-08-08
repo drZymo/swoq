@@ -4,34 +4,34 @@ namespace Swoq.Server.Data;
 
 public class SwoqDatabaseInMemory : ISwoqDatabase
 {
-    private readonly object playersWriteMutex = new();
-    private IImmutableDictionary<string, Player> players = ImmutableDictionary<string, Player>.Empty;
+    private readonly object usersWriteMutex = new();
+    private IImmutableDictionary<string, User> users = ImmutableDictionary<string, User>.Empty;
 
     public SwoqDatabaseInMemory()
     { }
 
-    public async Task CreatePlayerAsync(Player newPlayer) =>
+    public async Task CreateUserAsync(User newUser) =>
         await Task.Run(() =>
         {
-            newPlayer.Id ??= Guid.NewGuid().ToString();
-            lock (playersWriteMutex)
+            newUser.Id ??= Guid.NewGuid().ToString();
+            lock (usersWriteMutex)
             {
-                players = players.Add(newPlayer.Id, newPlayer);
+                users = users.Add(newUser.Id, newUser);
             }
         });
 
-    public async Task<Player?> FindPlayerByIdAsync(string id) =>
-        await Task.FromResult(players.TryGetValue(id, out var p) ? p : null);
+    public async Task<User?> FindUserByIdAsync(string id) =>
+        await Task.FromResult(users.TryGetValue(id, out var u) ? u : null);
 
-    public async Task<Player?> FindPlayerByNameAsync(string name) =>
-        await Task.Run(() => players.Values.Where(p => p.Name.Equals(name)).FirstOrDefault());
+    public async Task<User?> FindUserByNameAsync(string name) =>
+        await Task.Run(() => users.Values.Where(u => u.Name.Equals(name)).FirstOrDefault());
 
-    public async Task UpdatePlayerAsync(Player player)
+    public async Task UpdateUserAsync(User user)
     {
-        if (player.Id == null) return;
-        await Task.Run(() => players = players.SetItem(player.Id, player));
+        if (user.Id == null) return;
+        await Task.Run(() => users = users.SetItem(user.Id, user));
     }
 
-    public async Task<IImmutableList<Player>> GetAllPlayers() =>
-        await Task.FromResult(players.Values.ToImmutableArray());
+    public async Task<IImmutableList<User>> GetAllUsers() =>
+        await Task.FromResult(users.Values.ToImmutableArray());
 }

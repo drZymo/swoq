@@ -12,7 +12,7 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
             var response = new StartResponse();
             try
             {
-                var startResult = server.Start(request.PlayerId, request.HasLevel ? request.Level : null);
+                var startResult = server.Start(request.UserId, request.HasLevel ? request.Level : null);
 
                 response.Result = Result.Ok;
                 response.GameId = startResult.GameId.ToString();
@@ -22,7 +22,7 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
                 response.State = startResult.State.Convert();
 
                 // Report
-                gameServicePostman.RaiseStarted(startResult.PlayerName, startResult.GameId, request, response);
+                gameServicePostman.RaiseStarted(startResult.UserName, startResult.GameId, request, response);
             }
             catch (SwoqGameException ex)
             {

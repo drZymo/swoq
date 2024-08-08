@@ -6,7 +6,7 @@ namespace Swoq.Server.Data;
 
 public class SwoqDatabase : ISwoqDatabase
 {
-    private readonly IMongoCollection<Player> playersCollection;
+    private readonly IMongoCollection<User> usersCollection;
 
     public SwoqDatabase(IOptions<SwoqDatabaseSettings> swoqDatabaseSettings)
     {
@@ -16,38 +16,38 @@ public class SwoqDatabase : ISwoqDatabase
         var mongoDatabase = mongoClient.GetDatabase(
             swoqDatabaseSettings.Value.DatabaseName);
 
-        playersCollection = mongoDatabase.GetCollection<Player>(
-            swoqDatabaseSettings.Value.PlayersCollectionName);
+        usersCollection = mongoDatabase.GetCollection<User>(
+            swoqDatabaseSettings.Value.UsersCollectionName);
     }
 
-    public async Task CreatePlayerAsync(Player newPlayer) =>
-        await playersCollection.InsertOneAsync(newPlayer);
+    public async Task CreateUserAsync(User newUser) =>
+        await usersCollection.InsertOneAsync(newUser);
 
-    public void CreatePlayer(Player newPlayer) =>
-        playersCollection.InsertOne(newPlayer);
+    public void CreateUser(User newUser) =>
+        usersCollection.InsertOne(newUser);
 
-    public async Task<Player?> FindPlayerByIdAsync(string id) =>
-        await playersCollection.Find(p => p.Id == id).FirstOrDefaultAsync();
+    public async Task<User?> FindUserByIdAsync(string id) =>
+        await usersCollection.Find(p => p.Id == id).FirstOrDefaultAsync();
 
-    public async Task<Player?> FindPlayerByNameAsync(string name) =>
-        await playersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
+    public async Task<User?> FindUserByNameAsync(string name) =>
+        await usersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
 
-    public async Task UpdatePlayerAsync(Player player)
+    public async Task UpdateUserAsync(User user)
     {
-        if (player.Id == null) return;
-        var filter = Builders<Player>.Filter.
-            Eq(p => p.Id, player.Id);
-        var update = Builders<Player>.Update.
-            Set(p => p.Level, player.Level).
-            Set(p => p.QuestLengthTicks, player.QuestLengthTicks).
-            Set(p => p.QuestLengthSeconds, player.QuestLengthSeconds);
-        await playersCollection.UpdateOneAsync(filter, update);
+        if (user.Id == null) return;
+        var filter = Builders<User>.Filter.
+            Eq(p => p.Id, user.Id);
+        var update = Builders<User>.Update.
+            Set(p => p.Level, user.Level).
+            Set(p => p.QuestLengthTicks, user.QuestLengthTicks).
+            Set(p => p.QuestLengthSeconds, user.QuestLengthSeconds);
+        await usersCollection.UpdateOneAsync(filter, update);
     }
 
-    public async Task<IImmutableList<Player>> GetAllPlayers()
+    public async Task<IImmutableList<User>> GetAllUsers()
     {
-        var players = await playersCollection.FindAsync(p => true);
-        var playersList = await players.ToListAsync();
-        return playersList.ToImmutableArray();
+        var users = await usersCollection.FindAsync(p => true);
+        var usersList = await users.ToListAsync();
+        return usersList.ToImmutableArray();
     }
 }

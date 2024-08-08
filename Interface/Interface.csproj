@@ -9,15 +9,15 @@
 
   <ItemGroup>
     <None Remove="monitor.proto" />
-    <None Remove="player.proto" />
     <None Remove="replay.proto" />
     <None Remove="swoq.proto" />
+    <None Remove="user.proto" />
   </ItemGroup>
 
   <ItemGroup>
     <Protobuf Include="monitor.proto" />
     <Protobuf Include="replay.proto" />
-    <Protobuf Include="player.proto" />
+    <Protobuf Include="user.proto" />
     <Protobuf Include="swoq.proto" />
   </ItemGroup>
 

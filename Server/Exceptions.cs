@@ -2,9 +2,9 @@
 
 public abstract class SwoqException : Exception;
 
-public class UnknownPlayerException : SwoqException;
+public class UnknownUserException : SwoqException;
 public class UnknownGameIdException : SwoqException;
-public class PlayerLevelTooLowException : SwoqException;
+public class UserLevelTooLowException : SwoqException;
 public class QuestQueuedException : SwoqException;
 
 public abstract class SwoqGameException(GameState state) : SwoqException

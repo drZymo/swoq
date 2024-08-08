@@ -6,67 +6,67 @@ namespace Swoq.Server;
 
 internal class QuestQueue
 {
-    private record QueueEntry(string PlayerId, string PlayerName, DateTime StartTime, DateTime LastQueryTime);
+    private record QueueEntry(string UserId, string UserName, DateTime StartTime, DateTime LastQueryTime);
 
     private IImmutableDictionary<string, QueueEntry> entries = ImmutableDictionary<string, QueueEntry>.Empty;
 
-    private IImmutableList<string> queuedPlayers = [];
+    private IImmutableList<string> queuedUsers = [];
 
     public event EventHandler<IImmutableList<string>>? Updated;
 
-    public string FrontPlayerId => entries.OrderBy(kvp => kvp.Value.StartTime).First().Key;
+    public string FrontUserId => entries.OrderBy(kvp => kvp.Value.StartTime).First().Key;
 
-    public void Enqueue(Player player)
+    public void Enqueue(User user)
     {
-        if (player.Id == null) throw new ArgumentNullException(nameof(player));
+        if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
         var now = Clock.Now;
 
-        // Cleanup inactive queued players.
+        // Cleanup inactive queued users.
         var inactiveQuests = entries.
             Where(kvp => kvp.Value.LastQueryTime < now - Parameters.MaxQuestInactivityTime);
-        var inactivePlayerNames = inactiveQuests.
-            Select(kvp => kvp.Value.PlayerName).
+        var inactiveUserNames = inactiveQuests.
+            Select(kvp => kvp.Value.UserName).
             ToImmutableArray();
         if (inactiveQuests.Any())
         {
             entries = entries.RemoveRange(inactiveQuests.Select(kvp => kvp.Key));
         }
-        if (inactivePlayerNames.Length > 0)
+        if (inactiveUserNames.Length > 0)
         {
-            queuedPlayers = queuedPlayers.RemoveRange(inactivePlayerNames);
+            queuedUsers = queuedUsers.RemoveRange(inactiveUserNames);
         }
 
-        if (entries.TryGetValue(player.Id, out var entry))
+        if (entries.TryGetValue(user.Id, out var entry))
         {
             // Refresh query time of existing entry
-            entries = entries.SetItem(player.Id, entry with { LastQueryTime = now });
+            entries = entries.SetItem(user.Id, entry with { LastQueryTime = now });
         }
         else
         {
-            // Enqueue this player if not queued already
-            entry = new QueueEntry(player.Id, player.Name, now, now);
-            entries = entries.Add(player.Id, entry);
-            queuedPlayers = queuedPlayers.Add(player.Name);
+            // Enqueue this user if not queued already
+            entry = new QueueEntry(user.Id, user.Name, now, now);
+            entries = entries.Add(user.Id, entry);
+            queuedUsers = queuedUsers.Add(user.Name);
             OnUpdated();
         }
     }
 
-    public (string playerId, string playerName) Dequeue()
+    public (string userId, string userName) Dequeue()
     {
-        var frontPlayerId = FrontPlayerId;
+        var frontUserId = FrontUserId;
 
-        var entry = entries[frontPlayerId];
-        entries = entries.Remove(frontPlayerId);
-        queuedPlayers = queuedPlayers.RemoveAt(0);
+        var entry = entries[frontUserId];
+        entries = entries.Remove(frontUserId);
+        queuedUsers = queuedUsers.RemoveAt(0);
 
         OnUpdated();
 
-        return (entry.PlayerId, entry.PlayerName);
+        return (entry.UserId, entry.UserName);
     }
 
     private void OnUpdated()
     {
-        Updated?.Invoke(this, queuedPlayers);
+        Updated?.Invoke(this, queuedUsers);
     }
 }

@@ -6,9 +6,9 @@ public static class Converters
     {
         Result.Ok => "OK",
         Result.InternalError => "InternalError",
-        Result.UnknownPlayer => "UnknownPlayer",
+        Result.UnknownUser => "UnknownUser",
         Result.UnknownGameId => "UnknownGameId",
-        Result.PlayerLevelTooLow => "PlayerLevelTooLow",
+        Result.UserLevelTooLow => "UserLevelTooLow",
         Result.QuestQueued => "QuestQueued",
         Result.MoveNotAllowed => "MoveNotAllowed",
         Result.UseNotAllowed => "UseNotAllowed",

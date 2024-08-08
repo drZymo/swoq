@@ -15,7 +15,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
     public GameStateMonitorViewModel()
     {
-        QueuedPlayers = new(queuedPlayers);
+        QueueUsers = new(queuedUsers);
 
         monitorThread = new Thread(new ThreadStart(MonitorThread));
         monitorThread.Start();
@@ -38,8 +38,8 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private readonly ObservableCollection<string> queuedPlayers = [];
-    public ReadOnlyObservableCollection<string> QueuedPlayers { get; }
+    private readonly ObservableCollection<string> queuedUsers = [];
+    public ReadOnlyObservableCollection<string> QueueUsers { get; }
 
     private string statusMessage = "";
     public string StatusMessage
@@ -82,7 +82,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                         Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
 
                         var started = message.Started;
-                        gameStateBuilder = new GameStateBuilder(started.Response.Height, started.Response.Width, started.Response.VisibilityRange, started.Player);
+                        gameStateBuilder = new GameStateBuilder(started.Response.Height, started.Response.Width, started.Response.VisibilityRange, started.UserName);
                         var gameState = gameStateBuilder.BuildNext(null, started.Response.State, started.Response.Result, Dispatcher.UIThread);
                         Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
@@ -96,13 +96,13 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     if (message.QueueUpdate != null)
                     {
-                        var queuedPlayers = message.QueueUpdate.QueuedPlayers.ToImmutableArray();
+                        var queuedUsers = message.QueueUpdate.QueuedUsers.ToImmutableArray();
                         Dispatcher.UIThread.Invoke(() =>
                         {
-                            this.queuedPlayers.Clear();
-                            foreach (var qp in queuedPlayers)
+                            this.queuedUsers.Clear();
+                            foreach (var qu in queuedUsers)
                             {
-                                this.queuedPlayers.Add(qp);
+                                this.queuedUsers.Add(qu);
                             }
                         });
                     }
