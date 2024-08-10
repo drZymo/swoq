@@ -21,9 +21,9 @@ _result_strings  = {
     swoq_pb2.RESULT_OK: 'OK',
 
     swoq_pb2.RESULT_INTERNAL_ERROR: 'INTERNAL_ERROR',
-    swoq_pb2.RESULT_UNKNOWN_PLAYER: 'UNKNOWN_swoq_pb2.TILE_PLAYER',
+    swoq_pb2.RESULT_UNKNOWN_USER: 'UNKNOWN_USER',
     swoq_pb2.RESULT_UNKNOWN_GAME_ID: 'UNKNOWN_GAME_ID',
-    swoq_pb2.RESULT_PLAYER_LEVEL_TOO_LOW: 'PLAYER_LEVEL_TOO_LOW',
+    swoq_pb2.RESULT_USER_LEVEL_TOO_LOW: 'USER_LEVEL_TOO_LOW',
     swoq_pb2.RESULT_QUEST_QUEUED: 'QUEST_QUEUED',
     swoq_pb2.RESULT_MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
     swoq_pb2.RESULT_NO_PROGRESS: 'NO_PROGRESS',
@@ -31,18 +31,18 @@ _result_strings  = {
     swoq_pb2.RESULT_GAME_FINISHED: 'GAME_FINISHED',
     swoq_pb2.RESULT_PLAYER1_NOT_PRESENT: 'PLAYER1_NOT_PRESENT',
     swoq_pb2.RESULT_USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
-    swoq_pb2.RESULT_INVENTORY_FULL: 'swoq_pb2.INVENTORY_FULL',
-    swoq_pb2.RESULT_INVENTORY_EMPTY: 'swoq_pb2.INVENTORY_swoq_pb2.TILE_EMPTY',
+    swoq_pb2.RESULT_INVENTORY_FULL: 'INVENTORY_FULL',
+    swoq_pb2.RESULT_INVENTORY_EMPTY: 'INVENTORY_EMPTY',
     swoq_pb2.RESULT_PLAYER1_DIED: 'PLAYER1_DIED',
-    swoq_pb2.RESULT_NO_SWORD: 'NO_swoq_pb2.TILE_SWORD',
+    swoq_pb2.RESULT_NO_SWORD: 'NO_SWORD',
     swoq_pb2.RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
     swoq_pb2.RESULT_PLAYER2_DIED: 'PLAYER2_DIED',
 }
 
 class GamePlayer:
 
-    def __init__(self, player_id:str, plot:bool=True, print:bool=True):
-        self.player_id = player_id
+    def __init__(self, user_id:str, plot:bool=True, print:bool=True):
+        self.user_id = user_id
         self.plot = plot
         self.print = print
 
@@ -66,14 +66,14 @@ class GamePlayer:
 
 
     def start(self, level:int=None) -> None:
-        startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.player_id, level=level))
+        startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level))
         if self.print:
             result = _result_strings[startResponse.result]
             print(f'{result=}')
 
         while startResponse.result == swoq_pb2.RESULT_QUEST_QUEUED:
             sleep(1)
-            startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.player_id, level=level))
+            startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level))
             if self.print:
                 result = _result_strings[startResponse.result]
                 print(f'{result=}')
