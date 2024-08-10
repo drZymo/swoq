@@ -21,7 +21,7 @@ internal abstract record GameCharacter(
     int Health,
     bool HasSword);
 
-internal record GamePlayer(
+internal record Player(
     GameCharacterId Id,
     Position Position,
     Inventory Inventory = Inventory.None,
@@ -29,7 +29,7 @@ internal record GamePlayer(
     bool HasSword = false)
     : GameCharacter(Id, Position, Inventory, Health, HasSword);
 
-internal record GameEnemy(
+internal record Enemy(
     GameCharacterId Id,
     Position Position,
     Inventory Inventory = Inventory.None,

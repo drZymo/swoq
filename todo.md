@@ -1,18 +1,13 @@
 # TODO
 
 - [ ] Fix boulder handling in bot
-- [ ] More tests
-  - [X] invalid uses
-  - [X] enemy chasing out of view
-  - [ ] player crushed by door
-  - [.] quest progress (replay with quicker time improves stats)
-- [.] Player portal
+- [.] User portal
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
 - [ ] Reorder proto files for incremental features
   - [ ] Player state optional fields
-- [ ] Remove player registration from proto (move to portal)
+- [ ] Remove user registration from proto (move to portal)
 - [ ] Quest finished screen in dashboard
 - [ ] Hardcode dashboard colors
 - [ ] Order: width/height, x/y in proto
@@ -92,6 +87,11 @@
 - [X] Idle detection when placing/picking up boulder does not work. Add position change check.
 - [X] Test other colored pressure plates
 - [X] Level not available => insufficient player level
+- [X] More tests
+  - [X] invalid uses
+  - [X] enemy chasing out of view
+  - [X] player crushed by door
+  - [X] quest progress (replay with quicker time improves stats)
 
 # Design decisions
 
