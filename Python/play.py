@@ -94,10 +94,20 @@ class GamePlayer:
         self.expected_enemy_health = None
         
         self.plates_with_boulders = []
+        
+        self.boulder_drop_pos_1 = None
+        self.boulder_drop_pos_2 = None
 
         if self.plot:
             self._frame = plot_map(self.map)
 
+
+    def reset(self) -> None:
+        self.prev_level = self.level
+        self.map = np.zeros_like(self.map)
+        self.plates_with_boulders = []
+        self.boulder_drop_pos_1 = None
+        self.boulder_drop_pos_2 = None
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
         self.level = state.level
@@ -128,10 +138,8 @@ class GamePlayer:
 
         # Clear map for every new level
         if self.prev_level != self.level:
-            self.prev_level = self.level
-            self.map = np.zeros_like(self.map)
-            self.plates_with_boulders = []
             print(f'Entered level {self.level}')
+            self.reset()
 
         if len(state.player1.surroundings) > 0:
             top = self.player1_pos[0] - self.visibility_range
@@ -235,8 +243,8 @@ class GamePlayer:
         self.pickup_health()
         self.pickup_sword()
         self.pickup_keys()
-        self.explore()
         self.attack()
+        self.explore()
         self.move_to_pressure_plate()
         self.wait_at_pressure_plate_door()
         self.pickup_boulder()
@@ -343,6 +351,14 @@ class GamePlayer:
                                 self.move_to_2(key_pos)
                                 break
 
+    
+    def can_1_reach(self, pos) -> bool:
+        return get_direction(self.player1_pos, pos, self.player1_distances, self.player1_paths) is not None
+
+
+    def can_2_reach(self, pos) -> bool:
+        return get_direction(self.player2_pos, pos, self.player2_distances, self.player2_paths) is not None
+
 
     def move_to_exit(self) -> None:
         # Move to exit if possible
@@ -353,22 +369,66 @@ class GamePlayer:
             # Only move when both players can reach the exit (or each other)
             can_reach = False
             if valid_pos(self.player1_pos) and valid_pos(self.player2_pos):
-                can_reach = (get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None and \
-                    get_direction(self.player1_pos, self.player1_pos, self.player1_distances, self.player1_paths) is not None) or \
-                    (get_direction(self.player1_pos, self.player2_pos, self.player1_distances, self.player1_paths) is not None and \
-                    get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None)
+                can_reach = (self.can_1_reach(exit_pos) and self.can_2_reach(self.player1_pos)) or \
+                    (self.can_1_reach(self.player2_pos) and self.can_2_reach(exit_pos))
             elif valid_pos(self.player1_pos):
-                can_reach = get_direction(self.player1_pos, exit_pos, self.player1_distances, self.player1_paths) is not None
+                can_reach = self.can_1_reach(exit_pos)
             elif valid_pos(self.player2_pos):
-                can_reach = get_direction(self.player2_pos, exit_pos, self.player2_distances, self.player2_paths) is not None
+                can_reach = self.can_2_reach(exit_pos)
 
             if can_reach:
                 if self.can_act1():
-                    print('exit1')
-                    self.move_to_1(exit_pos)
+                    # drop boulder before entering exit
+                    if self.player1_inventory == swoq_pb2.INVENTORY_BOULDER:
+                        if self.boulder_drop_pos_1 is None:
+                            self.boulder_drop_pos_1 = self.get_closest_clearing(self.player1_pos, self.player1_distances, self.player1_paths)
+                        if self.boulder_drop_pos_1 is not None:
+                            if are_adjacent(self.player1_pos, self.boulder_drop_pos_1):
+                                print('boulder_drop1')
+                                self.use_1(self.boulder_drop_pos_1)
+                                self.boulder_drop_pos_1 = None
+                            else:
+                                print('boulder_drop_move1')
+                                self.move_to_1(self.boulder_drop_pos_1)
+                    else:
+                        print('exit1')
+                        self.move_to_1(exit_pos)
                 if self.can_act2():
-                    print('exit2')
-                    self.move_to_2(exit_pos)
+                    # drop boulder before entering exit
+                    if self.player2_inventory == swoq_pb2.INVENTORY_BOULDER:
+                        if self.boulder_drop_pos_2 is None:
+                            self.boulder_drop_pos_2 = self.get_closest_clearing(self.player2_pos, self.player2_distances, self.player2_paths)
+                        if self.boulder_drop_pos_2 is not None:
+                            if are_adjacent(self.player2_pos, self.boulder_drop_pos_2):
+                                print('boulder_drop2')
+                                self.use_2(self.boulder_drop_pos_2)
+                                self.boulder_drop_pos_2 = None
+                            else:
+                                print('boulder_drop_move2')
+                                self.move_to_2(self.boulder_drop_pos_2)
+                    else:
+                        print('exit2')
+                        self.move_to_2(exit_pos)
+
+
+    def get_closest_clearing(self, from_pos, distances, paths) -> tuple[str, tuple]:
+        closest_empty = None
+        closest_dist = None
+        
+        # find closest empty with EMPTY neighbors
+        for pos_y, pos_x in np.argwhere(self.map == swoq_pb2.TILE_EMPTY):
+            if (pos_y, pos_x-1) in distances and self.map[pos_y, pos_x-1] == swoq_pb2.TILE_EMPTY and \
+               (pos_y, pos_x+1) in distances and self.map[pos_y, pos_x+1] == swoq_pb2.TILE_EMPTY and \
+               (pos_y-1, pos_x) in distances and self.map[pos_y-1, pos_x] == swoq_pb2.TILE_EMPTY and \
+               (pos_y+1, pos_x) in distances and self.map[pos_y+1, pos_x] == swoq_pb2.TILE_EMPTY:
+                pos = (pos_y, pos_x)
+                dist = distances[pos]
+                if closest_dist is None or dist < closest_dist:
+                    closest_dist = dist
+                    closest_empty = pos
+
+        return closest_empty
+
 
     def run_away_from_enemy(self) -> None:
         # if adjacent to an enemy with more health, then leave
@@ -379,6 +439,7 @@ class GamePlayer:
         if self.can_act2():
             # TODO
             pass
+        
         
     def attack(self) -> None:
         # Attack
@@ -401,32 +462,31 @@ class GamePlayer:
             else:
                 dist_players = min(dist_1_to_2, dist_2_to_1)
             
-            if self.combined_health >= self.expected_enemy_health:
-                if self.can_act1() and self.player1_has_sword:
-                    if self.player2_has_sword and dist_players is not None and dist_players > 5:
-                        # Move closer to each other if both can fight
-                        print('move_closer1')
-                        self.move_to_1(self.player2_pos)
-                    elif are_adjacent(self.player1_pos, enemy_pos):
-                        print('attack_use1')
-                        self.use_1(enemy_pos)
-                        self.expected_enemy_health -= 1
-                    else:
-                        print('attack_move1')
-                        self.move_to_1(enemy_pos)
+            if self.can_act1() and self.player1_has_sword and self.player1_health > 1:
+                # Move closer to each other if BOTH can fight
+                if self.player2_has_sword and dist_players is not None and dist_players > 5:
+                    print('move_closer1')
+                    self.move_to_1(self.player2_pos)
+                elif are_adjacent(self.player1_pos, enemy_pos):
+                    print('attack_use1')
+                    self.use_1(enemy_pos)
+                    self.expected_enemy_health -= 1
+                else:
+                    print('attack_move1')
+                    self.move_to_1(enemy_pos)
 
-                if self.can_act2() and self.player2_has_sword:
-                    if self.player1_has_sword and dist_players is not None and dist_players > 4:
-                        # Move closer to each other if both can fight
-                        print('move_closer2')
-                        self.move_to_2(self.player1_pos)
-                    elif are_adjacent(self.player2_pos, enemy_pos):
-                        print('attack_use2')
-                        self.use_2(enemy_pos)
-                        self.expected_enemy_health -= 1
-                    else:
-                        print('attack_move2')
-                        self.move_to_2(enemy_pos)
+            if self.can_act2() and self.player2_has_sword and self.player2_health > 1:
+                # Move closer to each other if BOTH can fight
+                if self.player1_has_sword and dist_players is not None and dist_players > 4:
+                    print('move_closer2')
+                    self.move_to_2(self.player1_pos)
+                elif are_adjacent(self.player2_pos, enemy_pos):
+                    print('attack_use2')
+                    self.use_2(enemy_pos)
+                    self.expected_enemy_health -= 1
+                else:
+                    print('attack_move2')
+                    self.move_to_2(enemy_pos)
 
             if self.expected_enemy_health is not None and self.expected_enemy_health <= 0:
                 self.expected_enemy_health = None
@@ -454,10 +514,10 @@ class GamePlayer:
             sword_pos = tuple(swords[0])
             
             # let player 1 pickup sword first
-            if self.can_act1() and not self.player1_has_sword:
+            if self.can_act1() and not self.player1_has_sword and self.can_1_reach(sword_pos):
                 print('sword1')
                 self.move_to_1(sword_pos)
-            elif self.can_act2() and not self.player2_has_sword and self.player1_has_sword:
+            elif self.can_act2() and not self.player2_has_sword and self.player1_has_sword and self.can_2_reach(sword_pos):
                 print('sword2')
                 self.move_to_2(sword_pos)
 
@@ -527,8 +587,10 @@ class GamePlayer:
         if np.any(plate_doors):
             plate_door_pos = tuple(plate_doors[0])
             if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
-                print('move_black2')
-                self.move_to_2(plate_door_pos)
+                # only move close to door, do not stand next to it (could block the other player)
+                if plate_door_pos in self.player2_distances and self.player2_distances[plate_door_pos] > 2:
+                    print('move_black2')
+                    self.move_to_2(plate_door_pos)
 
 
     def pickup_boulder(self) -> None:
@@ -556,10 +618,11 @@ class GamePlayer:
         doors = np.argwhere((self.map == swoq_pb2.TILE_DOOR_RED) | (self.map == swoq_pb2.TILE_DOOR_GREEN) | (self.map == swoq_pb2.TILE_DOOR_BLUE))
         if np.any(doors):
             door_pos = tuple(doors[0])
-            if self.can_act1():
+            # only move close to door, do not stand next to it (could block the other player)
+            if self.can_act1() and door_pos in self.player1_distances and self.player1_distances[door_pos] > 2:
                 print('move_door1')
                 self.move_to_1(door_pos)
-            elif self.can_act2():
+            elif self.can_act2() and door_pos in self.player2_distances and self.player2_distances[door_pos] > 2:
                 print('move_door2')
                 self.move_to_2(door_pos)
 
