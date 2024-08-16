@@ -184,6 +184,35 @@ def get_direction(from_pos, to_pos, distances, paths):
     return get_direction_towards(paths, from_pos, adjacent_pos)
 
 
+def get_closest_adjacent(from_pos, to_pos, distances):
+    north = (to_pos[0]-1, to_pos[1])
+    south = (to_pos[0]+1, to_pos[1])
+    west = (to_pos[0], to_pos[1]-1)
+    east = (to_pos[0], to_pos[1]+1)
+
+    if from_pos == north: return 1, to_pos
+    if from_pos == south: return 1, to_pos
+    if from_pos == west: return 1, to_pos
+    if from_pos == east: return 1, to_pos
+
+    min_dist = np.inf
+    adjacent_pos = None
+    if north in distances and distances[north] < min_dist:
+        min_dist = distances[north]
+        adjacent_pos = north
+    if south in distances and distances[south] < min_dist:
+        min_dist = distances[south]
+        adjacent_pos = south
+    if east in distances and distances[east] < min_dist:
+        min_dist = distances[east]
+        adjacent_pos = east
+    if west in distances and distances[west] < min_dist:
+        min_dist = distances[west]
+        adjacent_pos = west
+        
+    return min_dist, adjacent_pos
+
+
 def plot_distances(distances: dict[tuple,int], height: int, width: int) -> None:
     D = np.zeros((height, width), np.float32)
     for y in range(height):

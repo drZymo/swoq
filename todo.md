@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Fix boulder handling in bot
+- [ ] Extra one player combat levels before introducing second player
 - [.] User portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -92,6 +92,7 @@
   - [X] enemy chasing out of view
   - [X] player crushed by door
   - [X] quest progress (replay with quicker time improves stats)
+- [X] Fix boulder handling in bot
 
 # Design decisions
 

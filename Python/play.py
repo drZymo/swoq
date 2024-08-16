@@ -91,12 +91,7 @@ class GamePlayer:
         self.action1:swoq_pb2.DirectedAction = None
         self.action2:swoq_pb2.DirectedAction = None
         
-        self.expected_enemy_health = None
-        
-        self.plates_with_boulders = []
-        
-        self.boulder_drop_pos_1 = None
-        self.boulder_drop_pos_2 = None
+        self.reset()
 
         if self.plot:
             self._frame = plot_map(self.map)
@@ -109,8 +104,12 @@ class GamePlayer:
         self.plates_with_boulders = []
         self.boulder_drop_pos_1 = None
         self.boulder_drop_pos_2 = None
-        self.remain_on_plate_counter = 0
-        self.plate_color = None
+        self.remain_on_plate_counter_1 = 0
+        self.plate_color_1 = None
+        self.plate_pos_1 = None
+        self.remain_on_plate_counter_2 = 0
+        self.plate_color_2 = None
+        self.plate_pos_2 = None
         self.random_pos1 = None
         self.random_pos2 = None
 
@@ -146,6 +145,7 @@ class GamePlayer:
             print(f'Entered level {self.level}')
             self.reset()
 
+        # Copy surroundings to map
         if len(state.player1.surroundings) > 0:
             top = self.player1_pos[0] - self.visibility_range
             left = self.player1_pos[1] - self.visibility_range
@@ -174,7 +174,7 @@ class GamePlayer:
                             self.map[map_y, map_x] = s
                     i += 1
 
-        # Remove all players from map
+        # Manually place players, to prevent lingering entries
         self.map[self.map == swoq_pb2.TILE_PLAYER] = swoq_pb2.TILE_EMPTY
         if self.player1_pos is not None:
             y,x = self.player1_pos
@@ -183,12 +183,13 @@ class GamePlayer:
             y,x = self.player2_pos
             if y >= 0 and x >=0: self.map[y,x] = swoq_pb2.TILE_PLAYER
 
+        # Update paths
         if self.player1_pos is not None:
             self.player1_distances, self.player1_paths = compute_distances_quick(self.map, self.player1_pos)
 
         if self.player2_pos is not None:
             self.player2_distances, self.player2_paths = compute_distances_quick(self.map, self.player2_pos)
-
+            
 
     def act(self):
         # Once in a while player 2 will not move, to break cycles
@@ -247,6 +248,11 @@ class GamePlayer:
     def step(self) -> None:
         if self.finished: return
 
+        self.plate_pos_2 = None
+        self.plate_pos_1 = None
+
+        if self.level == 18:
+            self.handle_level18()
         self.run_away_from_enemy()
         self.move_to_exit()
         self.pickup_health()
@@ -254,10 +260,12 @@ class GamePlayer:
         self.pickup_keys()
         self.attack()
         self.explore()
-        self.move_to_pressure_plate()
-        self.wait_at_pressure_plate_door()
+        if self.level != 18:
+            self.move_to_pressure_plate()
+            self.wait_at_pressure_plate_door_2()
         self.pickup_boulder()
-        self.wait_at_random_door()
+        if self.level != 18:
+            self.wait_at_random_door()
         self.random_walk() # fallback
         self.act()
         self.update_remain_on_plate()
@@ -292,11 +300,11 @@ class GamePlayer:
 
 
     def can_act1(self) -> bool:
-        return valid_pos(self.player1_pos) and self.action1 is None and self.remain_on_plate_counter <= 0
+        return valid_pos(self.player1_pos) and self.action1 is None and self.remain_on_plate_counter_1 <= 0
 
 
     def can_act2(self) -> bool:
-        return valid_pos(self.player2_pos) and self.action2 is None
+        return valid_pos(self.player2_pos) and self.action2 is None and self.remain_on_plate_counter_2 <= 0
 
 
     def move_to_1(self, pos:tuple[int,int]) -> None:
@@ -326,40 +334,75 @@ class GamePlayer:
     def pickup_key_or_open_door(self, key:int, door:int, item:int) -> None:
         doors = np.argwhere(self.map == door)
         if np.any(doors):
-            door_pos = tuple(doors[0])
-            if self.can_act1() and self.player1_inventory == item and get_direction(self.player1_pos, door_pos, self.player1_distances, self.player1_paths) is not None:
-                if are_adjacent(self.player1_pos, door_pos):
-                    print('use_door1')
-                    self.use_1(door_pos)
-                else:
+            
+            if self.can_act1() and self.player1_inventory == item:
+                min_dist = None
+                min_door_pos = None
+                for door_pos in doors:
+                    door_pos = tuple(door_pos)
+                    if are_adjacent(self.player1_pos, door_pos):
+                        print('use_door1')
+                        self.use_1(door_pos)
+                        break
+                    elif door_pos in self.player1_distances:
+                        dist = self.player1_distances[door_pos]
+                        if min_dist is None or dist < min_dist:
+                            min_dist = dist
+                            min_door_pos = door_pos
+                    else:
+                        dist, adj_pos = get_closest_adjacent(self.player1_pos, door_pos, self.player1_distances)
+                        dist += 1
+                        if min_dist is None or dist < min_dist:
+                            min_dist = dist
+                            min_door_pos = adj_pos
+
+                if self.can_act1() and min_door_pos is not None:
                     print('move_door1')
-                    self.move_to_1(door_pos)
-            elif self.can_act2() and self.player2_inventory == item and get_direction(self.player2_pos, door_pos, self.player2_distances, self.player2_paths) is not None:
-                if are_adjacent(self.player2_pos, door_pos):
-                    print('use_door2')
-                    self.use_2(door_pos)
-                else:
+                    self.move_to_1(min_door_pos)
+
+            if self.can_act2() and self.player2_inventory == item:
+                min_dist = None
+                min_door_pos = None
+                for door_pos in doors:
+                    door_pos = tuple(door_pos)
+                    if are_adjacent(self.player2_pos, door_pos):
+                        print('use_door2')
+                        self.use_2(door_pos)
+                        break
+                    elif door_pos in self.player2_distances:
+                        dist = self.player2_distances[door_pos]
+                        if min_dist is None or dist < min_dist:
+                            min_dist = dist
+                            min_door_pos = door_pos
+                    else:
+                        dist, adj_pos = get_closest_adjacent(self.player2_pos, door_pos, self.player2_distances)
+                        dist += 1
+                        if min_dist is None or dist < min_dist:
+                            min_dist = dist
+                            min_door_pos = adj_pos
+
+                if self.can_act2() and min_door_pos is not None:
                     print('move_door2')
-                    self.move_to_2(door_pos)
-            else:
-                keys = np.argwhere(self.map == key)
-                if np.any(keys):
+                    self.move_to_2(min_door_pos)
 
-                    if self.can_act1() and self.player1_inventory == 0:
-                        for key in keys:
-                            key_pos = tuple(key)
-                            if get_direction(self.player1_pos, key_pos, self.player1_distances, self.player1_paths) is not None:
-                                print('move_key1')
-                                self.move_to_1(key_pos)
-                                break
+            # Only pickup keys if there are doors with the same color        
+            keys = np.argwhere(self.map == key)
+            if np.any(keys):
+                if self.can_act1() and self.player1_inventory == 0:
+                    for key in keys:
+                        key_pos = tuple(key)
+                        if get_direction(self.player1_pos, key_pos, self.player1_distances, self.player1_paths) is not None:
+                            print('move_key1')
+                            self.move_to_1(key_pos)
+                            break
 
-                    if self.can_act2() and self.player2_inventory == 0:
-                        for key in keys:
-                            key_pos = tuple(key)
-                            if get_direction(self.player2_pos, key_pos, self.player2_distances, self.player2_paths) is not None:
-                                print('move_key2')
-                                self.move_to_2(key_pos)
-                                break
+                if self.can_act2() and self.player2_inventory == 0:
+                    for key in keys:
+                        key_pos = tuple(key)
+                        if get_direction(self.player2_pos, key_pos, self.player2_distances, self.player2_paths) is not None:
+                            print('move_key2')
+                            self.move_to_2(key_pos)
+                            break
 
     
     def can_1_reach(self, pos) -> bool:
@@ -525,6 +568,11 @@ class GamePlayer:
         # Pickup sword
         swords = np.argwhere(self.map == swoq_pb2.TILE_SWORD)
         if np.any(swords):
+            
+            for sword_pos in swords:
+                sword_pos = tuple(sword_pos)
+                # TODO: find closests
+
             sword_pos = tuple(swords[0])
             
             # let player 1 pickup sword first
@@ -583,41 +631,43 @@ class GamePlayer:
 
     def move_to_pressure_plate(self) -> None:
         plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
-        self.plate_pos = None
         if np.any(plates):
-            self.plate_pos = tuple(plates[0])
+            plate_pos = tuple(plates[0])
             if self.can_act1():
+                self.plate_pos_1 = plate_pos
+                self.plate_color_1 = self.map[self.plate_pos_1]
                 if self.two_players: # Only with two players simply move
-                    self.plate_color = self.map[self.plate_pos]
                     print('plate1')
-                    self.move_to_1(self.plate_pos)
+                    self.move_to_1(self.plate_pos_1)
                 elif self.player1_inventory == 4: # has boulder
                     print('plate_boulder1')
-                    if are_adjacent(self.player1_pos, self.plate_pos):
-                        self.use_1(self.plate_pos)
-                        self.plates_with_boulders.append(self.plate_pos)
+                    if are_adjacent(self.player1_pos, self.plate_pos_1):
+                        self.use_1(self.plate_pos_1)
+                        self.plates_with_boulders.append(self.plate_pos_1)
                     else:
                         # move to below plate if possible
-                        below = (self.plate_pos[0]+1, self.plate_pos[1])
-                        self.move_to_1(below if not is_wall(self.map, below) else self.plate_pos)
+                        below = (self.plate_pos_1[0]+1, self.plate_pos_1[1])
+                        self.move_to_1(below if not is_wall(self.map, below) else self.plate_pos_1)
             if self.can_act2():
+                self.plate_pos_2 = plate_pos
+                self.plate_color_2 = self.map[self.plate_pos_2]
                 if self.player2_inventory == 4: # has boulder
                     print('plate_boulder2')
-                    if are_adjacent(self.player2_pos, self.plate_pos):
-                        self.use_2(self.plate_pos)
-                        self.plates_with_boulders.append(self.plate_pos)
+                    if are_adjacent(self.player2_pos, self.plate_pos_2):
+                        self.use_2(self.plate_pos_2)
+                        self.plates_with_boulders.append(self.plate_pos_2)
                     else:
                         # move to below plate if possible
-                        below = (self.plate_pos[0]+1, self.plate_pos[1])
-                        self.move_to_2(below if not is_wall(self.map, below) else self.plate_pos)
+                        below = (self.plate_pos_2[0]+1, self.plate_pos_2[1])
+                        self.move_to_2(below if not is_wall(self.map, below) else self.plate_pos_2)
 
 
-    def wait_at_pressure_plate_door(self) -> None:
-        if self.plate_color == swoq_pb2.TILE_PRESSURE_PLATE_RED:
+    def wait_at_pressure_plate_door_2(self) -> None:
+        if self.plate_color_1 == swoq_pb2.TILE_PRESSURE_PLATE_RED:
             plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_RED)
-        elif self.plate_color  == swoq_pb2.TILE_PRESSURE_PLATE_GREEN:
+        elif self.plate_color_1  == swoq_pb2.TILE_PRESSURE_PLATE_GREEN:
             plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_GREEN)
-        elif self.plate_color  == swoq_pb2.TILE_PRESSURE_PLATE_BLUE:
+        elif self.plate_color_1  == swoq_pb2.TILE_PRESSURE_PLATE_BLUE:
             plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_BLUE)
         else:
             plate_doors = []
@@ -652,23 +702,68 @@ class GamePlayer:
 
     def wait_at_random_door(self) -> None:
         doors = np.argwhere((self.map == swoq_pb2.TILE_DOOR_RED) | (self.map == swoq_pb2.TILE_DOOR_GREEN) | (self.map == swoq_pb2.TILE_DOOR_BLUE))
-        if np.any(doors):
-            door_pos = tuple(doors[0])
-            # only move close to door, do not stand next to it (could block the other player)
-            if self.can_act1() and self.can_1_reach(door_pos):
+        for door_pos in doors:
+            door_pos = tuple(door_pos)
+
+            # Do not move to door if other player has key for it
+            door_tile = self.map[door_pos]
+
+            player1_has_key = (door_tile == swoq_pb2.TILE_DOOR_RED and self.player1_inventory == swoq_pb2.INVENTORY_KEY_RED) or \
+                (door_tile == swoq_pb2.TILE_DOOR_GREEN and self.player1_inventory == swoq_pb2.INVENTORY_KEY_GREEN) or \
+                (door_tile == swoq_pb2.TILE_DOOR_BLUE and self.player1_inventory == swoq_pb2.INVENTORY_KEY_BLUE)
+
+            player2_has_key = (door_tile == swoq_pb2.TILE_DOOR_RED and self.player2_inventory == swoq_pb2.INVENTORY_KEY_RED) or \
+                (door_tile == swoq_pb2.TILE_DOOR_GREEN and self.player2_inventory == swoq_pb2.INVENTORY_KEY_GREEN) or \
+                (door_tile == swoq_pb2.TILE_DOOR_BLUE and self.player2_inventory == swoq_pb2.INVENTORY_KEY_BLUE)
+
+            if self.can_act1() and not player2_has_key and self.can_1_reach(door_pos):
                 if euclid_dist(self.player1_pos, door_pos) > 1:
-                    print('move_door1')
+                    print('move_random_door1')
                     self.move_to_1(door_pos)
-            elif self.can_act2() and self.can_2_reach(door_pos):
+            elif self.can_act2() and not player1_has_key and self.can_2_reach(door_pos):
                 if euclid_dist(self.player2_pos, door_pos) > 1:
-                    print('move_door2')
+                    print('move_random_door2')
                     self.move_to_2(door_pos)
 
 
+    def handle_level18(self) -> None:
+        if valid_pos(self.player1_pos) and self.player1_pos[1] < 8:
+            # Move player 2 to plate
+            plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
+            plates = list([p for p in plates if p[1] < 8])
+            if np.any(plates) and self.can_act2():
+                self.plate_pos_2 = tuple(plates[0])
+                self.plate_color_2 = self.map[self.plate_pos_2]
+                print('plate2_18')
+                self.move_to_2(self.plate_pos_2)
+        else:
+            self.remain_on_plate_counter_2 = 0
+
+        if valid_pos(self.player2_pos) and self.player2_pos[0] < 11:
+            # Move player 1 to second plate
+            plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
+            plates = list([p for p in plates if p[1] >= 8])
+            if np.any(plates) and self.can_act1():
+                self.plate_pos_1 = tuple(plates[0])
+                self.plate_color_1 = self.map[self.plate_pos_1]
+                print('plate1_18')
+                self.move_to_1(self.plate_pos_1)
+        else:
+            self.remain_on_plate_counter_1 = 0
+
+
+
     def update_remain_on_plate(self) -> None:
-        if self.plate_pos is not None and self.player1_pos[0] == self.plate_pos[0] and self.player1_pos[1] == self.plate_pos[1]:
-            print(f'Reset {self.remain_on_plate_counter=}')
-            self.remain_on_plate_counter = 100
+        if self.plate_pos_1 is not None and self.player1_pos[0] == self.plate_pos_1[0] and self.player1_pos[1] == self.plate_pos_1[1]:
+            print(f'Reset 1 {self.remain_on_plate_counter_1=}')
+            self.remain_on_plate_counter_1 = 100
             
-        if self.remain_on_plate_counter > 0:
-            self.remain_on_plate_counter -= 1
+        if self.remain_on_plate_counter_1 > 0:
+            self.remain_on_plate_counter_1 -= 1
+
+        if self.plate_pos_2 is not None and self.player2_pos[0] == self.plate_pos_2[0] and self.player2_pos[1] == self.plate_pos_2[1]:
+            print(f'Reset 2 {self.remain_on_plate_counter_2=}')
+            self.remain_on_plate_counter_2 = 100
+            
+        if self.remain_on_plate_counter_2 > 0:
+            self.remain_on_plate_counter_2 -= 1
