@@ -153,18 +153,24 @@ def get_direction_towards(paths: dict, from_pos: tuple[int,int], to_pos: tuple[i
 
 
 def get_direction(from_pos, to_pos, distances, paths):
+    dir, dist = get_direction_and_distance(from_pos, to_pos, distances, paths)
+    return dir
+
+
+def get_direction_and_distance(from_pos, to_pos, distances, paths):
     if to_pos in distances:
-        return get_direction_towards(paths, from_pos, to_pos)
+        dist = distances[to_pos]
+        return get_direction_towards(paths, from_pos, to_pos), dist
 
     north = (to_pos[0]-1, to_pos[1])
     south = (to_pos[0]+1, to_pos[1])
     west = (to_pos[0], to_pos[1]-1)
     east = (to_pos[0], to_pos[1]+1)
 
-    if from_pos == north: return 'S'
-    if from_pos == south: return 'N'
-    if from_pos == west: return 'E'
-    if from_pos == east: return 'W'
+    if from_pos == north: return 'S', 1
+    if from_pos == south: return 'N', 1
+    if from_pos == west: return 'E', 1
+    if from_pos == east: return 'W', 1
 
     min_dist = np.inf
     adjacent_pos = None
@@ -181,7 +187,7 @@ def get_direction(from_pos, to_pos, distances, paths):
         min_dist = distances[west]
         adjacent_pos = west
 
-    return get_direction_towards(paths, from_pos, adjacent_pos)
+    return get_direction_towards(paths, from_pos, adjacent_pos), (min_dist+1)
 
 
 def get_closest_adjacent(from_pos, to_pos, distances):

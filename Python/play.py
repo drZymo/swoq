@@ -564,24 +564,48 @@ class GamePlayer:
                 self.move_to_2(health_pos)
 
 
+    def move_to_closest_1(self, positions, name):
+        min_dist = None
+        min_dir = None
+        for pos in positions:
+            pos = tuple(pos)
+            
+            dir, dist = get_direction_and_distance(self.player1_pos, pos, self.player1_distances, self.player1_paths)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                min_dir = dir
+                        
+        if self.can_act1() and min_dir is not None:
+            print(name)
+            self.queue_move1(min_dir)
+
+    
+    def move_to_closest_2(self, positions, name):
+        min_dist = None
+        min_dir = None
+        for pos in positions:
+            pos = tuple(pos)
+            
+            dir, dist = get_direction_and_distance(self.player2_pos, pos, self.player2_distances, self.player2_paths)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                min_dir = dir
+                        
+        if self.can_act2() and min_dir is not None:
+            print(name)
+            self.queue_move2(min_dir)
+
+
     def pickup_sword(self) -> None:
         # Pickup sword
         swords = np.argwhere(self.map == swoq_pb2.TILE_SWORD)
         if np.any(swords):
-            
-            for sword_pos in swords:
-                sword_pos = tuple(sword_pos)
-                # TODO: find closests
+            if self.can_act1() and not self.player1_has_sword:
+                self.move_to_closest_1(swords, 'sword1')
 
-            sword_pos = tuple(swords[0])
-            
             # let player 1 pickup sword first
-            if self.can_act1() and not self.player1_has_sword and self.can_1_reach(sword_pos):
-                print('sword1')
-                self.move_to_1(sword_pos)
-            elif self.can_act2() and not self.player2_has_sword and self.player1_has_sword and self.can_2_reach(sword_pos):
-                print('sword2')
-                self.move_to_2(sword_pos)
+            if self.can_act2() and not self.player2_has_sword and self.player1_has_sword:
+                self.move_to_closest_2(swords, 'sword2')
 
 
     def pickup_keys(self) -> None:
