@@ -241,3 +241,10 @@ def get_dist_to_other_player(player1_pos:tuple[int,int], player2_pos:tuple[int,i
 
     dist = player1_distances[adj_pos] + 1
     return dist
+
+
+def euclid_dist(a, b):
+    dy = a[0] - b[0]
+    dx = a[1] - b[1]
+    dist = np.sqrt(dy*dy+dx*dx)
+    return dist
