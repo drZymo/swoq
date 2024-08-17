@@ -653,6 +653,49 @@ class GamePlayer:
                 self.move_to_2(self.random_pos2)
 
 
+    def use_closest_1(self, positions, name) -> None:
+        if not self.can_act1():
+            return
+        use_dir, move_dir = self.use_closest(positions, name, self.player1_pos, self.player1_distances, self.player1_paths)
+        if use_dir is not None:
+            print(f'{name}_use_1')
+            self.queue_use1(use_dir)
+        elif move_dir is not None:
+            print(f'{name}_move_1')
+            self.queue_move1(move_dir)
+
+    def use_closest_2(self, positions, name) -> None:
+        if not self.can_act2():
+            return
+        use_dir, move_dir = self.use_closest(positions, name, self.player2_pos, self.player2_distances, self.player2_paths)
+        if use_dir is not None:
+            print(f'{name}_use_2')
+            self.queue_use2(use_dir)
+        elif move_dir is not None:
+            print(f'{name}_move_2')
+            self.queue_move2(move_dir)
+
+    def use_closest(self, positions, player_pos, player_distances, player_paths) -> tuple[str,str]:
+        min_dist = None
+        min_dir = None
+        min_pos = None
+        for pos in positions:
+            pos = tuple(pos)
+            dir, dist = get_direction_and_distance(player_pos, pos, player_distances, player_paths)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                min_dir = dir
+                min_pos = pos
+                
+        if min_dir is not None:
+            if are_adjacent(player_pos, min_pos):
+                return (min_dir, None)
+            else:
+                return (None, min_dir)
+        
+        return (None, None)
+            
+
     def move_to_pressure_plate(self) -> None:
         plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
         if np.any(plates):
@@ -707,21 +750,10 @@ class GamePlayer:
         boulders = np.argwhere(self.map == swoq_pb2.TILE_BOULDER)
         boulders = [b for b in boulders if tuple(b) not in self.plates_with_boulders]
         if np.any(boulders):
-            boulder_pos = tuple(boulders[0])
             if self.can_act1() and self.player1_inventory == 0:
-                if are_adjacent(self.player1_pos, boulder_pos):
-                    print('use_boulder1')
-                    self.use_1(boulder_pos)
-                else:
-                    print('move_boulder1')
-                    self.move_to_1(boulder_pos)
+                self.use_closest_1(boulders, 'boulder')
             if self.can_act2() and self.player2_inventory == 0:
-                if are_adjacent(self.player2_pos, boulder_pos):
-                    print('use_boulder2')
-                    self.use_2(boulder_pos)
-                else:
-                    print('move_boulder2')
-                    self.move_to_2(boulder_pos)
+                self.use_closest_2(boulders, 'boulder')
 
 
     def wait_at_random_door(self) -> None:
