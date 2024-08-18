@@ -253,7 +253,6 @@ class GamePlayer:
 
         if self.level == 18:
             self.handle_level18()
-        self.run_away_from_enemy()
         self.move_to_exit()
         self.pickup_health()
         self.pickup_sword()
@@ -335,84 +334,23 @@ class GamePlayer:
         doors = np.argwhere(self.map == door)
         if np.any(doors):
             
+            # open door
             if self.can_act1() and self.player1_inventory == item:
-                min_dist = None
-                min_door_pos = None
-                for door_pos in doors:
-                    door_pos = tuple(door_pos)
-                    if are_adjacent(self.player1_pos, door_pos):
-                        print('use_door1')
-                        self.use_1(door_pos)
-                        break
-                    elif door_pos in self.player1_distances:
-                        dist = self.player1_distances[door_pos]
-                        if min_dist is None or dist < min_dist:
-                            min_dist = dist
-                            min_door_pos = door_pos
-                    else:
-                        dist, adj_pos = get_closest_adjacent(self.player1_pos, door_pos, self.player1_distances)
-                        dist += 1
-                        if min_dist is None or dist < min_dist:
-                            min_dist = dist
-                            min_door_pos = adj_pos
-
-                if self.can_act1() and min_door_pos is not None:
-                    print('move_door1')
-                    self.move_to_1(min_door_pos)
+                self.use_closest_1(doors, 'door')
 
             if self.can_act2() and self.player2_inventory == item:
-                min_dist = None
-                min_door_pos = None
-                for door_pos in doors:
-                    door_pos = tuple(door_pos)
-                    if are_adjacent(self.player2_pos, door_pos):
-                        print('use_door2')
-                        self.use_2(door_pos)
-                        break
-                    elif door_pos in self.player2_distances:
-                        dist = self.player2_distances[door_pos]
-                        if min_dist is None or dist < min_dist:
-                            min_dist = dist
-                            min_door_pos = door_pos
-                    else:
-                        dist, adj_pos = get_closest_adjacent(self.player2_pos, door_pos, self.player2_distances)
-                        dist += 1
-                        if min_dist is None or dist < min_dist:
-                            min_dist = dist
-                            min_door_pos = adj_pos
+                self.use_closest_2(doors, 'door')
 
-                if self.can_act2() and min_door_pos is not None:
-                    print('move_door2')
-                    self.move_to_2(min_door_pos)
-
-            # Only pickup keys if there are doors with the same color        
+            # pick up keys for doors visible
             keys = np.argwhere(self.map == key)
             if np.any(keys):
                 if self.can_act1() and self.player1_inventory == 0:
-                    for key in keys:
-                        key_pos = tuple(key)
-                        if get_direction(self.player1_pos, key_pos, self.player1_distances, self.player1_paths) is not None:
-                            print('move_key1')
-                            self.move_to_1(key_pos)
-                            break
+                    self.move_to_closest_1(keys, 'key')
 
                 if self.can_act2() and self.player2_inventory == 0:
-                    for key in keys:
-                        key_pos = tuple(key)
-                        if get_direction(self.player2_pos, key_pos, self.player2_distances, self.player2_paths) is not None:
-                            print('move_key2')
-                            self.move_to_2(key_pos)
-                            break
+                    self.move_to_closest_2(keys, 'key')
 
     
-    def can_1_reach(self, pos) -> bool:
-        return get_direction(self.player1_pos, pos, self.player1_distances, self.player1_paths) is not None
-
-
-    def can_2_reach(self, pos) -> bool:
-        return get_direction(self.player2_pos, pos, self.player2_distances, self.player2_paths) is not None
-
-
     def move_to_exit(self) -> None:
         # Move to exit if possible
         exits = np.argwhere(self.map == swoq_pb2.TILE_EXIT)
@@ -483,23 +421,10 @@ class GamePlayer:
         return closest_empty
 
 
-    def run_away_from_enemy(self) -> None:
-        # if adjacent to an enemy with more health, then leave
-        if self.can_act1():
-            # TODO
-            pass
-        
-        if self.can_act2():
-            # TODO
-            pass
-        
-        
     def attack(self) -> None:
         # Attack
         enemies = np.argwhere(self.map == swoq_pb2.TILE_ENEMY)
         if np.any(enemies):
-            enemy_pos = tuple(enemies[0])
-            
             if self.expected_enemy_health is None:
                 self.expected_enemy_health = 6
 
@@ -521,29 +446,17 @@ class GamePlayer:
                     dist_players = min(dist_1_to_2, dist_2_to_1)
 
                 if self.can_act1() and dist_players is not None and dist_players > 10:
-                    print('move_closer1')
+                    print('move_closer_1')
                     self.move_to_1(self.player2_pos)
                 if self.can_act2() and dist_players is not None and dist_players > 4:
-                    print('move_closer2')
+                    print('move_closer_2')
                     self.move_to_2(self.player1_pos)
 
             if self.can_act1() and can_attack_1:
-                if are_adjacent(self.player1_pos, enemy_pos):
-                    print('attack_use1')
-                    self.use_1(enemy_pos)
-                    self.expected_enemy_health -= 1
-                else:
-                    print('attack_move1')
-                    self.move_to_1(enemy_pos)
+                self.use_closest_1(enemies, 'attack')
 
             if self.can_act2() and can_attack_2:
-                if are_adjacent(self.player2_pos, enemy_pos):
-                    print('attack_use2')
-                    self.use_2(enemy_pos)
-                    self.expected_enemy_health -= 1
-                else:
-                    print('attack_move2')
-                    self.move_to_2(enemy_pos)
+                self.use_closest_2(enemies, 'attack')
 
             if self.expected_enemy_health is not None and self.expected_enemy_health <= 0:
                 self.expected_enemy_health = None
@@ -553,47 +466,11 @@ class GamePlayer:
         # Pickup health
         healths = np.argwhere(self.map == swoq_pb2.TILE_HEALTH)
         if np.any(healths):
-            health_pos = tuple(healths[0])
-            
             # let player 1 pickup health first
             if self.can_act1() and (self.player2_health is None or self.player1_health <= self.player2_health):
-                print('health1')
-                self.move_to_1(health_pos)
+                self.move_to_closest_1(healths, 'health')
             elif self.can_act2() and (self.player1_health is None or self.player1_health > self.player2_health):
-                print('health2')
-                self.move_to_2(health_pos)
-
-
-    def move_to_closest_1(self, positions, name):
-        min_dist = None
-        min_dir = None
-        for pos in positions:
-            pos = tuple(pos)
-            
-            dir, dist = get_direction_and_distance(self.player1_pos, pos, self.player1_distances, self.player1_paths)
-            if min_dist is None or dist < min_dist:
-                min_dist = dist
-                min_dir = dir
-                        
-        if self.can_act1() and min_dir is not None:
-            print(name)
-            self.queue_move1(min_dir)
-
-    
-    def move_to_closest_2(self, positions, name):
-        min_dist = None
-        min_dir = None
-        for pos in positions:
-            pos = tuple(pos)
-            
-            dir, dist = get_direction_and_distance(self.player2_pos, pos, self.player2_distances, self.player2_paths)
-            if min_dist is None or dist < min_dist:
-                min_dist = dist
-                min_dir = dir
-                        
-        if self.can_act2() and min_dir is not None:
-            print(name)
-            self.queue_move2(min_dir)
+                self.move_to_closest_2(healths, 'health')
 
 
     def pickup_sword(self) -> None:
@@ -651,82 +528,33 @@ class GamePlayer:
             if self.random_pos2 is not None:
                 print(f'random2 {self.random_pos2}')
                 self.move_to_2(self.random_pos2)
-
-
-    def use_closest_1(self, positions, name) -> None:
-        if not self.can_act1():
-            return
-        use_dir, move_dir = self.use_closest(positions, name, self.player1_pos, self.player1_distances, self.player1_paths)
-        if use_dir is not None:
-            print(f'{name}_use_1')
-            self.queue_use1(use_dir)
-        elif move_dir is not None:
-            print(f'{name}_move_1')
-            self.queue_move1(move_dir)
-
-    def use_closest_2(self, positions, name) -> None:
-        if not self.can_act2():
-            return
-        use_dir, move_dir = self.use_closest(positions, name, self.player2_pos, self.player2_distances, self.player2_paths)
-        if use_dir is not None:
-            print(f'{name}_use_2')
-            self.queue_use2(use_dir)
-        elif move_dir is not None:
-            print(f'{name}_move_2')
-            self.queue_move2(move_dir)
-
-    def use_closest(self, positions, player_pos, player_distances, player_paths) -> tuple[str,str]:
-        min_dist = None
-        min_dir = None
-        min_pos = None
-        for pos in positions:
-            pos = tuple(pos)
-            dir, dist = get_direction_and_distance(player_pos, pos, player_distances, player_paths)
-            if min_dist is None or dist < min_dist:
-                min_dist = dist
-                min_dir = dir
-                min_pos = pos
-                
-        if min_dir is not None:
-            if are_adjacent(player_pos, min_pos):
-                return (min_dir, None)
-            else:
-                return (None, min_dir)
-        
-        return (None, None)
             
 
     def move_to_pressure_plate(self) -> None:
         plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
         if np.any(plates):
-            plate_pos = tuple(plates[0])
             if self.can_act1():
-                self.plate_pos_1 = plate_pos
-                self.plate_color_1 = self.map[self.plate_pos_1]
-                if self.two_players: # Only with two players simply move
-                    print('plate1')
-                    self.move_to_1(self.plate_pos_1)
-                elif self.player1_inventory == 4: # has boulder
-                    print('plate_boulder1')
-                    if are_adjacent(self.player1_pos, self.plate_pos_1):
-                        self.use_1(self.plate_pos_1)
+                if self.player1_inventory == 4:
+                    # place boulders on plates
+                    plate_pos = self.use_closest_1(plates, 'plate_boulder')
+                    if plate_pos is not None:
+                        self.plate_pos_1 = plate_pos
+                        self.plate_color_1 = self.map[self.plate_pos_1]
                         self.plates_with_boulders.append(self.plate_pos_1)
-                    else:
-                        # move to below plate if possible
-                        below = (self.plate_pos_1[0]+1, self.plate_pos_1[1])
-                        self.move_to_1(below if not is_wall(self.map, below) else self.plate_pos_1)
-            if self.can_act2():
-                self.plate_pos_2 = plate_pos
-                self.plate_color_2 = self.map[self.plate_pos_2]
-                if self.player2_inventory == 4: # has boulder
-                    print('plate_boulder2')
-                    if are_adjacent(self.player2_pos, self.plate_pos_2):
-                        self.use_2(self.plate_pos_2)
-                        self.plates_with_boulders.append(self.plate_pos_2)
-                    else:
-                        # move to below plate if possible
-                        below = (self.plate_pos_2[0]+1, self.plate_pos_2[1])
-                        self.move_to_2(below if not is_wall(self.map, below) else self.plate_pos_2)
+                elif self.two_players:
+                    # only player 1 will stand on plates with two players
+                    plate_pos = self.move_to_closest_1(plates, 'plate')
+                    if plate_pos is not None:
+                        self.plate_pos_1 = plate_pos
+                        self.plate_color_1 = self.map[self.plate_pos_1]
+            
+            if self.can_act2() and self.player2_inventory == 4:
+                # place boulders on plates
+                plate_pos = self.use_closest_2(plates, 'plate_boulder')
+                if plate_pos is not None:
+                    self.plate_pos_2 = plate_pos
+                    self.plate_color_2 = self.map[self.plate_pos_2]
+                    self.plates_with_boulders.append(self.plate_pos_2)
 
 
     def wait_at_pressure_plate_door_2(self) -> None:
@@ -740,10 +568,10 @@ class GamePlayer:
             plate_doors = []
 
         if np.any(plate_doors):
-            plate_door_pos = tuple(plate_doors[0])
+            # player 1 stands on plates
+            # player 2 moves to plate doors
             if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
-                print('move_plate_door2')
-                self.move_to_2(plate_door_pos)
+                self.move_to_closest_1(plate_doors, 'plate_door')
 
 
     def pickup_boulder(self) -> None:
@@ -806,6 +634,82 @@ class GamePlayer:
                 self.move_to_1(self.plate_pos_1)
         else:
             self.remain_on_plate_counter_1 = 0
+
+
+    def can_1_reach(self, pos) -> bool:
+        return get_direction(self.player1_pos, pos, self.player1_distances, self.player1_paths) is not None
+
+    def can_2_reach(self, pos) -> bool:
+        return get_direction(self.player2_pos, pos, self.player2_distances, self.player2_paths) is not None
+
+
+    def use_closest_1(self, positions, name) -> tuple[int, int]|None:
+        if not self.can_act1():
+            return
+        pos, dir = self.find_closest(positions, self.player1_pos, self.player1_distances, self.player1_paths)
+        if dir is None or pos is None:
+            return None
+    
+        if are_adjacent(self.player1_pos, pos):
+            print(f'{name}_use_1')
+            self.queue_use1(dir)
+        else:
+            print(f'{name}_move_1')
+            self.queue_move1(dir)
+        return pos
+
+    def use_closest_2(self, positions, name) -> tuple[int, int]|None:
+        if not self.can_act2():
+            return
+        pos, dir = self.find_closest(positions, self.player2_pos, self.player2_distances, self.player2_paths)
+        if dir is None or pos is None:
+            return None
+    
+        if are_adjacent(self.player2_pos, pos):
+            print(f'{name}_use_2')
+            self.queue_use2(dir)
+        else:
+            print(f'{name}_move_2')
+            self.queue_move2(dir)
+        return pos
+
+    def move_to_closest_1(self, positions, name):
+        if not self.can_act1():
+            return None
+
+        pos, dir = self.find_closest(positions, self.player1_pos, self.player1_distances, self.player1_paths)
+        if dir is None or pos is None:
+            return None
+    
+        print(f'{name}_move_1')
+        self.queue_move1(dir)
+        return pos
+    
+    def move_to_closest_2(self, positions, name):
+        if not self.can_act2():
+            return None
+
+        pos, dir = self.find_closest(positions, self.player2_pos, self.player2_distances, self.player2_paths)
+        if dir is None or pos is None:
+            return None
+    
+        print(f'{name}_move_2')
+        self.queue_move2(dir)
+        return pos
+
+    def find_closest(self, positions, player_pos, player_distances, player_paths) -> tuple[tuple[int,int]|None, str|None]:
+        min_dist = None
+        min_dir = None
+        min_pos = None
+        for pos in positions:
+            pos = tuple(pos)
+            dir, dist = get_direction_and_distance(player_pos, pos, player_distances, player_paths)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                min_dir = dir
+                min_pos = pos
+                
+        return min_pos, min_dir
 
 
 
