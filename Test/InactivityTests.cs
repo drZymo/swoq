@@ -187,6 +187,13 @@ internal class InactivityTests : GameTestBase
         now += TimeSpan.FromSeconds(2);
         // Place boulder should now trigger inactivity
         Assert.Throws<NoProgressException>(() => Act(DirectedAction.UseWest));
+
+        // Game is finished
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.CheckIsActive(), Is.False);
+        });
     }
 
     [Test]
@@ -269,6 +276,9 @@ internal class InactivityTests : GameTestBase
 
         // One more circle will trigger no progress
         Assert.Throws<NoProgressException>(() => WalkCircle());
+
+        // Game is finished
+        Assert.That(game.IsFinished, Is.True);
     }
 
     [Test]
@@ -309,6 +319,57 @@ internal class InactivityTests : GameTestBase
 
         // One more circle will trigger no progress
         Assert.Throws<NoProgressException>(() => WalkCircle(small: true));
+
+        // Game is finished
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.CheckIsActive(), Is.False);
+        });
+    }
+
+    [Test]
+    public void NotAllowedMovesTriggerInactivity()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Walk to wall
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((5, 1)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(5, 1)], Is.EqualTo((Tile.Empty, Tile.Player)));
+        });
+
+        // Repeat moving west, which is not allowed.
+        // Results in no progress
+        for (var j = 0; j < 20; j++)
+        {
+            now += TimeSpan.FromSeconds(1);
+            Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveWest));
+        }
+
+        // One more move will trigger no progress
+        now += TimeSpan.FromSeconds(1);
+        Assert.Throws<NoProgressException>(() => Act(DirectedAction.MoveWest));
+
+        // Game is finished
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.CheckIsActive(), Is.False);
+        });
     }
 
     private void WalkCircle(bool small = false)

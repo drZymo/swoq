@@ -1,7 +1,6 @@
 # TODO
 
 - [ ] Extra one player combat levels before introducing second player
-- [ ] BUG: Move not allowed does not trigger inactivity
 - [.] User portal
   - [ ] Proto file hosting per level
   - [ ] Current level
@@ -94,6 +93,7 @@
   - [X] player crushed by door
   - [X] quest progress (replay with quicker time improves stats)
 - [X] Fix boulder handling in bot
+- [X] BUG: Move not allowed does not trigger inactivity
 
 # Design decisions
 

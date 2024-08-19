@@ -76,9 +76,6 @@ public class Game : IGame
             throw new NoProgressException(CreateState());
         }
 
-        LastActionTime = Clock.Now;
-        ticks++;
-
         Debug.Assert(player1 != null || player2 != null);
 
         // Pre conditions
@@ -111,6 +108,9 @@ public class Game : IGame
         StorePlayerPosition(player2, ref player2Positions);
 
         UpdateGameStatus();
+
+        LastActionTime = Clock.Now;
+        ticks++;
     }
 
     public bool CheckIsActive()
