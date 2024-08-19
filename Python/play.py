@@ -39,6 +39,13 @@ _result_strings  = {
     swoq_pb2.RESULT_PLAYER2_DIED: 'PLAYER2_DIED',
 }
 
+
+def find_random_pos(player_pos, player_distances):
+    positions = list(player_distances.keys())
+    positions.remove(player_pos) # not own pos
+    return positions[np.random.choice(len(positions))]
+
+
 class GamePlayer:
 
     def __init__(self, user_id:str, plot:bool=True, print:bool=True):
@@ -112,6 +119,7 @@ class GamePlayer:
         self.plate_pos_2 = None
         self.random_pos1 = None
         self.random_pos2 = None
+        
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
         self.level = state.level
@@ -422,14 +430,14 @@ class GamePlayer:
 
 
     def attack(self) -> None:
+        can_attack_1 = self.player1_has_sword and self.player1_health > 1
+        can_attack_2 = self.player2_has_sword and self.player2_health > 1
+
         # Attack
         enemies = np.argwhere(self.map == swoq_pb2.TILE_ENEMY)
         if np.any(enemies):
             if self.expected_enemy_health is None:
                 self.expected_enemy_health = 6
-
-            can_attack_1 = self.player1_has_sword and self.player1_health > 1
-            can_attack_2 = self.player2_has_sword and self.player2_health > 1
 
             # If both can still attack, then coordinate by moving closer together
             if can_attack_1 and can_attack_2:
@@ -453,13 +461,33 @@ class GamePlayer:
                     self.move_to_2(self.player1_pos)
 
             if self.can_act1() and can_attack_1:
-                self.use_closest_1(enemies, 'attack')
+                _, attacked = self.use_closest_1(enemies, 'attack')
+                if attacked:
+                    self.expected_enemy_health -= 1
 
             if self.can_act2() and can_attack_2:
-                self.use_closest_2(enemies, 'attack')
+                _, attacked = self.use_closest_2(enemies, 'attack')
+                if attacked:
+                    self.expected_enemy_health -= 1
 
             if self.expected_enemy_health is not None and self.expected_enemy_health <= 0:
                 self.expected_enemy_health = None
+
+        elif self.expected_enemy_health is not None and self.expected_enemy_health > 0:
+            # if there was an enemy but it is no longer visible, then find it by walking randomly
+            if self.can_act1() and can_attack_1:
+                if self.random_pos1 is None:
+                    self.random_pos1 = find_random_pos(self.player1_pos, self.player1_distances)
+                if self.random_pos1 is not None:
+                    print(f'enemy_search_1')
+                    self.move_to_1(self.random_pos1)
+            
+            if self.can_act2() and can_attack_2:
+                if self.random_pos2 is None:
+                    self.random_pos2 = find_random_pos(self.player2_pos, self.player2_distances)
+                if self.random_pos2 is not None:
+                    print(f'enemy_search_2')
+                    self.move_to_2(self.random_pos2)
 
 
     def pickup_health(self) -> None:
@@ -507,24 +535,23 @@ class GamePlayer:
 
 
     def random_walk(self) -> None:
-        if self.random_pos1 is not None and self.player1_pos == self.random_pos1:
-            self.random_pos1 = None
-        if self.random_pos2 is not None and self.player2_pos == self.random_pos2:
-            self.random_pos2 = None
+        if self.random_pos1 is not None:
+            if self.player1_pos == self.random_pos1 or not self.can_1_reach(self.random_pos1):
+                self.random_pos1 = None
+        
+        if self.random_pos2 is not None:
+            if self.player2_pos == self.random_pos2 or not self.can_2_reach(self.random_pos2):
+                self.random_pos2 = None
             
         if self.can_act1():
-            if self.random_pos1 is None or not self.can_1_reach(self.random_pos1):
-                positions = list(self.player1_distances.keys())
-                positions.remove(self.player1_pos) # not own pos
-                self.random_pos1 = positions[np.random.choice(len(positions))]
+            if self.random_pos1 is None:
+                self.random_pos1 = find_random_pos(self.player1_pos, self.player1_distances)
             if self.random_pos1 is not None:
                 print(f'random1 {self.random_pos1}')
                 self.move_to_1(self.random_pos1)
         if self.can_act2():
-            if self.random_pos2 is None or not self.can_2_reach(self.random_pos2):
-                positions = list(self.player2_distances.keys())
-                positions.remove(self.player2_pos) # not own pos
-                self.random_pos2 = positions[np.random.choice(len(positions))]
+            if self.random_pos2 is None:
+                self.random_pos2 = find_random_pos(self.player2_pos, self.player2_distances)
             if self.random_pos2 is not None:
                 print(f'random2 {self.random_pos2}')
                 self.move_to_2(self.random_pos2)
@@ -536,10 +563,11 @@ class GamePlayer:
             if self.can_act1():
                 if self.player1_inventory == 4:
                     # place boulders on plates
-                    plate_pos = self.use_closest_1(plates, 'plate_boulder')
+                    plate_pos, placed = self.use_closest_1(plates, 'plate_boulder')
                     if plate_pos is not None:
                         self.plate_pos_1 = plate_pos
                         self.plate_color_1 = self.map[self.plate_pos_1]
+                    if placed:
                         self.plates_with_boulders.append(self.plate_pos_1)
                 elif self.two_players:
                     # only player 1 will stand on plates with two players
@@ -550,10 +578,11 @@ class GamePlayer:
             
             if self.can_act2() and self.player2_inventory == 4:
                 # place boulders on plates
-                plate_pos = self.use_closest_2(plates, 'plate_boulder')
+                plate_pos, placed = self.use_closest_2(plates, 'plate_boulder')
                 if plate_pos is not None:
                     self.plate_pos_2 = plate_pos
                     self.plate_color_2 = self.map[self.plate_pos_2]
+                if placed:
                     self.plates_with_boulders.append(self.plate_pos_2)
 
 
@@ -643,35 +672,37 @@ class GamePlayer:
         return get_direction(self.player2_pos, pos, self.player2_distances, self.player2_paths) is not None
 
 
-    def use_closest_1(self, positions, name) -> tuple[int, int]|None:
+    def use_closest_1(self, positions, name) -> tuple[tuple[int, int]|None, bool]:
         if not self.can_act1():
-            return
+            return None, False
         pos, dir = self.find_closest(positions, self.player1_pos, self.player1_distances, self.player1_paths)
         if dir is None or pos is None:
-            return None
+            return None, False
     
         if are_adjacent(self.player1_pos, pos):
             print(f'{name}_use_1')
             self.queue_use1(dir)
+            return pos, True
         else:
             print(f'{name}_move_1')
             self.queue_move1(dir)
-        return pos
+            return pos, False
 
-    def use_closest_2(self, positions, name) -> tuple[int, int]|None:
+    def use_closest_2(self, positions, name) -> tuple[tuple[int, int]|None, bool]:
         if not self.can_act2():
-            return
+            return None, False
         pos, dir = self.find_closest(positions, self.player2_pos, self.player2_distances, self.player2_paths)
         if dir is None or pos is None:
-            return None
+            return None, False
     
         if are_adjacent(self.player2_pos, pos):
             print(f'{name}_use_2')
             self.queue_use2(dir)
+            return pos, True
         else:
             print(f'{name}_move_2')
             self.queue_move2(dir)
-        return pos
+            return pos, False
 
     def move_to_closest_1(self, positions, name):
         if not self.can_act1():
