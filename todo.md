@@ -1,6 +1,7 @@
 # TODO
 
 - [ ] Extra one player combat levels before introducing second player
+- [ ] BUG: Move not allowed does not trigger inactivity
 - [.] User portal
   - [ ] Proto file hosting per level
   - [ ] Current level

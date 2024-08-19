@@ -476,18 +476,12 @@ class GamePlayer:
         elif self.expected_enemy_health is not None and self.expected_enemy_health > 0:
             # if there was an enemy but it is no longer visible, then find it by walking randomly
             if self.can_act1() and can_attack_1:
-                if self.random_pos1 is None:
-                    self.random_pos1 = find_random_pos(self.player1_pos, self.player1_distances)
-                if self.random_pos1 is not None:
-                    print(f'enemy_search_1')
-                    self.move_to_1(self.random_pos1)
+                self.explore()
+                self.random_walk()
             
             if self.can_act2() and can_attack_2:
-                if self.random_pos2 is None:
-                    self.random_pos2 = find_random_pos(self.player2_pos, self.player2_distances)
-                if self.random_pos2 is not None:
-                    print(f'enemy_search_2')
-                    self.move_to_2(self.random_pos2)
+                self.explore()
+                self.random_walk()
 
 
     def pickup_health(self) -> None:
