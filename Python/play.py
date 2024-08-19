@@ -600,7 +600,7 @@ class GamePlayer:
             # player 1 stands on plates
             # player 2 moves to plate doors
             if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
-                self.move_to_closest_1(plate_doors, 'plate_door')
+                self.move_to_closest_2(plate_doors, 'plate_door')
 
 
     def pickup_boulder(self) -> None:
