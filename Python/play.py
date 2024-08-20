@@ -320,7 +320,8 @@ class GamePlayer:
         self.attack()
         self.explore()
         # self.move_to_pressure_plate()
-        # self.wait_at_pressure_plate_door_2()
+        self.wait_at_pressure_plate_door_1()
+        self.wait_at_pressure_plate_door_2()
 
         self.map = old_map
         
@@ -628,6 +629,22 @@ class GamePlayer:
                 if placed:
                     self.plates_with_boulders.append(self.plate_pos_2)
 
+
+    def wait_at_pressure_plate_door_1(self) -> None:
+        if self.plate_color_2 == swoq_pb2.TILE_PRESSURE_PLATE_RED:
+            plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_RED)
+        elif self.plate_color_2  == swoq_pb2.TILE_PRESSURE_PLATE_GREEN:
+            plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_GREEN)
+        elif self.plate_color_2  == swoq_pb2.TILE_PRESSURE_PLATE_BLUE:
+            plate_doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_BLUE)
+        else:
+            plate_doors = []
+
+        if np.any(plate_doors):
+            # player 2 stands on plates
+            # player 1 moves to plate doors
+            if self.can_act1() and valid_pos(self.player2_pos): # Only with two players
+                self.move_to_closest_1(plate_doors, 'plate_door')
 
     def wait_at_pressure_plate_door_2(self) -> None:
         if self.plate_color_1 == swoq_pb2.TILE_PRESSURE_PLATE_RED:
