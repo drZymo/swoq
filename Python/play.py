@@ -42,7 +42,8 @@ _result_strings  = {
 
 def find_random_pos(player_pos, player_distances) -> tuple[int,int]|None:
     positions = list(player_distances.keys())
-    positions.remove(player_pos) # not own pos
+    if player_pos in positions:
+        positions.remove(player_pos) # not own pos
     if np.any(positions):
         return positions[np.random.choice(len(positions))]
     else:
@@ -108,7 +109,6 @@ class GamePlayer:
 
 
     def reset(self) -> None:
-        self.prev_level = self.level
         self.map = np.zeros_like(self.map)
         self.expected_enemy_health = None
         self.plates_with_boulders = []
@@ -123,6 +123,9 @@ class GamePlayer:
         self.random_pos1 = None
         self.random_pos2 = None
         self.picked_up_boulders = set()
+        self.level20_door_positions = set()
+        self.level20_initial_boss_pos = None
+        self.level20_state = None
         
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
@@ -154,6 +157,7 @@ class GamePlayer:
 
         # Clear map for every new level
         if self.prev_level != self.level:
+            self.prev_level = self.level
             print(f'Entered level {self.level}')
             self.reset()
 
@@ -267,6 +271,8 @@ class GamePlayer:
             self.step_level18()
         elif self.level == 19:
             self.step_level19()
+        elif self.level == 20:
+            self.step_level20()
         else:
             self.move_to_exit()
             self.pickup_health()
@@ -326,6 +332,51 @@ class GamePlayer:
         self.map = old_map
         
         
+    def step_level20(self) -> None:
+        old_map = self.map
+        
+        player_1_on_plate = self.plate_color_1 is not None and self.remain_on_plate_counter_1 > 0
+
+        avoid_boss = False
+        boss_positions = np.argwhere(self.map == swoq_pb2.TILE_BOSS)
+        if np.any(boss_positions):
+            boss_pos = tuple(boss_positions[0])
+            boss_pos_y, boss_pos_x = boss_pos
+            # Stop avoiding boss when player 1 is on the plate
+            avoid_boss = not player_1_on_plate
+        else:
+            boss_pos = None
+
+        boss_moving = False
+        if boss_pos is not None:
+            if self.level20_initial_boss_pos is not None and self.level20_initial_boss_pos != boss_pos:
+                boss_moving = True
+            if self.level20_initial_boss_pos is None:
+                self.level20_initial_boss_pos = boss_pos
+
+        # stay away from boss if not done yet
+        if avoid_boss:
+            new_map = self.map.copy()
+            for my in range(boss_pos_y-self.visibility_range, boss_pos_y+self.visibility_range+1):
+                for mx in range(boss_pos_x-self.visibility_range, boss_pos_x+self.visibility_range+1):
+                    if 0 <= my < self.height and 0 <= mx < self.width:
+                        new_map[my, mx] = swoq_pb2.TILE_WALL
+                        if (my, mx) in self.player1_distances:
+                            del self.player1_distances[(my, mx)]
+                        if (my, mx) in self.player2_distances:
+                            del self.player2_distances[(my, mx)]
+            self.map = new_map
+
+        self.level20_store_door_positions()
+
+        self.move_to_exit()
+        self.pickup_keys()
+        if not avoid_boss:
+            self.level20_lure_boss(boss_pos, boss_moving)
+        self.explore()
+        self.level19_wait_at_plate_1()
+
+        self.map = old_map
 
 
     def get_direction_towards_closest_unknown(self, from_pos, distances, paths) -> str:
@@ -854,3 +905,53 @@ class GamePlayer:
                     self.plate_color_2 = self.map[self.plate_pos_2]
                 if placed:
                     self.plates_with_boulders.append(self.plate_pos_2)
+
+    def level20_store_door_positions(self) -> None:
+        plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED)
+        doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_RED)
+        if np.any(plates) and np.any(doors):
+            for pos in doors:
+                self.level20_door_positions.add(tuple(pos))
+
+        plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN)
+        doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_GREEN)
+        if np.any(plates) and np.any(doors):
+            for pos in doors:
+                self.level20_door_positions.add(tuple(pos))
+
+        plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE)
+        doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_BLUE)
+        if np.any(plates) and np.any(doors):
+            for pos in doors:
+                self.level20_door_positions.add(tuple(pos))
+
+
+    def level20_lure_boss(self, boss_pos, boss_moving) -> None:
+        # move player 2 towards doors first
+        if self.can_act2() and boss_pos is not None:
+            print(f'{self.level20_door_positions=}')
+            if self.level20_state is None:
+                self.level20_state = 'move_to_door'
+                print(f'{self.level20_state=}')
+            
+            if self.level20_state == 'move_to_door':
+                if self.player2_pos in self.level20_door_positions:
+                    self.level20_state = 'trigger_boss'
+                    print(f'{self.level20_state=}')
+                else:
+                    self.move_to_closest_2(self.level20_door_positions, 'boss_door')
+            
+            elif self.level20_state == 'trigger_boss':
+                if boss_moving:
+                    self.level20_state = 'lure_boss'
+                    print(f'{self.level20_state=}')
+                else:
+                    self.queue_move2('E')
+            
+            elif self.level20_state == 'lure_boss':
+                self.queue_move2('W')
+                
+                # move player 1 off plate when boss is at door
+                if boss_pos in self.level20_door_positions:
+                    self.queue_move1('W')
+        
