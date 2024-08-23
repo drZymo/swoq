@@ -124,7 +124,7 @@ class GamePlayer:
         self.random_pos2 = None
         self.picked_up_boulders = set()
         self.level20_door_positions = set()
-        self.level20_initial_boss_pos = None
+        self.level20_prev_boss_pos = None
         self.level20_state = None
         
 
@@ -213,6 +213,12 @@ class GamePlayer:
             print(f' player 2 skipped')
             self.action2 = None
 
+        # -1 means stay at position
+        if self.action1 == -1:
+            self.action1 = None
+        if self.action2 == -1:
+            self.action2 = None
+
         print(f'{self.action1=}, {self.action2=}')
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, action2=self.action2))
 
@@ -277,7 +283,7 @@ class GamePlayer:
             self.move_to_exit()
             self.pickup_health()
             self.pickup_sword()
-            self.pickup_keys()
+            self.pickup_keys_or_open_doors()
             self.attack()
             self.explore()
             self.move_to_pressure_plate()
@@ -293,10 +299,11 @@ class GamePlayer:
         self.move_to_exit()
         self.pickup_health()
         self.pickup_sword()
-        self.pickup_keys()
+        self.pickup_keys_or_open_doors()
         self.attack()
         self.explore()
         self.pickup_boulder()
+
         
     def step_level19(self) -> None:
         old_map = self.map
@@ -322,7 +329,7 @@ class GamePlayer:
             self.level19_wait_at_plate_1()
         self.pickup_health()
         self.pickup_sword()
-        self.pickup_keys()
+        self.pickup_keys_or_open_doors()
         self.attack()
         self.explore()
         # self.move_to_pressure_plate()
@@ -333,9 +340,15 @@ class GamePlayer:
         
         
     def step_level20(self) -> None:
+        print(f'{self.level20_state=}')
+        
         old_map = self.map
         
         player_1_on_plate = self.plate_color_1 is not None and self.remain_on_plate_counter_1 > 0
+
+        if self.level20_state is None:
+            self.level20_state = 'explore'
+            print(f'change to {self.level20_state}')
 
         avoid_boss = False
         boss_positions = np.argwhere(self.map == swoq_pb2.TILE_BOSS)
@@ -349,10 +362,9 @@ class GamePlayer:
 
         boss_moving = False
         if boss_pos is not None:
-            if self.level20_initial_boss_pos is not None and self.level20_initial_boss_pos != boss_pos:
+            if self.level20_prev_boss_pos is not None and self.level20_prev_boss_pos != boss_pos:
                 boss_moving = True
-            if self.level20_initial_boss_pos is None:
-                self.level20_initial_boss_pos = boss_pos
+            self.level20_prev_boss_pos = boss_pos
 
         # stay away from boss if not done yet
         if avoid_boss:
@@ -368,14 +380,78 @@ class GamePlayer:
             self.map = new_map
 
         self.level20_store_door_positions()
+        print(f'{self.level20_door_positions=}')
 
-        self.move_to_exit()
-        self.pickup_keys()
-        if not avoid_boss:
-            self.level20_lure_boss(boss_pos, boss_moving)
+        if self.level20_state == 'explore':
+            if np.any(self.level20_door_positions):
+                self.level20_state = 'move_to_plate'
+                print(f'change to {self.level20_state}')
+
+        if self.level20_state == 'move_to_plate':
+            # player 1 on plate
+            self.level19_wait_at_plate_1()
+            # move player 2 towards player 1
+            if self.can_act2():
+                dir = get_direction_towards(self.player2_paths, self.player2_pos, self.player1_pos)
+                self.queue_move2(dir)
+                
+            if self.remain_on_plate_counter_1 > 0:
+                self.level20_state = 'move_to_door'
+                print(f'change to {self.level20_state}')
+
+        if self.level20_state == 'move_to_door':
+            if self.player2_pos in self.level20_door_positions:
+                self.level20_state = 'trigger_boss'
+                print(f'change to {self.level20_state}')
+            else:
+                if self.can_act2():
+                    self.move_to_closest_2(self.level20_door_positions, 'boss_door')
+            
+        if self.level20_state == 'trigger_boss':
+            self.remain_on_plate_counter_1 = 100
+            if boss_moving:
+                self.level20_state = 'lure_boss'
+                print(f'change to {self.level20_state}')
+            else:
+                if self.can_act2():
+                    self.queue_move2('E')
+        
+        if self.level20_state == 'lure_boss':
+            self.remain_on_plate_counter_1 = 100
+            if self.can_act2():
+                if boss_moving:
+                    self.queue_move2('W')
+                else:
+                    # stay at position, don't allow other actions
+                    self.action2 = -1
+            
+            # move player 1 off plate when boss is at door
+            if boss_pos in self.level20_door_positions:
+                self.remain_on_plate_counter_1 = 0
+                self.plate_pos_1 = None
+                self.plate_color_1 = None
+                self.queue_move1('W') #override any move
+                self.level20_state = 'open_exit'
+                print(f'change to {self.level20_state}')
+
+        if self.level20_state == 'open_exit':
+            self.pickup_keys_or_open_doors()
+            
+            if np.any(self.map == swoq_pb2.TILE_EXIT):
+                self.level20_state = 'pickup_treasure'
+                print(f'change to {self.level20_state}')
+
+        if self.level20_state == 'pickup_treasure':
+            self.pickup_treasure()
+            if self.player1_inventory == swoq_pb2.INVENTORY_TREASURE and self.player2_inventory == swoq_pb2.INVENTORY_TREASURE:
+                self.level20_state = 'move_to_exit'
+                print(f'change to {self.level20_state}')
+
+        if self.level20_state == 'move_to_exit':
+            self.move_to_exit()
+            
         self.explore()
-        self.level19_wait_at_plate_1()
-
+                
         self.map = old_map
 
 
@@ -608,11 +684,20 @@ class GamePlayer:
                 self.move_to_closest_2(swords, 'sword2')
 
 
-    def pickup_keys(self) -> None:
+    def pickup_keys_or_open_doors(self) -> None:
         # Pickup keys
         self.pickup_key_or_open_door(swoq_pb2.TILE_KEY_RED, swoq_pb2.TILE_DOOR_RED, swoq_pb2.INVENTORY_KEY_RED)
         self.pickup_key_or_open_door(swoq_pb2.TILE_KEY_GREEN, swoq_pb2.TILE_DOOR_GREEN, swoq_pb2.INVENTORY_KEY_GREEN)
         self.pickup_key_or_open_door(swoq_pb2.TILE_KEY_BLUE, swoq_pb2.TILE_DOOR_BLUE, swoq_pb2.INVENTORY_KEY_BLUE)
+
+
+    def pickup_treasure(self) -> None:
+        treasures = np.argwhere(self.map == swoq_pb2.TILE_TREASURE)
+        if np.any(treasures):
+            if self.can_act1() and self.player1_inventory == 0:
+                self.move_to_closest_1(treasures, 'treasure')
+            if self.can_act2() and self.player2_inventory == 0:
+                self.move_to_closest_2(treasures, 'treasure')
 
 
     def explore(self) -> None:
@@ -909,49 +994,22 @@ class GamePlayer:
     def level20_store_door_positions(self) -> None:
         plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED)
         doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_RED)
+        print(f'RED: p {len(plates)}, d {len(doors)}')
         if np.any(plates) and np.any(doors):
             for pos in doors:
                 self.level20_door_positions.add(tuple(pos))
 
         plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN)
         doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_GREEN)
+        print(f'GREEN: p {len(plates)}, d {len(doors)}')
         if np.any(plates) and np.any(doors):
             for pos in doors:
                 self.level20_door_positions.add(tuple(pos))
 
         plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE)
         doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_BLUE)
+        print(f'BLUE: p {len(plates)}, d {len(doors)}')
         if np.any(plates) and np.any(doors):
             for pos in doors:
                 self.level20_door_positions.add(tuple(pos))
-
-
-    def level20_lure_boss(self, boss_pos, boss_moving) -> None:
-        # move player 2 towards doors first
-        if self.can_act2() and boss_pos is not None:
-            print(f'{self.level20_door_positions=}')
-            if self.level20_state is None:
-                self.level20_state = 'move_to_door'
-                print(f'{self.level20_state=}')
-            
-            if self.level20_state == 'move_to_door':
-                if self.player2_pos in self.level20_door_positions:
-                    self.level20_state = 'trigger_boss'
-                    print(f'{self.level20_state=}')
-                else:
-                    self.move_to_closest_2(self.level20_door_positions, 'boss_door')
-            
-            elif self.level20_state == 'trigger_boss':
-                if boss_moving:
-                    self.level20_state = 'lure_boss'
-                    print(f'{self.level20_state=}')
-                else:
-                    self.queue_move2('E')
-            
-            elif self.level20_state == 'lure_boss':
-                self.queue_move2('W')
-                
-                # move player 1 off plate when boss is at door
-                if boss_pos in self.level20_door_positions:
-                    self.queue_move1('W')
         
