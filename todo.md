@@ -2,21 +2,18 @@
 
 - [ ] Extra one player combat levels before introducing second player
 - [.] User portal
+  - [ ] user registration
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
 - [ ] Reorder proto files for incremental features
   - [ ] Player state optional fields
-- [ ] Remove user registration from proto (move to portal)
 - [ ] Quest finished screen in dashboard
 - [ ] Hardcode dashboard colors
 - [ ] Order: width/height, x/y in proto
 - [ ] Zip file for ReplayViewer
 - [ ] Example bot Python
 - [ ] Example bot C#
-- [.] Distinguish player in game and player on interface. User vs Player
-  - Player -> User
-  - GamePlayer -> Player, GameEnemy -> Enemy
 - [ ] Reuse database stuff betwen portal and server
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Lore in the proto files
@@ -94,6 +91,10 @@
   - [X] quest progress (replay with quicker time improves stats)
 - [X] Fix boulder handling in bot
 - [X] BUG: Move not allowed does not trigger inactivity
+- [X] Distinguish player in game and player on interface. User vs Player
+  - Player -> User
+  - GamePlayer -> Player, GameEnemy -> Enemy
+- [X] Remove user registration from proto (move to portal)
 
 # Design decisions
 
