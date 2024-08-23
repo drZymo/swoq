@@ -251,9 +251,10 @@ internal class CrushTests : GameTestBase
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.Empty, Tile.DoorBlue)));
             // Boulder from plate
             Assert.That(changes[(5, 9)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateBlue)));
-            // Treasure dropped by enemy
+            // Treasure dropped by enemy (other treasure on other side of door)
             Assert.That(changes[(1, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
-            Assert.That(changes[(2, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
+            // Key dropped by enemy
+            Assert.That(changes[(2, 7)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
         });
 
         // Place boulder back on plate
@@ -271,7 +272,7 @@ internal class CrushTests : GameTestBase
             // Boss (was out of view) gone
             Assert.That(changes[(1, 8)], Is.EqualTo((Tile.Boss, Tile.Empty)));
             // Key dropped
-            Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
+            Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
             // Boulder on plate
             Assert.That(changes[(5, 9)], Is.EqualTo((Tile.PressurePlateBlue, Tile.Boulder)));
         });
