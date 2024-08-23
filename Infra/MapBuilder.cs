@@ -116,7 +116,6 @@ public class MapBuilder(int height, int width, int visibilityRange)
     {
         Tile.Unknown => Cell.Unknown,
         Tile.Empty => Cell.Empty,
-        Tile.Player => Cell.Empty, // Players always stand on empty
         Tile.Wall => Cell.Wall,
         Tile.Exit => Cell.Exit,
         Tile.DoorRed => Cell.DoorRedClosed,
@@ -129,10 +128,14 @@ public class MapBuilder(int height, int width, int visibilityRange)
         Tile.PressurePlateGreen => Cell.PressurePlateGreen,
         Tile.PressurePlateBlue => Cell.PressurePlateBlue,
         Tile.Sword => Cell.Sword,
-        Tile.Enemy => Cell.Empty, // Enemies always stand on empty
         Tile.Health => Cell.Health,
         Tile.Boulder => Cell.Boulder,
         Tile.Treasure => Cell.Treasure,
+
+        // Players and enemies always stand on empty cells
+        Tile.Player => Cell.Empty,
+        Tile.Enemy => Cell.Empty,
+        Tile.Boss => Cell.Empty,
         _ => throw new NotImplementedException(),
     };
 }
