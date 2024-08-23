@@ -798,6 +798,12 @@ public class Game : IGame
             // Remove character from game
             character = character with { Position = PositionEx.Invalid };
 
+            // Boss drops two treasures (most important otherwise cannot exit)
+            if (character.Id == GameCharacterId.Boss)
+            {
+                DropItem(position, Cell.Treasure);
+                DropItem(position, Cell.Treasure);
+            }
             // Drop inventory
             if (character.Inventory != Inventory.None)
             {
@@ -810,12 +816,6 @@ public class Game : IGame
             {
                 DropItem(position, Cell.Sword);
                 character = character with { HasSword = false };
-            }
-            // Boss drops two treasures
-            if (character.Id == GameCharacterId.Boss)
-            {
-                DropItem(position, Cell.Treasure);
-                DropItem(position, Cell.Treasure);
             }
 
             lastChangeTick = ticks;
