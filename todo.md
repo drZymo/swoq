@@ -31,7 +31,7 @@
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Show player2 info in replay viewer from start
 - [ ] Extend .editorconfig
-- [ ] Refactor 3 enemy handling in maps
+- [ ] Refactor 3 enemy + boss handling in maps and mapbuilder
 
 ## Done
 - [X] Act vs Move/Use

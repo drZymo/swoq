@@ -15,6 +15,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
     private Position player1Position = (-1, -1);
     private Position? player2Position = null;
     private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
+    private Position? bossPosition = null;
 
     public void Reset()
     {
@@ -41,6 +42,7 @@ public class MapBuilder(int height, int width, int visibilityRange)
         player1Position = (-1, -1);
         player2Position = null;
         enemyPositions = ImmutableList<Position>.Empty;
+        bossPosition = null;
     }
 
     public void SetLevel(int level)
@@ -76,7 +78,11 @@ public class MapBuilder(int height, int width, int visibilityRange)
             var mx = left + x;
             if (0 <= my && my < height && 0 <= mx && mx < width)
             {
-                if (tile == Tile.Enemy)
+                if (tile == Tile.Boss)
+                {
+                    bossPosition = (my, mx);
+                }
+                else if (tile == Tile.Enemy)
                 {
                     enemyPositions = enemyPositions.Add((my, mx));
                 }
@@ -102,13 +108,28 @@ public class MapBuilder(int height, int width, int visibilityRange)
 
     public Map CreateMap()
     {
-        Position? enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
-        Position? enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
+        Position? enemy1Pos;
+        Position? enemy2Pos;
+        Position? enemy3Pos;
+        if (bossPosition.HasValue)
+        {
+            enemy1Pos = bossPosition.Value;
+            enemy2Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
+            enemy3Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
+        }
+        else
+        {
+            enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
+            enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
+            enemy3Pos = enemyPositions.Count > 2 ? enemyPositions[2] : null;
+        }
 
         return new Map(level, mapData.Cast<Cell>(), height, width, player1Position,
             initialPlayer2Position: player2Position,
             initialEnemy1Position: enemy1Pos,
+            isEnemy1Boss: bossPosition.HasValue,
             initialEnemy2Position: enemy2Pos,
+            initialEnemy3Position: enemy3Pos,
             visibility: visibility.Cast<bool>());
     }
 
