@@ -38,6 +38,10 @@
 	{
 		var users = await Database.GetAllUsers();
 
-		Scores = users.Select(u => new Score(u.Name, u.Level, u.QuestLengthTicks, u.QuestLengthSeconds)).ToList();
+		Scores = users.Select(u => new Score(u.Name, u.Level, u.QuestLengthTicks, u.QuestLengthSeconds)).
+			OrderByDescending(s => s.Level).
+			ThenBy(s => s.LengthTicks).
+			ThenBy(s => s.LengthSeconds).
+			ToList();
 	}
 }
