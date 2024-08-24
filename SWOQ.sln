@@ -21,7 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapGeneratorBenchmark", "MapGeneratorBenchmark\MapGeneratorBenchmark.csproj", "{0AF3FF6F-1E5B-4667-B798-239F588FF04D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SwoqPortal", "SwoqPortal\SwoqPortal.csproj", "{FFABD664-570C-4D40-B8B9-2B18C3880A4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Portal", "Portal\Portal.csproj", "{FFABD664-570C-4D40-B8B9-2B18C3880A4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{421825FF-EAAE-4625-8D31-C04AAFE9471A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{FFABD664-570C-4D40-B8B9-2B18C3880A4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFABD664-570C-4D40-B8B9-2B18C3880A4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FFABD664-570C-4D40-B8B9-2B18C3880A4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

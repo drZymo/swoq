@@ -20,6 +20,15 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
             }
         });
 
+    public void CreateUser(User newUser)
+    {
+        newUser.Id ??= Guid.NewGuid().ToString();
+        lock (usersWriteMutex)
+        {
+            users = users.Add(newUser.Id, newUser);
+        }
+    }
+
     public async Task<User?> FindUserByIdAsync(string id) =>
         await Task.FromResult(users.TryGetValue(id, out var u) ? u : null);
 

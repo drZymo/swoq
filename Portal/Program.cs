@@ -1,5 +1,5 @@
 using Swoq.Server.Data;
-using SwoqPortal.Components;
+using Swoq.Portal.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 

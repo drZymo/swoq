@@ -30,23 +30,23 @@ public class SwoqDatabase : ISwoqDatabase
         await usersCollection.Find(p => p.Id == id).FirstOrDefaultAsync();
 
     public async Task<User?> FindUserByNameAsync(string name) =>
-        await usersCollection.Find(p => p.Name == name).FirstOrDefaultAsync();
+        await usersCollection.Find(u => u.Name == name).FirstOrDefaultAsync();
 
     public async Task UpdateUserAsync(User user)
     {
         if (user.Id == null) return;
         var filter = Builders<User>.Filter.
-            Eq(p => p.Id, user.Id);
+            Eq(u => u.Id, user.Id);
         var update = Builders<User>.Update.
-            Set(p => p.Level, user.Level).
-            Set(p => p.QuestLengthTicks, user.QuestLengthTicks).
-            Set(p => p.QuestLengthSeconds, user.QuestLengthSeconds);
+            Set(u => u.Level, user.Level).
+            Set(u => u.QuestLengthTicks, user.QuestLengthTicks).
+            Set(u => u.QuestLengthSeconds, user.QuestLengthSeconds);
         await usersCollection.UpdateOneAsync(filter, update);
     }
 
     public async Task<IImmutableList<User>> GetAllUsers()
     {
-        var users = await usersCollection.FindAsync(p => true);
+        var users = await usersCollection.FindAsync(u => true);
         var usersList = await users.ToListAsync();
         return usersList.ToImmutableArray();
     }
