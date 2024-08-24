@@ -1,0 +1,43 @@
+﻿@using Swoq.Server.Data
+@inject ISwoqDatabase Database
+
+<h2>High scores</h2>
+
+<div class="row">
+	<table class="arrowes-table table-striped">
+		<thead>
+			<tr>
+				<th>User</th>
+				<th>Level</th>
+				<th>Length (ticks)</th>
+				<th>Length (seconds)</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			@foreach (var score in Scores)
+			{
+				<tr>
+					<td>@score.UserName</td>
+					<td>@score.Level</td>
+					<td>@score.LengthTicks</td>
+					<td>@score.LengthSeconds</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+
+@code {
+
+	[Parameter]
+	public IEnumerable<Score> Scores { get; set; } = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		var users = await Database.GetAllUsers();
+
+		Scores = users.Select(u => new Score(u.Name, u.Level, u.QuestLengthTicks, u.QuestLengthSeconds)).ToList();
+	}
+}

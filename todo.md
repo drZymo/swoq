@@ -1,11 +1,11 @@
 # TODO
 
-- [ ] Extra one player combat levels before introducing second player
 - [.] User portal
   - [ ] user registration
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
+- [ ] Extra one player combat levels before introducing second player
 - [ ] Reorder proto files for incremental features
   - [ ] Player state optional fields
 - [ ] Quest finished screen in dashboard
@@ -14,7 +14,6 @@
 - [ ] Zip file for ReplayViewer
 - [ ] Example bot Python
 - [ ] Example bot C#
-- [ ] Reuse database stuff betwen portal and server
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
@@ -95,6 +94,8 @@
   - Player -> User
   - GamePlayer -> Player, GameEnemy -> Enemy
 - [X] Remove user registration from proto (move to portal)
+- [X] Reuse database stuff betwen portal and server
+
 
 # Design decisions
 
