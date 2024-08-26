@@ -1,159 +1,75 @@
-﻿<h3>Proto file</h3>
+﻿@using System.Text.RegularExpressions
+@inject IWebHostEnvironment webHostEnvironment
+
+<h3>Proto file</h3>
 
 <p>This proto file describes the interface you should use to communicate with the game server. For more information on setting up the connection and starting a game, go the general documention. (TODO).</p>
 
 <pre class="code"><code class="language-protobuf">@GetFileContent()</code></pre>
 
 @code {
+	private static readonly Regex LevelPattern = new Regex(@"^\s*// Level (\d+) and up:$");
+	private static readonly Regex EndOfBlockPattern = new Regex(@"^\s*\}$");
 
 	[Parameter]
 	public int Level { get; set; } = 0;
 
 	string GetFileContent()
 	{
-		var content = @"syntax = ""proto3"";
+		try
+		{
+			// Read full proto file
+			var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.proto");
+			var lines = File.ReadAllLines(path);
 
-package Swoq.Interface;
+			// Filer out all lines of too high levels
+			var filtered = new List<string>();
+			bool hide = false;
+			foreach (var line in lines)
+			{
+				if (!hide)
+				{
+					// Check if line defines level
+					var match = LevelPattern.Match(line);
+					if (match.Success)
+					{
+						var lineLevel = int.Parse(match.Groups[1].Value);
 
-enum Result {
-    RESULT_OK = 0;
-    RESULT_INTERNAL_ERROR = 1;
-    RESULT_UNKNOWN_PLAYER = 2;
-    RESULT_UNKNOWN_GAME_ID = 3;
-    RESULT_PLAYER_LEVEL_TOO_LOW = 4;
-    RESULT_QUEST_QUEUED = 5;
-    RESULT_MOVE_NOT_ALLOWED = 6;
-    RESULT_NO_PROGRESS = 7;
-    RESULT_GAME_TIMEOUT = 8;
-    RESULT_UNKNOWN_ACTION = 9;
-    RESULT_GAME_FINISHED = 10;
-    RESULT_PLAYER1_NOT_PRESENT = 11;";
-		if (Level >= 2) content += @"
-    RESULT_USE_NOT_ALLOWED = 12;
-    RESULT_INVENTORY_FULL = 13;
-    RESULT_INVENTORY_EMPTY = 14;";
-		if (Level >= 6) content += @"
-    RESULT_PLAYER1_DIED = 15;";
-		if (Level >= 8) content += @"
-    RESULT_NO_SWORD = 16;";
-		if (Level >= 10) content += @"
-    RESULT_PLAYER2_NOT_PRESENT = 17;
-    RESULT_PLAYER2_DIED = 18;";
-		content += @"
-}
+						// Level too high, then hide from here
+						if (lineLevel > Level) hide = true;
+					}
+				}
+				else if (EndOfBlockPattern.Match(line).Success)
+				{
+					// Stop hiding at end of a block (i.e. }).
+					hide = false;
+				}
 
-enum Tile {
-    TILE_UNKNOWN = 0;
-    TILE_EMPTY = 1;
-    TILE_PLAYER = 2;
-    TILE_WALL = 3;
-    TILE_EXIT = 4;";
-		if (Level >= 2) content += @"
-    TILE_DOOR_RED = 5;
-    TILE_KEY_RED = 6;
-    TILE_DOOR_GREEN = 7;
-    TILE_KEY_GREEN = 8;
-    TILE_DOOR_BLUE = 9;
-    TILE_KEY_BLUE = 10;";
-		if (Level >= 6) content += @"
-    TILE_BOULDER = 11;";
-		if (Level >= 7) content += @"
-    TILE_PRESSURE_PLATE_RED = 12;
-    TILE_PRESSURE_PLATE_GREEN = 13;
-    TILE_PRESSURE_PLATE_BLUE = 14;";
-		if (Level >= 8) content += @"
-    TILE_SWORD = 15;
-    TILE_HEALTH = 16;
-    TILE_ENEMY = 17;";
-		if (Level >= 20) content += @"
-    TILE_BOSS = 19;
-    TILE_TREASURE = 20;";
-		content += @"
-}
+				if (!hide)
+				{
+					filtered.Add(line);
 
-enum Inventory {
-    INVENTORY_NONE = 0;";
-		if (Level >= 2) content += @"
-    INVENTORY_KEY_RED = 1;
-    INVENTORY_KEY_GREEN = 2;
-    INVENTORY_KEY_BLUE = 3;";
-		if (Level >= 6) content += @"
-    INVENTORY_BOULDER = 4;";
-		if (Level >= 20) content += @"
-    INVENTORY_TREASURE = 5;";
-		content += @"
-}
+					if (filtered.Count >= 2)
+					{
+						// Remove empty blocks (i.e. enums)
+						if (filtered[^2].EndsWith("{") && filtered[^1].StartsWith("}"))
+						{
+							filtered = filtered[..^2];
+						}
+						// Remove second consecutive white line
+						if (string.IsNullOrWhiteSpace(filtered[^2]) && string.IsNullOrWhiteSpace(filtered[^1]))
+						{
+							filtered = filtered[..^1];
+						}
+					}
+				}
+			}
 
-enum DirectedAction {
-    DIRECTEDACTION_MOVE_NORTH = 0;
-    DIRECTEDACTION_MOVE_EAST = 1;
-    DIRECTEDACTION_MOVE_SOUTH = 2;
-    DIRECTEDACTION_MOVE_WEST = 3;";
-		if (Level >= 2) content += @"
-    DIRECTEDACTION_USE_NORTH = 4;
-    DIRECTEDACTION_USE_EAST = 5;
-    DIRECTEDACTION_USE_SOUTH = 6;
-    DIRECTEDACTION_USE_WEST = 7;";
-		content += @"
-}
-
-service GameService {
-    rpc Start(StartRequest) returns (StartResponse);
-    rpc Act(ActionRequest) returns (ActionResponse);
-}
-
-message Position {
-    int32 x = 1;
-    int32 y = 2;
-}
-
-message PlayerState {
-    Position position = 1;
-    repeated Tile surroundings = 2;";
-		if (Level >= 2) content += @"
-    optional Inventory inventory = 3;";
-		if (Level >= 8) content += @"
-    optional int32 health = 4;
-    optional bool hasSword = 5;";
-		content += @"
-}
-
-message State {
-    int32 tick = 1;
-    int32 level = 2;
-    bool finished = 3;
-    optional PlayerState player1 = 4;";
-		if (Level >= 10) content += @"
-    optional PlayerState player2 = 5;";
-		content += @"
-}
-
-message StartRequest {
-    string userId = 1;
-    optional int32 level = 2;
-}
-
-message StartResponse {
-    Result result = 1;
-    optional string gameId = 2;
-    optional int32 width = 3;
-    optional int32 height = 4;
-    optional int32 visibilityRange = 5;
-    optional State state = 6;
-}
-
-message ActionRequest {
-    string gameId = 1;
-    optional DirectedAction action1 = 2;";
-		if (Level >= 10) content += @"
-    optional DirectedAction action2 = 3;";
-		content += @"
-}
-
-message ActionResponse {
-    Result result = 1;
-    optional State state = 2;
-}";
-		return content;
+			return string.Join("\n", filtered);
+		}
+		catch
+		{
+			return "";
+		}
 	}
 }

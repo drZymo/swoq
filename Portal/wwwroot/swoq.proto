@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package Swoq.Interface;
+
+enum Result {
+    RESULT_OK = 0;
+    RESULT_INTERNAL_ERROR = 1;
+    RESULT_UNKNOWN_USER = 2;
+    RESULT_UNKNOWN_GAME_ID = 3;
+    RESULT_USER_LEVEL_TOO_LOW = 4;
+    RESULT_QUEST_QUEUED = 5;
+    RESULT_MOVE_NOT_ALLOWED = 6;
+    RESULT_NO_PROGRESS = 7;
+    RESULT_UNKNOWN_ACTION = 8;
+    RESULT_GAME_FINISHED = 9;
+    // Level 2 and up:
+    RESULT_USE_NOT_ALLOWED = 10;
+    RESULT_INVENTORY_FULL = 11;
+    RESULT_INVENTORY_EMPTY = 12;
+    // Level 6 and up:
+    RESULT_PLAYER_DIED = 13;
+    // Level 8 and up:
+    RESULT_NO_SWORD = 14;
+    // Level 10 and up:
+    RESULT_PLAYER_NOT_PRESENT = 15;
+    RESULT_PLAYER2_NOT_PRESENT = 16;
+    RESULT_PLAYER2_DIED = 17;
+}
+
+enum Tile {
+    TILE_UNKNOWN = 0;
+    TILE_EMPTY = 1;
+    TILE_PLAYER = 2;
+    TILE_WALL = 3;
+    TILE_EXIT = 4;
+    // Level 2 and up:
+    TILE_DOOR_RED = 5;
+    TILE_KEY_RED = 6;
+    TILE_DOOR_GREEN = 7;
+    TILE_KEY_GREEN = 8;
+    TILE_DOOR_BLUE = 9;
+    TILE_KEY_BLUE = 10;
+    // Level 6 and up:
+    TILE_BOULDER = 11;
+    // Level 7 and up:
+    TILE_PRESSURE_PLATE_RED = 12;
+    TILE_PRESSURE_PLATE_GREEN = 13;
+    TILE_PRESSURE_PLATE_BLUE = 14;
+    // Level 8 and up:
+    TILE_SWORD = 15;
+    TILE_HEALTH = 16;
+    TILE_ENEMY = 17;
+    // Level 20 and up:
+    TILE_BOSS = 19;
+    TILE_TREASURE = 20;
+}
+
+enum Inventory {
+    // Level 2 and up:
+    INVENTORY_NONE = 0;
+    INVENTORY_KEY_RED = 1;
+    INVENTORY_KEY_GREEN = 2;
+    INVENTORY_KEY_BLUE = 3;
+    // Level 6 and up:
+    INVENTORY_BOULDER = 4;
+    // Level 20 and up:
+    INVENTORY_TREASURE = 5;
+}
+
+enum DirectedAction {
+    DIRECTEDACTION_MOVE_NORTH = 0;
+    DIRECTEDACTION_MOVE_EAST = 1;
+    DIRECTEDACTION_MOVE_SOUTH = 2;
+    DIRECTEDACTION_MOVE_WEST = 3;
+    // Level 2 and up:
+    DIRECTEDACTION_USE_NORTH = 4;
+    DIRECTEDACTION_USE_EAST = 5;
+    DIRECTEDACTION_USE_SOUTH = 6;
+    DIRECTEDACTION_USE_WEST = 7;
+}
+
+service GameService {
+    rpc Start(StartRequest) returns (StartResponse);
+    rpc Act(ActionRequest) returns (ActionResponse);
+}
+
+message Position {
+    int32 x = 1;
+    int32 y = 2;
+}
+
+message PlayerState {
+    Position position = 1;
+    repeated Tile surroundings = 2;
+    // Level 2 and up:
+    Inventory inventory = 3;
+    // Level 8 and up:
+    int32 health = 4;
+    bool hasSword = 5;
+}
+
+message State {
+    int32 tick = 1;
+    int32 level = 2;
+    bool finished = 3;
+    optional PlayerState playerState = 4;
+    // Level 10 and up:
+    optional PlayerState player2State = 5;
+}
+
+message StartRequest {
+    string userId = 1;
+    optional int32 level = 2;
+}
+
+message StartResponse {
+    Result result = 1;
+    optional string gameId = 2;
+    optional int32 width = 3;
+    optional int32 height = 4;
+    optional int32 visibilityRange = 5;
+    optional State state = 6;
+}
+
+message ActionRequest {
+    string gameId = 1;
+    optional DirectedAction action = 2;
+    // Level 10 and up:
+    optional DirectedAction action2 = 3;
+}
+
+message ActionResponse {
+    Result result = 1;
+    optional State state = 2;
+}
