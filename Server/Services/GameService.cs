@@ -59,7 +59,7 @@ internal class GameService(ILogger<GameService> logger, GameServer server, GameS
                 }
                 gameId = id;
 
-                DirectedAction? action1 = request.HasAction1 ? request.Action1 : null;
+                DirectedAction? action1 = request.HasAction ? request.Action : null;
                 DirectedAction? action2 = request.HasAction2 ? request.Action2 : null;
 
                 var state = server.Act(gameId.Value, action1, action2);

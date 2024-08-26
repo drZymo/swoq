@@ -30,28 +30,28 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
 
         mapBuilder.SetLevel(state.Level);
         mapBuilder.PrepareForNextTimeStep();
-        mapBuilder.AddPlayerState(Convert(state.Player1?.Position), state.Player1?.Surroundings ?? [], 1);
-        mapBuilder.AddPlayerState(Convert(state.Player2?.Position), state.Player2?.Surroundings ?? [], 2);
+        mapBuilder.AddPlayerState(Convert(state.PlayerState?.Position), state.PlayerState?.Surroundings ?? [], 1);
+        mapBuilder.AddPlayerState(Convert(state.Player2State?.Position), state.Player2State?.Surroundings ?? [], 2);
         var map = mapBuilder.CreateMap();
 
         var status = state.Finished ? "Finished" : "Active";
 
         InfraUI.Models.PlayerState? player1State = null;
-        if (state.Player1 != null)
+        if (state.PlayerState != null)
         {
             var action1 = request != null
-                ? GetPlayerAction(request.HasAction1 ? request.Action1 : null)
+                ? GetPlayerAction(request.HasAction ? request.Action : null)
                 : "Start";
-            player1State = new InfraUI.Models.PlayerState(action1, state.Player1.Health, InventoryNames[state.Player1.Inventory], state.Player1.HasSword);
+            player1State = new InfraUI.Models.PlayerState(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword);
         }
 
         InfraUI.Models.PlayerState? player2State = null;
-        if (state.Player2 != null)
+        if (state.Player2State != null)
         {
             var action2 = request != null
                 ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
                 : "Start";
-            player2State = new InfraUI.Models.PlayerState(action2, state.Player2.Health, InventoryNames[state.Player2.Inventory], state.Player2.HasSword);
+            player2State = new InfraUI.Models.PlayerState(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword);
         }
 
         var gameState = createDispatcher.Invoke(() => new GameState(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State));

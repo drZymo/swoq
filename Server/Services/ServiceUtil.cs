@@ -15,12 +15,12 @@ internal static class ServiceUtil
             case UseNotAllowedException: return Result.UseNotAllowed;
             case UnknownActionException: return Result.UnknownAction;
             case GameFinishedException: return Result.GameFinished;
-            case Player1NotPresentException: return Result.Player1NotPresent;
+            case Player1NotPresentException: return Result.PlayerNotPresent;
             case Player2NotPresentException: return Result.Player2NotPresent;
             case InventoryEmptyException: return Result.InventoryEmpty;
             case InventoryFullException: return Result.InventoryFull;
             case NoSwordException: return Result.NoSword;
-            case Player1DiedException: return Result.Player1Died;
+            case Player1DiedException: return Result.PlayerDied;
             case Player2DiedException: return Result.Player2Died;
             case QuestQueuedException: return Result.QuestQueued;
             case NoProgressException: return Result.NoProgress;
@@ -36,8 +36,8 @@ internal static class ServiceUtil
             Tick = gameState.Tick,
             Level = gameState.Level,
             Finished = gameState.Finished,
-            Player1 = gameState.Player1?.Convert(),
-            Player2 = gameState.Player2?.Convert(),
+            PlayerState = gameState.Player1?.Convert(),
+            Player2State = gameState.Player2?.Convert(),
         };
     }
 
@@ -50,6 +50,8 @@ internal static class ServiceUtil
             Inventory = playerState.Inventory,
             HasSword = playerState.HasSword,
         };
+
+
         state.Surroundings.AddRange(playerState.Surroundings);
         return state;
     }
