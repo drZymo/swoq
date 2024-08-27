@@ -6,11 +6,9 @@
   - [ ] Current level
   - [ ] API description
 - [ ] Extra one player combat levels before introducing second player
-- [ ] Reorder proto files for incremental features
-  - [ ] Player state optional fields
 - [ ] Quest finished screen in dashboard
 - [ ] Hardcode dashboard colors
-- [ ] Order: width/height, x/y in proto
+- [ ] Auto hide inactive quests in dashboard
 - [ ] Zip file for ReplayViewer
 - [ ] Example bot Python
 - [ ] Example bot C#
@@ -25,7 +23,6 @@
 - [ ] Publish a single-file app
 - [ ] Sync appsettings for production/development
 - [ ] Tile size (w/h) dynamic in InfraUI
-- [ ] Show player2 info in replay viewer from start
 - [ ] Extend .editorconfig
 - [ ] Refactor 3 enemy + boss handling in maps and mapbuilder
 
@@ -95,6 +92,9 @@
   - GamePlayer -> Player, GameEnemy -> Enemy
 - [X] Remove user registration from proto (move to portal)
 - [X] Reuse database stuff betwen portal and server
+- [X] Reorder proto files for incremental features
+  - [X] Player state optional fields
+- [X] Order: width/height, x/y in proto
 
 
 # Design decisions

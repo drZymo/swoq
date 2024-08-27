@@ -26,8 +26,16 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
 
     public StartResult Start(string userId, int? level)
     {
-        // Get user object
-        var user = database.FindUserByIdAsync(userId).Result ?? throw new UnknownUserException();
+        User user;
+        try
+        {
+            // Get user object
+            user = database.FindUserByIdAsync(userId).Result ?? throw new UnknownUserException();
+        }
+        catch
+        {
+            throw new UnknownUserException();
+        }
 
         // Create a new game
         IGame game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
