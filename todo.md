@@ -356,3 +356,11 @@ Final enemy: Younger brother of duke.
 | GenerateAll    | 453.49 ms | 6.863 ms | 8.924 ms |
 | GenerateLevel1 |  19.48 ms | 0.284 ms | 0.252 ms |
 | GenerateLevel4 |  29.48 ms | 0.584 ms | 0.573 ms |
+
+# 2024-08-27
+
+| Method         | Mean      | Error    | StdDev   |
+|--------------- |----------:|---------:|---------:|
+| GenerateAll    | 390.27 ms | 6.972 ms | 5.822 ms |
+| GenerateLevel1 |  17.79 ms | 0.277 ms | 0.259 ms |
+| GenerateLevel4 |  28.19 ms | 0.395 ms | 0.369 ms |
