@@ -1,0 +1,30 @@
+﻿@page "/doc/"
+<PageTitle>SWOQ - Documentation</PageTitle>
+@((MarkupString)(new MarkdownSharp.Markdown().Transform(@"
+# Documentation
+
+The game is hosted by a server that provides a gRPC services called `GameService`.
+
+The service has two methods that can be called: `Start` and `Act`.
+
+## Starting a game
+
+There are two types of games that can be started: a training session or a quest.
+
+
+### Training
+
+Finishes once this level is completed. Can be run in parallel with other users. As oftern as you want.
+
+
+### Quest
+
+Only one user at a time is allowed to play a quest. If you start a quest while another user is already playing, you will be queued. Shown on dashboard.
+
+
+
+
+## Replays
+
+Use ReplayViewer
+")))
