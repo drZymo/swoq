@@ -17,12 +17,12 @@ _result_strings  = {
 }
 
 
-class GameServiceException(BaseException):
+class GamePlayerException(BaseException):
     def __init__(self, result: swoq_pb2.Result):
         self.result = result
 
 
-class GameService:
+class GamePlayer:
     def __init__(self, user_id:str):
         self.user_id = user_id
         self.channel = grpc.insecure_channel('localhost:5009')
@@ -52,7 +52,7 @@ class GameService:
             print(f'start({level=}): {_result_strings[start_response.result]}')
 
         if start_response.result != swoq_pb2.RESULT_OK:
-            raise GameServiceException(start_response.result)
+            raise GamePlayerException(start_response.result)
         
         self.game_id = start_response.gameId
         self.height = start_response.height
@@ -67,6 +67,6 @@ class GameService:
         print(f'act({action=}): {_result_strings[act_response.result]}')
 
         if act_response.result != swoq_pb2.RESULT_OK:
-            raise GameServiceException(act_response.result)
+            raise GamePlayerException(act_response.result)
 
         return act_response.state

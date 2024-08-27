@@ -1,11 +1,11 @@
-from game_service import GameService
+from game_player import GamePlayer
 import swoq_pb2
 
 user_id = '<insert your user id here>'
 level = 0 # None for quest, 0.. (i.e. integer) for train
 
 def main() -> None:
-    with GameService(user_id) as game:
+    with GamePlayer(user_id) as game:
         move_east = True
         state = game.start(level)
         while not state.finished:
