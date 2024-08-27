@@ -10,8 +10,6 @@
 - [ ] Hardcode dashboard colors
 - [ ] Auto hide inactive quests in dashboard
 - [ ] Zip file for ReplayViewer
-- [ ] Example bot Python
-- [ ] Example bot C#
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
@@ -95,6 +93,8 @@
 - [X] Reorder proto files for incremental features
   - [X] Player state optional fields
 - [X] Order: width/height, x/y in proto
+- [X] Example bot Python
+- [X] Example bot C#
 
 
 # Design decisions
