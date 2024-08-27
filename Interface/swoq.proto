@@ -13,15 +13,15 @@ enum Result {
     RESULT_NO_PROGRESS = 7;
     RESULT_UNKNOWN_ACTION = 8;
     RESULT_GAME_FINISHED = 9;
-    // Level 2 and up:
+    // Level 2 and higher:
     RESULT_USE_NOT_ALLOWED = 10;
     RESULT_INVENTORY_FULL = 11;
     RESULT_INVENTORY_EMPTY = 12;
-    // Level 6 and up:
+    // Level 6 and higher:
     RESULT_PLAYER_DIED = 13;
-    // Level 8 and up:
+    // Level 8 and higher:
     RESULT_NO_SWORD = 14;
-    // Level 10 and up:
+    // Level 10 and higher:
     RESULT_PLAYER_NOT_PRESENT = 15;
     RESULT_PLAYER2_NOT_PRESENT = 16;
     RESULT_PLAYER2_DIED = 17;
@@ -33,37 +33,37 @@ enum Tile {
     TILE_PLAYER = 2;
     TILE_WALL = 3;
     TILE_EXIT = 4;
-    // Level 2 and up:
+    // Level 2 and higher:
     TILE_DOOR_RED = 5;
     TILE_KEY_RED = 6;
     TILE_DOOR_GREEN = 7;
     TILE_KEY_GREEN = 8;
     TILE_DOOR_BLUE = 9;
     TILE_KEY_BLUE = 10;
-    // Level 6 and up:
+    // Level 6 and higher:
     TILE_BOULDER = 11;
-    // Level 7 and up:
+    // Level 7 and higher:
     TILE_PRESSURE_PLATE_RED = 12;
     TILE_PRESSURE_PLATE_GREEN = 13;
     TILE_PRESSURE_PLATE_BLUE = 14;
-    // Level 8 and up:
+    // Level 8 and higher:
     TILE_SWORD = 15;
     TILE_HEALTH = 16;
     TILE_ENEMY = 17;
-    // Level 20 and up:
+    // Level 20 and higher:
     TILE_BOSS = 19;
     TILE_TREASURE = 20;
 }
 
 enum Inventory {
-    // Level 2 and up:
+    // Level 2 and higher:
     INVENTORY_NONE = 0;
     INVENTORY_KEY_RED = 1;
     INVENTORY_KEY_GREEN = 2;
     INVENTORY_KEY_BLUE = 3;
-    // Level 6 and up:
+    // Level 6 and higher:
     INVENTORY_BOULDER = 4;
-    // Level 20 and up:
+    // Level 20 and higher:
     INVENTORY_TREASURE = 5;
 }
 
@@ -72,7 +72,7 @@ enum DirectedAction {
     DIRECTEDACTION_MOVE_EAST = 1;
     DIRECTEDACTION_MOVE_SOUTH = 2;
     DIRECTEDACTION_MOVE_WEST = 3;
-    // Level 2 and up:
+    // Level 2 and higher:
     DIRECTEDACTION_USE_NORTH = 4;
     DIRECTEDACTION_USE_EAST = 5;
     DIRECTEDACTION_USE_SOUTH = 6;
@@ -92,9 +92,9 @@ message Position {
 message PlayerState {
     Position position = 1;
     repeated Tile surroundings = 2;
-    // Level 2 and up:
+    // Level 2 and higher:
     Inventory inventory = 3;
-    // Level 8 and up:
+    // Level 8 and higher:
     int32 health = 4;
     bool hasSword = 5;
 }
@@ -104,7 +104,7 @@ message State {
     int32 level = 2;
     bool finished = 3;
     optional PlayerState playerState = 4;
-    // Level 10 and up:
+    // Level 10 and higher:
     optional PlayerState player2State = 5;
 }
 
@@ -125,7 +125,7 @@ message StartResponse {
 message ActionRequest {
     string gameId = 1;
     optional DirectedAction action = 2;
-    // Level 10 and up:
+    // Level 10 and higher:
     optional DirectedAction action2 = 3;
 }
 
