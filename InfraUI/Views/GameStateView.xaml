@@ -11,7 +11,7 @@
              Foreground="White">
     <Grid ColumnDefinitions="*,300">
 
-        <Grid Grid.Column="0">
+        <Grid Grid.Column="0" Background="Black">
             <Image Source="{Binding Map.MapImage}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
