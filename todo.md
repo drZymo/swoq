@@ -1,7 +1,8 @@
 # TODO
 
-- [ ] Extra one player combat levels before introducing second player
-  - [ ] New levels
+- [-] Extra one player combat levels before introducing second player
+  - [X] New levels
+  - [ ] Prevent sword drop by enemy until two players
   - [ ] Update proto files levels
 - [.] User portal
   - [ ] user registration
@@ -10,6 +11,7 @@
   - [ ] API description
 - [ ] Quest finished screen in dashboard
 - [ ] Hardcode dashboard colors
+- [ ] Optmize performance of Game.cs
 - [ ] Auto hide inactive quests in dashboard
 - [ ] Zip file for ReplayViewer
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState

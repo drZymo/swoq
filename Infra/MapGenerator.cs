@@ -335,6 +335,7 @@ public class MapGenerator : IMapGenerator
             map[boulderPos] = Cell.Boulder;
         }
     }
+
     private void GenerateLevel8()
     {
         /// First enemy. Run to exit.
@@ -344,6 +345,13 @@ public class MapGenerator : IMapGenerator
 
         var enemyPos = GetRandomEmptyPositionInRoom(exitRoom, margin: 1);
         map.Enemy1.Position = enemyPos;
+
+        // Place several boulders around map
+        for (var i = 0; i < 6; i++)
+        {
+            var boulderPos = ClaimRandomPositionInRandomAvailableRoom(availableRooms, margin: 1);
+            map[boulderPos] = Cell.Boulder;
+        }
     }
 
     private void GenerateLevel9()
@@ -354,25 +362,46 @@ public class MapGenerator : IMapGenerator
         /// Room is locked with second door with pressure plate in front.
         /// Crush enemy with door to get key.
         /// No swords.
-        /// 
 
+        // Create a maze with an additional exit room below it
         RestrictAvailablePositions(maxY: height - 6);
         CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 1);
         ConnectRoomsRandomly();
         RestoreAvailablePositions();
-
         exitRoom = CreateRoomTopLeft(height - 6, width - 8, 5, 7);
 
-        // Find room closest to left of exit room
+        // Find room closest to left of exit room and connect them
+        // This will make sure it always enters from the left.
         var connectRoom = rooms.Where(r => r.Right < exitRoom.Left).OrderBy(r => exitRoom.Center.DistanceTo(r.Center)).First();
-
         ConnectRooms(exitRoom, connectRoom);
 
-        var pos = GetRandomEmptyPositionInRoom(connectRoom);
-        map[pos] = Cell.Health;
-
+        // Add player and exit with door around
         PlacePlayersTopLeftAndExitBottomRight(false);
         var (exitKeyColor, _) = AddLockAroundExit();
+
+        // Create door for entering exit room
+        var entryDoorColor = PickRandomAvailableKeyColor();
+        var entryDoorCell = ToDoor(entryDoorColor);
+        ImmutableList<(Position enemyPos, Position platePos)> enemyAndPlatePositions = [];
+        for (var y = exitRoom.Top; y <= exitRoom.Bottom; y++)
+        {
+            if (SetIfEmpty(y, exitRoom.Left - 1, entryDoorCell))
+            {
+                var enemyPos = (y, exitRoom.Left + 1);
+                var platePos = (y, exitRoom.Left - 3);
+                if (IsEmpty(enemyPos) && IsEmpty(platePos))
+                {
+                    enemyAndPlatePositions = enemyAndPlatePositions.Add((enemyPos, platePos));
+                }
+            }
+        }
+
+        // Place enemy right of door
+        var (enemyPosition, platePosition) = enemyAndPlatePositions.PickOne();
+        map.Enemy1.Position = enemyPosition;
+        map.Enemy1.Inventory = ToInventory(exitKeyColor);
+        // and plate left of door
+        map[platePosition] = ToPressurePlate(entryDoorColor);
     }
 
     private void GenerateLevel10()
