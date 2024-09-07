@@ -337,17 +337,49 @@ public class MapGenerator : IMapGenerator
     }
     private void GenerateLevel8()
     {
+        /// First enemy. Run to exit.
+        /// In room of exit. 
+        /// No sword.
+        CreateStandardMaze();
+
+        var enemyPos = GetRandomEmptyPositionInRoom(exitRoom, margin: 1);
+        map.Enemy1.Position = enemyPos;
     }
 
     private void GenerateLevel9()
     {
+        /// Lure. 
+        /// One enemy with key to exit door. 
+        /// In a room before exit.
+        /// Room is locked with second door with pressure plate in front.
+        /// Crush enemy with door to get key.
+        /// No swords.
+        /// 
+
+        RestrictAvailablePositions(maxY: height - 6);
+        CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 1);
+        ConnectRoomsRandomly();
+        RestoreAvailablePositions();
+
+        exitRoom = CreateRoomTopLeft(height - 6, width - 8, 5, 7);
+
+        // Find room closest to left of exit room
+        var connectRoom = rooms.Where(r => r.Right < exitRoom.Left).OrderBy(r => exitRoom.Center.DistanceTo(r.Center)).First();
+
+        ConnectRooms(exitRoom, connectRoom);
+
+        var pos = GetRandomEmptyPositionInRoom(connectRoom);
+        map[pos] = Cell.Health;
+
+        PlacePlayersTopLeftAndExitBottomRight(false);
+        var (exitKeyColor, _) = AddLockAroundExit();
     }
 
     private void GenerateLevel10()
     {
         /// First combat.
         /// Locked exit. One enemy with key to exit door
-        /// One sword and armor in initial room.
+        /// One sword and health in initial room.
 
         var playerRoom = CreateRoom(4, 4, 7, 7);
         CreateStandardMaze();
