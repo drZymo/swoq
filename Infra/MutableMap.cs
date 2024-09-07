@@ -24,6 +24,8 @@ public class MutableMap(int level, int height, int width)
     public MutableCharacter Enemy2 { get; } = new();
     public MutableCharacter Enemy3 { get; } = new();
 
+    public bool IsFinal { get; set; } = false;
+
     public Cell this[int y, int x]
     {
         get => data[y * Width + x];
@@ -49,6 +51,7 @@ public class MutableMap(int level, int height, int width)
             Enemy2.Position.IsValid() ? Enemy2.Position : null,
             Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None,
             Enemy3.Position.IsValid() ? Enemy3.Position : null,
-            Enemy3.Position.IsValid() ? Enemy3.Inventory : Inventory.None);
+            Enemy3.Position.IsValid() ? Enemy3.Inventory : Inventory.None,
+            isFinal: IsFinal);
     }
 }

@@ -505,8 +505,8 @@ public class Game : IGame
         var cannotExit =
             // Cannot carry boulder when exiting
             (player.Inventory == Inventory.Boulder) ||
-            // In last level, treasure is needed when exiting
-            (map.Level == Parameters.FinalLevel && player.Inventory != Inventory.Treasure);
+            // In last level with boss, treasure is needed when exiting
+            (map.IsFinal && player.Inventory != Inventory.Treasure);
 
         if (cannotExit)
         {

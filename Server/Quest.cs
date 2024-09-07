@@ -71,7 +71,7 @@ public class Quest : IGame
             database.UpdateUserAsync(user);
 
             // Create a new game if this was not the last level
-            if (Level <= Parameters.FinalLevel)
+            if (Level <= mapGenerator.MaxLevel)
             {
                 currentGame = new Game(mapGenerator.Generate(Level), Parameters.MaxQuestInactivityTime);
                 state = currentGame.State;
@@ -79,7 +79,7 @@ public class Quest : IGame
             else
             {
                 // TODO: Report to dashboard
-                state = new GameState(ticks, Level, true);
+                state = new GameState(ticks, Level, Finished: true);
             }
         }
 

@@ -61,6 +61,8 @@ public class MapGenerator : IMapGenerator
 
     public Map Generate(int level)
     {
+        if (level < 0 || level > MaxLevel) throw new ArgumentOutOfRangeException(nameof(level));
+
         int tries = 0;
         while (true)
         {
@@ -89,6 +91,10 @@ public class MapGenerator : IMapGenerator
                 if (level == 18) GenerateLevel18();
                 if (level == 19) GenerateLevel19();
                 if (level == 20) GenerateLevel20();
+                if (level == 21) GenerateLevel21();
+                if (level == 22) GenerateLevel22();
+
+                if (level == MaxLevel) map.IsFinal = true;
 
                 // Sanity check
                 foreach (var pos in availablePositions)
@@ -110,6 +116,10 @@ public class MapGenerator : IMapGenerator
             }
         }
     }
+
+    public int MaxLevel { get; } = MaximumLevel;
+
+    public const int MaximumLevel = 22;
 
     private void Reset(int level)
     {
@@ -325,8 +335,15 @@ public class MapGenerator : IMapGenerator
             map[boulderPos] = Cell.Boulder;
         }
     }
-
     private void GenerateLevel8()
+    {
+    }
+
+    private void GenerateLevel9()
+    {
+    }
+
+    private void GenerateLevel10()
     {
         /// First combat.
         /// Locked exit. One enemy with key to exit door
@@ -346,7 +363,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
     }
 
-    private void GenerateLevel9()
+    private void GenerateLevel11()
     {
         /// Two enemies.
         /// First enemy drops key for room with second enemy.
@@ -381,7 +398,7 @@ public class MapGenerator : IMapGenerator
         }
     }
 
-    private void GenerateLevel10()
+    private void GenerateLevel12()
     {
         /// Prison
         /// One big room that holds the second player.
@@ -463,7 +480,7 @@ public class MapGenerator : IMapGenerator
         map[healthPos] = Cell.Health;
     }
 
-    private void GenerateLevel11()
+    private void GenerateLevel13()
     {
         /// Simple two locker rooms, but now with 2 players.
         /// Correct player must pick up keys and open doors.
@@ -486,7 +503,7 @@ public class MapGenerator : IMapGenerator
         map[locker2KeyPos] = ToKey(locker2KeyColor);
     }
 
-    private void GenerateLevel12()
+    private void GenerateLevel14()
     {
         /// Double-door locker room.
         /// With two players.
@@ -498,7 +515,7 @@ public class MapGenerator : IMapGenerator
         map[outerKeyPos] = ToKey(outerColor);
     }
 
-    private void GenerateLevel13()
+    private void GenerateLevel15()
     {
         /// Pressure plate wall.
         /// Two sided level with two corridors.
@@ -535,7 +552,7 @@ public class MapGenerator : IMapGenerator
         map[exitKeyPos] = ToKey(exitKeyColor);
     }
 
-    private void GenerateLevel14()
+    private void GenerateLevel16()
     {
         /// Double pressure plate.
         /// Double-door locker room.
@@ -555,7 +572,7 @@ public class MapGenerator : IMapGenerator
         map[boulderPos] = Cell.Boulder;
     }
 
-    private void GenerateLevel15()
+    private void GenerateLevel17()
     {
         /// Two sided maze with door.
         /// Left side has swords, no health.
@@ -588,7 +605,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
     }
 
-    private void GenerateLevel16()
+    private void GenerateLevel18()
     {
         /// Run for sword.
         /// No more left/right sides.
@@ -610,7 +627,7 @@ public class MapGenerator : IMapGenerator
         map[sword2Pos] = Cell.Sword;
     }
 
-    private void GenerateLevel17()
+    private void GenerateLevel19()
     {
         /// Two enemies.
         /// Split maze. One enemy on left side in front of tunnel door. Other in front of exit door. 
@@ -644,7 +661,7 @@ public class MapGenerator : IMapGenerator
         map[health2Pos] = Cell.Health;
     }
 
-    private void GenerateLevel18()
+    private void GenerateLevel20()
     {
         /// Separation
         /// At start, pressure plate to open one door. Player1 needs to step on it so Player2 can enter next room.
@@ -777,7 +794,7 @@ public class MapGenerator : IMapGenerator
         map[GetRandomEmptyPositionInRoom(preExitRoom)] = Cell.Health;
     }
 
-    private void GenerateLevel19()
+    private void GenerateLevel21()
     {
         /// Grand desert.
         /// Double pressure plate locker room with two swords and two health.
@@ -874,7 +891,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy3.Inventory = ToInventory(exitKeyColor);
     }
 
-    private void GenerateLevel20()
+    private void GenerateLevel22()
     {
         /// Crush.
         /// One enemy (with lots of health and damage),

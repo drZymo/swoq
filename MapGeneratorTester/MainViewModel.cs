@@ -38,6 +38,8 @@ class MainViewModel : ViewModelBase
         }
     }
 
+    public int MaxLevel { get; } = MapGenerator.MaximumLevel;
+
     private int width = 64;
     public int Width
     {

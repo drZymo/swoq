@@ -8,6 +8,8 @@ namespace Swoq.Test;
 [TestFixture]
 internal class QuestTests
 {
+    private const int MaxLevel = 9;
+
     private readonly DummyGenerator mapGenerator = new();
     private readonly SwoqDatabaseInMemory database = new();
     private Quest quest;
@@ -51,9 +53,9 @@ internal class QuestTests
     [Test]
     public void FinishAllLevelsFinishesQuest()
     {
-        // Finish 20 levels to reach last one
+        // Finish all levels to reach last one
         Assert.That(CurrentUser.Level, Is.EqualTo(0));
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < MaxLevel; i++)
         {
             now += TimeSpan.FromSeconds(5);
             quest.Act(DirectedAction.MoveEast);
@@ -61,22 +63,22 @@ internal class QuestTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(CurrentUser.Level, Is.EqualTo(20));
+            Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel));
             Assert.That(quest.State.Finished, Is.False);
-            Assert.That(quest.State.Level, Is.EqualTo(20));
+            Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
         });
 
         // Finish last by fist picking up treasure
         quest.Act(DirectedAction.MoveWest);
         quest.Act(DirectedAction.MoveEast);
         quest.Act(DirectedAction.MoveEast);
-        Assert.That(CurrentUser.Level, Is.EqualTo(21));
+        Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel + 1));
 
         // Quest finished now
         Assert.Multiple(() =>
         {
             Assert.That(quest.State.Finished, Is.True);
-            Assert.That(quest.State.Level, Is.EqualTo(21));
+            Assert.That(quest.State.Level, Is.EqualTo(MaxLevel + 1));
         });
 
         // No more actions allowed
@@ -177,7 +179,12 @@ internal class QuestTests
             map[1, 4] = Cell.Wall;
 
             map.Player1.Position = (1, 2);
+
+            if (level == MaxLevel) map.IsFinal = true;
+
             return map.ToMap();
         }
+
+        public int MaxLevel { get; } = QuestTests.MaxLevel;
     }
 }

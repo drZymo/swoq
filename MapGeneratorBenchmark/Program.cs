@@ -11,7 +11,7 @@ public class Benchmarks
     [Benchmark]
     public void GenerateAll()
     {
-        for (var l = 0; l < 20; l++)
+        for (var l = 0; l <= generator.MaxLevel; l++)
         {
             generator.Generate(l);
         }

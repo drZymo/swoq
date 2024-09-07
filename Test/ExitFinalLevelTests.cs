@@ -228,6 +228,9 @@ internal class ExitFinalLevelTests : GameTestBase
         map[height - 2, 1] = Cell.Boulder;
         map[1, width - 2] = Cell.Treasure;
 
+        // Final level!
+        map.IsFinal = true;
+
         return map.ToMap();
     }
 }

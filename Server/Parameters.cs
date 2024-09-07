@@ -15,8 +15,6 @@ internal static class Parameters
 
     public const int ExtraHealth = 3;
 
-    public const int FinalLevel = 20;
-
     public static readonly TimeSpan GameRetentionTime = TimeSpan.FromMinutes(10);
 
     public static readonly TimeSpan MaxTrainingInactivityTime = TimeSpan.FromMinutes(1);

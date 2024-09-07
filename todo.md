@@ -1,11 +1,11 @@
 # TODO
 
+- [ ] Extra one player combat levels before introducing second player
 - [.] User portal
   - [ ] user registration
   - [ ] Proto file hosting per level
   - [ ] Current level
   - [ ] API description
-- [ ] Extra one player combat levels before introducing second player
 - [ ] Quest finished screen in dashboard
 - [ ] Hardcode dashboard colors
 - [ ] Auto hide inactive quests in dashboard
@@ -213,19 +213,21 @@ Once all features are introduced, the levels are constructed with more and more 
 5. **(Doors)** Double-door locker room. Two doors to enter room with exit key. Both keys are in the open. Key for inner door is close to the player at startup, so it can be picked up accidentally. Outer door key is far away from room and player.
 6. **(Boulders)** Standard maze with boulders in front of exit. Pick up boulder to reach exit. But drop it before exiting.
 7. **(Pressure plate with boulders)** Pressure plate in front of exit with door. Several boulders scattered through maze. Door is visible from pressure plate, so it can be observed to open.
-8. **(Combat)** First combat. Locked exit. One enemy with key to exit door. One sword and armor in initial room.
-9. **(Combat)** Two enemies. First enemy drops key for room with second enemy. Second enemy has key for exit. 3 health needed to win from two enemies.
-10. **(Two players)** Prison. One room with a door that holds the second player. Door is guarded by an enemy. Sword and health somewhere in map. Enemy has key for door. Exit is open, so it tempted to leave without freeing second player.
-11. **(Two players)** Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
-12. **(Two players)** Double-door locker room. With two players. Again right key must be picked up first.
-13. **(Two players)** Pressure plate wall. Two sided level with two corridors. One locked with pressure plate door, other with regular door. Pressure plate on left side, key to door on the right side. Must work together to open regular door. Exit in the open, so it is tempting to enter without helping other.
-14. **(Two players)** Double pressure plate. Double-door locker room. Pressure plate for both doors. One boulder in the level. Key for exit door in locker. One player needs to stand on pressure plate, other needs a boulder on it.
-15. **(Two player combat)** Two sided maze with door. Left side has swords, no health. Right side has one enemy. Work together to kill enemy with key to exit.
-16. **(Two player combat)** Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
-17. **(Two player combat)** Two enemies. Split maze. One enemy on left side in front of tunnel door. Other in front of exit door. One sword and health in left side. Extra heath in right side. First enemy drops sword for second player. Second enemy drops key for exit door. Total player health = 5+3 + 5+3 = 16. Total enemy health = 12. One player total health = 5+3+3 = 11, so need two player interaction. One player needs to collect sword and health first then kill enemy so second player can grab the sword.
-18. **(Two player combat)** Separation. At start, pressure plate to open one door. Player1 needs to step on it so Player2 can enter next room. In that room another pressure plate to open other door in start room. Player2 needs to step on it so Player1 can enter other room. Now both players are in a separate part of the map, where the both have to kill their own enemy. Each enemy leaves a key to enter the final part of the map where both players are joined again. One final enemy with key to exit.
-19. **(Finale)** Grand desert. Double pressure plate locker room with two swords and two health. Players have to take turns getting swords and health. 2x health and boulder scattered around map. Pre-exit room with two guards. One extra guard in exit room with key for exit.
-20. **(Finale)** Crush. One enemy (with lots of health and damage), swords and health in level, but still not enough to defeat boss. Corridor/room with pressure plate controlled door wall. One player must lure the boss on the plate. Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. Door is closed and kills boss. Boss loot is key for exit door and two big treasures and are placed next to closed door. Without treasure in inventory player is killed when leaving.
+8. **(Combat)** First enemy. In room of exit. Run to exit. No sword. Random health and boulders.
+9. **(Combat)** Lure. One enemy with key to exit door. In a room before exit. Room is locked with second door with pressure plate in fron. Crush enemy with door to get key. No swords. Random health and boulders.
+10. **(Combat)** First combat. Locked exit. One enemy with key to exit door. One sword and armor in initial room.
+11. **(Combat)** Two enemies. First enemy drops key for room with second enemy. Second enemy has key for exit. 3 health needed to win from two enemies.
+12. **(Two players)** Prison. One room with a door that holds the second player. Door is guarded by an enemy. Sword and health somewhere in map. Enemy has key for door. Exit is open, so it tempted to leave without freeing second player.
+13. **(Two players)** Simple two locker rooms, but now with 2 players. Correct player must pick up keys and open doors.
+14. **(Two players)** Double-door locker room. With two players. Again right key must be picked up first.
+15. **(Two players)** Pressure plate wall. Two sided level with two corridors. One locked with pressure plate door, other with regular door. Pressure plate on left side, key to door on the right side. Must work together to open regular door. Exit in the open, so it is tempting to enter without helping other.
+16. **(Two players)** Double pressure plate. Double-door locker room. Pressure plate for both doors. One boulder in the level. Key for exit door in locker. One player needs to stand on pressure plate, other needs a boulder on it.
+17. **(Two player combat)** Two sided maze with door. Left side has swords, no health. Right side has one enemy. Work together to kill enemy with key to exit.
+18. **(Two player combat)** Run for sword. No more left/right sides. Enemy is in the room next to the spawn point, swords are far away on the map. Enemy has key for exit door.
+19. **(Two player combat)** Two enemies. Split maze. One enemy on left side in front of tunnel door. Other in front of exit door. One sword and health in left side. Extra heath in right side. First enemy drops sword for second player. Second enemy drops key for exit door. Total player health = 5+3 + 5+3 = 16. Total enemy health = 12. One player total health = 5+3+3 = 11, so need two player interaction. One player needs to collect sword and health first then kill enemy so second player can grab the sword.
+20. **(Two player combat)** Separation. At start, pressure plate to open one door. Player1 needs to step on it so Player2 can enter next room. In that room another pressure plate to open other door in start room. Player2 needs to step on it so Player1 can enter other room. Now both players are in a separate part of the map, where the both have to kill their own enemy. Each enemy leaves a key to enter the final part of the map where both players are joined again. One final enemy with key to exit.
+21. **(Finale)** Grand desert. Double pressure plate locker room with two swords and two health. Players have to take turns getting swords and health. 2x health and boulder scattered around map. Pre-exit room with two guards. One extra guard in exit room with key for exit.
+22. **(Finale)** Crush. One enemy (with lots of health and damage), swords and health in level, but still not enough to defeat boss. Corridor/room with pressure plate controlled door wall. One player must lure the boss on the plate. Other player must stand on pressure plate (somewhere far away) and step off when boss is on the door position. Door is closed and kills boss. Boss loot is key for exit door and two big treasures and are placed next to closed door. Without treasure in inventory player is killed when leaving.
 
 ### Boss
 

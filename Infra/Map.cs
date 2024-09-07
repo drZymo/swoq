@@ -19,7 +19,8 @@ public class Map(
     Inventory initialEnemy2Inventory = Inventory.None,
     Position? initialEnemy3Position = null,
     Inventory initialEnemy3Inventory = Inventory.None,
-    IEnumerable<bool>? visibility = null) : IEnumerable<Cell>
+    IEnumerable<bool>? visibility = null,
+    bool isFinal = false) : IEnumerable<Cell>
 {
     public static readonly Map Empty = new(-1, [], 0, 0, (0, 0));
 
@@ -39,6 +40,8 @@ public class Map(
     public Inventory InitialEnemy2Inventory { get; } = initialEnemy2Inventory;
     public Position? InitialEnemy3Position { get; } = initialEnemy3Position;
     public Inventory InitialEnemy3Inventory { get; } = initialEnemy3Inventory;
+
+    public bool IsFinal { get; } = isFinal;
 
     public Cell this[int y, int x] => cells[y * Width + x];
 
@@ -65,11 +68,11 @@ public class Map(
             InitialEnemy2Inventory,
             InitialEnemy3Position,
             InitialEnemy3Inventory,
-            visibility);
+            visibility,
+            IsFinal);
     }
 
     public Map Set(Position pos, Cell cell) => Set(pos.y, pos.x, cell);
-
 
     public bool IsVisible(int y, int x) => visibility == null || visibility[y * Width + x];
 
