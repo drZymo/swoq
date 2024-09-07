@@ -2,8 +2,8 @@
 
 - [-] Extra one player combat levels before introducing second player
   - [X] New levels
-  - [ ] Prevent sword drop by enemy until two players
-  - [ ] Update proto files levels
+  - [X] Prevent sword drop by enemy until two players
+  - [ ] Update proto files levels (automatic search?)
 - [.] User portal
   - [ ] user registration
   - [ ] Proto file hosting per level
