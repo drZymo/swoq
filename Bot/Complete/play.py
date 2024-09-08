@@ -29,11 +29,11 @@ _result_strings  = {
     swoq_pb2.RESULT_NO_PROGRESS: 'NO_PROGRESS',
     swoq_pb2.RESULT_UNKNOWN_ACTION: 'UNKNOWN_ACTION',
     swoq_pb2.RESULT_GAME_FINISHED: 'GAME_FINISHED',
-    swoq_pb2.RESULT_PLAYER1_NOT_PRESENT: 'PLAYER1_NOT_PRESENT',
+    swoq_pb2.RESULT_PLAYER_NOT_PRESENT: 'PLAYER_NOT_PRESENT',
     swoq_pb2.RESULT_USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
     swoq_pb2.RESULT_INVENTORY_FULL: 'INVENTORY_FULL',
     swoq_pb2.RESULT_INVENTORY_EMPTY: 'INVENTORY_EMPTY',
-    swoq_pb2.RESULT_PLAYER1_DIED: 'PLAYER1_DIED',
+    swoq_pb2.RESULT_PLAYER_DIED: 'PLAYER_DIED',
     swoq_pb2.RESULT_NO_SWORD: 'NO_SWORD',
     swoq_pb2.RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
     swoq_pb2.RESULT_PLAYER2_DIED: 'PLAYER2_DIED',
@@ -134,17 +134,17 @@ class GamePlayer:
 
         self.combined_health = 0
         
-        self.player1_pos = (state.player1.position.y, state.player1.position.x) if state.HasField("player1") else None
-        self.player1_health = state.player1.health if state.HasField("player1") else None
-        self.player1_inventory = state.player1.inventory if state.HasField("player1") else None
-        self.player1_has_sword = state.player1.hasSword if state.HasField("player1") else None
+        self.player1_pos = (state.playerState.position.y, state.playerState.position.x) if state.HasField('playerState') else None
+        self.player1_health = state.playerState.health if state.HasField('playerState') else None
+        self.player1_inventory = state.playerState.inventory if state.HasField('playerState') else None
+        self.player1_has_sword = state.playerState.hasSword if state.HasField('playerState') else None
         if self.player1_health is not None:
             self.combined_health += self.player1_health
 
-        self.player2_pos = (state.player2.position.y, state.player2.position.x) if state.HasField("player2") else None
-        self.player2_health = state.player2.health if state.HasField("player2") else None
-        self.player2_inventory = state.player2.inventory if state.HasField("player2") else None
-        self.player2_has_sword = state.player2.hasSword if state.HasField("player2") else None
+        self.player2_pos = (state.player2State.position.y, state.player2State.position.x) if state.HasField('player2State') else None
+        self.player2_health = state.player2State.health if state.HasField('player2State') else None
+        self.player2_inventory = state.player2State.inventory if state.HasField('player2State') else None
+        self.player2_has_sword = state.player2State.hasSword if state.HasField('player2State') else None
         if self.player2_health is not None:
             self.combined_health += self.player2_health
         
@@ -162,13 +162,13 @@ class GamePlayer:
             self.reset()
 
         # Copy surroundings to map
-        if len(state.player1.surroundings) > 0:
+        if len(state.playerState.surroundings) > 0:
             top = self.player1_pos[0] - self.visibility_range
             left = self.player1_pos[1] - self.visibility_range
             i = 0
             for y in range(self.visibility_range*2 + 1):
                 for x in range(self.visibility_range*2 + 1):
-                    s = state.player1.surroundings[i]
+                    s = state.playerState.surroundings[i]
                     if s != swoq_pb2.TILE_UNKNOWN:
                         map_x = left + x
                         map_y = top + y
@@ -176,13 +176,13 @@ class GamePlayer:
                             self.map[map_y, map_x] = s
                     i += 1
 
-        if len(state.player2.surroundings) > 0:
+        if len(state.player2State.surroundings) > 0:
             top = self.player2_pos[0] - self.visibility_range
             left = self.player2_pos[1] - self.visibility_range
             i = 0
             for y in range(self.visibility_range*2 + 1):
                 for x in range(self.visibility_range*2 + 1):
-                    s = state.player2.surroundings[i]
+                    s = state.player2State.surroundings[i]
                     if s != swoq_pb2.TILE_UNKNOWN:
                         map_x = left + x
                         map_y = top + y
@@ -220,7 +220,7 @@ class GamePlayer:
             self.action2 = None
 
         print(f'{self.action1=}, {self.action2=}')
-        response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action1=self.action1, action2=self.action2))
+        response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action=self.action1, action2=self.action2))
 
         self.update_global_state(response.state)
 
