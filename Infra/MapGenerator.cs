@@ -379,9 +379,8 @@ public class MapGenerator : IMapGenerator
         PlacePlayersTopLeftAndExitBottomRight(false);
         var (exitKeyColor, _) = AddLockAroundExit();
 
-        // Create door for entering exit room
-        var entryDoorColor = PickRandomAvailableKeyColor();
-        var entryDoorCell = ToDoor(entryDoorColor);
+        // Create door for entering exit room with same color as exit
+        var entryDoorCell = ToDoor(exitKeyColor);
         ImmutableList<(Position enemyPos, Position platePos)> enemyAndPlatePositions = [];
         for (var y = exitRoom.Top; y <= exitRoom.Bottom; y++)
         {
@@ -401,7 +400,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy1.Position = enemyPosition;
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
         // and plate left of door
-        map[platePosition] = ToPressurePlate(entryDoorColor);
+        map[platePosition] = ToPressurePlate(exitKeyColor);
     }
 
     private void GenerateLevel10()

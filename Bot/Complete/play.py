@@ -101,7 +101,7 @@ class GamePlayer:
 
         self.action1:swoq_pb2.DirectedAction = None
         self.action2:swoq_pb2.DirectedAction = None
-        
+
         self.reset()
 
         if self.plot:
@@ -123,17 +123,17 @@ class GamePlayer:
         self.random_pos1 = None
         self.random_pos2 = None
         self.picked_up_boulders = set()
-        self.level20_door_positions = set()
-        self.level20_prev_boss_pos = None
-        self.level20_state = None
-        
+        self.plate_door_positions = set()
+        self.level22_prev_boss_pos = None
+        self.level22_state = None
+
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
         self.level = state.level
         self.finished = state.finished
 
         self.combined_health = 0
-        
+
         self.player1_pos = (state.playerState.position.y, state.playerState.position.x) if state.HasField('playerState') else None
         self.player1_health = state.playerState.health if state.HasField('playerState') else None
         self.player1_inventory = state.playerState.inventory if state.HasField('playerState') else None
@@ -147,7 +147,7 @@ class GamePlayer:
         self.player2_has_sword = state.player2State.hasSword if state.HasField('player2State') else None
         if self.player2_health is not None:
             self.combined_health += self.player2_health
-        
+
         self.two_players = valid_pos(self.player1_pos) and valid_pos(self.player2_pos)
 
         if self.print:
@@ -205,7 +205,7 @@ class GamePlayer:
 
         if self.player2_pos is not None:
             self.player2_distances, self.player2_paths = compute_distances_quick(self.map, self.player2_pos)
-            
+
 
     def act(self):
         # Once in a while player 2 will not move, to break cycles
@@ -273,18 +273,21 @@ class GamePlayer:
         self.plate_pos_2 = None
         self.plate_pos_1 = None
 
-        if self.level == 18:
-            self.step_level18()
-        elif self.level == 19:
-            self.step_level19()
-        elif self.level == 20:
+        self.store_plate_door_positions()
+
+        if self.level == 20:
             self.step_level20()
+        elif self.level == 21:
+            self.step_level21()
+        elif self.level == 22:
+            self.step_level22()
         else:
             self.move_to_exit()
             self.pickup_health()
             self.pickup_sword()
             self.pickup_keys_or_open_doors()
             self.attack()
+            self.crush_with_door()
             self.explore()
             self.move_to_pressure_plate()
             self.wait_at_pressure_plate_door_2()
@@ -293,8 +296,8 @@ class GamePlayer:
         self.random_walk() # fallback
         self.act()
         self.update_remain_on_plate()
-        
-    def step_level18(self) -> None:
+
+    def step_level20(self) -> None:
         self.handle_level18()
         self.move_to_exit()
         self.pickup_health()
@@ -304,10 +307,10 @@ class GamePlayer:
         self.explore()
         self.pickup_boulder()
 
-        
-    def step_level19(self) -> None:
+
+    def step_level21(self) -> None:
         old_map = self.map
-        
+
         # as long as both players have no sword the bottom right part is off-limits
         if not self.player1_has_sword or not self.player2_has_sword:
             new_map = self.map.copy()
@@ -319,7 +322,7 @@ class GamePlayer:
                     if (my, mx) in self.player2_distances:
                         del self.player2_distances[(my, mx)]
             self.map = new_map
-            
+
         self.move_to_exit()
         self.pickup_boulder()
         self.level19_place_boulder()
@@ -337,18 +340,18 @@ class GamePlayer:
         self.wait_at_pressure_plate_door_2()
 
         self.map = old_map
-        
-        
-    def step_level20(self) -> None:
-        print(f'{self.level20_state=}')
-        
+
+
+    def step_level22(self) -> None:
+        print(f'{self.level22_state=}')
+
         old_map = self.map
-        
+
         player_1_on_plate = self.plate_color_1 is not None and self.remain_on_plate_counter_1 > 0
 
-        if self.level20_state is None:
-            self.level20_state = 'explore'
-            print(f'change to {self.level20_state}')
+        if self.level22_state is None:
+            self.level22_state = 'explore'
+            print(f'change to {self.level22_state}')
 
         avoid_boss = False
         boss_positions = np.argwhere(self.map == swoq_pb2.TILE_BOSS)
@@ -362,9 +365,9 @@ class GamePlayer:
 
         boss_moving = False
         if boss_pos is not None:
-            if self.level20_prev_boss_pos is not None and self.level20_prev_boss_pos != boss_pos:
+            if self.level22_prev_boss_pos is not None and self.level22_prev_boss_pos != boss_pos:
                 boss_moving = True
-            self.level20_prev_boss_pos = boss_pos
+            self.level22_prev_boss_pos = boss_pos
 
         # stay away from boss if not done yet
         if avoid_boss:
@@ -379,44 +382,41 @@ class GamePlayer:
                             del self.player2_distances[(my, mx)]
             self.map = new_map
 
-        self.level20_store_door_positions()
-        print(f'{self.level20_door_positions=}')
+        if self.level22_state == 'explore':
+            if np.any(self.plate_door_positions):
+                self.level22_state = 'move_to_plate'
+                print(f'change to {self.level22_state}')
 
-        if self.level20_state == 'explore':
-            if np.any(self.level20_door_positions):
-                self.level20_state = 'move_to_plate'
-                print(f'change to {self.level20_state}')
-
-        if self.level20_state == 'move_to_plate':
+        if self.level22_state == 'move_to_plate':
             # player 1 on plate
             self.level19_wait_at_plate_1()
             # move player 2 towards player 1
             if self.can_act2():
                 dir = get_direction_towards(self.player2_paths, self.player2_pos, self.player1_pos)
                 self.queue_move2(dir)
-                
-            if self.remain_on_plate_counter_1 > 0:
-                self.level20_state = 'move_to_door'
-                print(f'change to {self.level20_state}')
 
-        if self.level20_state == 'move_to_door':
-            if self.player2_pos in self.level20_door_positions:
-                self.level20_state = 'trigger_boss'
-                print(f'change to {self.level20_state}')
+            if self.remain_on_plate_counter_1 > 0:
+                self.level22_state = 'move_to_door'
+                print(f'change to {self.level22_state}')
+
+        if self.level22_state == 'move_to_door':
+            if self.player2_pos in self.plate_door_positions:
+                self.level22_state = 'trigger_boss'
+                print(f'change to {self.level22_state}')
             else:
                 if self.can_act2():
-                    self.move_to_closest_2(self.level20_door_positions, 'boss_door')
-            
-        if self.level20_state == 'trigger_boss':
+                    self.move_to_closest_2(self.plate_door_positions, 'boss_door')
+
+        if self.level22_state == 'trigger_boss':
             self.remain_on_plate_counter_1 = 100
             if boss_moving:
-                self.level20_state = 'lure_boss'
-                print(f'change to {self.level20_state}')
+                self.level22_state = 'lure_boss'
+                print(f'change to {self.level22_state}')
             else:
                 if self.can_act2():
                     self.queue_move2('E')
-        
-        if self.level20_state == 'lure_boss':
+
+        if self.level22_state == 'lure_boss':
             self.remain_on_plate_counter_1 = 100
             if self.can_act2():
                 if boss_moving:
@@ -424,41 +424,41 @@ class GamePlayer:
                 else:
                     # stay at position, don't allow other actions
                     self.action2 = -1
-            
+
             # move player 1 off plate when boss is at door
-            if boss_pos in self.level20_door_positions:
+            if boss_pos in self.plate_door_positions:
                 self.remain_on_plate_counter_1 = 0
                 self.plate_pos_1 = None
                 self.plate_color_1 = None
                 self.queue_move1('W') #override any move
-                self.level20_state = 'open_exit'
-                print(f'change to {self.level20_state}')
+                self.level22_state = 'open_exit'
+                print(f'change to {self.level22_state}')
 
-        if self.level20_state == 'open_exit':
+        if self.level22_state == 'open_exit':
             self.pickup_keys_or_open_doors()
-            
-            if np.any(self.map == swoq_pb2.TILE_EXIT):
-                self.level20_state = 'pickup_treasure'
-                print(f'change to {self.level20_state}')
 
-        if self.level20_state == 'pickup_treasure':
+            if np.any(self.map == swoq_pb2.TILE_EXIT):
+                self.level22_state = 'pickup_treasure'
+                print(f'change to {self.level22_state}')
+
+        if self.level22_state == 'pickup_treasure':
             self.pickup_treasure()
             if self.player1_inventory == swoq_pb2.INVENTORY_TREASURE and self.player2_inventory == swoq_pb2.INVENTORY_TREASURE:
-                self.level20_state = 'move_to_exit'
-                print(f'change to {self.level20_state}')
+                self.level22_state = 'move_to_exit'
+                print(f'change to {self.level22_state}')
 
-        if self.level20_state == 'move_to_exit':
+        if self.level22_state == 'move_to_exit':
             self.move_to_exit()
-            
+
         self.explore()
-                
+
         self.map = old_map
 
 
     def get_direction_towards_closest_unknown(self, from_pos, distances, paths) -> str:
         closest_empty = None
         closest_dist = None
-        
+
         # find closest empty with UNKNOWN neighbors
         for pos_y, pos_x in np.argwhere(self.map == swoq_pb2.TILE_UNKNOWN):
             pos = None
@@ -518,7 +518,7 @@ class GamePlayer:
     def pickup_key_or_open_door(self, key:int, door:int, item:int) -> None:
         doors = np.argwhere(self.map == door)
         if np.any(doors):
-            
+
             # open door
             if self.can_act1() and self.player1_inventory == item:
                 self.use_closest_1(doors, 'door')
@@ -535,7 +535,7 @@ class GamePlayer:
                 if self.can_act2() and self.player2_inventory == 0:
                     self.move_to_closest_2(keys, 'key')
 
-    
+
     def move_to_exit(self) -> None:
         # Move to exit if possible
         exits = np.argwhere(self.map == swoq_pb2.TILE_EXIT)
@@ -590,7 +590,7 @@ class GamePlayer:
     def get_closest_clearing(self, from_pos, distances, paths) -> tuple[str, tuple]:
         closest_empty = None
         closest_dist = None
-        
+
         # find closest empty with EMPTY neighbors
         for pos_y, pos_x in np.argwhere(self.map == swoq_pb2.TILE_EMPTY):
             if (pos_y, pos_x-1) in distances and self.map[pos_y, pos_x-1] == swoq_pb2.TILE_EMPTY and \
@@ -655,10 +655,37 @@ class GamePlayer:
             if self.can_act1() and can_attack_1:
                 self.explore()
                 self.random_walk()
-            
+
             if self.can_act2() and can_attack_2:
                 self.explore()
                 self.random_walk()
+
+
+    def crush_with_door(self) -> None:
+        player_1_on_plate = self.plate_color_1 is not None and self.remain_on_plate_counter_1 > 0
+        player_2_on_plate = self.plate_color_2 is not None and self.remain_on_plate_counter_2 > 0
+
+        enemy_at_plate_door = False
+
+        enemies = np.argwhere((self.map == swoq_pb2.TILE_ENEMY) | (self.map == swoq_pb2.TILE_BOSS))
+        for enemy_pos in enemies:
+            enemy_pos = tuple(enemy_pos)
+            if enemy_pos in self.plate_door_positions:
+                enemy_at_plate_door = True
+
+        print(f'{enemy_at_plate_door=}, {player_1_on_plate=}, {player_2_on_plate=}')
+
+        if enemy_at_plate_door:
+            if player_1_on_plate:
+                self.remain_on_plate_counter_1 = 0
+                self.plate_pos_1 = None
+                self.plate_color_1 = None
+                self.queue_move1('W') #override any move
+            if player_2_on_plate:
+                self.remain_on_plate_counter_2 = 0
+                self.plate_pos_2 = None
+                self.plate_color_2 = None
+                self.queue_move2('W') #override any move
 
 
     def pickup_health(self) -> None:
@@ -718,11 +745,11 @@ class GamePlayer:
         if self.random_pos1 is not None:
             if self.player1_pos == self.random_pos1 or not self.can_1_reach(self.random_pos1):
                 self.random_pos1 = None
-        
+
         if self.random_pos2 is not None:
             if self.player2_pos == self.random_pos2 or not self.can_2_reach(self.random_pos2):
                 self.random_pos2 = None
-            
+
         if self.can_act1():
             if self.random_pos1 is None:
                 self.random_pos1 = find_random_pos(self.player1_pos, self.player1_distances)
@@ -735,7 +762,7 @@ class GamePlayer:
             if self.random_pos2 is not None:
                 print(f'random2 {self.random_pos2}')
                 self.move_to_2(self.random_pos2)
-            
+
 
     def move_to_pressure_plate(self) -> None:
         plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
@@ -749,13 +776,13 @@ class GamePlayer:
                         self.plate_color_1 = self.map[self.plate_pos_1]
                     if placed:
                         self.plates_with_boulders.append(self.plate_pos_1)
-                elif self.two_players:
+                else:
                     # only player 1 will stand on plates with two players
                     plate_pos = self.move_to_closest_1(plates, 'plate')
                     if plate_pos is not None:
                         self.plate_pos_1 = plate_pos
                         self.plate_color_1 = self.map[self.plate_pos_1]
-            
+
             if self.can_act2() and self.player2_inventory == 4:
                 # place boulders on plates
                 plate_pos, placed = self.use_closest_2(plates, 'plate_boulder')
@@ -874,7 +901,7 @@ class GamePlayer:
         pos, dir = self.find_closest(positions, self.player1_pos, self.player1_distances, self.player1_paths)
         if dir is None or pos is None:
             return None, False
-    
+
         if are_adjacent(self.player1_pos, pos):
             print(f'{name}_use_1')
             self.queue_use1(dir)
@@ -890,7 +917,7 @@ class GamePlayer:
         pos, dir = self.find_closest(positions, self.player2_pos, self.player2_distances, self.player2_paths)
         if dir is None or pos is None:
             return None, False
-    
+
         if are_adjacent(self.player2_pos, pos):
             print(f'{name}_use_2')
             self.queue_use2(dir)
@@ -907,11 +934,11 @@ class GamePlayer:
         pos, dir = self.find_closest(positions, self.player1_pos, self.player1_distances, self.player1_paths)
         if dir is None or pos is None:
             return None
-    
+
         print(f'{name}_move_1')
         self.queue_move1(dir)
         return pos
-    
+
     def move_to_closest_2(self, positions, name):
         if not self.can_act2():
             return None
@@ -919,7 +946,7 @@ class GamePlayer:
         pos, dir = self.find_closest(positions, self.player2_pos, self.player2_distances, self.player2_paths)
         if dir is None or pos is None:
             return None
-    
+
         print(f'{name}_move_2')
         self.queue_move2(dir)
         return pos
@@ -935,7 +962,7 @@ class GamePlayer:
                 min_dist = dist
                 min_dir = dir
                 min_pos = pos
-                
+
         return min_pos, min_dir
 
 
@@ -943,14 +970,14 @@ class GamePlayer:
         if self.plate_pos_1 is not None and self.player1_pos[0] == self.plate_pos_1[0] and self.player1_pos[1] == self.plate_pos_1[1]:
             print(f'Reset 1 {self.remain_on_plate_counter_1=}')
             self.remain_on_plate_counter_1 = 100
-            
+
         if self.remain_on_plate_counter_1 > 0:
             self.remain_on_plate_counter_1 -= 1
 
         if self.plate_pos_2 is not None and self.player2_pos[0] == self.plate_pos_2[0] and self.player2_pos[1] == self.plate_pos_2[1]:
             print(f'Reset 2 {self.remain_on_plate_counter_2=}')
             self.remain_on_plate_counter_2 = 100
-            
+
         if self.remain_on_plate_counter_2 > 0:
             self.remain_on_plate_counter_2 -= 1
 
@@ -963,7 +990,7 @@ class GamePlayer:
                 if plate_pos is not None:
                     self.plate_pos_2 = plate_pos
                     self.plate_color_2 = self.map[self.plate_pos_2]
-        
+
     def level19_wait_at_plate_1(self) -> None:
         if self.can_act1():
             plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
@@ -991,25 +1018,23 @@ class GamePlayer:
                 if placed:
                     self.plates_with_boulders.append(self.plate_pos_2)
 
-    def level20_store_door_positions(self) -> None:
+
+    def store_plate_door_positions(self) -> None:
         plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED)
         doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_RED)
-        print(f'RED: p {len(plates)}, d {len(doors)}')
         if np.any(plates) and np.any(doors):
             for pos in doors:
-                self.level20_door_positions.add(tuple(pos))
+                self.plate_door_positions.add(tuple(pos))
 
         plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN)
         doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_GREEN)
-        print(f'GREEN: p {len(plates)}, d {len(doors)}')
         if np.any(plates) and np.any(doors):
             for pos in doors:
-                self.level20_door_positions.add(tuple(pos))
+                self.plate_door_positions.add(tuple(pos))
 
         plates = np.argwhere(self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE)
         doors = np.argwhere(self.map == swoq_pb2.TILE_DOOR_BLUE)
-        print(f'BLUE: p {len(plates)}, d {len(doors)}')
         if np.any(plates) and np.any(doors):
             for pos in doors:
-                self.level20_door_positions.add(tuple(pos))
+                self.plate_door_positions.add(tuple(pos))
         
