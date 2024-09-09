@@ -618,7 +618,7 @@ public class Game : IGame
             var visiblePlayer = visiblePlayers.First();
             MoveEnemyTowards(ref enemy, visiblePlayer.Position);
         }
-        else if (enemy.IsTriggered)
+        else if (enemy.IsTriggered && closestPlayers.Any())
         {
             // No player visible, but it was before, so simply move towards the closest player
             // at a slower pace, by randomly skipping moves
