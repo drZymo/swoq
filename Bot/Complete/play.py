@@ -673,8 +673,6 @@ class GamePlayer:
             if enemy_pos in self.plate_door_positions:
                 enemy_at_plate_door = True
 
-        print(f'{enemy_at_plate_door=}, {player_1_on_plate=}, {player_2_on_plate=}')
-
         if enemy_at_plate_door:
             if player_1_on_plate:
                 self.remain_on_plate_counter_1 = 0
@@ -776,7 +774,7 @@ class GamePlayer:
                         self.plate_color_1 = self.map[self.plate_pos_1]
                     if placed:
                         self.plates_with_boulders.append(self.plate_pos_1)
-                else:
+                elif self.two_players or self.level == 9:
                     # only player 1 will stand on plates with two players
                     plate_pos = self.move_to_closest_1(plates, 'plate')
                     if plate_pos is not None:
