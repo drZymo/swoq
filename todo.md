@@ -1,10 +1,5 @@
 # TODO
 
-- [-] Extra one player combat levels before introducing second player
-  - [X] New levels
-  - [X] Prevent sword drop by enemy until two players
-  - [ ] Update proto files levels (automatic search from quest replay?)
-  - [ ] Enemy drop loot near player
 - [.] User portal
   - [ ] user registration
   - [ ] Proto file hosting per level
@@ -100,6 +95,11 @@
 - [X] Order: width/height, x/y in proto
 - [X] Example bot Python
 - [X] Example bot C#
+- [X] Extra one player combat levels before introducing second player
+  - [X] New levels
+  - [X] Prevent sword drop by enemy until two players
+  - [X] Update proto files levels (automatic search from quest replay?)
+  - [X] Enemy drop loot near player
 
 
 # Design decisions

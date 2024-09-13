@@ -201,6 +201,8 @@ public class Game : IGame
 
             switch (action.Value)
             {
+                case DirectedAction.None:
+                    break;
                 case DirectedAction.MoveNorth:
                 case DirectedAction.MoveEast:
                 case DirectedAction.MoveSouth:
@@ -221,6 +223,8 @@ public class Game : IGame
 
     private Position GetDirectedActionPosition(Player player, DirectedAction action) => action switch
     {
+        DirectedAction.None => player.Position,
+
         DirectedAction.MoveNorth => (player.Position.y - 1, player.Position.x),
         DirectedAction.UseNorth => (player.Position.y - 1, player.Position.x),
 

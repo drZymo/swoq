@@ -27,6 +27,7 @@ public static class Converters
 
     public static string ConvertToString(this DirectedAction action) => action switch
     {
+        DirectedAction.None => "None",
         DirectedAction.MoveNorth => "Move North",
         DirectedAction.MoveEast => "Move East",
         DirectedAction.MoveSouth => "Move South",

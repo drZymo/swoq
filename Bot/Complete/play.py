@@ -298,7 +298,7 @@ class GamePlayer:
         self.update_remain_on_plate()
 
     def step_level20(self) -> None:
-        self.handle_level18()
+        self.handle_level20()
         self.move_to_exit()
         self.pickup_health()
         self.pickup_sword()
@@ -325,11 +325,11 @@ class GamePlayer:
 
         self.move_to_exit()
         self.pickup_boulder()
-        self.level19_place_boulder()
+        self.level21_place_boulder()
         if not self.player1_has_sword and len(self.plates_with_boulders) > 0:
-            self.level19_wait_at_plate_2()
+            self.level21_wait_at_plate_2()
         if self.player1_has_sword and not self.player2_has_sword and len(self.plates_with_boulders) > 0:
-            self.level19_wait_at_plate_1()
+            self.level21_wait_at_plate_1()
         self.pickup_health()
         self.pickup_sword()
         self.pickup_keys_or_open_doors()
@@ -389,7 +389,7 @@ class GamePlayer:
 
         if self.level22_state == 'move_to_plate':
             # player 1 on plate
-            self.level19_wait_at_plate_1()
+            self.level21_wait_at_plate_1()
             # move player 2 towards player 1
             if self.can_act2():
                 dir = get_direction_towards(self.player2_paths, self.player2_pos, self.player1_pos)
@@ -860,7 +860,7 @@ class GamePlayer:
                     self.move_to_2(door_pos)
 
 
-    def handle_level18(self) -> None:
+    def handle_level20(self) -> None:
         if valid_pos(self.player1_pos) and self.player1_pos[1] < 8:
             # Move player 2 to plate
             plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
@@ -980,7 +980,7 @@ class GamePlayer:
             self.remain_on_plate_counter_2 -= 1
 
 
-    def level19_wait_at_plate_2(self) -> None:
+    def level21_wait_at_plate_2(self) -> None:
         if self.can_act2():
             plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
             if np.any(plates):
@@ -989,7 +989,7 @@ class GamePlayer:
                     self.plate_pos_2 = plate_pos
                     self.plate_color_2 = self.map[self.plate_pos_2]
 
-    def level19_wait_at_plate_1(self) -> None:
+    def level21_wait_at_plate_1(self) -> None:
         if self.can_act1():
             plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
             if np.any(plates):
@@ -998,7 +998,7 @@ class GamePlayer:
                     self.plate_pos_1 = plate_pos
                     self.plate_color_1 = self.map[self.plate_pos_1]
 
-    def level19_place_boulder(self) -> None:
+    def level21_place_boulder(self) -> None:
         plates = np.argwhere((self.map == swoq_pb2.TILE_PRESSURE_PLATE_RED) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_GREEN) | (self.map == swoq_pb2.TILE_PRESSURE_PLATE_BLUE))
         if np.any(plates):
             if self.can_act1() and self.player1_inventory == swoq_pb2.INVENTORY_BOULDER:

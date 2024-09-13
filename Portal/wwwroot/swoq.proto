@@ -21,7 +21,7 @@ enum Result {
     RESULT_PLAYER_DIED = 13;
     // Level 8 and higher:
     RESULT_NO_SWORD = 14;
-    // Level 10 and higher:
+    // Level 12 and higher:
     RESULT_PLAYER_NOT_PRESENT = 15;
     RESULT_PLAYER2_NOT_PRESENT = 16;
     RESULT_PLAYER2_DIED = 17;
@@ -47,12 +47,13 @@ enum Tile {
     TILE_PRESSURE_PLATE_GREEN = 13;
     TILE_PRESSURE_PLATE_BLUE = 14;
     // Level 8 and higher:
-    TILE_SWORD = 15;
-    TILE_HEALTH = 16;
-    TILE_ENEMY = 17;
-    // Level 20 and higher:
-    TILE_BOSS = 19;
-    TILE_TREASURE = 20;
+    TILE_ENEMY = 15;
+    // Level 10 and higher:
+    TILE_SWORD = 16;
+    TILE_HEALTH = 17;
+    // Level 22 and higher:
+    TILE_BOSS = 18;
+    TILE_TREASURE = 19;
 }
 
 enum Inventory {
@@ -63,20 +64,21 @@ enum Inventory {
     INVENTORY_KEY_BLUE = 3;
     // Level 6 and higher:
     INVENTORY_BOULDER = 4;
-    // Level 20 and higher:
+    // Level 22 and higher:
     INVENTORY_TREASURE = 5;
 }
 
 enum DirectedAction {
-    DIRECTEDACTION_MOVE_NORTH = 0;
-    DIRECTEDACTION_MOVE_EAST = 1;
-    DIRECTEDACTION_MOVE_SOUTH = 2;
-    DIRECTEDACTION_MOVE_WEST = 3;
+    DIRECTEDACTION_NONE = 0;
+    DIRECTEDACTION_MOVE_NORTH = 1;
+    DIRECTEDACTION_MOVE_EAST = 2;
+    DIRECTEDACTION_MOVE_SOUTH = 3;
+    DIRECTEDACTION_MOVE_WEST = 4;
     // Level 2 and higher:
-    DIRECTEDACTION_USE_NORTH = 4;
-    DIRECTEDACTION_USE_EAST = 5;
-    DIRECTEDACTION_USE_SOUTH = 6;
-    DIRECTEDACTION_USE_WEST = 7;
+    DIRECTEDACTION_USE_NORTH = 5;
+    DIRECTEDACTION_USE_EAST = 6;
+    DIRECTEDACTION_USE_SOUTH = 7;
+    DIRECTEDACTION_USE_WEST = 8;
 }
 
 service GameService {
@@ -96,6 +98,7 @@ message PlayerState {
     Inventory inventory = 3;
     // Level 8 and higher:
     int32 health = 4;
+    // Level 10 and higher:
     bool hasSword = 5;
 }
 
@@ -104,7 +107,7 @@ message State {
     int32 level = 2;
     bool finished = 3;
     optional PlayerState playerState = 4;
-    // Level 10 and higher:
+    // Level 12 and higher:
     optional PlayerState player2State = 5;
 }
 
@@ -125,7 +128,7 @@ message StartResponse {
 message ActionRequest {
     string gameId = 1;
     optional DirectedAction action = 2;
-    // Level 10 and higher:
+    // Level 12 and higher:
     optional DirectedAction action2 = 3;
 }
 
