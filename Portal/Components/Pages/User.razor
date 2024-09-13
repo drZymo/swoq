@@ -1,0 +1,79 @@
+﻿@page "/user"
+@page "/user/{UserId}"
+@using Swoq.Server.Data
+@inject ISwoqDatabase Database
+@inject NavigationManager NavigationManager
+
+@if (CurrentUser == null)
+{
+	<PageTitle>User</PageTitle>
+	<h1>User</h1>
+
+	<p>Please sign in with your user ID.</p>
+
+	<p>If you do not have a user ID yet, then <NavLink href="register">register here</NavLink> first.</p>
+
+	<form method="post" @onsubmit="Submit" @formname="signin-plain-form">
+		<AntiforgeryToken />
+		<div>
+			<label>
+				User ID:
+				<InputText @bind-Value="LoginUserId" />
+			</label>
+		</div>
+		<div>
+			<button type="submit">Submit</button>
+		</div>
+	</form>
+}
+else {
+	<PageTitle>User - @CurrentUser.Name</PageTitle>
+
+	<h1>Hi @CurrentUser.Name</h1>
+
+	@if (Welcome)
+	{
+		<div class="alert alert-success" role="alert">
+			Welcome. Your user ID is: <b>@CurrentUser.Id</b>
+		</div>
+	}
+
+	<p>Current level: @CurrentUser.Level (reached in @CurrentUser.QuestLengthTicks ticks)</p>
+
+	<ProtoFile Level="CurrentUser.Level" />
+}
+
+@code {
+	[Parameter]
+	public string UserId { get; set; } = string.Empty;
+
+	[SupplyParameterFromQuery]
+	public bool Welcome { get; set; } = false;
+
+	public Swoq.Server.Data.User? CurrentUser { get; set; } = null;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (!String.IsNullOrEmpty(UserId))
+		{
+			try
+			{
+				CurrentUser = await Database.FindUserByIdAsync(UserId);
+			}
+			catch
+			{
+				CurrentUser = null;
+			}
+		}
+
+		await base.OnParametersSetAsync();
+	}
+
+	[SupplyParameterFromForm]
+	public string LoginUserId { get; set; } = string.Empty;
+
+	private void Submit()
+	{
+		NavigationManager.NavigateTo($"/user/{LoginUserId}");
+	}
+}

@@ -33,7 +33,7 @@
 
 	private void Submit()
 	{
-		var user = new User() { Name = UserName };
+		var user = new Swoq.Server.Data.User() { Name = UserName };
 		try
 		{
 			Database.CreateUser(user);

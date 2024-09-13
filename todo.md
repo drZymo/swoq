@@ -4,6 +4,7 @@
   - [X] New levels
   - [X] Prevent sword drop by enemy until two players
   - [ ] Update proto files levels (automatic search from quest replay?)
+  - [ ] Enemy drop loot near player
 - [.] User portal
   - [ ] user registration
   - [ ] Proto file hosting per level
