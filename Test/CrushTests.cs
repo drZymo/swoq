@@ -144,8 +144,8 @@ internal class CrushTests : GameTestBase
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
             // Boulder from plate
             Assert.That(changes[(5, 1)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateRed)));
-            // Sword dropped by enemy
-            Assert.That(changes[(1, 3)], Is.EqualTo((Tile.Empty, Tile.Sword)));
+            // Key dropped by enemy
+            Assert.That(changes[(2, 3)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
         });
 
         // Place boulder back on plate
@@ -162,8 +162,8 @@ internal class CrushTests : GameTestBase
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
             // Enemy (was out of view) gone
             Assert.That(changes[(1, 2)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
-            // Key dropped
-            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
+            // Sword dropped on other side of door
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Empty, Tile.Sword)));
             // Boulder on plate
             Assert.That(changes[(5, 1)], Is.EqualTo((Tile.PressurePlateRed, Tile.Boulder)));
         });
@@ -251,10 +251,9 @@ internal class CrushTests : GameTestBase
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.Empty, Tile.DoorBlue)));
             // Boulder from plate
             Assert.That(changes[(5, 9)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateBlue)));
-            // Treasure dropped by enemy (other treasure on other side of door)
+            // Treasures dropped by enemy (key on other side of door)
             Assert.That(changes[(1, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
-            // Key dropped by enemy
-            Assert.That(changes[(2, 7)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
+            Assert.That(changes[(2, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
         });
 
         // Place boulder back on plate
@@ -272,7 +271,7 @@ internal class CrushTests : GameTestBase
             // Boss (was out of view) gone
             Assert.That(changes[(1, 8)], Is.EqualTo((Tile.Boss, Tile.Empty)));
             // Key dropped
-            Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
+            Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
             // Boulder on plate
             Assert.That(changes[(5, 9)], Is.EqualTo((Tile.PressurePlateBlue, Tile.Boulder)));
         });

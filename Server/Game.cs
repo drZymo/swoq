@@ -865,19 +865,35 @@ public class Game : IGame
             if (!IsOccupied(p)) choices = choices.Add(p);
         }
 
-        // First check positions adjacent
+        AddIfNotOccupied((pos.y - 1, pos.x - 1));
         AddIfNotOccupied((pos.y - 1, pos.x));
+        AddIfNotOccupied((pos.y - 1, pos.x + 1));
         AddIfNotOccupied((pos.y, pos.x - 1));
         AddIfNotOccupied((pos.y, pos.x + 1));
-        AddIfNotOccupied((pos.y + 1, pos.x));
-        if (choices.Count > 0) return choices.PickOne();
-
-        // No empty positions found yet, try diagonal
-        AddIfNotOccupied((pos.y - 1, pos.x - 1));
-        AddIfNotOccupied((pos.y - 1, pos.x + 1));
         AddIfNotOccupied((pos.y + 1, pos.x - 1));
+        AddIfNotOccupied((pos.y + 1, pos.x));
         AddIfNotOccupied((pos.y + 1, pos.x + 1));
-        return choices.Count > 0 ? choices.PickOne() : PositionEx.Invalid;
+
+        if (choices.Count == 0) return PositionEx.Invalid;
+
+        // Pick one closest to a player
+        return choices.OrderBy(p => DistanceToAnyPlayer(p)).First();
+    }
+
+    private double DistanceToAnyPlayer(Position p)
+    {
+        double distance = double.PositiveInfinity;
+        if (player1 != null && player1.Position.IsValid())
+        {
+            var d1 = player1.Position.DistanceTo(p);
+            if (d1 < distance) distance = d1;
+        }
+        if (player2 != null && player2.Position.IsValid())
+        {
+            var d2 = player2.Position.DistanceTo(p);
+            if (d2 < distance) distance = d2;
+        }
+        return distance;
     }
 
     private static bool IsPlayerActive(Player? player, ImmutableList<Position> playerPositions)

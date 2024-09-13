@@ -159,7 +159,7 @@ internal class TwoPlayerCombatTests : GameTestBase
             Assert.That(game.State.Player2.Health, Is.EqualTo(3)); // player 2 is no longer attacked
             Assert.That(changes, Has.Count.EqualTo(2));
             Assert.That(changes[(4, 6)], Is.EqualTo((Tile.Enemy, Tile.Empty))); // Enemy died, removed from game
-            Assert.That(changes[(4, 7)], Is.EqualTo((Tile.Empty, Tile.Sword))); // Enemy sword dropped
+            Assert.That(changes[(3, 5)], Is.EqualTo((Tile.Empty, Tile.Sword))); // Enemy sword dropped
         });
     }
 
