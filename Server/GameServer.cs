@@ -14,7 +14,7 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
     private readonly object currentQuestMutex = new();
-    private Guid? currentQuestId = null;
+    private ImmutableHashSet<Guid> currentQuestIds = [];
 
     private readonly QuestQueue questQueue = new();
 
@@ -69,20 +69,20 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
             var now = Clock.Now;
 
             // Cleanup current quest if finished or idle for too long
-            if (currentQuestId.HasValue)
+            foreach (var currentQuestId in currentQuestIds)
             {
-                var currentQuest = games[currentQuestId.Value];
+                var currentQuest = games[currentQuestId];
                 if (currentQuest.State.Finished || !currentQuest.CheckIsActive())
                 {
-                    currentQuestId = null;
+                    currentQuestIds = currentQuestIds.Remove(currentQuestId);
                 }
             }
 
             // Queue (or update entry) user
             questQueue.Enqueue(user);
 
-            // Do not allow starting another quest when current quest is active.
-            if (currentQuestId.HasValue)
+            // Do not allow starting another quest when too many quests are active.
+            if (currentQuestIds.Count >= 1)
             {
                 throw new QuestQueuedException();
             }
@@ -92,15 +92,16 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
             {
                 throw new QuestQueuedException();
             }
+
+            // No quests active
+            // User first in queue
+            // Dequeue
             var (frontUserId, frontUserName) = questQueue.Dequeue();
             Debug.Assert(frontUserId == user.Id);
             Debug.Assert(frontUserName == user.Name);
-
-            // No quest active
-            // User first in queue
-            // Start a new game
+            // and start a new game
             var quest = new Quest(user, database, mapGenerator);
-            currentQuestId = quest.Id;
+            currentQuestIds = currentQuestIds.Add(quest.Id);
             return quest;
         }
     }
@@ -131,10 +132,12 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
             lock (gamesWriteMutex)
             {
                 games = games.RemoveRange(idsToRemove);
-
-                if (currentQuestId.HasValue && !games.ContainsKey(currentQuestId.Value))
+            }
+            lock (currentQuestMutex)
+            {
+                foreach (var gameId in currentQuestIds)
                 {
-                    currentQuestId = null;
+                    currentQuestIds = currentQuestIds.Remove(gameId);
                 }
             }
         }
