@@ -32,4 +32,6 @@ internal static class Parameters
     public const int MaxInactivityTicks = 500;
 
     public const int MinIdleMoveDistance = 5;
+
+    public const int NrOfActiveQuests = 1;
 }

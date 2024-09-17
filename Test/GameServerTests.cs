@@ -19,7 +19,7 @@ public class GameServerTests
         Clock.Setup(() => now);
 
         database = new();
-        gameServer = new(database, mapGenerator);
+        gameServer = new(database, mapGenerator, nrActiveQuests: 1);
     }
 
     [Test]

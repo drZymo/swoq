@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
-public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
+public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator, int nrActiveQuests = Parameters.NrOfActiveQuests)
 {
     public record StartResult(string UserName, Guid GameId, GameState State);
 
@@ -82,7 +82,7 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator)
             questQueue.Enqueue(user);
 
             // Do not allow starting another quest when too many quests are active.
-            if (currentQuestIds.Count >= 1)
+            if (currentQuestIds.Count >= nrActiveQuests)
             {
                 throw new QuestQueuedException();
             }
