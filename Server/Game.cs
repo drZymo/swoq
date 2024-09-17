@@ -677,7 +677,7 @@ public class Game : IGame
         if (character == null) return;
         character = character with { Health = Math.Max(0, character.Health - damage) };
         lastChangeTick = ticks;
-        character = CleanupDeadCharacter(ref character);
+        CleanupDeadCharacter(ref character);
     }
 
     private void DealDamage(GameCharacterId characterId, int damage)
@@ -802,7 +802,7 @@ public class Game : IGame
         }
     }
 
-    private T CleanupDeadCharacter<T>(ref T character) where T : GameCharacter
+    private void CleanupDeadCharacter<T>(ref T character) where T : GameCharacter
     {
         if (character.Health <= 0 && character.Position.IsValid())
         {
@@ -833,8 +833,6 @@ public class Game : IGame
 
             lastChangeTick = ticks;
         }
-
-        return character;
     }
 
     private void DropItem(Position fromPosition, Cell item)
