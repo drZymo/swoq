@@ -104,6 +104,8 @@ class GamePlayer:
 
         self.reset()
 
+        print(f'Started game {self.game_id}, level {self.level}')
+
         if self.plot:
             self._frame = plot_map(self.map)
 
@@ -158,7 +160,7 @@ class GamePlayer:
         # Clear map for every new level
         if self.prev_level != self.level:
             self.prev_level = self.level
-            print(f'Entered level {self.level}')
+            if self.print: print(f'Entered level {self.level}')
             self.reset()
 
         # Copy surroundings to map
@@ -208,9 +210,11 @@ class GamePlayer:
 
 
     def act(self):
+        if not self.print: print('.', end='', flush=True)
+        
         # Once in a while player 2 will not move, to break cycles
         if np.random.uniform() < 0.05:
-            print(f' player 2 skipped')
+            if self.print: print(f' player 2 skipped')
             self.action2 = None
 
         # -1 means stay at position
@@ -219,7 +223,7 @@ class GamePlayer:
         if self.action2 == -1:
             self.action2 = None
 
-        print(f'{self.action1=}, {self.action2=}')
+        if self.print: print(f'{self.action1=}, {self.action2=}')
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action=self.action1, action2=self.action2))
 
         self.update_global_state(response.state)
@@ -231,6 +235,9 @@ class GamePlayer:
             result = _result_strings[response.result]
             print(f'{result=}')
             print(f' finished={self.finished}')
+            
+        if not self.print:
+            if self.finished: print()
 
         # clear for next act
         self.action1:swoq_pb2.DirectedAction = None
@@ -238,6 +245,16 @@ class GamePlayer:
 
         return response.result == 0
 
+
+    def step_randomly(self) -> None:
+        assert(self.action1 is None)
+        self.action1 = np.random.choice(swoq_pb2.DirectedAction.values())
+        if self.two_players:
+            assert(self.action2 is None)
+            self.action2 = np.random.choice(swoq_pb2.DirectedAction.values())
+        self.act()
+        self.update_remain_on_plate()
+        
 
     def queue_move1(self, direction:str) -> None:
         global to_swoq_pb2_action
@@ -343,7 +360,6 @@ class GamePlayer:
 
 
     def step_level22(self) -> None:
-        print(f'{self.level22_state=}')
 
         old_map = self.map
 
@@ -351,7 +367,6 @@ class GamePlayer:
 
         if self.level22_state is None:
             self.level22_state = 'explore'
-            print(f'change to {self.level22_state}')
 
         avoid_boss = False
         boss_positions = np.argwhere(self.map == swoq_pb2.TILE_BOSS)
@@ -385,7 +400,6 @@ class GamePlayer:
         if self.level22_state == 'explore':
             if np.any(self.plate_door_positions):
                 self.level22_state = 'move_to_plate'
-                print(f'change to {self.level22_state}')
 
         if self.level22_state == 'move_to_plate':
             # player 1 on plate
@@ -397,12 +411,10 @@ class GamePlayer:
 
             if self.remain_on_plate_counter_1 > 0:
                 self.level22_state = 'move_to_door'
-                print(f'change to {self.level22_state}')
 
         if self.level22_state == 'move_to_door':
             if self.player2_pos in self.plate_door_positions:
                 self.level22_state = 'trigger_boss'
-                print(f'change to {self.level22_state}')
             else:
                 if self.can_act2():
                     self.move_to_closest_2(self.plate_door_positions, 'boss_door')
@@ -411,7 +423,6 @@ class GamePlayer:
             self.remain_on_plate_counter_1 = 100
             if boss_moving:
                 self.level22_state = 'lure_boss'
-                print(f'change to {self.level22_state}')
             else:
                 if self.can_act2():
                     self.queue_move2('E')
@@ -432,20 +443,17 @@ class GamePlayer:
                 self.plate_color_1 = None
                 self.queue_move1('W') #override any move
                 self.level22_state = 'open_exit'
-                print(f'change to {self.level22_state}')
 
         if self.level22_state == 'open_exit':
             self.pickup_keys_or_open_doors()
 
             if np.any(self.map == swoq_pb2.TILE_EXIT):
                 self.level22_state = 'pickup_treasure'
-                print(f'change to {self.level22_state}')
 
         if self.level22_state == 'pickup_treasure':
             self.pickup_treasure()
             if self.player1_inventory == swoq_pb2.INVENTORY_TREASURE and self.player2_inventory == swoq_pb2.INVENTORY_TREASURE:
                 self.level22_state = 'move_to_exit'
-                print(f'change to {self.level22_state}')
 
         if self.level22_state == 'move_to_exit':
             self.move_to_exit()
@@ -560,14 +568,14 @@ class GamePlayer:
                             self.boulder_drop_pos_1 = self.get_closest_clearing(self.player1_pos, self.player1_distances, self.player1_paths)
                         if self.boulder_drop_pos_1 is not None:
                             if are_adjacent(self.player1_pos, self.boulder_drop_pos_1):
-                                print('boulder_drop1')
+                                if self.print: print('boulder_drop1')
                                 self.use_1(self.boulder_drop_pos_1)
                                 self.boulder_drop_pos_1 = None
                             else:
-                                print('boulder_drop_move1')
+                                if self.print: print('boulder_drop_move1')
                                 self.move_to_1(self.boulder_drop_pos_1)
                     else:
-                        print('exit1')
+                        if self.print: print('exit1')
                         self.move_to_1(exit_pos)
                 if self.can_act2():
                     # drop boulder before entering exit
@@ -576,14 +584,14 @@ class GamePlayer:
                             self.boulder_drop_pos_2 = self.get_closest_clearing(self.player2_pos, self.player2_distances, self.player2_paths)
                         if self.boulder_drop_pos_2 is not None:
                             if are_adjacent(self.player2_pos, self.boulder_drop_pos_2):
-                                print('boulder_drop2')
+                                if self.print: print('boulder_drop2')
                                 self.use_2(self.boulder_drop_pos_2)
                                 self.boulder_drop_pos_2 = None
                             else:
-                                print('boulder_drop_move2')
+                                if self.print: print('boulder_drop_move2')
                                 self.move_to_2(self.boulder_drop_pos_2)
                     else:
-                        print('exit2')
+                        if self.print: print('exit2')
                         self.move_to_2(exit_pos)
 
 
@@ -631,10 +639,10 @@ class GamePlayer:
                     dist_players = min(dist_1_to_2, dist_2_to_1)
 
                 if self.can_act1() and dist_players is not None and dist_players > 10:
-                    print('move_closer_1')
+                    if self.print: print('move_closer_1')
                     self.move_to_1(self.player2_pos)
                 if self.can_act2() and dist_players is not None and dist_players > 4:
-                    print('move_closer_2')
+                    if self.print: print('move_closer_2')
                     self.move_to_2(self.player1_pos)
 
             if self.can_act1() and can_attack_1:
@@ -730,12 +738,12 @@ class GamePlayer:
         if self.can_act1():
             dir = self.get_direction_towards_closest_unknown(self.player1_pos, self.player1_distances, self.player1_paths)
             if dir is not None:
-                print('explore1')
+                if self.print: print('explore1')
                 self.queue_move1(dir)
         if self.can_act2():
             dir = self.get_direction_towards_closest_unknown(self.player2_pos, self.player2_distances, self.player2_paths)
             if dir is not None:
-                print('explore2')
+                if self.print: print('explore2')
                 self.queue_move2(dir)
 
 
@@ -752,13 +760,13 @@ class GamePlayer:
             if self.random_pos1 is None:
                 self.random_pos1 = find_random_pos(self.player1_pos, self.player1_distances)
             if self.random_pos1 is not None:
-                print(f'random1 {self.random_pos1}')
+                if self.print: print(f'random1 {self.random_pos1}')
                 self.move_to_1(self.random_pos1)
         if self.can_act2():
             if self.random_pos2 is None:
                 self.random_pos2 = find_random_pos(self.player2_pos, self.player2_distances)
             if self.random_pos2 is not None:
-                print(f'random2 {self.random_pos2}')
+                if self.print: print(f'random2 {self.random_pos2}')
                 self.move_to_2(self.random_pos2)
 
 
@@ -852,11 +860,11 @@ class GamePlayer:
 
             if self.can_act1() and not player2_has_key and self.can_1_reach(door_pos):
                 if euclid_dist(self.player1_pos, door_pos) > 1:
-                    print('move_random_door1')
+                    if self.print: print('move_random_door1')
                     self.move_to_1(door_pos)
             elif self.can_act2() and not player1_has_key and self.can_2_reach(door_pos):
                 if euclid_dist(self.player2_pos, door_pos) > 1:
-                    print('move_random_door2')
+                    if self.print: print('move_random_door2')
                     self.move_to_2(door_pos)
 
 
@@ -868,7 +876,7 @@ class GamePlayer:
             if np.any(plates) and self.can_act2():
                 self.plate_pos_2 = tuple(plates[0])
                 self.plate_color_2 = self.map[self.plate_pos_2]
-                print('plate2_18')
+                if self.print: print('plate2_18')
                 self.move_to_2(self.plate_pos_2)
         else:
             self.remain_on_plate_counter_2 = 0
@@ -880,7 +888,7 @@ class GamePlayer:
             if np.any(plates) and self.can_act1():
                 self.plate_pos_1 = tuple(plates[0])
                 self.plate_color_1 = self.map[self.plate_pos_1]
-                print('plate1_18')
+                if self.print: print('plate1_18')
                 self.move_to_1(self.plate_pos_1)
         else:
             self.remain_on_plate_counter_1 = 0
@@ -901,11 +909,11 @@ class GamePlayer:
             return None, False
 
         if are_adjacent(self.player1_pos, pos):
-            print(f'{name}_use_1')
+            if self.print: print(f'{name}_use_1')
             self.queue_use1(dir)
             return pos, True
         else:
-            print(f'{name}_move_1')
+            if self.print: print(f'{name}_move_1')
             self.queue_move1(dir)
             return pos, False
 
@@ -917,11 +925,11 @@ class GamePlayer:
             return None, False
 
         if are_adjacent(self.player2_pos, pos):
-            print(f'{name}_use_2')
+            if self.print: print(f'{name}_use_2')
             self.queue_use2(dir)
             return pos, True
         else:
-            print(f'{name}_move_2')
+            if self.print: print(f'{name}_move_2')
             self.queue_move2(dir)
             return pos, False
 
@@ -933,7 +941,7 @@ class GamePlayer:
         if dir is None or pos is None:
             return None
 
-        print(f'{name}_move_1')
+        if self.print: print(f'{name}_move_1')
         self.queue_move1(dir)
         return pos
 
@@ -945,7 +953,7 @@ class GamePlayer:
         if dir is None or pos is None:
             return None
 
-        print(f'{name}_move_2')
+        if self.print: print(f'{name}_move_2')
         self.queue_move2(dir)
         return pos
 
@@ -966,14 +974,14 @@ class GamePlayer:
 
     def update_remain_on_plate(self) -> None:
         if self.plate_pos_1 is not None and self.player1_pos[0] == self.plate_pos_1[0] and self.player1_pos[1] == self.plate_pos_1[1]:
-            print(f'Reset 1 {self.remain_on_plate_counter_1=}')
+            if self.print: print(f'Reset 1 {self.remain_on_plate_counter_1=}')
             self.remain_on_plate_counter_1 = 100
 
         if self.remain_on_plate_counter_1 > 0:
             self.remain_on_plate_counter_1 -= 1
 
         if self.plate_pos_2 is not None and self.player2_pos[0] == self.plate_pos_2[0] and self.player2_pos[1] == self.plate_pos_2[1]:
-            print(f'Reset 2 {self.remain_on_plate_counter_2=}')
+            if self.print: print(f'Reset 2 {self.remain_on_plate_counter_2=}')
             self.remain_on_plate_counter_2 = 100
 
         if self.remain_on_plate_counter_2 > 0:
