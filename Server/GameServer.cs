@@ -49,7 +49,7 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
         return new StartResult(user.Name, game.Id, game.State);
     }
 
-    private Game StartTraining(User user, int level)
+    private static Game StartTraining(User user, int level)
     {
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
