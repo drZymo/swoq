@@ -4,29 +4,27 @@ using Swoq.Infra;
 
 namespace MapGeneratorBenchmark;
 
-public class Benchmarks
+public static class Benchmarks
 {
-    private readonly MapGenerator generator = new(64, 64);
-
     [Benchmark]
-    public void GenerateAll()
+    public static void GenerateAll()
     {
-        for (var l = 0; l <= generator.MaxLevel; l++)
+        for (var l = 0; l <= MapGenerator.MaxLevel; l++)
         {
-            generator.Generate(l);
+            MapGenerator.Generate(l);
         }
     }
 
     [Benchmark]
-    public void GenerateLevel1()
+    public static void GenerateLevel1()
     {
-        generator.Generate(1);
+        MapGenerator.Generate(1);
     }
 
     [Benchmark]
-    public void GenerateLevel4()
+    public static void GenerateLevel4()
     {
-        generator.Generate(4);
+        MapGenerator.Generate(4);
     }
 }
 
@@ -36,7 +34,7 @@ public static class Program
     {
         if (args.Length == 1 && args[0] == "all")
         {
-            new Benchmarks().GenerateAll();
+            Benchmarks.GenerateAll();
         }
         else
         {

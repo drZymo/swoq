@@ -10,9 +10,8 @@ internal class QuestTests
 {
     private const int MaxLevel = 9;
 
-    private readonly DummyGenerator mapGenerator = new();
     private readonly SwoqDatabaseInMemory database = new();
-    private Quest quest;
+    private Quest<DummyGenerator> quest;
     private string userId;
 
     private DateTime now = DateTime.Now;
@@ -27,7 +26,7 @@ internal class QuestTests
         Assert.That(user.Id, Is.Not.Null);
         userId = user.Id;
 
-        quest = new Quest(user, database, mapGenerator);
+        quest = new Quest<DummyGenerator>(user, database);
         Assert.Multiple(() =>
         {
             Assert.That(quest.State.Finished, Is.False);
@@ -111,7 +110,7 @@ internal class QuestTests
         // Do it faster with same amount of ticks
         {
             // in a new quest
-            var newQuest = new Quest(CurrentUser, database, mapGenerator);
+            var newQuest = new Quest<DummyGenerator>(CurrentUser, database);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -133,7 +132,7 @@ internal class QuestTests
         // Do it faster with less ticks
         {
             // in a new quest
-            var newQuest = new Quest(CurrentUser, database, mapGenerator);
+            var newQuest = new Quest<DummyGenerator>(CurrentUser, database);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -164,7 +163,7 @@ internal class QuestTests
 
     private class DummyGenerator : IMapGenerator
     {
-        public Map Generate(int level)
+        public static Map Generate(int level, int height, int width)
         {
             MutableMap map = new(level, 3, 5);
             for (var x = 0; x < 5; x++)
@@ -185,6 +184,6 @@ internal class QuestTests
             return map.ToMap();
         }
 
-        public int MaxLevel { get; } = QuestTests.MaxLevel;
+        public static int MaxLevel { get; } = QuestTests.MaxLevel;
     }
 }

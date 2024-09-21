@@ -2,10 +2,10 @@
 
 public interface IMapGenerator
 {
-    Map Generate(int level);
+    static abstract Map Generate(int level, int height, int width);
 
     /// <summary>
     /// Maximum level that can be generated (inclusive bound).
     /// </summary>
-    int MaxLevel { get; }
+    static abstract int MaxLevel { get; }
 }

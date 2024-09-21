@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] BUG: Fix multi-threaded map generator
 - [ ] Show current game sessions
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
@@ -107,6 +106,7 @@
   - [X] Enemy drop loot near player
 - [X] Random player, random level train script to test load
 - [X] Duration test for mapgenerator
+- [X] BUG: Fix multi-threaded map generator
 
 
 # Design decisions

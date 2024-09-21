@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
-public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator, int nrActiveQuests = Parameters.NrOfActiveQuests)
+public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests)
 {
     public record StartResult(string UserName, Guid GameId, GameState State);
 
@@ -54,13 +54,13 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator, int 
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
-        var map = mapGenerator.Generate(level);
+        var map = MapGenerator.Generate(level);
 
         // Create new training game
         return new Game(map, Parameters.MaxTrainingInactivityTime);
     }
 
-    private Quest StartQuest(User user)
+    private Quest<MapGenerator> StartQuest(User user)
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
@@ -100,7 +100,7 @@ public class GameServer(ISwoqDatabase database, IMapGenerator mapGenerator, int 
             Debug.Assert(frontUserId == user.Id);
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
-            var quest = new Quest(user, database, mapGenerator);
+            var quest = new Quest<MapGenerator>(user, database);
             currentQuestIds = currentQuestIds.Add(quest.Id);
             return quest;
         }

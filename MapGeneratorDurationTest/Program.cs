@@ -1,11 +1,11 @@
 ﻿using Swoq.Infra;
 
-IEnumerable<int> RandomLevels()
+static IEnumerable<int> RandomLevels()
 {
     var random = new Random();
     while (true)
     {
-        yield return random.Next(MapGenerator.MaximumLevel + 1);
+        yield return random.Next(MapGenerator.MaxLevel + 1);
     }
 }
 

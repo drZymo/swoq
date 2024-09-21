@@ -4,25 +4,23 @@ using Swoq.Server.Data;
 
 namespace Swoq.Server;
 
-public class Quest : IGame
+public class Quest<MG> : IGame where MG : IMapGenerator
 {
     private readonly User user;
     private readonly ISwoqDatabase database;
-    private readonly IMapGenerator mapGenerator;
     private readonly DateTime startTime;
 
     private Game currentGame;
     private int ticks = 0;
 
-    public Quest(User user, ISwoqDatabase database, IMapGenerator mapGenerator)
+    public Quest(User user, ISwoqDatabase database)
     {
         this.user = user;
         this.database = database;
-        this.mapGenerator = mapGenerator;
         this.startTime = Clock.Now;
 
         Id = Guid.NewGuid();
-        currentGame = new Game(mapGenerator.Generate(Level), Parameters.MaxQuestInactivityTime);
+        currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
         State = currentGame.State;
     }
 
@@ -71,9 +69,9 @@ public class Quest : IGame
             database.UpdateUserAsync(user);
 
             // Create a new game if this was not the last level
-            if (Level <= mapGenerator.MaxLevel)
+            if (Level <= MG.MaxLevel)
             {
-                currentGame = new Game(mapGenerator.Generate(Level), Parameters.MaxQuestInactivityTime);
+                currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
                 state = currentGame.State;
             }
             else

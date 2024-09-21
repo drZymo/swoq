@@ -117,9 +117,7 @@ public class MapGenerator : IMapGenerator
         }
     }
 
-    public int MaxLevel { get; } = MaximumLevel;
-
-    public const int MaximumLevel = 22;
+    public static int MaxLevel { get; } = 22;
 
     private void Reset(int level)
     {
