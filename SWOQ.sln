@@ -23,7 +23,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapGeneratorBenchmark", "Ma
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Portal", "Portal\Portal.csproj", "{FFABD664-570C-4D40-B8B9-2B18C3880A4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{421825FF-EAAE-4625-8D31-C04AAFE9471A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", "{421825FF-EAAE-4625-8D31-C04AAFE9471A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapGeneratorDurationTest", "MapGeneratorDurationTest\MapGeneratorDurationTest.csproj", "{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{19E7D084-05F0-4CD4-B3AB-CA1C46B5D39D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,9 +79,18 @@ Global
 		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{421825FF-EAAE-4625-8D31-C04AAFE9471A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B28F7859-038A-4837-A177-8452A1FE129A} = {19E7D084-05F0-4CD4-B3AB-CA1C46B5D39D}
+		{0AF3FF6F-1E5B-4667-B798-239F588FF04D} = {19E7D084-05F0-4CD4-B3AB-CA1C46B5D39D}
+		{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4} = {19E7D084-05F0-4CD4-B3AB-CA1C46B5D39D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7EF7B68E-BCA9-4AC4-9371-A3A796DCB073}
