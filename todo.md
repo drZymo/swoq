@@ -1,17 +1,21 @@
 # TODO
 
+- [ ] BUG: Fix multi-threaded map generator
+- [ ] Show current game sessions
+- [ ] Quest finished screen in dashboard
+- [ ] Quest finished mark in high score
 - [.] User portal
   - [X] user registration
   - [X] Proto file hosting per level
   - [ ] Current level
   - [ ] API description per level
-- [ ] Quest finished screen in dashboard
 - [.] Allow more than 1 quest at a time in case it is needed
 - [ ] Hardcode dashboard colors
 - [ ] Optmize performance of Game.cs
 - [ ] Auto hide inactive quests in dashboard
-- [ ] Zip file for ReplayViewer
+- [ ] Installer/Zip file for ReplayViewer
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
+- [ ] Rolling ball
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
 - [?] Slower with boulder in inventory. 50% change movement is executed.
@@ -101,6 +105,8 @@
   - [X] Prevent sword drop by enemy until two players
   - [X] Update proto files levels (automatic search from quest replay?)
   - [X] Enemy drop loot near player
+- [X] Random player, random level train script to test load
+- [X] Duration test for mapgenerator
 
 
 # Design decisions
