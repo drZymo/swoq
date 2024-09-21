@@ -394,6 +394,7 @@ public class MapGenerator : IMapGenerator
                 }
             }
         }
+        if (enemyAndPlatePositions.Count == 0) throw new MapGeneratorException("No empty position for enemy and plate");
 
         // Place enemy right of door
         var (enemyPosition, platePosition) = enemyAndPlatePositions.PickOne();
@@ -1458,6 +1459,8 @@ public class MapGenerator : IMapGenerator
                 bestRooms = bestRooms.Add(room);
             }
         }
+        if (bestRooms.Count == 0) throw new MapGeneratorException("No reachable rooms found");
+
         return bestRooms.PickOne();
     }
 
