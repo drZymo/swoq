@@ -62,7 +62,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 bool connected = false;
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-                var client = new Interface.QuestMonitorService.QuestMonitorServiceClient(channel);
+                var client = new Interface.MonitorService.MonitorServiceClient(channel);
 
                 GameStateBuilder? gameStateBuilder = null;
 

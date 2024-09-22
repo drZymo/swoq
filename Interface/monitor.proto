@@ -5,8 +5,8 @@ import "swoq.proto";
 
 package Swoq.Interface;
 
-service QuestMonitorService {
-    rpc Monitor(google.protobuf.Empty) returns (stream QuestUpdate);
+service MonitorService {
+    rpc Monitor(google.protobuf.Empty) returns (stream Update);
 }
 
 message QuestStarted {
@@ -26,7 +26,7 @@ message QueueUpdate {
     repeated string queuedUsers = 1;
 }
 
-message QuestUpdate {
+message Update {
     optional QuestStarted started = 1;
     optional QuestActed acted = 2;
     optional QueueUpdate queueUpdate = 3;

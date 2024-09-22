@@ -6,15 +6,15 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server.Services;
 
-internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorServiceBase, IDisposable
+internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDisposable
 {
     private readonly GameServicePostman gameServicePostman;
     private readonly GameServer gameServer;
 
-    private readonly ConcurrentQueue<QuestUpdate> updates = new();
+    private readonly ConcurrentQueue<Update> updates = new();
     private readonly SemaphoreSlim updatesCount = new(0);
 
-    public QuestMonitorService(GameServicePostman gameServicePostman, GameServer gameServer)
+    public MonitorService(GameServicePostman gameServicePostman, GameServer gameServer)
     {
         this.gameServicePostman = gameServicePostman;
         this.gameServer = gameServer;
@@ -31,7 +31,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
         gameServicePostman.Started -= OnStarted;
     }
 
-    public override async Task Monitor(Empty request, IServerStreamWriter<QuestUpdate> responseStream, ServerCallContext context)
+    public override async Task Monitor(Empty request, IServerStreamWriter<Update> responseStream, ServerCallContext context)
     {
         try
         {
@@ -59,7 +59,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
         {
             currentQuestGameId = e.gameId;
 
-            var update = new QuestUpdate
+            var update = new Update
             {
                 Started = new QuestStarted
                 {
@@ -79,7 +79,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
     {
         if (e.gameId == currentQuestGameId)
         {
-            var update = new QuestUpdate
+            var update = new Update
             {
                 Acted = new QuestActed
                 {
@@ -96,7 +96,7 @@ internal class QuestMonitorService : Interface.QuestMonitorService.QuestMonitorS
 
     private void OnQueueUpdated(object? sender, IImmutableList<string> queue)
     {
-        var update = new QuestUpdate
+        var update = new Update
         {
             QueueUpdate = new()
         };

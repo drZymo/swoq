@@ -1,6 +1,7 @@
 # TODO
 
-- [ ] Show current game sessions
+- [ ] Run duration test to check for exceptions
+- [.git s] Show current game sessions
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
 - [.] User portal
@@ -14,7 +15,9 @@
 - [ ] Auto hide inactive quests in dashboard
 - [ ] Installer/Zip file for ReplayViewer
 - [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
-- [ ] Rolling ball
+- [ ] More level features
+  - [ ] Rolling ball
+  - [ ] Falling plates (fall after 1 sec)
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
 - [?] Slower with boulder in inventory. 50% change movement is executed.
