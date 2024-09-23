@@ -2,6 +2,8 @@
 
 - [ ] Run duration test to check for exceptions
 - [.] Show current game sessions
+- [.] Allow more than 1 quest at a time in case it is needed
+  - [ ] unit tests
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
 - [.] User portal
@@ -9,7 +11,7 @@
   - [X] Proto file hosting per level
   - [ ] Current level
   - [ ] API description per level
-- [.] Allow more than 1 quest at a time in case it is needed
+- [ ] Replay shared folder
 - [ ] Hardcode dashboard colors
 - [ ] Optmize performance of Game.cs
 - [ ] Auto hide inactive quests in dashboard

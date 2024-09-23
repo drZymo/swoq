@@ -236,8 +236,10 @@ class GamePlayer:
             print(f'{result=}')
             print(f' finished={self.finished}')
             
-        if not self.print:
-            if self.finished: print()
+        if not self.print and self.finished:
+            result = _result_strings[response.result]
+            print()
+            print(f'Finished: {result}')
 
         # clear for next act
         self.action1:swoq_pb2.DirectedAction = None

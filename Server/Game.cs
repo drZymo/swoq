@@ -667,7 +667,7 @@ public class Game : IGame
         if (Math.Abs(dy) > 0)
         {
             var nextPosY = (enemy.Position.y + Math.Sign(dy), enemy.Position.x);
-            if (CanMoveTo(nextPosY)) nextPositions = nextPositions.Add(nextPosY);
+            if (CanMoveTo(nextPosY, isEnemy: true)) nextPositions = nextPositions.Add(nextPosY);
         }
 
         // Check horizontal movement
@@ -675,7 +675,7 @@ public class Game : IGame
         if (Math.Abs(dx) > 0)
         {
             var nextPosX = (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
-            if (CanMoveTo(nextPosX)) nextPositions = nextPositions.Add(nextPosX);
+            if (CanMoveTo(nextPosX, isEnemy: true)) nextPositions = nextPositions.Add(nextPosX);
         }
 
         // Take a random move towards the player
@@ -720,7 +720,7 @@ public class Game : IGame
         }
     }
 
-    private bool CanMoveTo(Position position)
+    private bool CanMoveTo(Position position, bool isEnemy = false)
     {
         // Move within map bounds
         if (position.x < 0 || position.x >= map.Width) return false;
@@ -733,8 +733,9 @@ public class Game : IGame
         }
 
         // Check if cell is walkable
+        // Enemies can only enter cells that appear empty
         var cell = map[position];
-        return cell.CanWalkOn();
+        return !isEnemy ? cell.CanWalkOn() : cell.IsEmpty();
     }
 
     private bool IsVisible(Position from, Position to)
