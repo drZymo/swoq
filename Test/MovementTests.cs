@@ -95,7 +95,13 @@ internal class MovementTests : GameTestBase
         Assert.Throws<InventoryFullException>(() => Act(DirectedAction.MoveSouth));
 
         // Nothing changed
-        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((7, 5)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(game.State.Player1.HasSword, Is.True);
+            Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        });
     }
 
     [Test]
@@ -124,7 +130,12 @@ internal class MovementTests : GameTestBase
         Assert.Throws<InventoryFullException>(() => Act(action2: DirectedAction.MoveSouth));
 
         // Nothing changed
-        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player2.Position, Is.EqualTo((7, 6)));
+            Assert.That(game.State.Player2.Inventory, Is.EqualTo(Inventory.KeyRed));
+            Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        });
     }
 
     [Test]
@@ -142,7 +153,12 @@ internal class MovementTests : GameTestBase
         Assert.Throws<MoveNotAllowedException>(() => Act(action2: DirectedAction.MoveWest));
 
         // Nothing changed
-        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+            Assert.That(game.State.Player2.Position, Is.EqualTo((6, 6)));
+            Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        });
     }
 
     [Test]
@@ -174,7 +190,12 @@ internal class MovementTests : GameTestBase
         Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveNorth));
 
         // Nothing changed
-        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((4, 5)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        });
     }
 
     [Test]
@@ -204,7 +225,12 @@ internal class MovementTests : GameTestBase
         Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveWest));
 
         // Nothing changed
-        Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 2)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(mapCache.GetNewChanges(), Is.Empty);
+        });
     }
 
     protected override Map CreateGameMap()

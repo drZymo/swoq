@@ -1,7 +1,7 @@
 # TODO
 
 - [ ] Run duration test to check for exceptions
-- [.git s] Show current game sessions
+- [.] Show current game sessions
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
 - [.] User portal

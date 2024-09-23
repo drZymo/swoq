@@ -74,8 +74,7 @@ public class Game : IGame
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        var prevPlayer1 = player1;
-        var prevPlayer2 = player2;
+        // Pre condition checks
 
         if (IsFinished) throw new GameFinishedException(CreateState());
 
@@ -87,7 +86,6 @@ public class Game : IGame
 
         Debug.Assert(player1 != null || player2 != null);
 
-        // Pre conditions
         if (action1 != null)
         {
             if (player1 == null || !player1.Position.IsValid()) throw new Player1NotPresentException(CreateState());
@@ -99,27 +97,43 @@ public class Game : IGame
             if (player2.Health <= 0) throw new Player2DiedException(CreateState());
         }
 
-        PerformPlayerAction(action1, ref player1);
-        PerformPlayerAction(action2, ref player2);
-
-        // Process enemies using previous positions of players
-        foreach (var enemy in enemies.Values)
+        // Act
+        // Store current state, so it can be reverted to when something went wrong
+        var prevState = (map, player1, player1Positions, player2, player2Positions, enemies);
+        try
         {
-            var newEnemy = enemy;
-            ProcessEnemy(ref newEnemy, prevPlayer1, prevPlayer2);
-            enemies = enemies.SetItem(newEnemy.Id, newEnemy);
+            PerformPlayerAction(action1, ref player1);
+            CheckInvariant();
+            PerformPlayerAction(action2, ref player2);
+            CheckInvariant();
+
+            // Process enemies using previous positions of players
+            foreach (var enemy in enemies.Values)
+            {
+                var newEnemy = enemy;
+                ProcessEnemy(ref newEnemy, prevState.player1, prevState.player2);
+                enemies = enemies.SetItem(newEnemy.Id, newEnemy);
+                CheckInvariant();
+            }
+
+            CleanupDeadCharacters();
+            CheckInvariant();
+
+            // Store current positions
+            StorePlayerPosition(player1, ref player1Positions);
+            StorePlayerPosition(player2, ref player2Positions);
+
+            UpdateGameStatus();
+
+            LastActionTime = Clock.Now;
+            ticks++;
         }
-
-        CleanupDeadCharacters();
-
-        // Store current positions
-        StorePlayerPosition(player1, ref player1Positions);
-        StorePlayerPosition(player2, ref player2Positions);
-
-        UpdateGameStatus();
-
-        LastActionTime = Clock.Now;
-        ticks++;
+        catch (SwoqActionNotAllowedException)
+        {
+            // Revert state
+            (map, player1, player1Positions, player2, player2Positions, enemies) = prevState;
+            throw;
+        }
     }
 
     public bool CheckIsActive()
@@ -1039,4 +1053,41 @@ public class Game : IGame
     }
 
     #endregion
+
+    private void CheckInvariant()
+    {
+        foreach (var c in GetAliveCharacters())
+        {
+            var m = map[c.Position];
+            switch (m)
+            {
+                case Cell.Empty:
+                case Cell.DoorRedOpen:
+                case Cell.PressurePlateRed:
+                case Cell.DoorGreenOpen:
+                case Cell.PressurePlateGreen:
+                case Cell.DoorBlueOpen:
+                case Cell.PressurePlateBlue:
+                    break;
+                case Cell.Unknown:
+                case Cell.Wall:
+                case Cell.Exit:
+                case Cell.DoorRedClosed:
+                case Cell.KeyRed:
+                case Cell.DoorGreenClosed:
+                case Cell.KeyGreen:
+                case Cell.DoorBlueClosed:
+                case Cell.KeyBlue:
+                case Cell.Sword:
+                case Cell.Health:
+                case Cell.Boulder:
+                case Cell.PressurePlateRedWithBoulder:
+                case Cell.PressurePlateGreenWithBoulder:
+                case Cell.PressurePlateBlueWithBoulder:
+                case Cell.Treasure:
+                    Debug.Fail($"{c.Id} cannot stand on {m}");
+                    break;
+            }
+        }
+    }
 }
