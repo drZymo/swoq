@@ -97,9 +97,10 @@ public class Game : IGame
             if (player2.Health <= 0) throw new Player2DiedException(CreateState());
         }
 
-        // Act
         // Store current state, so it can be reverted to when something went wrong
         var prevState = (map, player1, player1Positions, player2, player2Positions, enemies);
+
+        // Act
         try
         {
             PerformPlayerAction(action1, ref player1);
@@ -209,29 +210,32 @@ public class Game : IGame
 
     private void PerformPlayerAction(DirectedAction? action, ref Player? player)
     {
-        if (action.HasValue && player != null)
-        {
-            var actionPos = GetDirectedActionPosition(player, action.Value);
+        // Skip if no action requested
+        if (!action.HasValue) return;
 
-            switch (action.Value)
-            {
-                case DirectedAction.None:
-                    break;
-                case DirectedAction.MoveNorth:
-                case DirectedAction.MoveEast:
-                case DirectedAction.MoveSouth:
-                case DirectedAction.MoveWest:
-                    Move(ref player, actionPos);
-                    break;
-                case DirectedAction.UseNorth:
-                case DirectedAction.UseEast:
-                case DirectedAction.UseSouth:
-                case DirectedAction.UseWest:
-                    Use(ref player, actionPos);
-                    break;
-                default:
-                    throw new UnknownActionException(CreateState());
-            }
+        // Skip if player has died before action could be performed.
+        if (player == null || player.Health <= 0 || !player.Position.IsValid()) return;
+
+        var actionPos = GetDirectedActionPosition(player, action.Value);
+
+        switch (action.Value)
+        {
+            case DirectedAction.None:
+                break;
+            case DirectedAction.MoveNorth:
+            case DirectedAction.MoveEast:
+            case DirectedAction.MoveSouth:
+            case DirectedAction.MoveWest:
+                Move(ref player, actionPos);
+                break;
+            case DirectedAction.UseNorth:
+            case DirectedAction.UseEast:
+            case DirectedAction.UseSouth:
+            case DirectedAction.UseWest:
+                Use(ref player, actionPos);
+                break;
+            default:
+                throw new UnknownActionException(CreateState());
         }
     }
 
