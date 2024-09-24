@@ -1,9 +1,9 @@
 # TODO
 
 - [ ] Run duration test to check for exceptions
-- [.] Show current game sessions
 - [.] Allow more than 1 quest at a time in case it is needed
   - [ ] unit tests
+  - [ ] dashboard
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
 - [.] User portal
@@ -113,6 +113,7 @@
 - [X] Duration test for mapgenerator
 - [X] BUG: Fix multi-threaded map generator
 
+- [X] Show current game sessions
 
 # Design decisions
 
@@ -339,6 +340,17 @@ Placed on pressure plate will leave it pressed.
   - [ ] Close door kills player
 - [ ] Inactive time
 - [ ]
+
+## Current training sessions list
+
+Send updates of start and stop instead of whole list?
+Whole list with every update is too much data. But list can also be sent once every second.
+Server keeps track of all updates and sends the updated list every second.
+Show extra info like, is active or not (act happened in last period), finished.
+
+Decouple the processing. GameServer needs to be as responsive as possible. Games list is protected with a mutex for thread safety. So, updating that list frequently (i.e. with every `Act`) wll impact performance. 
+
+`GameServer` will get a few events, game added, game removed, game acted, game finished. The monitor service will subscribe and queues all events. A background thread processes the queue and updates the list. Every second the list is transmitted.
 
 
 # Lore in the proto files

@@ -1,6 +1,7 @@
 ﻿using Avalonia.Threading;
 using Grpc.Net.Client;
 using Swoq.InfraUI.ViewModels;
+using Swoq.Interface;
 using Swoq.ReplayViewer.ViewModels;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
@@ -16,6 +17,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     public GameStateMonitorViewModel()
     {
         QueueUsers = new(queuedUsers);
+        TrainingSessions = new(trainingSessions);
 
         monitorThread = new Thread(new ThreadStart(MonitorThread));
         monitorThread.Start();
@@ -52,6 +54,9 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private readonly ObservableCollection<TrainingSessionViewModel> trainingSessions = [];
+    public ReadOnlyObservableCollection<TrainingSessionViewModel> TrainingSessions { get; }
+
     private async void MonitorThread()
     {
         var callOptions = new Grpc.Core.CallOptions(cancellationToken: cancellationTokenSource.Token);
@@ -77,19 +82,19 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     var message = call.ResponseStream.Current;
 
-                    if (message.Started != null)
+                    if (message.QuestStarted != null)
                     {
                         Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
 
-                        var started = message.Started;
+                        var started = message.QuestStarted;
                         gameStateBuilder = new GameStateBuilder(started.Response.Height, started.Response.Width, started.Response.VisibilityRange, started.UserName);
                         var gameState = gameStateBuilder.BuildNext(null, started.Response.State, started.Response.Result, Dispatcher.UIThread);
                         Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
 
-                    if (message.Acted != null && gameStateBuilder != null)
+                    if (message.QuestActed != null && gameStateBuilder != null)
                     {
-                        var acted = message.Acted;
+                        var acted = message.QuestActed;
                         var gameState = gameStateBuilder.BuildNext(acted.Request, acted.Response.State, acted.Response.Result, Dispatcher.UIThread);
                         Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
                     }
@@ -105,6 +110,11 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                                 this.queuedUsers.Add(qu);
                             }
                         });
+                    }
+
+                    if (message.TrainingUpdate != null)
+                    {
+                        UpdateTrainingSessions(message);
                     }
                 }
             }
@@ -129,6 +139,52 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Internal error"; });
                 Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
+            }
+        }
+    }
+
+    private void UpdateTrainingSessions(Update message)
+    {
+        var newTrainingSessions = message.TrainingUpdate.Sessions;
+
+        var newIds = newTrainingSessions.Select(s => s.GameId).ToImmutableHashSet();
+        var oldIds = trainingSessions.Select(s => s.Id).ToImmutableHashSet();
+
+        var addedSessionIds = newIds.Except(oldIds);
+        var removedSessionIds = oldIds.Except(newIds);
+        var updatedSessionIds = newIds.Intersect(newIds);
+
+        // Remove sessions
+        var sessionsToRemove = trainingSessions.Where(s => removedSessionIds.Contains(s.Id)).ToImmutableArray();
+        foreach (var session in sessionsToRemove)
+        {
+            trainingSessions.Remove(session);
+        }
+
+        // Add sessions at the start
+        var sessionsToAdd = newTrainingSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
+        foreach (var session in sessionsToAdd)
+        {
+            trainingSessions.Insert(
+                0,
+                new TrainingSessionViewModel(
+                    session.GameId,
+                    session.UserName,
+                    session.Level,
+                    session.IsActive,
+                    session.IsFinished));
+        }
+
+        // Update existing
+        foreach (var id in updatedSessionIds)
+        {
+            var newSession = newTrainingSessions.Where(s => s.GameId == id).FirstOrDefault();
+            var oldSession = trainingSessions.Where(s => s.Id == id).FirstOrDefault();
+
+            if (newSession != null && oldSession != null)
+            {
+                oldSession.IsActive = newSession.IsActive;
+                oldSession.IsFinished = newSession.IsFinished;
             }
         }
     }

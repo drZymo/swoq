@@ -24,6 +24,11 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
         remove => questQueue.Updated -= value;
     }
 
+    public event EventHandler<(Guid gameId, string username, int? level)>? GameAdded;
+    public event EventHandler<Guid>? GameRemoved;
+    public event EventHandler<(Guid gameId, bool finished)>? GameActed;
+
+    
     public StartResult Start(string userId, int? level)
     {
         User user;
@@ -42,6 +47,7 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
         lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
+            GameAdded?.Invoke(this, (game.Id, user.Name, level));
         }
         // and remove old games
         CleanupOldGames();
@@ -113,6 +119,7 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
 
         // Play game
         game.Act(action1, action2);
+        GameActed?.Invoke(this, (gameId, game.State.Finished));
         return game.State;
     }
 
@@ -120,25 +127,32 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
     {
         var now = Clock.Now;
 
-        // Gather ids to remove
+        // Find games that have been finished for a while
         var idsToRemove = games.Values.
             Where(g => now - g.LastActionTime > Parameters.GameRetentionTime).
+            Where(g => g.State.Finished || !g.CheckIsActive()).
             Select(g => g.Id).
             ToImmutableArray();
 
-        // Remove all at once
         if (idsToRemove.Length > 0)
         {
+            // Update current quest
+            lock (currentQuestMutex)
+            {
+                foreach (var gameId in idsToRemove)
+                {
+                    currentQuestIds = currentQuestIds.Remove(gameId);
+                }
+            }
+            // Before actually removing the games
             lock (gamesWriteMutex)
             {
                 games = games.RemoveRange(idsToRemove);
             }
-            lock (currentQuestMutex)
+            // Notify monitors
+            foreach (var id in idsToRemove)
             {
-                foreach (var gameId in currentQuestIds)
-                {
-                    currentQuestIds = currentQuestIds.Remove(gameId);
-                }
+                GameRemoved?.Invoke(this, id);
             }
         }
     }

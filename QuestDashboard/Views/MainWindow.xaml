@@ -14,7 +14,7 @@
         Foreground="White"
         Background="Black">
     <Grid ColumnDefinitions="300,*">
-        <Grid Grid.Column="0" RowDefinitions="*,*,auto">
+        <Grid Grid.Column="0" RowDefinitions="*,auto,*,auto">
             <infraui:GroupBox Grid.Row="0" Header="Highscores">
                 <StackPanel Orientation="Vertical" DataContext="{Binding Scores}">
                     <ItemsControl ItemsSource="{Binding Scores}">
@@ -24,10 +24,10 @@
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding UserName}"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
                                     <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
-                                    <Run Text="{Binding LengthTicks}"/>
-                                    <Run>ticks,</Run>
-                                    <Run Text="{Binding LengthSeconds}"/>
-                                    <Run>sec.</Run>
+                                        <Run Text="{Binding LengthTicks}"/>
+                                        <Run>ticks,</Run>
+                                        <Run Text="{Binding LengthSeconds}"/>
+                                        <Run>sec.</Run>
                                     </TextBlock>
                                 </Grid>
                             </DataTemplate>
@@ -48,7 +48,25 @@
                 </StackPanel>
             </infraui:GroupBox>
 
-            <TextBlock Grid.Row="2" Text="{Binding Scores.StatusMessage}" FontSize="12" Foreground="Gray"/>
+            <infraui:GroupBox Grid.Row="2" Header="Training sessions">
+                <StackPanel Orientation="Vertical" DataContext="{Binding GameStateMonitor}">
+                    <ItemsControl ItemsSource="{Binding TrainingSessions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock  Foreground="{Binding TextColor}" Text="{Binding UserName}"/>
+                                        <TextBlock  Foreground="{Binding TextColor}" IsVisible="{Binding IsFinished}">✓</TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right" Foreground="{Binding TextColor}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </infraui:GroupBox>
+
+            <TextBlock Grid.Row="3" Text="{Binding Scores.StatusMessage}" FontSize="12" Foreground="Gray"/>
         </Grid>
 
         <Grid Grid.Column="1" DataContext="{Binding GameStateMonitor}" RowDefinitions="*,auto">

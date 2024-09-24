@@ -3,6 +3,7 @@ using Grpc.Core;
 using Swoq.Interface;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Swoq.Server.Services;
 
@@ -14,6 +15,9 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
     private readonly ConcurrentQueue<Update> updates = new();
     private readonly SemaphoreSlim updatesCount = new(0);
 
+    private readonly CancellationTokenSource cancellationTokenSource = new();
+    private readonly Thread trainMonitorThread;
+
     public MonitorService(GameServicePostman gameServicePostman, GameServer gameServer)
     {
         this.gameServicePostman = gameServicePostman;
@@ -22,10 +26,22 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
         this.gameServicePostman.Started += OnStarted;
         this.gameServicePostman.Acted += OnActed;
         this.gameServer.QueueUpdated += OnQueueUpdated;
+        this.gameServer.GameAdded += OnGameAdded;
+        this.gameServer.GameRemoved += OnGameRemoved;
+        this.gameServer.GameActed += OnGameActed;
+
+        trainMonitorThread = new Thread(new ThreadStart(TrainMonitorThread));
+        trainMonitorThread.Start();
     }
 
     public void Dispose()
     {
+        cancellationTokenSource.Cancel();
+        trainMonitorThread.Join();
+
+        gameServer.GameActed -= OnGameActed;
+        gameServer.GameRemoved -= OnGameRemoved;
+        gameServer.GameAdded -= OnGameAdded;
         gameServer.QueueUpdated -= OnQueueUpdated;
         gameServicePostman.Acted -= OnActed;
         gameServicePostman.Started -= OnStarted;
@@ -46,7 +62,7 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
         }
         catch (OperationCanceledException)
         {
-            // Gracefull shutdown
+            // Graceful shutdown
         }
     }
 
@@ -61,13 +77,13 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
 
             var update = new Update
             {
-                Started = new QuestStarted
+                QuestStarted = new QuestStarted
                 {
                     GameId = e.gameId.ToString(),
                     UserName = e.userName,
                     Request = e.request,
                     Response = e.response
-                },
+                }
             };
 
             updates.Enqueue(update);
@@ -81,7 +97,7 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
         {
             var update = new Update
             {
-                Acted = new QuestActed
+                QuestActed = new QuestActed
                 {
                     GameId = e.gameId.ToString(),
                     Request = e.request,
@@ -104,5 +120,120 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
 
         updates.Enqueue(update);
         updatesCount.Release();
+    }
+
+
+    private void OnGameAdded(object? sender, (Guid gameId, string username, int? level) e)
+    {
+        gameUpdates.Enqueue(new GameAddedEntry(e.gameId, e.username, e.level));
+        gameUpdatesSemaphore.Release();
+    }
+
+    private void OnGameRemoved(object? sender, Guid gameId)
+    {
+        gameUpdates.Enqueue(new GameRemovedEntry(gameId));
+        gameUpdatesSemaphore.Release();
+    }
+
+    private void OnGameActed(object? sender, (Guid gameId, bool finished) e)
+    {
+        gameUpdates.Enqueue(new GameActedEntry(e.gameId, e.finished));
+        gameUpdatesSemaphore.Release();
+    }
+
+    private abstract record GameUpdateEntry(Guid GameId);
+    private record GameAddedEntry(Guid GameId, string UserName, int? Level) : GameUpdateEntry(GameId);
+    private record GameRemovedEntry(Guid GameId) : GameUpdateEntry(GameId);
+    private record GameActedEntry(Guid GameId, bool Finished) : GameUpdateEntry(GameId);
+
+    private SemaphoreSlim gameUpdatesSemaphore = new(0);
+    private ConcurrentQueue<GameUpdateEntry> gameUpdates = new();
+
+    private record TrainingSessionEntry(Guid GameId, string UserName, int Level, bool IsActive, bool IsFinished)
+    {
+        public TrainingSession ToTrainingSession()
+        {
+            return new TrainingSession
+            {
+                GameId = GameId.ToString(),
+                UserName = UserName,
+                Level = Level,
+                IsActive = IsActive,
+                IsFinished = IsFinished
+            };
+        }
+    }
+
+    private ImmutableDictionary<Guid, TrainingSessionEntry> trainingSessions = ImmutableDictionary<Guid, TrainingSessionEntry>.Empty;
+
+    private void TrainMonitorThread()
+    {
+        var lastUpdate = DateTime.MinValue;
+        while (!cancellationTokenSource.IsCancellationRequested)
+        {
+            try
+            {
+                if (gameUpdatesSemaphore.Wait(Parameters.TrainingUpdatePeriod, cancellationTokenSource.Token))
+                {
+                    gameUpdates.TryDequeue(out var update);
+                    switch (update)
+                    {
+                        case GameAddedEntry e:
+                            {
+                                if (e.Level.HasValue)
+                                {
+                                    var session = new TrainingSessionEntry(e.GameId, e.UserName, e.Level.Value, true, false);
+                                    trainingSessions = trainingSessions.SetItem(session.GameId, session);
+                                }
+                            }
+                            break;
+                        case GameRemovedEntry e:
+                            {
+                                if (trainingSessions.ContainsKey(e.GameId))
+                                {
+                                    trainingSessions = trainingSessions.Remove(e.GameId);
+                                }
+                            }
+                            break;
+                        case GameActedEntry e:
+                            {
+                                if (trainingSessions.TryGetValue(e.GameId, out var session))
+                                {
+                                    session = session with { IsActive = true, IsFinished = e.Finished };
+                                    trainingSessions = trainingSessions.SetItem(session.GameId, session);
+                                }
+                            }
+                            break;
+                    }
+                }
+
+                var now = DateTime.Now;
+
+                if ((now - lastUpdate) > Parameters.TrainingUpdatePeriod)
+                {
+                    // Send an updated list
+                    var update = new Update { TrainingUpdate = new() };
+                    update.TrainingUpdate.Sessions.AddRange(trainingSessions.Values.Select(s => s.ToTrainingSession()));
+                    updates.Enqueue(update);
+                    updatesCount.Release();
+
+                    // Mark all sessions as inactive
+                    trainingSessions = trainingSessions.ToImmutableDictionary(s => s.Key, s => s.Value with { IsActive = false });
+
+                    // Start waiting another period
+                    lastUpdate = now;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Stop gracefully
+                break;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Exception {ex.GetType()}: {ex.Message}");
+                Thread.Sleep(TimeSpan.FromSeconds(5));
+            }
+        }
     }
 }

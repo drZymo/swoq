@@ -26,8 +26,21 @@ message QueueUpdate {
     repeated string queuedUsers = 1;
 }
 
+message TrainingSession {
+    string gameId = 1;
+    string userName = 2;
+    int32 level = 3;
+    bool isActive = 4;
+    bool isFinished = 5;
+}
+
+message TrainingUpdate {
+    repeated TrainingSession sessions = 1;
+}
+
 message Update {
-    optional QuestStarted started = 1;
-    optional QuestActed acted = 2;
+    optional QuestStarted questStarted = 1;
+    optional QuestActed questActed = 2;
     optional QueueUpdate queueUpdate = 3;
+    optional TrainingUpdate trainingUpdate = 4;
 }
