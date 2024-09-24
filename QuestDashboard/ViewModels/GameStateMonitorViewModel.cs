@@ -158,14 +158,19 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         var sessionsToRemove = trainingSessions.Where(s => removedSessionIds.Contains(s.Id)).ToImmutableArray();
         foreach (var session in sessionsToRemove)
         {
-            trainingSessions.Remove(session);
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                trainingSessions.Remove(session);
+            });
         }
 
         // Add sessions at the start
         var sessionsToAdd = newTrainingSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
         foreach (var session in sessionsToAdd)
         {
-            trainingSessions.Insert(
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                trainingSessions.Insert(
                 0,
                 new TrainingSessionViewModel(
                     session.GameId,
@@ -173,6 +178,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                     session.Level,
                     session.IsActive,
                     session.IsFinished));
+            });
         }
 
         // Update existing
@@ -183,8 +189,11 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
             if (newSession != null && oldSession != null)
             {
-                oldSession.IsActive = newSession.IsActive;
-                oldSession.IsFinished = newSession.IsFinished;
+                Dispatcher.UIThread.Invoke(() =>
+                {
+                    oldSession.IsActive = newSession.IsActive;
+                    oldSession.IsFinished = newSession.IsFinished;
+                });
             }
         }
     }

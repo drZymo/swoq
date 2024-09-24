@@ -1,9 +1,11 @@
 # TODO
 
 - [ ] Run duration test to check for exceptions
+- [ ] Move high scores to monitor service
 - [.] Allow more than 1 quest at a time in case it is needed
   - [ ] unit tests
   - [ ] dashboard
+- [ ] Rename QuestDashboard to simply Dashboard
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
 - [.] User portal
