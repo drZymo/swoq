@@ -1,10 +1,12 @@
 # TODO
 
 - [ ] Run duration test to check for exceptions
+- [ ] Remove CheckInvariant
 - [ ] Move high scores to monitor service
 - [.] Allow more than 1 quest at a time in case it is needed
   - [ ] unit tests
   - [ ] dashboard
+- [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Rename QuestDashboard to simply Dashboard
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
@@ -116,6 +118,7 @@
 - [X] BUG: Fix multi-threaded map generator
 
 - [X] Show current game sessions
+- [X] BUG: move from plate to open door pos that is now closed
 
 # Design decisions
 

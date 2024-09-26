@@ -260,17 +260,25 @@ public class Game : IGame
 
     private void Move(ref Player player, Position movePos)
     {
+        // Check if entering is allowed
         if (!CanMoveTo(movePos))
         {
             throw new MoveNotAllowedException(CreateState());
         }
 
-        LeaveCell(player.Position);
-
+        // Change pos first
+        // so player can be crushed by a door that closes by leaving its current cell
+        var prevPos = player.Position;
         player = player with { Position = movePos };
-        Debug.Assert(map[player.Position].CanWalkOn());
 
-        EnterCell(ref player, player.Position);
+        // First leave the current cell,
+        // so any doors are closed before entering the next cell
+        LeaveCell(prevPos);
+        // and enter if still alive
+        if (player.Position.IsValid())
+        {
+            EnterCell(ref player, player.Position);
+        }
     }
 
     private void LeaveCell(Position position)

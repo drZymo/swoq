@@ -28,7 +28,6 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
     public event EventHandler<Guid>? GameRemoved;
     public event EventHandler<(Guid gameId, bool finished)>? GameActed;
 
-    
     public StartResult Start(string userId, int? level)
     {
         User user;
