@@ -16,7 +16,7 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
     private readonly SemaphoreSlim updatesCount = new(0);
 
     private readonly CancellationTokenSource cancellationTokenSource = new();
-    private readonly Thread trainMonitorThread;
+    private readonly Thread trainingSessionMonitorThread;
 
     public MonitorService(GameServicePostman gameServicePostman, GameServer gameServer)
     {
@@ -30,14 +30,14 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
         this.gameServer.GameRemoved += OnGameRemoved;
         this.gameServer.GameActed += OnGameActed;
 
-        trainMonitorThread = new Thread(new ThreadStart(TrainMonitorThread));
-        trainMonitorThread.Start();
+        trainingSessionMonitorThread = new Thread(new ThreadStart(TrainingSessionMonitorThread));
+        trainingSessionMonitorThread.Start();
     }
 
     public void Dispose()
     {
         cancellationTokenSource.Cancel();
-        trainMonitorThread.Join();
+        trainingSessionMonitorThread.Join();
 
         gameServer.GameActed -= OnGameActed;
         gameServer.GameRemoved -= OnGameRemoved;
@@ -146,8 +146,8 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
     private record GameRemovedEntry(Guid GameId) : GameUpdateEntry(GameId);
     private record GameActedEntry(Guid GameId, bool Finished) : GameUpdateEntry(GameId);
 
-    private SemaphoreSlim gameUpdatesSemaphore = new(0);
-    private ConcurrentQueue<GameUpdateEntry> gameUpdates = new();
+    private readonly SemaphoreSlim gameUpdatesSemaphore = new(0);
+    private readonly ConcurrentQueue<GameUpdateEntry> gameUpdates = new();
 
     private record TrainingSessionEntry(Guid GameId, string UserName, int Level, bool IsActive, bool IsFinished)
     {
@@ -166,9 +166,10 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
 
     private ImmutableDictionary<Guid, TrainingSessionEntry> trainingSessions = ImmutableDictionary<Guid, TrainingSessionEntry>.Empty;
 
-    private void TrainMonitorThread()
+    private void TrainingSessionMonitorThread()
     {
         var lastUpdate = DateTime.MinValue;
+        var eventCount = 0;
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             try
@@ -205,14 +206,20 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
                             }
                             break;
                     }
+                    eventCount++;
                 }
 
                 var now = DateTime.Now;
-
-                if ((now - lastUpdate) > Parameters.TrainingUpdatePeriod)
+                var delta = (now - lastUpdate);
+                if (delta > Parameters.TrainingUpdatePeriod)
                 {
+                    var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
+
                     // Send an updated list
-                    var update = new Update { TrainingUpdate = new() };
+                    var update = new Update
+                    {
+                        TrainingUpdate = new() { EventsPerSecond = eventsPerSecond }
+                    };
                     update.TrainingUpdate.Sessions.AddRange(trainingSessions.Values.Select(s => s.ToTrainingSession()));
                     updates.Enqueue(update);
                     updatesCount.Release();
@@ -222,6 +229,7 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
 
                     // Start waiting another period
                     lastUpdate = now;
+                    eventCount = 0;
                 }
             }
             catch (OperationCanceledException)

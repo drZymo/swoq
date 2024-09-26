@@ -8,6 +8,7 @@
   - [ ] dashboard
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Rename QuestDashboard to simply Dashboard
+- [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
 - [.] User portal
@@ -119,6 +120,7 @@
 
 - [X] Show current game sessions
 - [X] BUG: move from plate to open door pos that is now closed
+- [X] How multi-threaded is the server really?
 
 # Design decisions
 

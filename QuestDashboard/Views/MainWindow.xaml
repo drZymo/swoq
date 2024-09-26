@@ -14,23 +14,30 @@
         Foreground="White"
         Background="Black">
     <Grid ColumnDefinitions="300,300,*">
-        <infraui:GroupBox Grid.Column="0" Header="Training sessions" DataContext="{Binding GameStateMonitor}">
-            <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding TrainingSessions}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
-                                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                                    <TextBlock  Foreground="{Binding TextColor}" Text="{Binding UserName}"/>
-                                    <TextBlock  Foreground="{Binding TextColor}" IsVisible="{Binding IsFinished}">✓</TextBlock>
-                                </StackPanel>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right" Foreground="{Binding TextColor}"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </infraui:GroupBox>
+        <Grid Grid.Column="0" RowDefinitions="*,auto" DataContext="{Binding GameStateMonitor}">
+            <infraui:GroupBox Grid.Row="0" Header="Training sessions">
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding TrainingSessions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock  Foreground="{Binding TextColor}" Text="{Binding UserName}"/>
+                                        <TextBlock  Foreground="{Binding TextColor}" IsVisible="{Binding IsFinished}">✓</TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right" Foreground="{Binding TextColor}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </infraui:GroupBox>
+
+            <TextBlock Grid.Row="2" FontSize="12" Foreground="Gray">
+                <Run>Events per second: </Run>
+                <Run Text="{Binding EventsPerSecond, StringFormat={}{0:0.0}}"/>
+            </TextBlock>
+        </Grid>
 
         <Grid Grid.Column="1" RowDefinitions="*,auto,auto">
             <infraui:GroupBox Grid.Row="0" Header="Highscores"  DataContext="{Binding Scores}">

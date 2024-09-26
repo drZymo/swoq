@@ -54,6 +54,17 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private double eventsPerSecond = 0;
+    public double EventsPerSecond
+    {
+        get => eventsPerSecond;
+        private set
+        {
+            eventsPerSecond = value;
+            OnPropertyChanged();
+        }
+    }
+
     private readonly ObservableCollection<TrainingSessionViewModel> trainingSessions = [];
     public ReadOnlyObservableCollection<TrainingSessionViewModel> TrainingSessions { get; }
 
@@ -67,7 +78,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 bool connected = false;
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-                var client = new Interface.MonitorService.MonitorServiceClient(channel);
+                var client = new MonitorService.MonitorServiceClient(channel);
 
                 GameStateBuilder? gameStateBuilder = null;
 
@@ -114,7 +125,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     if (message.TrainingUpdate != null)
                     {
-                        UpdateTrainingSessions(message);
+                        UpdateTrainingSessions(message.TrainingUpdate);
                     }
                 }
             }
@@ -143,10 +154,14 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void UpdateTrainingSessions(Update message)
+    private void UpdateTrainingSessions(TrainingUpdate update)
     {
-        var newTrainingSessions = message.TrainingUpdate.Sessions;
+        var newTrainingSessions = update.Sessions;
 
+        // Update events per second
+        EventsPerSecond = update.EventsPerSecond;
+
+        // Find out which game ids have been added, removed and updated
         var newIds = newTrainingSessions.Select(s => s.GameId).ToImmutableHashSet();
         var oldIds = trainingSessions.Select(s => s.Id).ToImmutableHashSet();
 

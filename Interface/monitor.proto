@@ -35,7 +35,8 @@ message TrainingSession {
 }
 
 message TrainingUpdate {
-    repeated TrainingSession sessions = 1;
+    float eventsPerSecond = 1;
+    repeated TrainingSession sessions = 2;
 }
 
 message Update {
