@@ -13,9 +13,9 @@
         FontSize="20"
         Foreground="White"
         Background="Black">
-    <Grid ColumnDefinitions="300,300,*">
-        <Grid Grid.Column="0" RowDefinitions="*,auto" DataContext="{Binding GameStateMonitor}">
-            <infraui:GroupBox Grid.Row="0" Header="Training sessions">
+    <Grid RowDefinitions="*,auto" DataContext="{Binding GameStateMonitor}">
+        <Grid Grid.Row="0" ColumnDefinitions="300,300,*">
+            <infraui:GroupBox Grid.Column="0" Header="Training sessions">
                 <ScrollViewer>
                     <ItemsControl ItemsSource="{Binding TrainingSessions}">
                         <ItemsControl.ItemTemplate>
@@ -33,50 +33,50 @@
                 </ScrollViewer>
             </infraui:GroupBox>
 
-            <TextBlock Grid.Row="2" FontSize="12" Foreground="Gray">
-                <Run>Events per second: </Run>
-                <Run Text="{Binding EventsPerSecond, StringFormat={}{0:0.0}}"/>
-            </TextBlock>
-        </Grid>
+            <Grid Grid.Column="1" RowDefinitions="*,auto,auto">
+                <infraui:GroupBox Grid.Row="0" Header="Highscores">
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding Scores}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding UserName}"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
+                                            <Run Text="{Binding LengthTicks}"/>
+                                            <Run>ticks,</Run>
+                                            <Run Text="{Binding LengthSeconds}"/>
+                                            <Run>sec.</Run>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </infraui:GroupBox>
 
-        <Grid Grid.Column="1" RowDefinitions="*,auto,auto">
-            <infraui:GroupBox Grid.Row="0" Header="Highscores"  DataContext="{Binding Scores}">
-                <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding Scores}">
+                <infraui:GroupBox Grid.Row="1" Header="Queue">
+                    <ItemsControl ItemsSource="{Binding QueueUsers}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding UserName}"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
-                                        <Run Text="{Binding LengthTicks}"/>
-                                        <Run>ticks,</Run>
-                                        <Run Text="{Binding LengthSeconds}"/>
-                                        <Run>sec.</Run>
-                                    </TextBlock>
-                                </Grid>
+                                <TextBlock Text="{Binding}"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </ScrollViewer>
-            </infraui:GroupBox>
+                </infraui:GroupBox>
+            </Grid>
 
-            <infraui:GroupBox Grid.Row="1" Header="Queue"  DataContext="{Binding GameStateMonitor}">
-                <ItemsControl ItemsSource="{Binding QueueUsers}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </infraui:GroupBox>
-
-            <TextBlock Grid.Row="2" Text="{Binding Scores.StatusMessage}" FontSize="12" Foreground="Gray"/>
+            <Grid Grid.Column="2">
+                <infraui:GameStateView Grid.Row="0" DataContext="{Binding GameState}"/>
+            </Grid>
         </Grid>
 
-        <Grid Grid.Column="2" DataContext="{Binding GameStateMonitor}" RowDefinitions="*,auto">
-            <infraui:GameStateView Grid.Row="0" DataContext="{Binding GameState}"/>
-            <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
+        <Grid Grid.Row="1" ColumnDefinitions="*,auto">
+            <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
+            <TextBlock Grid.Column="1" FontSize="12" Foreground="Gray">
+                <Run>Events per second: </Run>
+                <Run Text="{Binding EventsPerSecond, StringFormat={}{0:0.0}}"/>
+            </TextBlock>
         </Grid>
     </Grid>
 </Window>

@@ -7,7 +7,6 @@ package Swoq.Interface;
 
 service DashboardService {
     rpc GetUpdates(google.protobuf.Empty) returns (stream Update);
-    rpc GetScores(google.protobuf.Empty) returns(Scores);
 }
 
 message QuestStarted {
@@ -40,13 +39,6 @@ message TrainingUpdate {
     repeated TrainingSession sessions = 2;
 }
 
-message Update {
-    optional QuestStarted questStarted = 1;
-    optional QuestActed questActed = 2;
-    optional QueueUpdate queueUpdate = 3;
-    optional TrainingUpdate trainingUpdate = 4;
-}
-
 message Score {
     string userName = 1;
     int32 level = 2;
@@ -54,6 +46,14 @@ message Score {
     int32 lengthSeconds = 4;
 }
 
-message Scores {
+message ScoresUpdate {
     repeated Score scores = 1;
+}
+
+message Update {
+    optional QuestStarted questStarted = 1;
+    optional QuestActed questActed = 2;
+    optional QueueUpdate queueUpdate = 3;
+    optional TrainingUpdate trainingUpdate = 4;
+    optional ScoresUpdate scoresUpdate = 5;
 }

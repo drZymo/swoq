@@ -11,6 +11,8 @@ namespace Swoq.Dashboard.ViewModels;
 
 internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 {
+    private static readonly TimeSpan PollDelay = TimeSpan.FromSeconds(3);
+
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread getUpdatesThread;
 
@@ -18,6 +20,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     {
         QueueUsers = new(queuedUsers);
         TrainingSessions = new(trainingSessions);
+        Scores = new(scores);
 
         getUpdatesThread = new Thread(new ThreadStart(GetUpdatesThread));
         getUpdatesThread.Start();
@@ -43,6 +46,15 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     private readonly ObservableCollection<string> queuedUsers = [];
     public ReadOnlyObservableCollection<string> QueueUsers { get; }
 
+    private readonly ObservableCollection<TrainingSessionViewModel> trainingSessions = [];
+    public ReadOnlyObservableCollection<TrainingSessionViewModel> TrainingSessions { get; }
+
+    public record Score(string UserName, int Level, int LengthTicks, int LengthSeconds);
+
+    private readonly ObservableCollection<Score> scores = [];
+    public ReadOnlyObservableCollection<Score> Scores { get; }
+
+
     private string statusMessage = "";
     public string StatusMessage
     {
@@ -64,9 +76,6 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
             OnPropertyChanged();
         }
     }
-
-    private readonly ObservableCollection<TrainingSessionViewModel> trainingSessions = [];
-    public ReadOnlyObservableCollection<TrainingSessionViewModel> TrainingSessions { get; }
 
     private async void GetUpdatesThread()
     {
@@ -126,6 +135,11 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                     if (message.TrainingUpdate != null)
                     {
                         UpdateTrainingSessions(message.TrainingUpdate);
+                    }
+
+                    if (message.ScoresUpdate != null)
+                    {
+                        UpdateScores(message.ScoresUpdate);
                     }
                 }
             }
@@ -211,5 +225,24 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 });
             }
         }
+    }
+
+    private void UpdateScores(ScoresUpdate update)
+    {
+        var orderedScores = update.Scores.
+            Select(s => new Score(s.UserName, s.Level, s.LengthTicks, s.LengthSeconds)).
+            OrderByDescending(s => s.Level).
+            ThenBy(s => s.LengthTicks).
+            ThenBy(s => s.LengthSeconds).
+            ToImmutableArray();
+
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            scores.Clear();
+            foreach (var score in orderedScores)
+            {
+                scores.Add(score);
+            }
+        });
     }
 }

@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Sync appsettings for production/development
 - [ ] Run duration test to check for exceptions
 - [ ] Remove CheckInvariant
 - [.] Allow more than 1 quest at a time in case it is needed
@@ -31,7 +32,6 @@
 - [ ] Single build output/publish folder for server and dashboard
 - [ ] Auto start dashboard from server
 - [ ] Publish a single-file app
-- [ ] Sync appsettings for production/development
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
 - [ ] Refactor 3 enemy + boss handling in maps and mapbuilder

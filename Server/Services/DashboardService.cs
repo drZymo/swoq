@@ -69,20 +69,20 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
     }
 
-    public override async Task<Scores> GetScores(Empty request, ServerCallContext context)
-    {
-        var users = await database.GetAllUsers();
+    //public override async Task<Scores> GetScores(Empty request, ServerCallContext context)
+    //{
+    //    var users = await database.GetAllUsers();
 
-        var scores = new Scores();
-        scores.Scores_.AddRange(users.Select(u => new Score()
-        {
-            UserName = u.Name,
-            Level = u.Level,
-            LengthTicks = u.QuestLengthTicks,
-            LengthSeconds = u.QuestLengthSeconds
-        }));
-        return scores;
-    }
+    //    var scores = new Scores();
+    //    scores.Scores_.AddRange(users.Select(u => new Score()
+    //    {
+    //        UserName = u.Name,
+    //        Level = u.Level,
+    //        LengthTicks = u.QuestLengthTicks,
+    //        LengthSeconds = u.QuestLengthSeconds
+    //    }));
+    //    return scores;
+    //}
 
     private Guid currentQuestGameId = Guid.Empty;
 
@@ -183,16 +183,22 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     }
 
     private ImmutableDictionary<Guid, TrainingSessionEntry> trainingSessions = ImmutableDictionary<Guid, TrainingSessionEntry>.Empty;
+    private DateTime lastTrainingSessionsUpdate = DateTime.MinValue;
+    private DateTime lastScoresUpdate = DateTime.MinValue;
+    private int eventCount = 0;
 
     private void TrainingSessionMonitorThread()
     {
-        var lastUpdate = DateTime.MinValue;
-        var eventCount = 0;
+        trainingSessions = ImmutableDictionary<Guid, TrainingSessionEntry>.Empty;
+        lastTrainingSessionsUpdate = DateTime.MinValue;
+        lastScoresUpdate = DateTime.MinValue;
+        eventCount = 0;
+
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             try
             {
-                if (gameUpdatesSemaphore.Wait(Parameters.TrainingUpdatePeriod, cancellationTokenSource.Token))
+                if (gameUpdatesSemaphore.Wait(TimeSpan.FromMilliseconds(100), cancellationTokenSource.Token))
                 {
                     gameUpdates.TryDequeue(out var update);
                     switch (update)
@@ -228,27 +234,9 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                 }
 
                 var now = DateTime.Now;
-                var delta = (now - lastUpdate);
-                if (delta > Parameters.TrainingUpdatePeriod)
-                {
-                    var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
 
-                    // Send an updated list
-                    var update = new Update
-                    {
-                        TrainingUpdate = new() { EventsPerSecond = eventsPerSecond }
-                    };
-                    update.TrainingUpdate.Sessions.AddRange(trainingSessions.Values.Select(s => s.ToTrainingSession()));
-                    updates.Enqueue(update);
-                    updatesCount.Release();
-
-                    // Mark all sessions as inactive
-                    trainingSessions = trainingSessions.ToImmutableDictionary(s => s.Key, s => s.Value with { IsActive = false });
-
-                    // Start waiting another period
-                    lastUpdate = now;
-                    eventCount = 0;
-                }
+                SendTrainingUpdateIfNeeded(now);
+                SendScoresUpdateIfNeeded(now);
             }
             catch (OperationCanceledException)
             {
@@ -261,5 +249,57 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
+    }
+
+    private void SendTrainingUpdateIfNeeded(DateTime now)
+    {
+        if (now - lastTrainingSessionsUpdate < Parameters.TrainingUpdatePeriod) return;
+
+        // Compute events per second
+        var delta = (now - lastTrainingSessionsUpdate);
+        var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
+
+        // Send an updated list
+        var update = new Update
+        {
+            TrainingUpdate = new() { EventsPerSecond = eventsPerSecond }
+        };
+        update.TrainingUpdate.Sessions.AddRange(trainingSessions.Values.Select(s => s.ToTrainingSession()));
+        updates.Enqueue(update);
+        updatesCount.Release();
+
+        // Mark all sessions as inactive
+        trainingSessions = trainingSessions.ToImmutableDictionary(s => s.Key, s => s.Value with { IsActive = false });
+
+        // Start waiting another period
+        lastTrainingSessionsUpdate = now;
+        eventCount = 0;
+    }
+
+    private async void SendScoresUpdateIfNeeded(DateTime now)
+    {
+        if (now - lastScoresUpdate < Parameters.ScoresUpdatePeriod) return;
+
+        // Get scores from database
+        var users = await database.GetAllUsers();
+        var scores = users.Select(u => new Score()
+        {
+            UserName = u.Name,
+            Level = u.Level,
+            LengthTicks = u.QuestLengthTicks,
+            LengthSeconds = u.QuestLengthSeconds
+        });
+
+        // Send update
+        var update = new Update
+        {
+            ScoresUpdate = new()
+        };
+        update.ScoresUpdate.Scores.AddRange(scores);
+        updates.Enqueue(update);
+        updatesCount.Release();
+
+        // Start waiting another period
+        lastScoresUpdate = now;
     }
 }
