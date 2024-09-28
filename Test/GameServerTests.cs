@@ -52,6 +52,46 @@ public class GameServerTests
     }
 
     [Test]
+    public void SingleQuestCanFinish()
+    {
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        GivenUserRegistered();
+
+        // Start a quest
+        GameStartResult? result = null;
+        Assert.DoesNotThrow(() => result = gameServer.Start("u1", null));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.UserName, Is.EqualTo("User1"));
+
+        // Act on it
+        GameState state = result.State;
+        for (int i = 0; i < 2; i++)
+        {
+            Assert.That(state.Level, Is.EqualTo(0));
+            now += TimeSpan.FromSeconds(1);
+            Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveSouth));
+            now += TimeSpan.FromSeconds(1);
+            Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveEast));
+        }
+        Assert.That(state.Level, Is.EqualTo(1));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveSouth));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveEast));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveSouth));
+
+        // Now enter the final exit, game should be finished
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveEast));
+        Assert.Multiple(() =>
+        {
+            Assert.That(state.Level, Is.EqualTo(2));
+            Assert.That(state.Finished, Is.True);
+        });
+    }
+
+    [Test]
     public void SecondQuestStartIsQueued()
     {
         var gameServer = new GameServer<DummyGenerator>(database, 1);
@@ -255,6 +295,89 @@ public class GameServerTests
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
     }
 
+    [Test]
+    public void ThirdQuestBecomesActiveAfterFirstFinishes()
+    {
+        var gameServer = new GameServer<DummyGenerator>(database, 2);
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
+        GivenUserRegistered(id: "u3", name: "User2");
+
+        // Start quest for user 1
+        GameStartResult? result1 = null;
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
+        Assert.That(result1, Is.Not.Null);
+
+        // Start quest for user 2
+        now += TimeSpan.FromSeconds(1);
+        GameStartResult? result2 = null;
+        Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
+        Assert.That(result2, Is.Not.Null);
+
+        // Start quest for user 3, should be queued
+        now += TimeSpan.FromSeconds(1);
+        GameStartResult? result3 = null;
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(result3, Is.Null);
+
+        // Act on user 1 quest should be possible
+        GameState state = result1.State;
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+
+        // Act on user 2 quest should be possible
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+
+        // 3 is still queued
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+
+        // Finish the game with 1 and keep moving back-and-forth with 2
+        Assert.That(state.Level, Is.EqualTo(0));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(state.Level, Is.EqualTo(1));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+
+        // Now enter the final exit, game should be finished
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.Multiple(() =>
+        {
+            Assert.That(state.Level, Is.EqualTo(2));
+            Assert.That(state.Finished, Is.True);
+        });
+
+        // Now, since game 1 is finished, user 3 can continue
+        Assert.DoesNotThrow(() => result3 = gameServer.Start("u3", null));
+        // User 1 cannot act anymore
+        Assert.Throws<GameFinishedException>(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        // User 2 can still act
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+    }
+
     #region Primitives
 
     private void GivenUserRegistered(string id = "u1", string name = "User1", int level = 1)
@@ -294,11 +417,15 @@ public class GameServerTests
 
             map.Player1.Position = (1, 1);
 
-            if (level == MaxLevel) map.IsFinal = true;
+            if (level == MaxLevel)
+            {
+                map[height - 2, width - 3] = Cell.Treasure;
+                map.IsFinal = true;
+            }
 
             return map.ToMap();
         }
 
-        public static int MaxLevel { get; } = 2;
+        public static int MaxLevel { get; } = 1;
     }
 }

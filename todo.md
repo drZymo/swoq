@@ -2,7 +2,7 @@
 
 - [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
-  - [ ] unit tests
+  - [X] unit tests
   - [ ] dashboard
 - [ ] Run duration test to check for exceptions
 - [ ] Remove CheckInvariant
