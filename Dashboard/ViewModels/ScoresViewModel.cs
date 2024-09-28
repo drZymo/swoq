@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
-namespace Swoq.QuestDashboard.ViewModels;
+namespace Swoq.Dashboard.ViewModels;
 
 internal class ScoresViewModel : ViewModelBase, IDisposable
 {

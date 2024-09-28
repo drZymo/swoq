@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Swoq.Server.Services;
 
-internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDisposable
+internal class DashboardService : Interface.DashboardService.DashboardServiceBase, IDisposable
 {
     private readonly GameServicePostman gameServicePostman;
     private readonly GameServer gameServer;
@@ -18,7 +18,7 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread trainingSessionMonitorThread;
 
-    public MonitorService(GameServicePostman gameServicePostman, GameServer gameServer)
+    public DashboardService(GameServicePostman gameServicePostman, GameServer gameServer)
     {
         this.gameServicePostman = gameServicePostman;
         this.gameServer = gameServer;
@@ -47,7 +47,7 @@ internal class MonitorService : Interface.MonitorService.MonitorServiceBase, IDi
         gameServicePostman.Started -= OnStarted;
     }
 
-    public override async Task Monitor(Empty request, IServerStreamWriter<Update> responseStream, ServerCallContext context)
+    public override async Task GetUpdates(Empty request, IServerStreamWriter<Update> responseStream, ServerCallContext context)
     {
         try
         {

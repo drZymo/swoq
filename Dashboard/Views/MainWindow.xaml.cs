@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace Swoq.QuestDashboard.Views;
+namespace Swoq.Dashboard.Views;
 
 public partial class MainWindow : Window
 {

@@ -2,12 +2,11 @@
 
 - [ ] Run duration test to check for exceptions
 - [ ] Remove CheckInvariant
-- [ ] Move high scores to monitor service
+- [ ] Move high scores to dashboard service
 - [.] Allow more than 1 quest at a time in case it is needed
   - [ ] unit tests
   - [ ] dashboard
 - [ ] Rework inactive states of games. Move all checks to Game class.
-- [ ] Rename QuestDashboard to simply Dashboard
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
@@ -30,7 +29,7 @@
 - [?] Slower with boulder in inventory. 50% change movement is executed.
 - [?] Remember health at start of level
 - [ ] Autotile in map viewer
-- [ ] Single build output/publish folder for server and questdashboard
+- [ ] Single build output/publish folder for server and dashboard
 - [ ] Auto start dashboard from server
 - [ ] Publish a single-file app
 - [ ] Sync appsettings for production/development
@@ -117,10 +116,12 @@
 - [X] Random player, random level train script to test load
 - [X] Duration test for mapgenerator
 - [X] BUG: Fix multi-threaded map generator
-
 - [X] Show current game sessions
 - [X] BUG: move from plate to open door pos that is now closed
 - [X] How multi-threaded is the server really?
+- [X] Rename monitor service to dashboard service
+- [X] Rename Dashboard to simply Dashboard
+
 
 # Design decisions
 

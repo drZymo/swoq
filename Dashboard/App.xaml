@@ -1,7 +1,7 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Swoq.QuestDashboard.App"
-             xmlns:local="using:Swoq.QuestDashboard"
+             x:Class="Swoq.Dashboard.App"
+             xmlns:local="using:Swoq.Dashboard"
              RequestedThemeVariant="Dark">
     <Application.DataTemplates>
         <local:ViewLocator/>

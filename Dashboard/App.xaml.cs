@@ -1,10 +1,10 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Swoq.QuestDashboard.ViewModels;
-using Swoq.QuestDashboard.Views;
+using Swoq.Dashboard.ViewModels;
+using Swoq.Dashboard.Views;
 
-namespace Swoq.QuestDashboard;
+namespace Swoq.Dashboard;
 
 public partial class App : Application
 {

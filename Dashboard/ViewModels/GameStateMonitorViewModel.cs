@@ -7,26 +7,26 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
-namespace Swoq.QuestDashboard.ViewModels;
+namespace Swoq.Dashboard.ViewModels;
 
 internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 {
     private readonly CancellationTokenSource cancellationTokenSource = new();
-    private readonly Thread monitorThread;
+    private readonly Thread getUpdatesThread;
 
     public GameStateMonitorViewModel()
     {
         QueueUsers = new(queuedUsers);
         TrainingSessions = new(trainingSessions);
 
-        monitorThread = new Thread(new ThreadStart(MonitorThread));
-        monitorThread.Start();
+        getUpdatesThread = new Thread(new ThreadStart(GetUpdatesThread));
+        getUpdatesThread.Start();
     }
 
     public void Dispose()
     {
         cancellationTokenSource.Cancel();
-        monitorThread.Join();
+        getUpdatesThread.Join();
     }
 
     private GameStateViewModel gameState = new(null);
@@ -68,7 +68,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     private readonly ObservableCollection<TrainingSessionViewModel> trainingSessions = [];
     public ReadOnlyObservableCollection<TrainingSessionViewModel> TrainingSessions { get; }
 
-    private async void MonitorThread()
+    private async void GetUpdatesThread()
     {
         var callOptions = new Grpc.Core.CallOptions(cancellationToken: cancellationTokenSource.Token);
         while (!cancellationTokenSource.IsCancellationRequested)
@@ -78,11 +78,11 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 bool connected = false;
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-                var client = new MonitorService.MonitorServiceClient(channel);
+                var client = new DashboardService.DashboardServiceClient(channel);
 
                 GameStateBuilder? gameStateBuilder = null;
 
-                var call = client.Monitor(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
+                var call = client.GetUpdates(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
                 while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
                 {
                     if (!connected)

@@ -5,8 +5,8 @@ import "swoq.proto";
 
 package Swoq.Interface;
 
-service MonitorService {
-    rpc Monitor(google.protobuf.Empty) returns (stream Update);
+service DashboardService {
+    rpc GetUpdates(google.protobuf.Empty) returns (stream Update);
 }
 
 message QuestStarted {

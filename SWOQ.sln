@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra", "Infra\Infra.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReplayViewer", "ReplayViewer\ReplayViewer.csproj", "{887F1F89-0130-46AB-A2E0-B1A75C8E8288}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuestDashboard", "QuestDashboard\QuestDashboard.csproj", "{195B94C4-DBFC-4069-AFFB-7862F0E97730}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dashboard", "Dashboard\Dashboard.csproj", "{195B94C4-DBFC-4069-AFFB-7862F0E97730}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfraUI", "InfraUI\InfraUI.csproj", "{3081AB81-5FC5-41DE-8B51-1F944C079657}"
 EndProject

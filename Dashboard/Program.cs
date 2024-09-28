@@ -1,6 +1,6 @@
 ﻿using Avalonia;
 
-namespace Swoq.QuestDashboard;
+namespace Swoq.Dashboard;
 
 sealed class Program
 {

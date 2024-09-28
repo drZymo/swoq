@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Swoq.InfraUI.ViewModels;
 
-namespace Swoq.QuestDashboard;
+namespace Swoq.Dashboard;
 
 public class ViewLocator : IDataTemplate
 {

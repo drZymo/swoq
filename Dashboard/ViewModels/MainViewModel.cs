@@ -1,6 +1,6 @@
 ﻿using Swoq.InfraUI.ViewModels;
 
-namespace Swoq.QuestDashboard.ViewModels;
+namespace Swoq.Dashboard.ViewModels;
 
 internal class MainViewModel : ViewModelBase, IDisposable
 {

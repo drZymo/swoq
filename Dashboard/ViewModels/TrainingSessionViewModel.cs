@@ -1,7 +1,7 @@
 ﻿using Avalonia.Media;
 using Swoq.InfraUI.ViewModels;
 
-namespace Swoq.QuestDashboard.ViewModels;
+namespace Swoq.Dashboard.ViewModels;
 
 internal class TrainingSessionViewModel(string id, string userName, int level, bool isActive, bool isFinished) : ViewModelBase
 {
