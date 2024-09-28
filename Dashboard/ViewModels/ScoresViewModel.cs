@@ -57,7 +57,7 @@ internal class ScoresViewModel : ViewModelBase, IDisposable
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
 
                 using var channel = GrpcChannel.ForAddress("http://localhost:5009");
-                var client = new Interface.UserService.UserServiceClient(channel);
+                var client = new Interface.DashboardService.DashboardServiceClient(channel);
 
                 while (!cancellationTokenSource.IsCancellationRequested)
                 {

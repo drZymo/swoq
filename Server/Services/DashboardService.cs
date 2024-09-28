@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Swoq.Interface;
+using Swoq.Server.Data;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -11,6 +12,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
 {
     private readonly GameServicePostman gameServicePostman;
     private readonly GameServer gameServer;
+    private readonly ISwoqDatabase database;
 
     private readonly ConcurrentQueue<Update> updates = new();
     private readonly SemaphoreSlim updatesCount = new(0);
@@ -18,10 +20,11 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread trainingSessionMonitorThread;
 
-    public DashboardService(GameServicePostman gameServicePostman, GameServer gameServer)
+    public DashboardService(GameServicePostman gameServicePostman, GameServer gameServer, ISwoqDatabase database)
     {
         this.gameServicePostman = gameServicePostman;
         this.gameServer = gameServer;
+        this.database = database;
 
         this.gameServicePostman.Started += OnStarted;
         this.gameServicePostman.Acted += OnActed;
@@ -64,6 +67,21 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         {
             // Graceful shutdown
         }
+    }
+
+    public override async Task<Scores> GetScores(Empty request, ServerCallContext context)
+    {
+        var users = await database.GetAllUsers();
+
+        var scores = new Scores();
+        scores.Scores_.AddRange(users.Select(u => new Score()
+        {
+            UserName = u.Name,
+            Level = u.Level,
+            LengthTicks = u.QuestLengthTicks,
+            LengthSeconds = u.QuestLengthSeconds
+        }));
+        return scores;
     }
 
     private Guid currentQuestGameId = Guid.Empty;

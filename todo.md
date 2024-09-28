@@ -2,7 +2,6 @@
 
 - [ ] Run duration test to check for exceptions
 - [ ] Remove CheckInvariant
-- [ ] Move high scores to dashboard service
 - [.] Allow more than 1 quest at a time in case it is needed
   - [ ] unit tests
   - [ ] dashboard
@@ -121,6 +120,7 @@
 - [X] How multi-threaded is the server really?
 - [X] Rename monitor service to dashboard service
 - [X] Rename Dashboard to simply Dashboard
+- [X] Move high scores to dashboard service
 
 
 # Design decisions
