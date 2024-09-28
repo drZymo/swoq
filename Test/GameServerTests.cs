@@ -10,26 +10,26 @@ public class GameServerTests
     private DateTime now = DateTime.Now;
 
     private SwoqDatabaseInMemory database;
-    private GameServer gameServer;
-
+    
     [SetUp]
     public void Setup()
     {
         Clock.Setup(() => now);
 
         database = new();
-        gameServer = new(database, nrActiveQuests: 1);
     }
 
     [Test]
     public void UnknownUser()
     {
-        Assert.Throws<UnknownUserException>(() => gameServer.Start("u1", 0));
+        var gameServer = new GameServer(database, 1);
+    Assert.Throws<UnknownUserException>(() => gameServer.Start("u1", 0));
     }
 
     [Test]
     public void UserLevelTooLow()
     {
+        var gameServer = new GameServer(database, 1);
         GivenUserRegistered();
         Assert.Throws<UserLevelTooLowException>(() => gameServer.Start("u1", 2));
     }
@@ -37,6 +37,7 @@ public class GameServerTests
     [Test]
     public void SingleQuestCanStartAndAct()
     {
+        var gameServer = new GameServer(database, 1);
         GivenUserRegistered();
 
         // Start a quest
@@ -53,6 +54,7 @@ public class GameServerTests
     [Test]
     public void SecondQuestStartIsQueued()
     {
+        var gameServer = new GameServer(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -73,8 +75,36 @@ public class GameServerTests
     }
 
     [Test]
+    public void TwoQuestsCanBeActive()
+    {
+        var gameServer = new GameServer(database, 2);
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
+
+        // Start quest for user 1
+        GameServer.StartResult? result1 = null;
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
+        Assert.That(result1, Is.Not.Null);
+
+        // Start quest for user 2
+        now += TimeSpan.FromSeconds(1);
+        GameServer.StartResult? result2 = null;
+        Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
+        Assert.That(result2, Is.Not.Null);
+
+        // Act on user 1 quest should be possible
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+
+        // Act on user 2 quest should be possible
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+    }
+
+    [Test]
     public void TimeoutOnQuestWillFinishItAndAllowsNextInQueueToStart()
     {
+        var gameServer = new GameServer(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -113,6 +143,7 @@ public class GameServerTests
     [Test]
     public void UserIsRemovedFromQuestQueueWhenItStopsCallingStart()
     {
+        var gameServer = new GameServer(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "p3", name: "User3");
@@ -153,6 +184,7 @@ public class GameServerTests
     [Test]
     public void OldGamesAreCleanedUpAfterAWhile()
     {
+        var gameServer = new GameServer(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -189,6 +221,39 @@ public class GameServerTests
         Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
     }
 
+    [Test]
+    public void ThirdQuestIsQueued()
+    {
+        var gameServer = new GameServer(database, 2);
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
+        GivenUserRegistered(id: "u3", name: "User2");
+
+        // Start quest for user 1
+        GameServer.StartResult? result1 = null;
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
+        Assert.That(result1, Is.Not.Null);
+
+        // Start quest for user 2
+        now += TimeSpan.FromSeconds(1);
+        GameServer.StartResult? result2 = null;
+        Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
+        Assert.That(result2, Is.Not.Null);
+
+        // Start quest for user 3, should be queued
+        now += TimeSpan.FromSeconds(1);
+        GameServer.StartResult? result3 = null;
+        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(result3, Is.Null);
+
+        // Act on user 1 quest should be possible
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+
+        // Act on user 2 quest should be possible
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+    }
 
     #region Primitives
 

@@ -1,11 +1,12 @@
 # TODO
 
-- [ ] Sync appsettings for production/development
-- [ ] Run duration test to check for exceptions
-- [ ] Remove CheckInvariant
 - [.] Allow more than 1 quest at a time in case it is needed
+  - [X] game server
   - [ ] unit tests
   - [ ] dashboard
+- [ ] Run duration test to check for exceptions
+- [ ] Remove CheckInvariant
+- [ ] Sync appsettings for production/development
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Quest finished screen in dashboard
