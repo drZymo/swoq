@@ -3,7 +3,7 @@ using Swoq.Interface;
 
 namespace Swoq.Server.Services;
 
-internal class GameService(ILogger<GameService> logger, GameServer server, GameServicePostman gameServicePostman) : Interface.GameService.GameServiceBase
+internal class GameService(ILogger<GameService> logger, IGameServer server, GameServicePostman gameServicePostman) : Interface.GameService.GameServiceBase
 {
     public override Task<StartResponse> Start(StartRequest request, ServerCallContext context)
     {

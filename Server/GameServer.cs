@@ -6,10 +6,8 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
-public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests)
+public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
 {
-    public record StartResult(string UserName, Guid GameId, GameState State);
-
     private readonly object gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
@@ -28,7 +26,7 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
     public event EventHandler<Guid>? GameRemoved;
     public event EventHandler<(Guid gameId, bool finished)>? GameActed;
 
-    public StartResult Start(string userId, int? level)
+    public GameStartResult Start(string userId, int? level)
     {
         User user;
         try
@@ -51,7 +49,7 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
         // and remove old games
         CleanupOldGames();
 
-        return new StartResult(user.Name, game.Id, game.State);
+        return new GameStartResult(user.Name, game.Id, game.State);
     }
 
     private static Game StartTraining(User user, int level)
@@ -59,13 +57,13 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
-        var map = MapGenerator.Generate(level);
+        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
 
         // Create new training game
         return new Game(map, Parameters.MaxTrainingInactivityTime);
     }
 
-    private Quest<MapGenerator> StartQuest(User user)
+    private Quest<MG> StartQuest(User user)
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
@@ -105,7 +103,7 @@ public class GameServer(ISwoqDatabase database, int nrActiveQuests = Parameters.
             Debug.Assert(frontUserId == user.Id);
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
-            var quest = new Quest<MapGenerator>(user, database);
+            var quest = new Quest<MG>(user, database);
             currentQuestIds = currentQuestIds.Add(quest.Id);
             return quest;
         }

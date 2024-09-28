@@ -1,4 +1,5 @@
-﻿using Swoq.Server.Data;
+﻿using Swoq.Infra;
+using Swoq.Server.Data;
 using Swoq.Server.Services;
 
 namespace Swoq.Server;
@@ -16,7 +17,7 @@ public class Program
         //builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabaseInMemory>();
         builder.Services.AddSingleton<GameServicePostman>();
         builder.Services.AddSingleton<ReplaySaver>();
-        builder.Services.AddSingleton<GameServer>();
+        builder.Services.AddSingleton<IGameServer, GameServer<MapGenerator>>();
 
         var app = builder.Build();
         app.MapGrpcService<GameService>();

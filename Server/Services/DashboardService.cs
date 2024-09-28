@@ -11,7 +11,7 @@ namespace Swoq.Server.Services;
 internal class DashboardService : Interface.DashboardService.DashboardServiceBase, IDisposable
 {
     private readonly GameServicePostman gameServicePostman;
-    private readonly GameServer gameServer;
+    private readonly IGameServer gameServer;
     private readonly ISwoqDatabase database;
 
     private readonly ConcurrentQueue<Update> updates = new();
@@ -20,7 +20,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread trainingSessionMonitorThread;
 
-    public DashboardService(GameServicePostman gameServicePostman, GameServer gameServer, ISwoqDatabase database)
+    public DashboardService(GameServicePostman gameServicePostman, IGameServer gameServer, ISwoqDatabase database)
     {
         this.gameServicePostman = gameServicePostman;
         this.gameServer = gameServer;

@@ -10,7 +10,7 @@ public class GameServerTests
     private DateTime now = DateTime.Now;
 
     private SwoqDatabaseInMemory database;
-    
+
     [SetUp]
     public void Setup()
     {
@@ -22,14 +22,14 @@ public class GameServerTests
     [Test]
     public void UnknownUser()
     {
-        var gameServer = new GameServer(database, 1);
-    Assert.Throws<UnknownUserException>(() => gameServer.Start("u1", 0));
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        Assert.Throws<UnknownUserException>(() => gameServer.Start("u1", 0));
     }
 
     [Test]
     public void UserLevelTooLow()
     {
-        var gameServer = new GameServer(database, 1);
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered();
         Assert.Throws<UserLevelTooLowException>(() => gameServer.Start("u1", 2));
     }
@@ -37,11 +37,11 @@ public class GameServerTests
     [Test]
     public void SingleQuestCanStartAndAct()
     {
-        var gameServer = new GameServer(database, 1);
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered();
 
         // Start a quest
-        GameServer.StartResult? result = null;
+        GameStartResult? result = null;
         Assert.DoesNotThrow(() => result = gameServer.Start("u1", null));
         Assert.That(result, Is.Not.Null);
         Assert.That(result.UserName, Is.EqualTo("User1"));
@@ -54,18 +54,18 @@ public class GameServerTests
     [Test]
     public void SecondQuestStartIsQueued()
     {
-        var gameServer = new GameServer(database, 1);
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
         // Start quest for user 1
-        GameServer.StartResult? result1 = null;
+        GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
 
         // Start quest for user 2, it should be queued
         now += TimeSpan.FromSeconds(1);
-        GameServer.StartResult? result2 = null;
+        GameStartResult? result2 = null;
         Assert.Throws<QuestQueuedException>(() => result2 = gameServer.Start("u2", null));
         Assert.That(result2, Is.Null);
 
@@ -77,18 +77,18 @@ public class GameServerTests
     [Test]
     public void TwoQuestsCanBeActive()
     {
-        var gameServer = new GameServer(database, 2);
+        var gameServer = new GameServer<DummyGenerator>(database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
         // Start quest for user 1
-        GameServer.StartResult? result1 = null;
+        GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
 
         // Start quest for user 2
         now += TimeSpan.FromSeconds(1);
-        GameServer.StartResult? result2 = null;
+        GameStartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
         Assert.That(result2, Is.Not.Null);
 
@@ -104,12 +104,12 @@ public class GameServerTests
     [Test]
     public void TimeoutOnQuestWillFinishItAndAllowsNextInQueueToStart()
     {
-        var gameServer = new GameServer(database, 1);
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
         // Start quest for user 1 and 2
-        GameServer.StartResult? result1 = null;
+        GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
@@ -132,7 +132,7 @@ public class GameServerTests
         // User 1 quest is inactive and was stopped
         // User 2 is now first in line and can start the quest
         now += TimeSpan.FromSeconds(4);
-        GameServer.StartResult? result2 = null;
+        GameStartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
         Assert.That(result2, Is.Not.Null);
 
@@ -143,13 +143,13 @@ public class GameServerTests
     [Test]
     public void UserIsRemovedFromQuestQueueWhenItStopsCallingStart()
     {
-        var gameServer = new GameServer(database, 1);
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "p3", name: "User3");
 
         // Start quest for user 1, 2 and 3
-        GameServer.StartResult? result1 = null;
+        GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
@@ -175,7 +175,7 @@ public class GameServerTests
         // User 2 has been removed from the queue
         // User 3 is now first in line and can start the quest
         now += TimeSpan.FromSeconds(4);
-        GameServer.StartResult? result2 = null;
+        GameStartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("p3", null));
         Assert.That(result2, Is.Not.Null);
     }
@@ -184,12 +184,12 @@ public class GameServerTests
     [Test]
     public void OldGamesAreCleanedUpAfterAWhile()
     {
-        var gameServer = new GameServer(database, 1);
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
         // Start quest for user 1 and let it timeout
-        GameServer.StartResult? result1 = null;
+        GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
@@ -199,7 +199,7 @@ public class GameServerTests
         Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
 
         // Start training for user 2 and let it timeout
-        GameServer.StartResult? result2 = null;
+        GameStartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", 0));
         Assert.That(result2, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
@@ -212,7 +212,7 @@ public class GameServerTests
         now += TimeSpan.FromMinutes(11);
 
         // Start a new training
-        GameServer.StartResult? result3 = null;
+        GameStartResult? result3 = null;
         Assert.DoesNotThrow(() => result3 = gameServer.Start("u1", 0));
         Assert.That(result3, Is.Not.Null);
 
@@ -224,25 +224,25 @@ public class GameServerTests
     [Test]
     public void ThirdQuestIsQueued()
     {
-        var gameServer = new GameServer(database, 2);
+        var gameServer = new GameServer<DummyGenerator>(database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "u3", name: "User2");
 
         // Start quest for user 1
-        GameServer.StartResult? result1 = null;
+        GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
 
         // Start quest for user 2
         now += TimeSpan.FromSeconds(1);
-        GameServer.StartResult? result2 = null;
+        GameStartResult? result2 = null;
         Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", null));
         Assert.That(result2, Is.Not.Null);
 
         // Start quest for user 3, should be queued
         now += TimeSpan.FromSeconds(1);
-        GameServer.StartResult? result3 = null;
+        GameStartResult? result3 = null;
         Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
         Assert.That(result3, Is.Null);
 
@@ -263,4 +263,42 @@ public class GameServerTests
     }
 
     #endregion
+
+    private class DummyGenerator : IMapGenerator
+    {
+        public static Map Generate(int level, int height, int width)
+        {
+            width = 5;
+            height = 5;
+            MutableMap map = new(level, 5, 5);
+            for (var x = 0; x < width; x++)
+            {
+                map[0, x] = Cell.Wall;
+                map[height - 1, x] = Cell.Wall;
+            }
+            for (var y = 1; y < height - 1; y++)
+            {
+                map[y, 0] = Cell.Wall;
+                map[y, width - 1] = Cell.Wall;
+            }
+
+            for (var y = 1; y < height - 1; y++)
+            {
+                for (var x = 1; x < width - 1; x++)
+                {
+                    map[y, x] = Cell.Empty;
+                }
+            }
+
+            map[height - 2, width - 2] = Cell.Exit;
+
+            map.Player1.Position = (1, 1);
+
+            if (level == MaxLevel) map.IsFinal = true;
+
+            return map.ToMap();
+        }
+
+        public static int MaxLevel { get; } = 2;
+    }
 }
