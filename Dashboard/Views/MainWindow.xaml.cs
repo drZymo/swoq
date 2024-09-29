@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Swoq.Dashboard.ViewModels;
 
 namespace Swoq.Dashboard.Views;
 
@@ -23,6 +26,13 @@ public partial class MainWindow : Window
                 WindowState = WindowState.Normal;
             }
         }
+    }
 
+    private void OnMaximizeClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel mvm)
+        {
+            mvm.Maximize = !mvm.Maximize;
+        }
     }
 }

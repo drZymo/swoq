@@ -12,11 +12,16 @@
 	<ItemGroup>
 		<None Remove="App.xaml" />
 		<None Remove="MainWindow.xaml" />
+		<None Remove="Views\maximize.png" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<AvaloniaResource Include="App.xaml" />
 		<AvaloniaResource Include="Views\MainWindow.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AvaloniaResource Include="Views\maximize.png" />
 	</ItemGroup>
 
 	<ItemGroup>

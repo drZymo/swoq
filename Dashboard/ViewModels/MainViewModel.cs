@@ -10,4 +10,18 @@ internal class MainViewModel : ViewModelBase, IDisposable
     }
 
     public GameStateMonitorViewModel GameStateMonitor { get; } = new();
+
+    private bool maximize = false;
+    public bool Maximize
+    {
+        get => maximize;
+        set
+        {
+            if (maximize != value)
+            {
+                maximize = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 }
