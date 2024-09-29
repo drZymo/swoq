@@ -18,7 +18,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private readonly SemaphoreSlim updatesCount = new(0);
 
     private readonly CancellationTokenSource cancellationTokenSource = new();
-    private readonly Thread trainingSessionMonitorThread;
+    private readonly Thread sessionMonitorThread;
 
     public DashboardService(GameServicePostman gameServicePostman, IGameServer gameServer, ISwoqDatabase database)
     {
@@ -33,14 +33,14 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         this.gameServer.GameRemoved += OnGameRemoved;
         this.gameServer.GameActed += OnGameActed;
 
-        trainingSessionMonitorThread = new Thread(new ThreadStart(TrainingSessionMonitorThread));
-        trainingSessionMonitorThread.Start();
+        sessionMonitorThread = new Thread(new ThreadStart(SessionMonitorThread));
+        sessionMonitorThread.Start();
     }
 
     public void Dispose()
     {
         cancellationTokenSource.Cancel();
-        trainingSessionMonitorThread.Join();
+        sessionMonitorThread.Join();
 
         gameServer.GameActed -= OnGameActed;
         gameServer.GameRemoved -= OnGameRemoved;
@@ -68,21 +68,6 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
             // Graceful shutdown
         }
     }
-
-    //public override async Task<Scores> GetScores(Empty request, ServerCallContext context)
-    //{
-    //    var users = await database.GetAllUsers();
-
-    //    var scores = new Scores();
-    //    scores.Scores_.AddRange(users.Select(u => new Score()
-    //    {
-    //        UserName = u.Name,
-    //        Level = u.Level,
-    //        LengthTicks = u.QuestLengthTicks,
-    //        LengthSeconds = u.QuestLengthSeconds
-    //    }));
-    //    return scores;
-    //}
 
     private Guid currentQuestGameId = Guid.Empty;
 
@@ -128,69 +113,70 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
     }
 
-    private void OnQueueUpdated(object? sender, IImmutableList<string> queue)
+    private void OnQueueUpdated(object? sender, QueueUpdatedEventArgs e)
     {
         var update = new Update
         {
             QueueUpdate = new()
         };
-        update.QueueUpdate.QueuedUsers.AddRange(queue);
+        update.QueueUpdate.QueuedUsers.AddRange(e.QueuedUsers);
 
         updates.Enqueue(update);
         updatesCount.Release();
     }
 
 
-    private void OnGameAdded(object? sender, (Guid gameId, string username, int? level) e)
+    private void OnGameAdded(object? sender, GameAddedEventArgs e)
     {
-        gameUpdates.Enqueue(new GameAddedEntry(e.gameId, e.username, e.level));
+        gameUpdates.Enqueue(new GameAddedEntry(e));
         gameUpdatesSemaphore.Release();
     }
 
-    private void OnGameRemoved(object? sender, Guid gameId)
+    private void OnGameRemoved(object? sender, GameRemovedEventArgs e)
     {
-        gameUpdates.Enqueue(new GameRemovedEntry(gameId));
+        gameUpdates.Enqueue(new GameRemovedEntry(e));
         gameUpdatesSemaphore.Release();
     }
 
-    private void OnGameActed(object? sender, (Guid gameId, bool finished) e)
+    private void OnGameActed(object? sender, GameActedEventArgs e)
     {
-        gameUpdates.Enqueue(new GameActedEntry(e.gameId, e.finished));
+        gameUpdates.Enqueue(new GameActedEntry(e));
         gameUpdatesSemaphore.Release();
     }
 
     private abstract record GameUpdateEntry(Guid GameId);
-    private record GameAddedEntry(Guid GameId, string UserName, int? Level) : GameUpdateEntry(GameId);
-    private record GameRemovedEntry(Guid GameId) : GameUpdateEntry(GameId);
-    private record GameActedEntry(Guid GameId, bool Finished) : GameUpdateEntry(GameId);
+    private record GameAddedEntry(GameAddedEventArgs Args) : GameUpdateEntry(Args.GameId);
+    private record GameRemovedEntry(GameRemovedEventArgs Args) : GameUpdateEntry(Args.GameId);
+    private record GameActedEntry(GameActedEventArgs Args) : GameUpdateEntry(Args.GameId);
 
     private readonly SemaphoreSlim gameUpdatesSemaphore = new(0);
     private readonly ConcurrentQueue<GameUpdateEntry> gameUpdates = new();
 
-    private record TrainingSessionEntry(Guid GameId, string UserName, int Level, bool IsActive, bool IsFinished)
+    private record SessionEntry(Guid GameId, string UserName, int Level, bool IsQuest, bool IsActive, bool IsFinished)
     {
-        public TrainingSession ToTrainingSession()
+        public Session ToSession()
         {
-            return new TrainingSession
+            return new Session
             {
                 GameId = GameId.ToString(),
                 UserName = UserName,
                 Level = Level,
+                IsQuest = IsQuest,
                 IsActive = IsActive,
                 IsFinished = IsFinished
             };
         }
     }
 
-    private ImmutableDictionary<Guid, TrainingSessionEntry> trainingSessions = ImmutableDictionary<Guid, TrainingSessionEntry>.Empty;
-    private DateTime lastTrainingSessionsUpdate = DateTime.MinValue;
+    private ImmutableDictionary<Guid, SessionEntry> sessions = ImmutableDictionary<Guid, SessionEntry>.Empty;
+    private DateTime lastSessionsUpdate = DateTime.MinValue;
     private DateTime lastScoresUpdate = DateTime.MinValue;
     private int eventCount = 0;
 
-    private void TrainingSessionMonitorThread()
+    private void SessionMonitorThread()
     {
-        trainingSessions = ImmutableDictionary<Guid, TrainingSessionEntry>.Empty;
-        lastTrainingSessionsUpdate = DateTime.MinValue;
+        sessions = ImmutableDictionary<Guid, SessionEntry>.Empty;
+        lastSessionsUpdate = DateTime.MinValue;
         lastScoresUpdate = DateTime.MinValue;
         eventCount = 0;
 
@@ -205,27 +191,24 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                     {
                         case GameAddedEntry e:
                             {
-                                if (e.Level.HasValue)
-                                {
-                                    var session = new TrainingSessionEntry(e.GameId, e.UserName, e.Level.Value, true, false);
-                                    trainingSessions = trainingSessions.SetItem(session.GameId, session);
-                                }
+                                var session = new SessionEntry(e.Args.GameId, e.Args.UserName, e.Args.Level, e.Args.IsQuest, true, false);
+                                sessions = sessions.SetItem(session.GameId, session);
                             }
                             break;
                         case GameRemovedEntry e:
                             {
-                                if (trainingSessions.ContainsKey(e.GameId))
+                                if (sessions.ContainsKey(e.Args.GameId))
                                 {
-                                    trainingSessions = trainingSessions.Remove(e.GameId);
+                                    sessions = sessions.Remove(e.GameId);
                                 }
                             }
                             break;
                         case GameActedEntry e:
                             {
-                                if (trainingSessions.TryGetValue(e.GameId, out var session))
+                                if (sessions.TryGetValue(e.Args.GameId, out var session))
                                 {
-                                    session = session with { IsActive = true, IsFinished = e.Finished };
-                                    trainingSessions = trainingSessions.SetItem(session.GameId, session);
+                                    session = session with { Level = e.Args.Level, IsActive = true, IsFinished = e.Args.IsFinished };
+                                    sessions = sessions.SetItem(session.GameId, session);
                                 }
                             }
                             break;
@@ -235,7 +218,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
 
                 var now = DateTime.Now;
 
-                SendTrainingUpdateIfNeeded(now);
+                SendSessionsUpdateIfNeeded(now);
                 SendScoresUpdateIfNeeded(now);
             }
             catch (OperationCanceledException)
@@ -251,28 +234,28 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
     }
 
-    private void SendTrainingUpdateIfNeeded(DateTime now)
+    private void SendSessionsUpdateIfNeeded(DateTime now)
     {
-        if (now - lastTrainingSessionsUpdate < Parameters.TrainingUpdatePeriod) return;
+        if (now - lastSessionsUpdate < Parameters.SessionsUpdatePeriod) return;
 
         // Compute events per second
-        var delta = (now - lastTrainingSessionsUpdate);
+        var delta = (now - lastSessionsUpdate);
         var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
 
         // Send an updated list
         var update = new Update
         {
-            TrainingUpdate = new() { EventsPerSecond = eventsPerSecond }
+            SessionsUpdate = new() { EventsPerSecond = eventsPerSecond }
         };
-        update.TrainingUpdate.Sessions.AddRange(trainingSessions.Values.Select(s => s.ToTrainingSession()));
+        update.SessionsUpdate.Sessions.AddRange(sessions.Values.Select(s => s.ToSession()));
         updates.Enqueue(update);
         updatesCount.Release();
 
         // Mark all sessions as inactive
-        trainingSessions = trainingSessions.ToImmutableDictionary(s => s.Key, s => s.Value with { IsActive = false });
+        sessions = sessions.ToImmutableDictionary(s => s.Key, s => s.Value with { IsActive = false });
 
         // Start waiting another period
-        lastTrainingSessionsUpdate = now;
+        lastSessionsUpdate = now;
         eventCount = 0;
     }
 

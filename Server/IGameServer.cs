@@ -3,13 +3,18 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
+public record GameAddedEventArgs(Guid GameId, string UserName, int Level, bool IsQuest);
+public record GameRemovedEventArgs(Guid GameId);
+public record GameActedEventArgs(Guid GameId, int Level, bool IsFinished);
+public record QueueUpdatedEventArgs(IImmutableList<string> QueuedUsers);
+
 public interface IGameServer
 {
-    event EventHandler<(Guid gameId, bool finished)>? GameActed;
-    event EventHandler<(Guid gameId, string username, int? level)>? GameAdded;
-    event EventHandler<Guid>? GameRemoved;
-    event EventHandler<IImmutableList<string>>? QueueUpdated;
+    event EventHandler<GameAddedEventArgs>? GameAdded;
+    event EventHandler<GameRemovedEventArgs>? GameRemoved;
+    event EventHandler<GameActedEventArgs>? GameActed;
+    event EventHandler<QueueUpdatedEventArgs>? QueueUpdated;
 
-    GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null);
     GameStartResult Start(string userId, int? level);
+    GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null);
 }

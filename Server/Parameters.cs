@@ -35,6 +35,6 @@ internal static class Parameters
 
     public const int NrOfActiveQuests = 1;
 
-    public static readonly TimeSpan TrainingUpdatePeriod = TimeSpan.FromMilliseconds(250);
+    public static readonly TimeSpan SessionsUpdatePeriod = TimeSpan.FromMilliseconds(250);
     public static readonly TimeSpan ScoresUpdatePeriod = TimeSpan.FromMilliseconds(500);
 }

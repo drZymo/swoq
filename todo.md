@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] Show all sessions not only training, so quests are also in list
 - [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
@@ -12,6 +11,7 @@
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Quest finished screen in dashboard
 - [ ] Quest finished mark in high score
+- [ ] Allow reconnect of dashboard by resending quest started
 - [.] User portal
   - [X] user registration
   - [X] Proto file hosting per level
@@ -123,6 +123,7 @@
 - [X] Rename monitor service to dashboard service
 - [X] Rename Dashboard to simply Dashboard
 - [X] Move high scores to dashboard service
+- [X] Show all sessions not only training, so quests are also in list
 
 
 # Design decisions

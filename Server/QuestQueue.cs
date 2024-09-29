@@ -12,7 +12,7 @@ internal class QuestQueue
 
     private IImmutableList<string> queuedUsers = [];
 
-    public event EventHandler<IImmutableList<string>>? Updated;
+    public event EventHandler<QueueUpdatedEventArgs>? Updated;
 
     public string FrontUserId => entries.OrderBy(kvp => kvp.Value.StartTime).First().Key;
 
@@ -67,6 +67,6 @@ internal class QuestQueue
 
     private void OnUpdated()
     {
-        Updated?.Invoke(this, queuedUsers);
+        Updated?.Invoke(this, new QueueUpdatedEventArgs(queuedUsers));
     }
 }

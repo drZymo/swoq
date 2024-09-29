@@ -19,7 +19,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     public GameStateMonitorViewModel()
     {
         QueueUsers = new(queuedUsers);
-        TrainingSessions = new(trainingSessions);
+        Sessions = new(sessions);
         Scores = new(scores);
 
         getUpdatesThread = new Thread(new ThreadStart(GetUpdatesThread));
@@ -46,8 +46,8 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
     private readonly ObservableCollection<string> queuedUsers = [];
     public ReadOnlyObservableCollection<string> QueueUsers { get; }
 
-    private readonly ObservableCollection<TrainingSessionViewModel> trainingSessions = [];
-    public ReadOnlyObservableCollection<TrainingSessionViewModel> TrainingSessions { get; }
+    private readonly ObservableCollection<SessionViewModel> sessions = [];
+    public ReadOnlyObservableCollection<SessionViewModel> Sessions { get; }
 
     public record Score(string UserName, int Level, int LengthTicks, int LengthSeconds);
 
@@ -104,37 +104,23 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 
                     if (message.QuestStarted != null)
                     {
-                        Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
-
-                        var started = message.QuestStarted;
-                        gameStateBuilder = new GameStateBuilder(started.Response.Height, started.Response.Width, started.Response.VisibilityRange, started.UserName);
-                        var gameState = gameStateBuilder.BuildNext(null, started.Response.State, started.Response.Result, Dispatcher.UIThread);
-                        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
+                        gameStateBuilder = HandleQuestStarted(message.QuestStarted);
                     }
 
                     if (message.QuestActed != null && gameStateBuilder != null)
                     {
-                        var acted = message.QuestActed;
-                        var gameState = gameStateBuilder.BuildNext(acted.Request, acted.Response.State, acted.Response.Result, Dispatcher.UIThread);
-                        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
+                        HandleQuestActed(message.QuestActed, gameStateBuilder);
                     }
 
                     if (message.QueueUpdate != null)
                     {
-                        var queuedUsers = message.QueueUpdate.QueuedUsers.ToImmutableArray();
-                        Dispatcher.UIThread.Invoke(() =>
-                        {
-                            this.queuedUsers.Clear();
-                            foreach (var qu in queuedUsers)
-                            {
-                                this.queuedUsers.Add(qu);
-                            }
-                        });
+                        var update = message.QueueUpdate;
+                        HandleQueue(update);
                     }
 
-                    if (message.TrainingUpdate != null)
+                    if (message.SessionsUpdate != null)
                     {
-                        UpdateTrainingSessions(message.TrainingUpdate);
+                        UpdateSessions(message.SessionsUpdate);
                     }
 
                     if (message.ScoresUpdate != null)
@@ -168,58 +154,88 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void UpdateTrainingSessions(TrainingUpdate update)
+    private GameStateBuilder HandleQuestStarted(QuestStarted update)
     {
-        var newTrainingSessions = update.Sessions;
+        Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
+        var gameStateBuilder = new GameStateBuilder(update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
+        var gameState = gameStateBuilder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
+        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
+        return gameStateBuilder;
+    }
+
+    private void HandleQuestActed(QuestActed update, GameStateBuilder gameStateBuilder)
+    {
+        var gameState = gameStateBuilder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
+        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
+    }
+
+    private void HandleQueue(QueueUpdate update)
+    {
+        var queuedUsers = update.QueuedUsers.ToImmutableArray();
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            this.queuedUsers.Clear();
+            foreach (var qu in queuedUsers)
+            {
+                this.queuedUsers.Add(qu);
+            }
+        });
+    }
+
+    private void UpdateSessions(SessionsUpdate update)
+    {
+        var newSessions = update.Sessions;
 
         // Update events per second
         EventsPerSecond = update.EventsPerSecond;
 
         // Find out which game ids have been added, removed and updated
-        var newIds = newTrainingSessions.Select(s => s.GameId).ToImmutableHashSet();
-        var oldIds = trainingSessions.Select(s => s.Id).ToImmutableHashSet();
+        var newIds = newSessions.Select(s => s.GameId).ToImmutableHashSet();
+        var oldIds = sessions.Select(s => s.Id).ToImmutableHashSet();
 
         var addedSessionIds = newIds.Except(oldIds);
         var removedSessionIds = oldIds.Except(newIds);
         var updatedSessionIds = newIds.Intersect(newIds);
 
         // Remove sessions
-        var sessionsToRemove = trainingSessions.Where(s => removedSessionIds.Contains(s.Id)).ToImmutableArray();
-        foreach (var session in sessionsToRemove)
+        var sessionsToRemove = sessions.Where(s => removedSessionIds.Contains(s.Id)).ToImmutableArray();
+        Dispatcher.UIThread.Invoke(() =>
         {
-            Dispatcher.UIThread.Invoke(() =>
+            foreach (var session in sessionsToRemove)
             {
-                trainingSessions.Remove(session);
-            });
-        }
+                sessions.Remove(session);
+            }
+        });
 
         // Add sessions at the start
-        var sessionsToAdd = newTrainingSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
-        foreach (var session in sessionsToAdd)
+        var sessionsToAdd = newSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
+        Dispatcher.UIThread.Invoke(() =>
         {
-            Dispatcher.UIThread.Invoke(() =>
+            foreach (var session in sessionsToAdd)
             {
-                trainingSessions.Insert(
-                0,
-                new TrainingSessionViewModel(
-                    session.GameId,
-                    session.UserName,
-                    session.Level,
-                    session.IsActive,
-                    session.IsFinished));
-            });
-        }
+                sessions.Insert(
+                    0,
+                    new SessionViewModel(
+                        session.GameId,
+                        session.UserName,
+                        session.Level,
+                        session.IsQuest,
+                        session.IsActive,
+                        session.IsFinished));
+            }
+        });
 
         // Update existing
         foreach (var id in updatedSessionIds)
         {
-            var newSession = newTrainingSessions.Where(s => s.GameId == id).FirstOrDefault();
-            var oldSession = trainingSessions.Where(s => s.Id == id).FirstOrDefault();
+            var newSession = newSessions.Where(s => s.GameId == id).FirstOrDefault();
+            var oldSession = sessions.Where(s => s.Id == id).FirstOrDefault();
 
             if (newSession != null && oldSession != null)
             {
                 Dispatcher.UIThread.Invoke(() =>
                 {
+                    oldSession.Level = newSession.Level;
                     oldSession.IsActive = newSession.IsActive;
                     oldSession.IsFinished = newSession.IsFinished;
                 });

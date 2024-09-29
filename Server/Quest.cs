@@ -25,9 +25,8 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     }
 
     public Guid Id { get; }
-    public DateTime LastAction { get; private set; } = Clock.Now;
-
     public int Level { get; private set; } = 0;
+    public DateTime LastAction { get; private set; } = Clock.Now;
     public GameState State { get; private set; }
     public DateTime LastActionTime => currentGame.LastActionTime;
 

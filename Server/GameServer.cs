@@ -16,15 +16,16 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     private readonly QuestQueue questQueue = new();
 
-    public event EventHandler<IImmutableList<string>>? QueueUpdated
+
+    public event EventHandler<GameAddedEventArgs>? GameAdded;
+    public event EventHandler<GameRemovedEventArgs>? GameRemoved;
+    public event EventHandler<GameActedEventArgs>? GameActed;
+
+    public event EventHandler<QueueUpdatedEventArgs>? QueueUpdated
     {
         add => questQueue.Updated += value;
         remove => questQueue.Updated -= value;
     }
-
-    public event EventHandler<(Guid gameId, string username, int? level)>? GameAdded;
-    public event EventHandler<Guid>? GameRemoved;
-    public event EventHandler<(Guid gameId, bool finished)>? GameActed;
 
     public GameStartResult Start(string userId, int? level)
     {
@@ -44,7 +45,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         lock (gamesWriteMutex)
         {
             games = games.Add(game.Id, game);
-            GameAdded?.Invoke(this, (game.Id, user.Name, level));
+            GameAdded?.Invoke(this, new GameAddedEventArgs(game.Id, user.Name, game.Level, !level.HasValue));
         }
         // and remove old games
         CleanupOldGames();
@@ -116,7 +117,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         // Play game
         game.Act(action1, action2);
-        GameActed?.Invoke(this, (gameId, game.State.Finished));
+        GameActed?.Invoke(this, new GameActedEventArgs(gameId, game.Level, game.State.Finished));
         return game.State;
     }
 
@@ -149,7 +150,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             // Notify monitors
             foreach (var id in idsToRemove)
             {
-                GameRemoved?.Invoke(this, id);
+                GameRemoved?.Invoke(this, new GameRemovedEventArgs(id));
             }
         }
     }

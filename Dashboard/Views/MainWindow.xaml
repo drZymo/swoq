@@ -27,7 +27,7 @@
 
             <infraui:GroupBox Grid.Column="0" Header="Training sessions"  DataContext="{Binding GameStateMonitor}">
                 <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding TrainingSessions}">
+                    <ItemsControl ItemsSource="{Binding Sessions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">

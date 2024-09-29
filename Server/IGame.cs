@@ -5,6 +5,7 @@ namespace Swoq.Server;
 internal interface IGame
 {
     Guid Id { get; }
+    int Level { get; }
     GameState State { get; }
     DateTime LastActionTime { get; }
 

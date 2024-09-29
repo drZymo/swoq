@@ -67,6 +67,7 @@ public class Game : IGame
     }
 
     public Guid Id { get; } = Guid.NewGuid();
+    public int Level => map.Level;
     public GameState State => CreateState();
     public DateTime LastActionTime { get; private set; } = Clock.Now;
 
