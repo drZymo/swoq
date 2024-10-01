@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Swoq.Dashboard.ViewModels;
 
 namespace Swoq.Dashboard.Views;

@@ -1,5 +1,5 @@
-﻿using Swoq.Infra;
-using Swoq.InfraUI.Models;
+﻿using Swoq.InfraUI.Models;
+using Swoq.Interface;
 
 namespace Swoq.InfraUI.ViewModels;
 
@@ -50,13 +50,13 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
     public string Player2Inventory => Current?.Player2?.Inventory ?? "Unknown";
     public string Player2HasSword => NullableBooleanString(Current?.Player2?.HasSword);
 
-    private MapViewModel map = new();
-    public MapViewModel Map
+    private OverviewViewModel overview = new();
+    public OverviewViewModel Overview
     {
-        get => map;
+        get => overview;
         private set
         {
-            map = value;
+            overview = value;
             OnPropertyChanged();
         }
     }
@@ -104,7 +104,7 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
     public void Reset()
     {
         Current = null;
-        Map = new MapViewModel();
+        Overview = new OverviewViewModel();
         HasPlayer2 = false;
         HasEnemies = false;
         HasPickups = false;
@@ -114,22 +114,22 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
     {
         Current = gameState;
 
-        Map.Map = gameState.Map;
+        Overview.Overview = gameState.Overview;
 
-        HasPlayer2 = HasPlayer2 || (gameState.Map.InitialPlayer2Position != null);
-        HasEnemies = HasEnemies || (gameState.Map.Any(c => c == Cell.Sword) || gameState.Map.InitialEnemy1Position != null || gameState.Map.InitialEnemy2Position != null || gameState.Map.InitialEnemy3Position != null);
-        HasPickups = HasPickups || (gameState.Map.Any(RequiresInventory));
+        HasPlayer2 = HasPlayer2 || (gameState.Overview.InitialPlayer2Position != null);
+        HasEnemies = HasEnemies || (gameState.Overview.Any(t => t == Tile.Sword) || gameState.Overview.InitialEnemy1Position != null || gameState.Overview.InitialEnemy2Position != null || gameState.Overview.InitialEnemy3Position != null);
+        HasPickups = HasPickups || (gameState.Overview.Any(RequiresInventory));
     }
 
-    public static bool RequiresInventory(Cell cell) => cell switch
+    public static bool RequiresInventory(Tile tile) => tile switch
     {
-        Cell.KeyRed => true,
-        Cell.KeyGreen => true,
-        Cell.KeyBlue => true,
-        Cell.DoorRedClosed => true,
-        Cell.DoorGreenClosed => true,
-        Cell.DoorBlueClosed => true,
-        Cell.Boulder => true,
+        Tile.KeyRed => true,
+        Tile.KeyGreen => true,
+        Tile.KeyBlue => true,
+        Tile.DoorRed => true,
+        Tile.DoorGreen => true,
+        Tile.DoorBlue => true,
+        Tile.Boulder => true,
         _ => false,
     };
 

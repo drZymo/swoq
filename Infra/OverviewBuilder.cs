@@ -1,0 +1,135 @@
+﻿using Swoq.Interface;
+using System.Collections.Immutable;
+using System.Diagnostics;
+
+namespace Swoq.Infra;
+
+using Position = (int y, int x);
+
+public class OverviewBuilder(int height, int width, int visibilityRange)
+{
+    private readonly Tile[,] tileData = new Tile[height, width];
+    private readonly bool[,] visibilityData = new bool[height, width];
+
+    private int level = 0;
+    private Position player1Position = (-1, -1);
+    private Position? player2Position = null;
+    private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
+    private Position? bossPosition = null;
+
+    public void Reset()
+    {
+        level = 0;
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                tileData[y, x] = Tile.Unknown;
+            }
+        }
+        PrepareForNextTimeStep();
+    }
+
+    public void PrepareForNextTimeStep()
+    {
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                visibilityData[y, x] = false;
+            }
+        }
+        player1Position = (-1, -1);
+        player2Position = null;
+        enemyPositions = ImmutableList<Position>.Empty;
+        bossPosition = null;
+    }
+
+    public void SetLevel(int level)
+    {
+        this.level = level;
+    }
+
+    public void AddPlayerState(Position playerPosition, IEnumerable<Tile> surroundings, int playerIndex)
+    {
+        if (playerIndex < 1 || playerIndex > 2) throw new ArgumentOutOfRangeException(nameof(playerIndex));
+
+        if (playerPosition.y < 0 || playerPosition.x < 0 ||
+            !surroundings.Any())
+        {
+            if (playerIndex == 1) player1Position = PositionEx.Invalid;
+            if (playerIndex == 2) player2Position = null;
+            return;
+        }
+
+        var surroundingsSize = visibilityRange * 2 + 1;
+
+        var top = playerPosition.y - visibilityRange;
+        var left = playerPosition.x - visibilityRange;
+
+        var y = 0;
+        var x = 0;
+        foreach (var tile in surroundings)
+        {
+            Debug.Assert(0 <= x && x < surroundingsSize);
+            Debug.Assert(0 <= y && y < surroundingsSize);
+
+            var my = top + y;
+            var mx = left + x;
+            if (0 <= my && my < height && 0 <= mx && mx < width)
+            {
+                if (tile == Tile.Boss)
+                {
+                    bossPosition = (my, mx);
+                }
+                else if (tile == Tile.Enemy)
+                {
+                    enemyPositions = enemyPositions.Add((my, mx));
+                }
+                if (tile != Tile.Unknown)
+                {
+                    tileData[my, mx] = tile;
+                    visibilityData[my, mx] = true;
+                }
+            }
+
+            x++;
+            if (x >= surroundingsSize)
+            {
+                y++;
+                x = 0;
+            }
+        }
+
+        if (playerIndex == 1) player1Position = (playerPosition.y, playerPosition.x);
+        if (playerIndex == 2) player2Position = (playerPosition.y, playerPosition.x);
+    }
+
+    public Overview CreateOverview()
+    {
+        Position? enemy1Pos;
+        Position? enemy2Pos;
+        Position? enemy3Pos;
+        if (bossPosition.HasValue)
+        {
+            enemy1Pos = bossPosition.Value;
+            enemy2Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
+            enemy3Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
+        }
+        else
+        {
+            enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
+            enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
+            enemy3Pos = enemyPositions.Count > 2 ? enemyPositions[2] : null;
+        }
+
+        // Cast<T> will make it a flat array
+        return new Overview(level, tileData.Cast<Tile>(), height, width, player1Position,
+            initialPlayer2Position: player2Position,
+            initialEnemy1Position: enemy1Pos,
+            isEnemy1Boss: bossPosition.HasValue,
+            initialEnemy2Position: enemy2Pos,
+            initialEnemy3Position: enemy3Pos,
+            visibility: visibilityData.Cast<bool>());
+    }
+}

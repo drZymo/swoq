@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] Show surroundings separately in viewer
+  - [.] Split map and overview in separate classes
 - [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests

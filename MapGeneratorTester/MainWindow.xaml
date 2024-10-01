@@ -9,7 +9,7 @@
         Title="MapGenerator Tester" Height="800" Width="1000">
     <Grid ColumnDefinitions="*,200">
         <Grid Grid.Column="0" Background="Black">
-            <Image Source="{Binding Map.MapImage}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
+            <Image Source="{Binding Overview.OverviewImage}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
         <StackPanel Grid.Column="1" Orientation="Vertical">

@@ -16,7 +16,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         Add(Inventory.Boulder, "Boulder").
         Add(Inventory.Treasure, "Treasure");
 
-    private readonly MapBuilder mapBuilder = new(height, width, visibilityRange);
+    private readonly OverviewBuilder overviewBuilder = new(height, width, visibilityRange);
     private readonly string userName = userName;
     private GameState? previous = null;
 
@@ -25,14 +25,14 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
         // Clear whole map on new level
         if (previous == null || state.Level != previous.Level)
         {
-            mapBuilder.Reset();
+            overviewBuilder.Reset();
         }
 
-        mapBuilder.SetLevel(state.Level);
-        mapBuilder.PrepareForNextTimeStep();
-        mapBuilder.AddPlayerState(Convert(state.PlayerState?.Position), state.PlayerState?.Surroundings ?? [], 1);
-        mapBuilder.AddPlayerState(Convert(state.Player2State?.Position), state.Player2State?.Surroundings ?? [], 2);
-        var map = mapBuilder.CreateMap();
+        overviewBuilder.SetLevel(state.Level);
+        overviewBuilder.PrepareForNextTimeStep();
+        overviewBuilder.AddPlayerState(Convert(state.PlayerState?.Position), state.PlayerState?.Surroundings ?? [], 1);
+        overviewBuilder.AddPlayerState(Convert(state.Player2State?.Position), state.Player2State?.Surroundings ?? [], 2);
+        var overview = overviewBuilder.CreateOverview();
 
         var status = state.Finished ? "Finished" : "Active";
 
@@ -54,7 +54,7 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
             player2State = new InfraUI.Models.PlayerState(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword);
         }
 
-        var gameState = createDispatcher.Invoke(() => new GameState(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), map, player1State, player2State));
+        var gameState = createDispatcher.Invoke(() => new GameState(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), overview, player1State, player2State));
         previous = gameState;
         return gameState;
     }

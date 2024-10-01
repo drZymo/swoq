@@ -9,11 +9,11 @@ using System.Runtime.InteropServices;
 
 namespace Swoq.InfraUI.ViewModels;
 
-internal class MapImage(int mapHeight, int mapWidth)
+internal class OverviewImage(int mapHeight, int mapWidth)
 {
     private static readonly IImmutableDictionary<Tile, byte[]> tileSet;
 
-    static MapImage()
+    static OverviewImage()
     {
         var currentDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
             ?? AppDomain.CurrentDomain.BaseDirectory;
@@ -33,9 +33,9 @@ internal class MapImage(int mapHeight, int mapWidth)
         return new LockedMapImageImpl(this);
     }
 
-    private class LockedMapImageImpl(MapImage parent) : LockedMapImage
+    private class LockedMapImageImpl(OverviewImage parent) : LockedMapImage
     {
-        private readonly MapImage parent = parent;
+        private readonly OverviewImage parent = parent;
         private readonly ILockedFramebuffer framebuffer = parent.image.Lock();
 
         public override void Dispose()

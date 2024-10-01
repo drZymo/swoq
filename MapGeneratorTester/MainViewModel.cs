@@ -8,17 +8,17 @@ class MainViewModel : ViewModelBase
 {
     public MainViewModel()
     {
-        Map = new MapViewModel(MapGenerator.Generate(Level, Height, Width));
+        Overview = new OverviewViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
         Generate = new RelayCommand(HandleGenerate);
     }
 
-    private MapViewModel map = new();
-    public MapViewModel Map
+    private OverviewViewModel overview = new();
+    public OverviewViewModel Overview
     {
-        get => map;
+        get => overview;
         private set
         {
-            map = value;
+            overview = value;
             OnPropertyChanged();
         }
     }
@@ -91,12 +91,12 @@ class MainViewModel : ViewModelBase
         try
         {
             Status = "Generating ...";
-            Map = new MapViewModel(MapGenerator.Generate(Level, Height, Width));
+            Overview = new OverviewViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
             Status = "";
         }
         catch
         {
-            Map = new MapViewModel();
+            Overview = new OverviewViewModel();
             Status = "Generation failed";
         }
     }
