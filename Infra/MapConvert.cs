@@ -20,9 +20,7 @@ public static class MapConvert
             }
         }
 
-        return new Overview(map.Level, tileData, map.Height, map.Width,
-            map.InitialPlayer1Position, map.InitialPlayer2Position, map.InitialEnemy1Position, map.InitialEnemy1Inventory, map.IsEnemy1Boss, map.InitialEnemy2Position,
-            map.InitialEnemy2Inventory, map.InitialEnemy3Position, map.InitialEnemy3Inventory, visiblityData, map.IsFinal);
+        return new Overview(map.Level, map.Height, map.Width, tileData, visiblityData);
     }
 
 

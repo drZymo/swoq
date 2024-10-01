@@ -107,29 +107,7 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
 
     public Overview CreateOverview()
     {
-        Position? enemy1Pos;
-        Position? enemy2Pos;
-        Position? enemy3Pos;
-        if (bossPosition.HasValue)
-        {
-            enemy1Pos = bossPosition.Value;
-            enemy2Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
-            enemy3Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
-        }
-        else
-        {
-            enemy1Pos = enemyPositions.Count > 0 ? enemyPositions[0] : null;
-            enemy2Pos = enemyPositions.Count > 1 ? enemyPositions[1] : null;
-            enemy3Pos = enemyPositions.Count > 2 ? enemyPositions[2] : null;
-        }
-
         // Cast<T> will make it a flat array
-        return new Overview(level, tileData.Cast<Tile>(), height, width, player1Position,
-            initialPlayer2Position: player2Position,
-            initialEnemy1Position: enemy1Pos,
-            isEnemy1Boss: bossPosition.HasValue,
-            initialEnemy2Position: enemy2Pos,
-            initialEnemy3Position: enemy3Pos,
-            visibility: visibilityData.Cast<bool>());
+        return new Overview(level, height, width, tileData.Cast<Tile>(), visibilityData.Cast<bool>());
     }
 }

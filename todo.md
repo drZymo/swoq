@@ -29,6 +29,7 @@
   - [ ] Falling plates (fall after 1 sec)
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
+- [ ] Enemies that move towards player using path finding
 - [?] Slower with boulder in inventory. 50% change movement is executed.
 - [?] Remember health at start of level
 - [ ] Autotile in map viewer

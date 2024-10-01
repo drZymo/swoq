@@ -19,13 +19,11 @@ public class Map(
     Inventory initialEnemy2Inventory = Inventory.None,
     Position? initialEnemy3Position = null,
     Inventory initialEnemy3Inventory = Inventory.None,
-    IEnumerable<bool>? visibility = null,
     bool isFinal = false) : IEnumerable<Cell>
 {
     public static readonly Map Empty = new(-1, [], 0, 0, (0, 0));
 
     private readonly IImmutableList<Cell> cells = data.ToImmutableArray();
-    private readonly IImmutableList<bool>? visibility = visibility?.ToImmutableArray();
 
     public int Level { get; } = level;
     public int Height { get; } = height;
@@ -68,13 +66,8 @@ public class Map(
             InitialEnemy2Inventory,
             InitialEnemy3Position,
             InitialEnemy3Inventory,
-            visibility,
             IsFinal);
     }
 
     public Map Set(Position pos, Cell cell) => Set(pos.y, pos.x, cell);
-
-    public bool IsVisible(int y, int x) => visibility == null || visibility[y * Width + x];
-
-    public bool IsVisible(Position pos) => IsVisible(pos.y, pos.x);
 }

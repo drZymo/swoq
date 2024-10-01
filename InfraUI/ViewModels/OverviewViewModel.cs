@@ -86,27 +86,8 @@ public class OverviewViewModel : ViewModelBase
             for (var x = 0; x < overview.Width; x++)
             {
                 Position pos = (y, x);
-                bool isVisible = overview.IsVisible(pos);
-
-                Tile tile;
-                if (overview.InitialPlayer1Position.Equals(pos) ||
-                    (overview.InitialPlayer2Position != null && overview.InitialPlayer2Position.Equals(pos)))
-                {
-                    tile = Tile.Player;
-                }
-                else if (overview.InitialEnemy1Position != null && overview.InitialEnemy1Position.Value.Equals(pos))
-                {
-                    tile = overview.IsEnemy1Boss ? Tile.Boss : Tile.Enemy;
-                }
-                else if ((overview.InitialEnemy2Position != null && overview.InitialEnemy2Position.Value.Equals(pos)) ||
-                    (overview.InitialEnemy3Position != null && overview.InitialEnemy3Position.Value.Equals(pos)))
-                {
-                    tile = Tile.Enemy;
-                }
-                else
-                {
-                    tile = overview[pos];
-                }
+                var tile = overview[pos];
+                var isVisible = overview.IsVisible(pos);
 
                 lockedBitmap.Set(y, x, tile, isVisible);
             }

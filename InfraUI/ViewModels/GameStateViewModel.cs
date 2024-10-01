@@ -116,8 +116,8 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
 
         Overview.Overview = gameState.Overview;
 
-        HasPlayer2 = HasPlayer2 || (gameState.Overview.InitialPlayer2Position != null);
-        HasEnemies = HasEnemies || (gameState.Overview.Any(t => t == Tile.Sword) || gameState.Overview.InitialEnemy1Position != null || gameState.Overview.InitialEnemy2Position != null || gameState.Overview.InitialEnemy3Position != null);
+        HasPlayer2 = HasPlayer2 || (gameState.Overview.Count(t => t == Tile.Player) > 1);
+        HasEnemies = HasEnemies || (gameState.Overview.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss));
         HasPickups = HasPickups || (gameState.Overview.Any(RequiresInventory));
     }
 
