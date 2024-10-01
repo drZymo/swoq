@@ -6,7 +6,6 @@
   - [ ] dashboard
 - [ ] Run duration test to check for exceptions
 - [ ] Remove CheckInvariant
-- [ ] Sync appsettings for production/development
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Quest finished screen in dashboard
@@ -124,6 +123,7 @@
 - [X] Rename Dashboard to simply Dashboard
 - [X] Move high scores to dashboard service
 - [X] Show all sessions not only training, so quests are also in list
+- [X] Sync appsettings for production/development
 
 
 # Design decisions

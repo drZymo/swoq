@@ -86,7 +86,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
             {
                 bool connected = false;
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
-                using var channel = GrpcChannel.ForAddress("http://localhost:5009");
+                using var channel = GrpcChannel.ForAddress("http://localhost:5080");
                 var client = new DashboardService.DashboardServiceClient(channel);
 
                 GameStateBuilder? gameStateBuilder = null;

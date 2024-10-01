@@ -60,7 +60,7 @@ class GamePlayer:
         self.remain_on_plate_counter = 0
         self.plate_color = None
 
-        self.channel = grpc.insecure_channel('localhost:5009')
+        self.channel = grpc.insecure_channel('localhost:5080')
         self.stub = swoq_pb2_grpc.GameServiceStub(self.channel)
 
 

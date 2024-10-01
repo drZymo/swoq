@@ -14,7 +14,7 @@ class GamePlayer : IDisposable
 
     public GamePlayer(string userId)
     {
-        channel = GrpcChannel.ForAddress("http://localhost:5009");
+        channel = GrpcChannel.ForAddress("http://localhost:5080");
         client = new GameService.GameServiceClient(channel);
         this.userId = userId;
     }

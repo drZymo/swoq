@@ -25,7 +25,7 @@ class GamePlayerException(BaseException):
 class GamePlayer:
     def __init__(self, user_id:str):
         self.user_id = user_id
-        self.channel = grpc.insecure_channel('localhost:5009')
+        self.channel = grpc.insecure_channel('localhost:5080')
         self.game_service = swoq_pb2_grpc.GameServiceStub(self.channel)
 
 
