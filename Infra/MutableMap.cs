@@ -42,7 +42,7 @@ public class MutableMap(int level, int height, int width)
     {
         return new Map(
             Level,
-            data, Height, Width,
+            Height, Width, data,
             Player1.Position,
             Player2.Position.IsValid() ? Player2.Position : null,
             Enemy1.Position.IsValid() ? Enemy1.Position : null,

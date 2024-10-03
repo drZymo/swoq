@@ -7,6 +7,7 @@
   - [X] unit tests
   - [ ] dashboard
 - [ ] Run duration test to check for exceptions
+- [ ] Refactor 3 enemy + boss handling in maps and mapbuilder
 - [ ] Remove CheckInvariant
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
@@ -38,7 +39,6 @@
 - [ ] Publish a single-file app
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
-- [ ] Refactor 3 enemy + boss handling in maps and mapbuilder
 
 ## Done
 - [X] Act vs Move/Use

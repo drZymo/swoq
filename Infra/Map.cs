@@ -1,15 +1,14 @@
 ﻿namespace Swoq.Infra;
 
 using Swoq.Interface;
-using System.Collections;
 using System.Collections.Immutable;
 using Position = (int y, int x);
 
 public class Map(
     int level,
-    IEnumerable<Cell> data,
     int height,
     int width,
+    IEnumerable<Cell> data,
     Position initialPlayer1Position,
     Position? initialPlayer2Position = null,
     Position? initialEnemy1Position = null,
@@ -19,9 +18,9 @@ public class Map(
     Inventory initialEnemy2Inventory = Inventory.None,
     Position? initialEnemy3Position = null,
     Inventory initialEnemy3Inventory = Inventory.None,
-    bool isFinal = false) : IEnumerable<Cell>
+    bool isFinal = false)
 {
-    public static readonly Map Empty = new(-1, [], 0, 0, (0, 0));
+    public static readonly Map Empty = new(-1, 0, 0, [], (0, 0));
 
     private readonly IImmutableList<Cell> cells = data.ToImmutableArray();
 
@@ -45,18 +44,14 @@ public class Map(
 
     public Cell this[Position pos] => this[pos.y, pos.x];
 
-    public IEnumerator<Cell> GetEnumerator() => cells.GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator() => cells.GetEnumerator();
-
     public Map Set(int y, int x, Cell cell)
     {
         var cells = this.cells.SetItem(y * Width + x, cell);
         return new Map(
             Level,
-            cells,
             Height,
             Width,
+            cells,
             InitialPlayer1Position,
             InitialPlayer2Position,
             InitialEnemy1Position,

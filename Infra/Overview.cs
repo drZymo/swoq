@@ -29,19 +29,6 @@ public class Overview(
 
     IEnumerator IEnumerable.GetEnumerator() => tiles.GetEnumerator();
 
-    public Overview Set(int y, int x, Tile tile)
-    {
-        var tiles = this.tiles.SetItem(y * Width + x, tile);
-        return new Overview(
-            Level,
-            Height,
-            Width,
-            tiles,
-            visibility);
-    }
-
-    public Overview Set(Position pos, Tile tile) => Set(pos.y, pos.x, tile);
-
     public bool IsVisible(int y, int x) => visibility == null || visibility[y * Width + x];
 
     public bool IsVisible(Position pos) => IsVisible(pos.y, pos.x);
