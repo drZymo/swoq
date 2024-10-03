@@ -43,15 +43,11 @@ public class MutableMap(int level, int height, int width)
         return new Map(
             Level,
             Height, Width, data,
-            Player1.Position,
-            Player2.Position.IsValid() ? Player2.Position : null,
-            Enemy1.Position.IsValid() ? Enemy1.Position : null,
-            Enemy1.Position.IsValid() ? Enemy1.Inventory : Inventory.None,
-            Enemy1.IsBoss,
-            Enemy2.Position.IsValid() ? Enemy2.Position : null,
-            Enemy2.Position.IsValid() ? Enemy2.Inventory : Inventory.None,
-            Enemy3.Position.IsValid() ? Enemy3.Position : null,
-            Enemy3.Position.IsValid() ? Enemy3.Inventory : Inventory.None,
+            new Player(Player1.Position, Inventory.None),
+            new Player(Player2.Position, Inventory.None),
+            new Enemy(Enemy1.Position, Enemy1.Inventory, Enemy1.IsBoss),
+            new Enemy(Enemy2.Position, Enemy2.Inventory, Enemy2.IsBoss),
+            new Enemy(Enemy3.Position, Enemy3.Inventory, Enemy3.IsBoss),
             isFinal: IsFinal);
     }
 }

@@ -26,21 +26,18 @@ public static class MapConvert
 
     private static Tile ToTile(Map map, Position pos)
     {
-        if ((map.InitialPlayer1Position.IsValid() && pos.Equals(map.InitialPlayer1Position)) ||
-            (map.InitialPlayer2Position.HasValue && map.InitialPlayer2Position.Value.IsValid() && pos.Equals(map.InitialPlayer2Position.Value)))
+        if ((map.Player1.Position.IsValid() && pos.Equals(map.Player1.Position)) ||
+            (map.Player2.Position.IsValid() && pos.Equals(map.Player2.Position)))
         {
             return Tile.Player;
         }
 
-        if (map.InitialEnemy1Position.HasValue && map.InitialEnemy1Position.Value.IsValid() && pos.Equals(map.InitialEnemy1Position.Value))
+        foreach (var enemy in new Enemy[] { map.Enemy1, map.Enemy2, map.Enemy3 })
         {
-            return map.IsEnemy1Boss ? Tile.Boss : Tile.Enemy;
-        }
-
-        if ((map.InitialEnemy2Position.HasValue && map.InitialEnemy2Position.Value.IsValid() && pos.Equals(map.InitialEnemy2Position.Value)) ||
-            (map.InitialEnemy3Position.HasValue && map.InitialEnemy3Position.Value.IsValid() && pos.Equals(map.InitialEnemy3Position.Value)))
-        {
-            return Tile.Enemy;
+            if (enemy.Position.IsValid() && pos.Equals(enemy.Position))
+            {
+                return enemy.IsBoss ? Tile.Boss : Tile.Enemy;
+            }
         }
 
         return map[pos] switch

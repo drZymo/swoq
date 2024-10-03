@@ -4,23 +4,31 @@ using Swoq.Interface;
 using System.Collections.Immutable;
 using Position = (int y, int x);
 
+public record Player(Position Position, Inventory Inventory);
+public record Enemy(Position Position, Inventory Inventory, bool IsBoss);
+
 public class Map(
     int level,
     int height,
     int width,
     IEnumerable<Cell> data,
-    Position initialPlayer1Position,
-    Position? initialPlayer2Position = null,
-    Position? initialEnemy1Position = null,
-    Inventory initialEnemy1Inventory = Inventory.None,
-    bool isEnemy1Boss = false,
-    Position? initialEnemy2Position = null,
-    Inventory initialEnemy2Inventory = Inventory.None,
-    Position? initialEnemy3Position = null,
-    Inventory initialEnemy3Inventory = Inventory.None,
+    Player player1,
+    Player player2,
+    Enemy enemy1,
+    Enemy enemy2,
+    Enemy enemy3,
     bool isFinal = false)
 {
-    public static readonly Map Empty = new(-1, 0, 0, [], (0, 0));
+    public static readonly Map Empty = new(
+        -1,
+        0,
+        0,
+        [],
+        new Player(PositionEx.Invalid, Inventory.None),
+        new Player(PositionEx.Invalid, Inventory.None),
+        new Enemy(PositionEx.Invalid, Inventory.None, false),
+        new Enemy(PositionEx.Invalid, Inventory.None, false),
+        new Enemy(PositionEx.Invalid, Inventory.None, false));
 
     private readonly IImmutableList<Cell> cells = data.ToImmutableArray();
 
@@ -28,15 +36,12 @@ public class Map(
     public int Height { get; } = height;
     public int Width { get; } = width;
 
-    public Position InitialPlayer1Position { get; } = initialPlayer1Position;
-    public Position? InitialPlayer2Position { get; } = initialPlayer2Position;
-    public Position? InitialEnemy1Position { get; } = initialEnemy1Position;
-    public Inventory InitialEnemy1Inventory { get; } = initialEnemy1Inventory;
-    public bool IsEnemy1Boss { get; } = isEnemy1Boss;
-    public Position? InitialEnemy2Position { get; } = initialEnemy2Position;
-    public Inventory InitialEnemy2Inventory { get; } = initialEnemy2Inventory;
-    public Position? InitialEnemy3Position { get; } = initialEnemy3Position;
-    public Inventory InitialEnemy3Inventory { get; } = initialEnemy3Inventory;
+    public Player Player1 { get; } = player1;
+    public Player Player2 { get; } = player2;
+    public Enemy Enemy1 { get; } = enemy1;
+    public Enemy Enemy2 { get; } = enemy2;
+    public Enemy Enemy3 { get; } = enemy3;
+
 
     public bool IsFinal { get; } = isFinal;
 
@@ -47,21 +52,7 @@ public class Map(
     public Map Set(int y, int x, Cell cell)
     {
         var cells = this.cells.SetItem(y * Width + x, cell);
-        return new Map(
-            Level,
-            Height,
-            Width,
-            cells,
-            InitialPlayer1Position,
-            InitialPlayer2Position,
-            InitialEnemy1Position,
-            InitialEnemy1Inventory,
-            IsEnemy1Boss,
-            InitialEnemy2Position,
-            InitialEnemy2Inventory,
-            InitialEnemy3Position,
-            InitialEnemy3Inventory,
-            IsFinal);
+        return new Map(Level, Height, Width, cells, Player1, Player2, Enemy1, Enemy2, Enemy3, IsFinal);
     }
 
     public Map Set(Position pos, Cell cell) => Set(pos.y, pos.x, cell);

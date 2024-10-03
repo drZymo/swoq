@@ -27,42 +27,33 @@ public class Game : IGame
         this.maxInactivityTime = maxInactivityTime;
 
 
-        player1 = new Player(GameCharacterId.Player1, map.InitialPlayer1Position);
-        if (map.InitialPlayer2Position.HasValue)
+        player1 = new Player(GameCharacterId.Player1, map.Player1.Position, map.Player1.Inventory);
+        if (map.Player2.Position.IsValid())
         {
-            player2 = new Player(GameCharacterId.Player2, map.InitialPlayer2Position.Value);
+            player2 = new Player(GameCharacterId.Player2, map.Player2.Position, map.Player2.Inventory);
         }
 
         // enemies only have and drop swords in two player maps
         var isTwoPlayer = player1 != null && player2 != null;
 
-        if (map.InitialEnemy1Position.HasValue)
+        var nextEnemyId = GameCharacterId.Enemy1;
+        foreach (var mapEnemy in new Swoq.Infra.Enemy[] { map.Enemy1, map.Enemy2, map.Enemy3 })
         {
-            if (map.IsEnemy1Boss)
+            if (mapEnemy.Position.IsValid())
             {
-                var boss = new Enemy(GameCharacterId.Boss,
-                    map.InitialEnemy1Position.Value,
-                    Inventory: map.InitialEnemy1Inventory,
-                    Health: Parameters.BossHealth,
-                    Damage: Parameters.BossDamage,
-                    HasSword: false);
-                enemies = enemies.Add(boss.Id, boss);
-            }
-            else
-            {
-                var enemy = new Enemy(GameCharacterId.Enemy1, map.InitialEnemy1Position.Value, Inventory: map.InitialEnemy1Inventory, HasSword: isTwoPlayer);
+                Enemy enemy;
+                if (mapEnemy.IsBoss)
+                {
+                    enemy = new Enemy(GameCharacterId.Boss, mapEnemy.Position, mapEnemy.Inventory, Parameters.BossHealth, false, Parameters.BossDamage);
+                }
+                else
+                {
+                    enemy = new Enemy(nextEnemyId, mapEnemy.Position, mapEnemy.Inventory, Parameters.EnemyHealth, isTwoPlayer, Parameters.EnemyDamage);
+                    nextEnemyId++;
+                }
+
                 enemies = enemies.Add(enemy.Id, enemy);
             }
-        }
-        if (map.InitialEnemy2Position.HasValue)
-        {
-            var enemy = new Enemy(GameCharacterId.Enemy2, map.InitialEnemy2Position.Value, Inventory: map.InitialEnemy2Inventory, HasSword: isTwoPlayer);
-            enemies = enemies.Add(enemy.Id, enemy);
-        }
-        if (map.InitialEnemy3Position.HasValue)
-        {
-            var enemy = new Enemy(GameCharacterId.Enemy3, map.InitialEnemy3Position.Value, Inventory: map.InitialEnemy3Inventory, HasSword: isTwoPlayer);
-            enemies = enemies.Add(enemy.Id, enemy);
         }
     }
 
