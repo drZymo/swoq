@@ -41,16 +41,15 @@ public class Game : IGame
         {
             if (mapEnemy.Position.IsValid())
             {
-                Enemy enemy;
-                if (mapEnemy.IsBoss)
-                {
-                    enemy = new Enemy(GameCharacterId.Boss, mapEnemy.Position, mapEnemy.Inventory, Parameters.BossHealth, false, Parameters.BossDamage);
-                }
-                else
-                {
-                    enemy = new Enemy(nextEnemyId, mapEnemy.Position, mapEnemy.Inventory, Parameters.EnemyHealth, isTwoPlayer, Parameters.EnemyDamage);
-                    nextEnemyId++;
-                }
+                var enemy = new Enemy(
+                    nextEnemyId,
+                    mapEnemy.Position,
+                    mapEnemy.Inventory,
+                    mapEnemy.IsBoss ? Parameters.BossHealth : Parameters.EnemyHealth,
+                    mapEnemy.IsBoss ? false : isTwoPlayer,
+                    mapEnemy.IsBoss ? Parameters.BossDamage : Parameters.EnemyDamage,
+                    mapEnemy.IsBoss);
+                nextEnemyId++;
 
                 enemies = enemies.Add(enemy.Id, enemy);
             }
@@ -711,7 +710,6 @@ public class Game : IGame
             case GameCharacterId.Enemy1:
             case GameCharacterId.Enemy2:
             case GameCharacterId.Enemy3:
-            case GameCharacterId.Boss:
                 {
                     var newEnemy = enemies[characterId];
                     DealDamage(ref newEnemy, damage);
@@ -744,6 +742,7 @@ public class Game : IGame
 
     private bool IsVisible(Position from, Position to)
     {
+        if (from == to) return true;
         if (to.y < 0 || to.y >= map.Height) return false;
         if (to.x < 0 || to.x >= map.Width) return false;
         if (to.DistanceTo(from) > Parameters.PlayerVisibilityRange) return false;
@@ -831,7 +830,7 @@ public class Game : IGame
             character = character with { Position = PositionEx.Invalid };
 
             // Boss drops two treasures (most important otherwise cannot exit)
-            if (character.Id == GameCharacterId.Boss)
+            if (character is Enemy enemy && enemy.IsBoss)
             {
                 DropItem(position, Cell.Treasure);
                 DropItem(position, Cell.Treasure);
@@ -998,11 +997,6 @@ public class Game : IGame
 
     private Tile ToTile(Player player, Position pos)
     {
-        if (pos.Equals(player.Position))
-        {
-            return Tile.Player;
-        }
-
         if (!IsVisible(player.Position, pos))
         {
             return Tile.Unknown;
@@ -1012,14 +1006,10 @@ public class Game : IGame
         {
             if (pos.Equals(character.Position))
             {
-                return character.Id switch
+                return character switch
                 {
-                    GameCharacterId.Player1 => Tile.Player,
-                    GameCharacterId.Player2 => Tile.Player,
-                    GameCharacterId.Enemy1 => Tile.Enemy,
-                    GameCharacterId.Enemy2 => Tile.Enemy,
-                    GameCharacterId.Enemy3 => Tile.Enemy,
-                    GameCharacterId.Boss => Tile.Boss,
+                    Player => Tile.Player,
+                    Enemy enemy => enemy.IsBoss ? Tile.Boss : Tile.Enemy,
                     _ => throw new NotImplementedException(),
                 };
             }

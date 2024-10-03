@@ -11,7 +11,6 @@ internal enum GameCharacterId
     Enemy1,
     Enemy2,
     Enemy3,
-    Boss,
 }
 
 internal abstract record GameCharacter(
@@ -36,5 +35,6 @@ internal record Enemy(
     int Health = Parameters.EnemyHealth,
     bool HasSword = true,
     int Damage = Parameters.EnemyDamage,
+    bool IsBoss = false,
     bool IsTriggered = false)
     : GameCharacter(Id, Position, Inventory, Health, HasSword);
