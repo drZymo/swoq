@@ -1,5 +1,4 @@
 ﻿using Swoq.Interface;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Swoq.Infra;
@@ -12,10 +11,6 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
     private readonly bool[,] visibilityData = new bool[height, width];
 
     private int level = 0;
-    private Position player1Position = (-1, -1);
-    private Position? player2Position = null;
-    private IImmutableList<Position> enemyPositions = ImmutableList<Position>.Empty;
-    private Position? bossPosition = null;
 
     public void Reset()
     {
@@ -39,10 +34,6 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
                 visibilityData[y, x] = false;
             }
         }
-        player1Position = (-1, -1);
-        player2Position = null;
-        enemyPositions = ImmutableList<Position>.Empty;
-        bossPosition = null;
     }
 
     public void SetLevel(int level)
@@ -54,11 +45,8 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
     {
         if (playerIndex < 1 || playerIndex > 2) throw new ArgumentOutOfRangeException(nameof(playerIndex));
 
-        if (playerPosition.y < 0 || playerPosition.x < 0 ||
-            !surroundings.Any())
+        if (playerPosition.y < 0 || playerPosition.x < 0 || !surroundings.Any())
         {
-            if (playerIndex == 1) player1Position = PositionEx.Invalid;
-            if (playerIndex == 2) player2Position = null;
             return;
         }
 
@@ -78,14 +66,6 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
             var mx = left + x;
             if (0 <= my && my < height && 0 <= mx && mx < width)
             {
-                if (tile == Tile.Boss)
-                {
-                    bossPosition = (my, mx);
-                }
-                else if (tile == Tile.Enemy)
-                {
-                    enemyPositions = enemyPositions.Add((my, mx));
-                }
                 if (tile != Tile.Unknown)
                 {
                     tileData[my, mx] = tile;
@@ -100,9 +80,6 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
                 x = 0;
             }
         }
-
-        if (playerIndex == 1) player1Position = (playerPosition.y, playerPosition.x);
-        if (playerIndex == 2) player2Position = (playerPosition.y, playerPosition.x);
     }
 
     public Overview CreateOverview()
