@@ -23,23 +23,28 @@ public static class MapConvert
         return new Overview(map.Level, map.Height, map.Width, tileData, visiblityData);
     }
 
-    public static Tile ToTile(this Map map, Position pos)
+    public static Tile ToVisibleTile(this Map map, Position tilePos, Position observerPos, int visibilityRange)
     {
-        if ((map.Player1 != null && map.Player1.IsPresent && pos.Equals(map.Player1.Position)) ||
-            (map.Player2 != null && map.Player2.IsPresent && pos.Equals(map.Player2.Position)))
+        return map.IsVisible(from: observerPos, to: tilePos, maxRange: visibilityRange) ? map.ToTile(tilePos) : Tile.Unknown;
+    }
+
+    public static Tile ToTile(this Map map, Position tilePos)
+    {
+        if ((map.Player1 != null && map.Player1.IsPresent && tilePos.Equals(map.Player1.Position)) ||
+            (map.Player2 != null && map.Player2.IsPresent && tilePos.Equals(map.Player2.Position)))
         {
             return Tile.Player;
         }
 
         foreach (var enemy in map.Enemies.Values)
         {
-            if (enemy.IsPresent && pos.Equals(enemy.Position))
+            if (enemy.IsPresent && tilePos.Equals(enemy.Position))
             {
                 return enemy.IsBoss ? Tile.Boss : Tile.Enemy;
             }
         }
 
-        return map[pos] switch
+        return map[tilePos] switch
         {
             Cell.Unknown => Tile.Unknown,
             Cell.Empty => Tile.Empty,

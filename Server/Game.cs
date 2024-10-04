@@ -612,8 +612,7 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
 
     private bool IsPlayerVisibleByEnemy(Enemy enemy, Player player)
     {
-        var distance = enemy.Position.DistanceTo(player.Position);
-        return distance < Parameters.EnemyVisibilityRange && IsVisible(enemy.Position, player.Position);
+        return map.IsVisible(enemy.Position, player.Position, Parameters.EnemyVisibilityRange);
     }
 
     private void MoveEnemyTowards(ref Enemy enemy, Position targetPosition)
@@ -691,67 +690,6 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
         // Enemies can only enter cells that appear empty
         var cell = map[position];
         return !isEnemy ? cell.CanWalkOn() : cell.IsEmpty();
-    }
-
-    private bool IsVisible(Position from, Position to)
-    {
-        if (from == to) return true;
-        if (to.y < 0 || to.y >= map.Height) return false;
-        if (to.x < 0 || to.x >= map.Width) return false;
-        if (to.DistanceTo(from) > Parameters.PlayerVisibilityRange) return false;
-
-        if (from.x < to.x && IsVisible(from.x + 0.5, from.y + 0.5, to.x, to.y + 0.5)) return true;
-        if (from.x > to.x && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 1, to.y + 0.5)) return true;
-        if (from.y < to.y && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 0.5, to.y)) return true;
-        if (from.y > to.y && IsVisible(from.x + 0.5, from.y + 0.5, to.x + 0.5, to.y + 1)) return true;
-
-        return false;
-    }
-
-    private bool IsVisible(double srcX, double srcY, double dstX, double dstY)
-    {
-        var dx = dstX - srcX;
-        var dy = dstY - srcY;
-
-        if (Math.Abs(dx) > 1e-6) // prevent division by small amount
-        {
-            var stepX = Math.Sign(dx);
-            var x = stepX > 0 ? Math.Ceiling(srcX) : Math.Floor(srcX);
-            var stepY = stepX * dy / dx;
-            var y = srcY + (x - srcX) * dy / dx;
-
-            while (!(srcX < dstX && x >= dstX) && !(srcX > dstX && x <= dstX))
-            {
-                var mapX = (int)(x + stepX * 0.5);
-                var mapY = (int)y;
-                if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
-                if (!map[mapY, mapX].CanWalkOn()) return false; // Blocked by wall
-
-                x += stepX;
-                y += stepY;
-            }
-        }
-
-        if (Math.Abs(dy) > 1e-6) // prevent division by small amount
-        {
-            var stepY = Math.Sign(dy);
-            var y = stepY > 0 ? Math.Ceiling(srcY) : Math.Floor(srcY);
-            var stepX = stepY * dx / dy;
-            var x = srcX + (y - srcY) * dx / dy;
-
-            while (!(srcY < dstY && y >= dstY) && !(srcY > dstY && y <= dstY))
-            {
-                var mapY = (int)(y + stepY * 0.5);
-                var mapX = (int)x;
-                if (mapX < 0 || mapX >= map.Width || mapY < 0 || mapY >= map.Height) break;
-                if (!map[mapY, mapX].CanWalkOn()) return false; // Blocked by wall
-
-                y += stepY;
-                x += stepX;
-            }
-        }
-
-        return true;
     }
 
     private void CleanupDeadCharacters()
@@ -918,37 +856,30 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
 
     private PlayerState GetPlayerState(Player player)
     {
+        const int visibilityRange = Parameters.PlayerVisibilityRange;
+
         Tile[] surroundings = [];
 
         if (player.IsPresent)
         {
-            var width = Parameters.PlayerVisibilityRange * 2 + 1;
-            var height = Parameters.PlayerVisibilityRange * 2 + 1;
+            var width = visibilityRange * 2 + 1;
+            var height = visibilityRange * 2 + 1;
 
             surroundings = new Tile[height * width];
 
-            var top = player.Position.y - Parameters.PlayerVisibilityRange;
-            var left = player.Position.x - Parameters.PlayerVisibilityRange;
+            var top = player.Position.y - visibilityRange;
+            var left = player.Position.x - visibilityRange;
             for (var y = 0; y < height; y++)
             {
                 for (var x = 0; x < width; x++)
                 {
-                    surroundings[y * width + x] = ToTile(player, (top + y, left + x));
+                    surroundings[y * width + x] =
+                        map.ToVisibleTile((top + y, left + x), player.Position, visibilityRange);
                 }
             }
         }
 
         return new PlayerState(player.Position, player.Health, player.Inventory, player.HasSword, surroundings);
-    }
-
-    private Tile ToTile(Player player, Position pos)
-    {
-        if (!IsVisible(player.Position, pos))
-        {
-            return Tile.Unknown;
-        }
-
-        return map.ToTile(pos);
     }
 
     #endregion

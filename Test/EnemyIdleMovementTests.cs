@@ -54,12 +54,12 @@ internal class EnemyIdleMovementTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((12, 1)));
-            Assert.That(changes, Has.Count.EqualTo(27));
+            Assert.That(changes, Has.Count.EqualTo(30));
             // Player moved
             Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
             Assert.That(changes[(12, 1)], Is.EqualTo((Tile.Unknown, Tile.Player)));
             // Enemy appeared and moved
-            Assert.That(changes[(12, 6)], Is.EqualTo((Tile.Unknown, Tile.Enemy)));
+            Assert.That(changes[(12, 7)], Is.EqualTo((Tile.Unknown, Tile.Enemy)));
             // Rest is map reveal
         });
 
@@ -75,8 +75,8 @@ internal class EnemyIdleMovementTests : GameTestBase
             Assert.That(changes[(12, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
             Assert.That(changes[(12, 2)], Is.EqualTo((Tile.Empty, Tile.Player)));
             // Enemy moved
-            Assert.That(changes[(12, 6)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
-            Assert.That(changes[(12, 5)], Is.EqualTo((Tile.Empty, Tile.Enemy)));
+            Assert.That(changes[(12, 7)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
+            Assert.That(changes[(12, 6)], Is.EqualTo((Tile.Empty, Tile.Enemy)));
         });
     }
 
@@ -94,12 +94,12 @@ internal class EnemyIdleMovementTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((12, 1)));
-            Assert.That(changes, Has.Count.EqualTo(27));
+            Assert.That(changes, Has.Count.EqualTo(30));
             // Player moved
             Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
             Assert.That(changes[(12, 1)], Is.EqualTo((Tile.Unknown, Tile.Player)));
             // Enemy appeared and moved
-            Assert.That(changes[(12, 6)], Is.EqualTo((Tile.Unknown, Tile.Enemy)));
+            Assert.That(changes[(12, 7)], Is.EqualTo((Tile.Unknown, Tile.Enemy)));
             // Rest is map reveal
         });
 
@@ -115,17 +115,20 @@ internal class EnemyIdleMovementTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((1, 1)));
-            Assert.That(changes, Has.Count.EqualTo(5));
+            Assert.That(changes, Has.Count.EqualTo(4));
             // Player moved
             Assert.That(changes[(12, 1)], Is.EqualTo((Tile.Player, Tile.Empty)));
             Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Empty, Tile.Player)));
             // Enemy moved
-            Assert.That(changes[(12, 6)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
-            Assert.That(changes[(12, 4)], Is.EqualTo((Tile.Empty, Tile.Enemy))); // Position enemy was seen before turning corner
-            Assert.That(changes[(12, 2)], Is.EqualTo((Tile.Empty, Tile.Enemy))); // Position enemy was last seen in view
+            Assert.That(changes[(12, 7)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
+            Assert.That(changes[(12, 5)], Is.EqualTo((Tile.Empty, Tile.Enemy))); // Position enemy was seen before turning corner
         });
 
         // Wait, nothing happens
+        Act();
+        Act();
+        Act();
+        Act();
         Act();
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
@@ -144,9 +147,7 @@ internal class EnemyIdleMovementTests : GameTestBase
             Assert.That(changes[(9, 1)], Is.EqualTo((Tile.Empty, Tile.Enemy)));
         });
 
-        // Wait, enemy skips a few moves
-        Act();
-        Act();
+        // Wait, enemy skips a move
         Act();
         Assert.That(mapCache.GetNewChanges(), Is.Empty);
 
@@ -165,7 +166,7 @@ internal class EnemyIdleMovementTests : GameTestBase
 
     protected override Map CreateGameMap()
     {
-        var width = 8;
+        var width = 9;
         var height = 14;
         var map = new MutableMap(0, height, width);
 

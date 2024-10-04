@@ -11,8 +11,8 @@ internal class MovementTests : GameTestBase
     internal readonly Tile[] InitialSurroundings1 = ConvertSurroundings(
         "                 " +
         "                 " +
-        "    #########    " +
-        "   #....e....#   " +
+        "    ####e####    " +
+        "   #.........#   " +
         "   #.........#   " +
         "   #.........#   " +
         "   #.........#   " +
@@ -30,8 +30,8 @@ internal class MovementTests : GameTestBase
     internal readonly Tile[] InitialSurroundings2 = ConvertSurroundings(
         "                 " +
         "                 " +
-        "   #########     " +
-        "  #....e....#    " +
+        "   ####e####     " +
+        "  #.........#    " +
         "  #.........#    " +
         "  #.........#    " +
         "  #.........#    " +
@@ -172,18 +172,19 @@ internal class MovementTests : GameTestBase
         // Move towards enemy
         Act(DirectedAction.MoveNorth);
         Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
         var changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((4, 5)));
+            Assert.That(game.State.Player1.Position, Is.EqualTo((3, 5)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(changes, Has.Count.EqualTo(4));
             // Player moved
             Assert.That(changes[(6, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
-            Assert.That(changes[(4, 5)], Is.EqualTo((Tile.Empty, Tile.Player)));
+            Assert.That(changes[(3, 5)], Is.EqualTo((Tile.Empty, Tile.Player)));
             // Enemy moved
-            Assert.That(changes[(1, 5)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
-            Assert.That(changes[(3, 5)], Is.EqualTo((Tile.Empty, Tile.Enemy)));
+            Assert.That(changes[(0, 5)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
+            Assert.That(changes[(2, 5)], Is.EqualTo((Tile.Empty, Tile.Enemy)));
         });
 
         // Another move north will overlap with enemy, which is not be allowed
@@ -192,7 +193,7 @@ internal class MovementTests : GameTestBase
         // Nothing changed
         Assert.Multiple(() =>
         {
-            Assert.That(game.State.Player1.Position, Is.EqualTo((4, 5)));
+            Assert.That(game.State.Player1.Position, Is.EqualTo((3, 5)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(mapCache.GetNewChanges(), Is.Empty);
         });
@@ -269,8 +270,9 @@ internal class MovementTests : GameTestBase
         map[map.Player2.Position.y + 1, map.Player2.Position.x] = Cell.KeyRed;
         map[map.Player2.Position.y + 2, map.Player2.Position.x] = Cell.KeyBlue;
 
-        // One enemy in top
-        map.Enemy1.Position = (1, (width - 1) / 2);
+        // One enemy in top (in wall)
+        map.Enemy1.Position = (0, (width - 1) / 2);
+        map[map.Enemy1.Position.y, map.Enemy1.Position.x] = Cell.Empty;
 
         // Boulder in left
         map[map.Player1.Position.y, 1] = Cell.Boulder;
