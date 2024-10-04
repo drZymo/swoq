@@ -148,7 +148,7 @@ internal class TwoPlayerCombatTests : GameTestBase
             Assert.That(changes, Has.Count.EqualTo(0)); // no movements
         });
 
-        // Last attack will deal 2 more damage killing enemy
+        // Last attack will deal 2 more damage, killing enemy
         Act(DirectedAction.UseSouth, DirectedAction.UseNorth);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>

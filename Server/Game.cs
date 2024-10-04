@@ -7,54 +7,13 @@ namespace Swoq.Server;
 
 using Position = (int y, int x);
 
-public class Game : IGame
+public class Game(Map map, TimeSpan maxInactivityTime) : IGame
 {
-    private readonly TimeSpan maxInactivityTime;
-
     private int ticks = 0;
     private int lastChangeTick = 0;
 
-    private Map map;
-    private Player? player1 = null;
-    private Player? player2 = null;
-    private ImmutableDictionary<GameCharacterId, Enemy> enemies = ImmutableDictionary<GameCharacterId, Enemy>.Empty;
-
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
-
-    public Game(Map map, TimeSpan maxInactivityTime)
-    {
-        this.map = map;
-        this.maxInactivityTime = maxInactivityTime;
-
-        player1 = new Player(GameCharacterId.Player1, map.Player1.Position, map.Player1.Inventory);
-        if (map.Player2.Position.IsValid())
-        {
-            player2 = new Player(GameCharacterId.Player2, map.Player2.Position, map.Player2.Inventory);
-        }
-
-        // enemies only have and drop swords in two player maps
-        var isTwoPlayer = player1 != null && player2 != null;
-
-        var nextEnemyId = GameCharacterId.Enemy1;
-        foreach (var mapEnemy in new Swoq.Infra.Enemy[] { map.Enemy1, map.Enemy2, map.Enemy3 })
-        {
-            if (mapEnemy.Position.IsValid())
-            {
-                var enemy = new Enemy(
-                    nextEnemyId,
-                    mapEnemy.Position,
-                    mapEnemy.Inventory,
-                    mapEnemy.IsBoss ? Parameters.BossHealth : Parameters.EnemyHealth,
-                    mapEnemy.IsBoss ? false : isTwoPlayer,
-                    mapEnemy.IsBoss ? Parameters.BossDamage : Parameters.EnemyDamage,
-                    mapEnemy.IsBoss);
-                nextEnemyId++;
-
-                enemies = enemies.Add(enemy.Id, enemy);
-            }
-        }
-    }
 
     public Guid Id { get; } = Guid.NewGuid();
     public int Level => map.Level;
@@ -75,36 +34,34 @@ public class Game : IGame
             throw new NoProgressException(CreateState());
         }
 
-        Debug.Assert(player1 != null || player2 != null);
+        Debug.Assert(map.Player1 != null || map.Player2 != null);
 
         if (action1 != null)
         {
-            if (player1 == null || !player1.IsPresent) throw new Player1NotPresentException(CreateState());
-            Debug.Assert(player1.IsAlive);
+            if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException(CreateState());
+            Debug.Assert(map.Player1.IsAlive);
         }
         if (action2 != null)
         {
-            if (player2 == null || !player2.IsPresent) throw new Player2NotPresentException(CreateState());
-            Debug.Assert(player2.IsAlive);
+            if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException(CreateState());
+            Debug.Assert(map.Player2.IsAlive);
         }
 
         // Store current state, so it can be reverted to when something went wrong
-        var prevState = (map, player1, player1Positions, player2, player2Positions, enemies);
+        var prevState = (map, player1Positions, player2Positions);
 
         // Act
         try
         {
-            PerformPlayerAction(action1, ref player1);
+            PerformPlayerAction(action1, map.Player1);
             CheckInvariant();
-            PerformPlayerAction(action2, ref player2);
+            PerformPlayerAction(action2, map.Player2);
             CheckInvariant();
 
             // Process enemies using previous positions of players
-            foreach (var enemy in enemies.Values)
+            foreach (var enemy in map.Enemies.Values)
             {
-                var newEnemy = enemy;
-                ProcessEnemy(ref newEnemy, prevState.player1, prevState.player2);
-                enemies = enemies.SetItem(newEnemy.Id, newEnemy);
+                ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
                 CheckInvariant();
             }
 
@@ -112,8 +69,8 @@ public class Game : IGame
             CheckInvariant();
 
             // Store current positions
-            StorePlayerPosition(player1, ref player1Positions);
-            StorePlayerPosition(player2, ref player2Positions);
+            StorePlayerPosition(map.Player1, ref player1Positions);
+            StorePlayerPosition(map.Player2, ref player2Positions);
 
             UpdateGameStatus();
 
@@ -123,7 +80,7 @@ public class Game : IGame
         catch (SwoqActionNotAllowedException)
         {
             // Revert state
-            (map, player1, player1Positions, player2, player2Positions, enemies) = prevState;
+            (map, player1Positions, player2Positions) = prevState;
             throw;
         }
     }
@@ -137,8 +94,8 @@ public class Game : IGame
 
         if (player1Positions.Count > 0 || player2Positions.Count > 0)
         {
-            var player1Active = IsPlayerActive(player1, player1Positions);
-            var player2Active = IsPlayerActive(player2, player2Positions);
+            var player1Active = IsPlayerActive(map.Player1, player1Positions);
+            var player2Active = IsPlayerActive(map.Player2, player2Positions);
             if (!player1Active && !player2Active)
             {
                 return false;
@@ -150,9 +107,9 @@ public class Game : IGame
 
     private GameState CreateState()
     {
-        Debug.Assert(player1 != null || player2 != null);
-        PlayerState? player1State = player1 != null ? GetPlayerState(player1) : null;
-        PlayerState? player2State = player2 != null ? GetPlayerState(player2) : null;
+        Debug.Assert(map.Player1 != null || map.Player2 != null);
+        PlayerState? player1State = map.Player1 != null ? GetPlayerState(map.Player1) : null;
+        PlayerState? player2State = map.Player2 != null ? GetPlayerState(map.Player2) : null;
         return new GameState(ticks, map.Level, IsFinished, player1State, player2State);
     }
 
@@ -160,12 +117,12 @@ public class Game : IGame
     {
         Debug.Assert(!IsFinished);
 
-        if (player1 != null && !player1.IsAlive)
+        if (map.Player1 != null && !map.Player1.IsAlive)
         {
             IsFinished = true;
             throw new Player1DiedException(CreateState());
         }
-        if (player2 != null && !player2.IsAlive)
+        if (map.Player2 != null && !map.Player2.IsAlive)
         {
             IsFinished = true;
             throw new Player2DiedException(CreateState());
@@ -176,8 +133,8 @@ public class Game : IGame
             IsFinished = true;
             throw new NoProgressException(CreateState());
         }
-        if ((player1 == null || (!player1.IsPresent && player1.IsAlive)) &&
-            (player2 == null || (!player2.IsPresent && player2.IsAlive)))
+        if ((map.Player1 == null || (!map.Player1.IsPresent && map.Player1.IsAlive)) &&
+            (map.Player2 == null || (!map.Player2.IsPresent && map.Player2.IsAlive)))
         {
             // Both players exited the map alive
             IsFinished = true;
@@ -199,7 +156,7 @@ public class Game : IGame
         }
     }
 
-    private void PerformPlayerAction(DirectedAction? action, ref Player? player)
+    private void PerformPlayerAction(DirectedAction? action, Player? player)
     {
         // Skip if no action requested
         if (!action.HasValue) return;
@@ -228,6 +185,8 @@ public class Game : IGame
             default:
                 throw new UnknownActionException(CreateState());
         }
+
+        map = map.SetCharacter(player);
     }
 
     private Position GetDirectedActionPosition(Player player, DirectedAction action) => action switch
@@ -572,7 +531,7 @@ public class Game : IGame
         return a.IsPresent && b.IsPresent && AreAdjacent(a.Position, b.Position);
     }
 
-    private void ProcessEnemy(ref Enemy enemy, Player? prevPlayer1, Player? prevPlayer2)
+    private void ProcessEnemy(Enemy enemy, Player? prevPlayer1, Player? prevPlayer2)
     {
         // Is this enemy still alive?
         if (!enemy.IsPresent || !enemy.IsAlive) return;
@@ -581,14 +540,16 @@ public class Game : IGame
         {
             MoveEnemyToClosestPlayer(ref enemy);
         }
+
+        map = map.SetCharacter(enemy);
     }
 
     private bool TryEnemyAttackAdjacentPlayer(ref Enemy enemy, Player? prevPlayer1, Player? prevPlayer2)
     {
         // Are there players adjacent to the enemy?
         var currentAdjacentPlayers = ImmutableHashSet<GameCharacterId>.Empty;
-        if (player1 != null && AreAdjacent(enemy, player1)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player1);
-        if (player2 != null && AreAdjacent(enemy, player2)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player2);
+        if (map.Player1 != null && AreAdjacent(enemy, map.Player1)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player1);
+        if (map.Player2 != null && AreAdjacent(enemy, map.Player2)) currentAdjacentPlayers = currentAdjacentPlayers.Add(GameCharacterId.Player2);
 
         // No, then cannot attack
         if (currentAdjacentPlayers.Count == 0) return false;
@@ -603,8 +564,8 @@ public class Game : IGame
         if (adjacentPlayers.Count > 0)
         {
             var adjacentPlayer = adjacentPlayers.PickOne();
-            if (player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(ref player1, enemy.Damage);
-            if (player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(ref player2, enemy.Damage);
+            if (map.Player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(map.Player1, enemy.Damage);
+            if (map.Player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(map.Player2, enemy.Damage);
         }
 
         // Return true, even when not attacked.
@@ -621,8 +582,8 @@ public class Game : IGame
 
         // Make a list of players, ordered by distance from enemy
         ImmutableList<Player> players = [];
-        if (player1 != null && player1.IsPresent) players = players.Add(player1);
-        if (player2 != null && player2.IsPresent) players = players.Add(player2);
+        if (map.Player1 != null && map.Player1.IsPresent) players = players.Add(map.Player1);
+        if (map.Player2 != null && map.Player2.IsPresent) players = players.Add(map.Player2);
         var closestPlayers = players.
             OrderBy(p => p.Position.DistanceTo(enemy_.Position));
 
@@ -687,12 +648,13 @@ public class Game : IGame
         }
     }
 
-    private void DealDamage<T>(ref T? character, int damage) where T : GameCharacter
+    private void DealDamage<T>(T? character, int damage) where T : GameCharacter
     {
         if (character == null) return;
         character = character with { Health = Math.Max(0, character.Health - damage) };
         lastChangeTick = ticks;
         CleanupDeadCharacter(ref character);
+        map = map.SetCharacter(character);
     }
 
     private void DealDamage(GameCharacterId characterId, int damage)
@@ -700,22 +662,15 @@ public class Game : IGame
         switch (characterId)
         {
             case GameCharacterId.Player1:
-                DealDamage(ref player1, damage);
+                DealDamage(map.Player1, damage);
                 break;
             case GameCharacterId.Player2:
-                DealDamage(ref player2, damage);
+                DealDamage(map.Player2, damage);
                 break;
             case GameCharacterId.Enemy1:
             case GameCharacterId.Enemy2:
             case GameCharacterId.Enemy3:
-                {
-                    var newEnemy = enemies[characterId];
-                    DealDamage(ref newEnemy, damage);
-                    if (newEnemy != null)
-                    {
-                        enemies = enemies.SetItem(newEnemy.Id, newEnemy);
-                    }
-                }
+                DealDamage(map.Enemies[characterId], damage);
                 break;
         }
     }
@@ -801,54 +756,58 @@ public class Game : IGame
 
     private void CleanupDeadCharacters()
     {
-        if (player1 != null)
+        if (map.Player1 != null)
         {
+            var player1 = map.Player1;
             CleanupDeadCharacter(ref player1);
+            map = map.SetCharacter(player1);
         }
-        if (player2 != null)
+        if (map.Player2 != null)
         {
+            var player2 = map.Player2;
             CleanupDeadCharacter(ref player2);
+            map = map.SetCharacter(player2);
         }
 
-        foreach (var enemy in enemies.Values)
+        foreach (var enemy in map.Enemies.Values)
         {
             var newEnemy = enemy;
             CleanupDeadCharacter(ref newEnemy);
-            enemies = enemies.SetItem(newEnemy.Id, newEnemy);
+            map = map.SetCharacter(newEnemy);
         }
     }
 
     private void CleanupDeadCharacter<T>(ref T character) where T : GameCharacter
     {
-        if (!character.IsAlive && character.IsPresent)
+        // Make characters not present when they are no longer alive
+        if (character.IsAlive || !character.IsPresent) return;
+
+        var position = character.Position;
+
+        // Remove character from game
+        character = character with { Position = PositionEx.Invalid };
+
+        // Boss drops two treasures (most important otherwise cannot exit)
+        if (character is Enemy enemy && enemy.IsBoss)
         {
-            var position = character.Position;
-
-            // Remove character from game
-            character = character with { Position = PositionEx.Invalid };
-
-            // Boss drops two treasures (most important otherwise cannot exit)
-            if (character is Enemy enemy && enemy.IsBoss)
-            {
-                DropItem(position, Cell.Treasure);
-                DropItem(position, Cell.Treasure);
-            }
-            // Drop inventory
-            if (character.Inventory != Inventory.None)
-            {
-                var loot = character.Inventory.ToDroppedLoot();
-                DropItem(position, loot);
-                character = character with { Inventory = Inventory.None };
-            }
-            // Drop sword
-            if (character.HasSword)
-            {
-                DropItem(position, Cell.Sword);
-                character = character with { HasSword = false };
-            }
-
-            lastChangeTick = ticks;
+            DropItem(position, Cell.Treasure);
+            DropItem(position, Cell.Treasure);
         }
+        // Drop inventory
+        if (character.Inventory != Inventory.None)
+        {
+            var loot = character.Inventory.ToDroppedLoot();
+            DropItem(position, loot);
+            character = character with { Inventory = Inventory.None };
+        }
+        // Drop sword
+        if (character.HasSword)
+        {
+            DropItem(position, Cell.Sword);
+            character = character with { HasSword = false };
+        }
+
+        lastChangeTick = ticks;
     }
 
     private void DropItem(Position fromPosition, Cell item)
@@ -901,14 +860,14 @@ public class Game : IGame
     private double DistanceToAnyPlayer(Position p)
     {
         double distance = double.PositiveInfinity;
-        if (player1 != null && player1.IsPresent)
+        if (map.Player1 != null && map.Player1.IsPresent)
         {
-            var d1 = player1.Position.DistanceTo(p);
+            var d1 = map.Player1.Position.DistanceTo(p);
             if (d1 < distance) distance = d1;
         }
-        if (player2 != null && player2.IsPresent)
+        if (map.Player2 != null && map.Player2.IsPresent)
         {
-            var d2 = player2.Position.DistanceTo(p);
+            var d2 = map.Player2.Position.DistanceTo(p);
             if (d2 < distance) distance = d2;
         }
         return distance;
@@ -947,20 +906,9 @@ public class Game : IGame
 
     private IEnumerable<GameCharacter> GetAliveCharacters()
     {
-        if (player1 != null && player1.IsAlive && player1.IsPresent)
+        foreach (var character in map.AllCharacters.Where(c => c.IsAlive && c.IsPresent))
         {
-            yield return player1;
-        }
-        if (player2 != null && player2.IsAlive && player2.IsPresent)
-        {
-            yield return player2;
-        }
-        foreach (var enemy in enemies.Values)
-        {
-            if (enemy != null && enemy.IsAlive && enemy.IsPresent)
-            {
-                yield return enemy;
-            }
+            yield return character;
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿namespace Swoq.Infra;
 
 using Swoq.Interface;
+using System.Collections.Immutable;
 using Position = (int y, int x);
 
 public class MutableCharacter
@@ -8,6 +9,29 @@ public class MutableCharacter
     public Position Position { get; set; } = PositionEx.Invalid;
     public Inventory Inventory { get; set; } = Inventory.None;
     public bool IsBoss { get; set; } = false;
+
+    // TODO: Get from Parameters
+    private const int PlayerHealth = 5;
+    private const int EnemyHealth = 6;
+    private const int EnemyDamage = 1;
+    private const int BossHealth = 100;
+    private const int BossDamage = 100;
+
+    public Player ToPlayer(GameCharacterId id)
+    {
+        return new Player(id, Position, Inventory, PlayerHealth, false);
+    }
+    public Enemy ToEnemy(GameCharacterId id, bool isTwoPlayerGame)
+    {
+        return new Enemy(
+            id,
+            Position,
+            Inventory,
+            IsBoss ? BossHealth : EnemyHealth,
+            !IsBoss && isTwoPlayerGame,
+            IsBoss ? BossDamage : EnemyDamage,
+            IsBoss);
+    }
 }
 
 public class MutableMap(int level, int height, int width)
@@ -40,14 +64,40 @@ public class MutableMap(int level, int height, int width)
 
     public Map ToMap()
     {
-        return new Map(
-            Level,
-            Height, Width, data,
-            new Player(Player1.Position, Inventory.None),
-            new Player(Player2.Position, Inventory.None),
-            new Enemy(Enemy1.Position, Enemy1.Inventory, Enemy1.IsBoss),
-            new Enemy(Enemy2.Position, Enemy2.Inventory, Enemy2.IsBoss),
-            new Enemy(Enemy3.Position, Enemy3.Inventory, Enemy3.IsBoss),
-            isFinal: IsFinal);
+
+        Player? player1 = null;
+        Player? player2 = null;
+        ImmutableDictionary<GameCharacterId, Enemy> enemies = ImmutableDictionary<GameCharacterId, Enemy>.Empty;
+
+        if (Player1.Position.IsValid())
+        {
+            player1 = Player1.ToPlayer(GameCharacterId.Player1);
+        }
+        if (Player2.Position.IsValid())
+        {
+            player2 = Player2.ToPlayer(GameCharacterId.Player2);
+        }
+        var isTwoPlayerGame = player1 != null && player2 != null;
+
+        var nextEnemyId = GameCharacterId.Enemy1;
+        if (Enemy1.Position.IsValid())
+        {
+            var enemy = Enemy1.ToEnemy(nextEnemyId, isTwoPlayerGame);
+            enemies = enemies.SetItem(enemy.Id, enemy);
+            nextEnemyId++;
+        }
+        if (Enemy2.Position.IsValid())
+        {
+            var enemy = Enemy2.ToEnemy(nextEnemyId, isTwoPlayerGame);
+            enemies = enemies.SetItem(enemy.Id, enemy);
+            nextEnemyId++;
+        }
+        if (Enemy3.Position.IsValid())
+        {
+            var enemy = Enemy3.ToEnemy(nextEnemyId, isTwoPlayerGame);
+            enemies = enemies.SetItem(enemy.Id, enemy);
+        }
+
+        return new Map(Level, Height, Width, data, IsFinal, player1, player2, enemies);
     }
 }

@@ -8,9 +8,10 @@
   - [ ] dashboard
 - [ ] Run duration test to check for exceptions
 - [ ] Refactor 3 enemy + boss handling in maps and mapbuilder
-  - [ ] Merge game player/enemy state into map
+  - [X] Merge game player/enemy state into map
   - [ ] Move creation of observation to map class
   - [X] Remove nullability of players in Game
+- [ ] Remove two player dependency on sword drop??
 - [ ] Remove CheckInvariant
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia

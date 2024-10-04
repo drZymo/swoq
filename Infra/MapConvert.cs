@@ -23,18 +23,17 @@ public static class MapConvert
         return new Overview(map.Level, map.Height, map.Width, tileData, visiblityData);
     }
 
-
     private static Tile ToTile(Map map, Position pos)
     {
-        if ((map.Player1.Position.IsValid() && pos.Equals(map.Player1.Position)) ||
-            (map.Player2.Position.IsValid() && pos.Equals(map.Player2.Position)))
+        if ((map.Player1 != null && map.Player1.IsPresent && pos.Equals(map.Player1.Position)) ||
+            (map.Player2 != null && map.Player2.IsPresent && pos.Equals(map.Player2.Position)))
         {
             return Tile.Player;
         }
 
-        foreach (var enemy in new Enemy[] { map.Enemy1, map.Enemy2, map.Enemy3 })
+        foreach (var enemy in map.Enemies.Values)
         {
-            if (enemy.Position.IsValid() && pos.Equals(enemy.Position))
+            if (enemy.IsPresent && pos.Equals(enemy.Position))
             {
                 return enemy.IsBoss ? Tile.Boss : Tile.Enemy;
             }

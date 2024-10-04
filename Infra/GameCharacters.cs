@@ -1,11 +1,10 @@
-﻿using Swoq.Infra;
-using Swoq.Interface;
+﻿using Swoq.Interface;
 
-namespace Swoq.Server;
+namespace Swoq.Infra;
 
 using Position = (int y, int x);
 
-internal enum GameCharacterId
+public enum GameCharacterId
 {
     Player1,
     Player2,
@@ -14,7 +13,7 @@ internal enum GameCharacterId
     Enemy3,
 }
 
-internal abstract record GameCharacter(
+public abstract record GameCharacter(
     GameCharacterId Id,
     Position Position,
     Inventory Inventory,
@@ -25,21 +24,21 @@ internal abstract record GameCharacter(
     public bool IsPresent => Position.IsValid();
 }
 
-internal record Player(
+public record Player(
     GameCharacterId Id,
     Position Position,
-    Inventory Inventory = Inventory.None,
-    int Health = Parameters.PlayerHealth,
-    bool HasSword = false)
+    Inventory Inventory,
+    int Health,
+    bool HasSword)
     : GameCharacter(Id, Position, Inventory, Health, HasSword);
 
-internal record Enemy(
+public record Enemy(
     GameCharacterId Id,
     Position Position,
-    Inventory Inventory = Inventory.None,
-    int Health = Parameters.EnemyHealth,
-    bool HasSword = true,
-    int Damage = Parameters.EnemyDamage,
+    Inventory Inventory,
+    int Health,
+    bool HasSword,
+    int Damage,
     bool IsBoss = false,
     bool IsTriggered = false)
     : GameCharacter(Id, Position, Inventory, Health, HasSword);
