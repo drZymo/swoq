@@ -1,6 +1,5 @@
 ﻿using Avalonia.Media;
 using Swoq.Infra;
-using Swoq.Interface;
 using Position = (int y, int x);
 
 namespace Swoq.InfraUI.ViewModels;

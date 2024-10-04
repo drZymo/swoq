@@ -11,8 +11,6 @@ namespace Swoq.Dashboard.ViewModels;
 
 internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
 {
-    private static readonly TimeSpan PollDelay = TimeSpan.FromSeconds(3);
-
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread getUpdatesThread;
 
