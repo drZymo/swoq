@@ -23,7 +23,7 @@ public static class MapConvert
         return new Overview(map.Level, map.Height, map.Width, tileData, visiblityData);
     }
 
-    private static Tile ToTile(Map map, Position pos)
+    public static Tile ToTile(this Map map, Position pos)
     {
         if ((map.Player1 != null && map.Player1.IsPresent && pos.Equals(map.Player1.Position)) ||
             (map.Player2 != null && map.Player2.IsPresent && pos.Equals(map.Player2.Position)))

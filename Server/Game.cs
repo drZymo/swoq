@@ -948,49 +948,7 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
             return Tile.Unknown;
         }
 
-        foreach (var character in GetAliveCharacters())
-        {
-            if (pos.Equals(character.Position))
-            {
-                return character switch
-                {
-                    Player => Tile.Player,
-                    Enemy enemy => enemy.IsBoss ? Tile.Boss : Tile.Enemy,
-                    _ => throw new NotImplementedException(),
-                };
-            }
-        }
-
-        return map[pos] switch
-        {
-            Cell.Unknown => Tile.Unknown,
-            Cell.Empty => Tile.Empty,
-            Cell.Wall => Tile.Wall,
-            Cell.Exit => Tile.Exit,
-            Cell.DoorRedClosed => Tile.DoorRed,
-            Cell.KeyRed => Tile.KeyRed,
-            Cell.DoorGreenClosed => Tile.DoorGreen,
-            Cell.KeyGreen => Tile.KeyGreen,
-            Cell.DoorBlueClosed => Tile.DoorBlue,
-            Cell.KeyBlue => Tile.KeyBlue,
-            Cell.PressurePlateRed => Tile.PressurePlateRed,
-            Cell.PressurePlateGreen => Tile.PressurePlateGreen,
-            Cell.PressurePlateBlue => Tile.PressurePlateBlue,
-            Cell.Sword => Tile.Sword,
-            Cell.Health => Tile.Health,
-            Cell.Treasure => Tile.Treasure,
-
-            Cell.Boulder => Tile.Boulder,
-            Cell.PressurePlateRedWithBoulder => Tile.Boulder,
-            Cell.PressurePlateGreenWithBoulder => Tile.Boulder,
-            Cell.PressurePlateBlueWithBoulder => Tile.Boulder,
-
-            // don't show open doors
-            Cell.DoorRedOpen => Tile.Empty,
-            Cell.DoorGreenOpen => Tile.Empty,
-            Cell.DoorBlueOpen => Tile.Empty,
-            _ => throw new NotImplementedException(),
-        };
+        return map.ToTile(pos);
     }
 
     #endregion
