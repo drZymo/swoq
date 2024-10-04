@@ -1,4 +1,5 @@
-﻿using Swoq.Interface;
+﻿using Swoq.Infra;
+using Swoq.Interface;
 
 namespace Swoq.Server;
 
@@ -18,7 +19,11 @@ internal abstract record GameCharacter(
     Position Position,
     Inventory Inventory,
     int Health,
-    bool HasSword);
+    bool HasSword)
+{
+    public bool IsAlive => Health > 0;
+    public bool IsPresent => Position.IsValid();
+}
 
 internal record Player(
     GameCharacterId Id,

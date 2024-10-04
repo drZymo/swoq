@@ -16,16 +16,16 @@ public class Game : IGame
 
     private Map map;
     private Player? player1 = null;
-    private ImmutableList<Position> player1Positions = [];
     private Player? player2 = null;
-    private ImmutableList<Position> player2Positions = [];
     private ImmutableDictionary<GameCharacterId, Enemy> enemies = ImmutableDictionary<GameCharacterId, Enemy>.Empty;
+
+    private ImmutableList<Position> player1Positions = [];
+    private ImmutableList<Position> player2Positions = [];
 
     public Game(Map map, TimeSpan maxInactivityTime)
     {
         this.map = map;
         this.maxInactivityTime = maxInactivityTime;
-
 
         player1 = new Player(GameCharacterId.Player1, map.Player1.Position, map.Player1.Inventory);
         if (map.Player2.Position.IsValid())
@@ -79,13 +79,13 @@ public class Game : IGame
 
         if (action1 != null)
         {
-            if (player1 == null || !player1.Position.IsValid()) throw new Player1NotPresentException(CreateState());
-            if (player1.Health <= 0) throw new Player1DiedException(CreateState());
+            if (player1 == null || !player1.IsPresent) throw new Player1NotPresentException(CreateState());
+            Debug.Assert(player1.IsAlive);
         }
         if (action2 != null)
         {
-            if (player2 == null || !player2.Position.IsValid()) throw new Player2NotPresentException(CreateState());
-            if (player2.Health <= 0) throw new Player2DiedException(CreateState());
+            if (player2 == null || !player2.IsPresent) throw new Player2NotPresentException(CreateState());
+            Debug.Assert(player2.IsAlive);
         }
 
         // Store current state, so it can be reverted to when something went wrong
@@ -160,12 +160,12 @@ public class Game : IGame
     {
         Debug.Assert(!IsFinished);
 
-        if (player1 != null && player1.Health <= 0)
+        if (player1 != null && !player1.IsAlive)
         {
             IsFinished = true;
             throw new Player1DiedException(CreateState());
         }
-        if (player2 != null && player2.Health <= 0)
+        if (player2 != null && !player2.IsAlive)
         {
             IsFinished = true;
             throw new Player2DiedException(CreateState());
@@ -176,8 +176,8 @@ public class Game : IGame
             IsFinished = true;
             throw new NoProgressException(CreateState());
         }
-        if ((player1 == null || (!player1.Position.IsValid() && player1.Health > 0)) &&
-            (player2 == null || (!player2.Position.IsValid() && player2.Health > 0)))
+        if ((player1 == null || (!player1.IsPresent && player1.IsAlive)) &&
+            (player2 == null || (!player2.IsPresent && player2.IsAlive)))
         {
             // Both players exited the map alive
             IsFinished = true;
@@ -188,7 +188,7 @@ public class Game : IGame
     private static void StorePlayerPosition(Player? player, ref ImmutableList<Position> playerPositions)
     {
         // Only store positions of active players
-        if (player == null || !player.Position.IsValid()) return;
+        if (player == null || !player.IsPresent) return;
 
         // Store current position
         playerPositions = playerPositions.Add(player.Position);
@@ -205,7 +205,7 @@ public class Game : IGame
         if (!action.HasValue) return;
 
         // Skip if player has died before action could be performed.
-        if (player == null || player.Health <= 0 || !player.Position.IsValid()) return;
+        if (player == null || !player.IsAlive || !player.IsPresent) return;
 
         var actionPos = GetDirectedActionPosition(player, action.Value);
 
@@ -266,7 +266,7 @@ public class Game : IGame
         // so any doors are closed before entering the next cell
         LeaveCell(prevPos);
         // and enter if still alive
-        if (player.Position.IsValid())
+        if (player.IsPresent)
         {
             EnterCell(ref player, player.Position);
         }
@@ -569,15 +569,13 @@ public class Game : IGame
 
     private static bool AreAdjacent(GameCharacter a, GameCharacter b)
     {
-        return a.Position.IsValid() && b.Position.IsValid() &&
-            AreAdjacent(a.Position, b.Position);
+        return a.IsPresent && b.IsPresent && AreAdjacent(a.Position, b.Position);
     }
 
     private void ProcessEnemy(ref Enemy enemy, Player? prevPlayer1, Player? prevPlayer2)
     {
         // Is this enemy still alive?
-        if (!enemy.Position.IsValid()) return;
-        if (enemy.Health <= 0) return;
+        if (!enemy.IsPresent || !enemy.IsAlive) return;
 
         if (!TryEnemyAttackAdjacentPlayer(ref enemy, prevPlayer1, prevPlayer2))
         {
@@ -623,8 +621,8 @@ public class Game : IGame
 
         // Make a list of players, ordered by distance from enemy
         ImmutableList<Player> players = [];
-        if (player1 != null && player1.Position.IsValid()) players = players.Add(player1);
-        if (player2 != null && player2.Position.IsValid()) players = players.Add(player2);
+        if (player1 != null && player1.IsPresent) players = players.Add(player1);
+        if (player2 != null && player2.IsPresent) players = players.Add(player2);
         var closestPlayers = players.
             OrderBy(p => p.Position.DistanceTo(enemy_.Position));
 
@@ -822,7 +820,7 @@ public class Game : IGame
 
     private void CleanupDeadCharacter<T>(ref T character) where T : GameCharacter
     {
-        if (character.Health <= 0 && character.Position.IsValid())
+        if (!character.IsAlive && character.IsPresent)
         {
             var position = character.Position;
 
@@ -903,12 +901,12 @@ public class Game : IGame
     private double DistanceToAnyPlayer(Position p)
     {
         double distance = double.PositiveInfinity;
-        if (player1 != null && player1.Position.IsValid())
+        if (player1 != null && player1.IsPresent)
         {
             var d1 = player1.Position.DistanceTo(p);
             if (d1 < distance) distance = d1;
         }
-        if (player2 != null && player2.Position.IsValid())
+        if (player2 != null && player2.IsPresent)
         {
             var d2 = player2.Position.DistanceTo(p);
             if (d2 < distance) distance = d2;
@@ -919,7 +917,7 @@ public class Game : IGame
     private static bool IsPlayerActive(Player? player, ImmutableList<Position> playerPositions)
     {
         // Only check players that are alive
-        if (player == null || !player.Position.IsValid())
+        if (player == null || !player.IsPresent)
         {
             return false;
         }
@@ -949,17 +947,17 @@ public class Game : IGame
 
     private IEnumerable<GameCharacter> GetAliveCharacters()
     {
-        if (player1 != null && player1.Health > 0 && player1.Position.IsValid())
+        if (player1 != null && player1.IsAlive && player1.IsPresent)
         {
             yield return player1;
         }
-        if (player2 != null && player2.Health > 0 && player2.Position.IsValid())
+        if (player2 != null && player2.IsAlive && player2.IsPresent)
         {
             yield return player2;
         }
         foreach (var enemy in enemies.Values)
         {
-            if (enemy != null && enemy.Health > 0 && enemy.Position.IsValid())
+            if (enemy != null && enemy.IsAlive && enemy.IsPresent)
             {
                 yield return enemy;
             }
@@ -974,7 +972,7 @@ public class Game : IGame
     {
         Tile[] surroundings = [];
 
-        if (player.Position.IsValid())
+        if (player.IsPresent)
         {
             var width = Parameters.PlayerVisibilityRange * 2 + 1;
             var height = Parameters.PlayerVisibilityRange * 2 + 1;
