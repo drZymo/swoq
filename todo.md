@@ -1,16 +1,12 @@
 # TODO
 
 - [ ] Show surroundings separately in viewer
-  - [.] Split map and overview in separate classes
+  - [X] Split map and overview in separate classes
 - [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
   - [ ] dashboard
 - [ ] Run duration test to check for exceptions
-- [ ] Refactor 3 enemy + boss handling in maps and mapbuilder
-  - [X] Merge game player/enemy state into map
-  - [ ] Move creation of observation to map class
-  - [X] Remove nullability of players in Game
 - [ ] Remove two player dependency on sword drop??
 - [ ] Remove CheckInvariant
 - [ ] Rework inactive states of games. Move all checks to Game class.
@@ -28,7 +24,6 @@
 - [ ] Optmize performance of Game.cs
 - [ ] Auto hide inactive quests in dashboard
 - [ ] Installer/Zip file for ReplayViewer
-- [ ] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
 - [ ] More level features
   - [ ] Rolling ball
   - [ ] Falling plates (fall after 1 sec)
@@ -131,6 +126,11 @@
 - [X] Move high scores to dashboard service
 - [X] Show all sessions not only training, so quests are also in list
 - [X] Sync appsettings for production/development
+- [X] Differentiate the names of Swoq.Server.GameState and Swoq.InfraUI.Models.GameState
+- [X] Refactor 3 enemy + boss handling in maps and mapbuilder
+  - [X] Merge game player/enemy state into map
+  - [X] Move creation of observation to map class
+  - [X] Remove nullability of players in Game
 
 
 # Design decisions
