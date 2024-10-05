@@ -9,12 +9,12 @@ using System.Diagnostics;
 
 namespace Swoq.Dashboard.ViewModels;
 
-internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
+internal class GameObserverViewModel : ViewModelBase, IDisposable
 {
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread getUpdatesThread;
 
-    public GameStateMonitorViewModel()
+    public GameObserverViewModel()
     {
         QueueUsers = new(queuedUsers);
         Sessions = new(sessions);
@@ -30,13 +30,13 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         getUpdatesThread.Join();
     }
 
-    private GameStateViewModel gameState = new(null);
-    public GameStateViewModel GameState
+    private GameObservationViewModel gameObservation = new(null);
+    public GameObservationViewModel GameObservation
     {
-        get => gameState;
+        get => gameObservation;
         private set
         {
-            gameState = value;
+            gameObservation = value;
             OnPropertyChanged();
         }
     }
@@ -87,7 +87,7 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
                 using var channel = GrpcChannel.ForAddress("http://localhost:5080");
                 var client = new DashboardService.DashboardServiceClient(channel);
 
-                GameStateBuilder? gameStateBuilder = null;
+                GameObservationBuilder? gameStateBuilder = null;
 
                 var call = client.GetUpdates(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
                 while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
@@ -152,19 +152,19 @@ internal class GameStateMonitorViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private GameStateBuilder HandleQuestStarted(QuestStarted update)
+    private GameObservationBuilder HandleQuestStarted(QuestStarted update)
     {
-        Dispatcher.UIThread.Invoke(() => { GameState.Reset(); });
-        var gameStateBuilder = new GameStateBuilder(update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
+        Dispatcher.UIThread.Invoke(() => { GameObservation.Reset(); });
+        var gameStateBuilder = new GameObservationBuilder(update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
         var gameState = gameStateBuilder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
+        Dispatcher.UIThread.Invoke(() => { GameObservation.SetGameObservation(gameState); });
         return gameStateBuilder;
     }
 
-    private void HandleQuestActed(QuestActed update, GameStateBuilder gameStateBuilder)
+    private void HandleQuestActed(QuestActed update, GameObservationBuilder gameStateBuilder)
     {
         var gameState = gameStateBuilder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-        Dispatcher.UIThread.Invoke(() => { GameState.SetGameState(gameState); });
+        Dispatcher.UIThread.Invoke(() => { GameObservation.SetGameObservation(gameState); });
     }
 
     private void HandleQueue(QueueUpdate update)

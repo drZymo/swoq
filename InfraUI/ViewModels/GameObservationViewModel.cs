@@ -3,10 +3,10 @@ using Swoq.Interface;
 
 namespace Swoq.InfraUI.ViewModels;
 
-public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
+public class GameObservationViewModel(GameObservation? observation = null) : ViewModelBase
 {
-    private GameState? current = gameState;
-    private GameState? Current
+    private GameObservation? current = observation;
+    private GameObservation? Current
     {
         get => current;
         set
@@ -110,15 +110,15 @@ public class GameStateViewModel(GameState? gameState = null) : ViewModelBase
         HasPickups = false;
     }
 
-    public void SetGameState(GameState gameState)
+    public void SetGameObservation(GameObservation observation)
     {
-        Current = gameState;
+        Current = observation;
 
-        Overview.Overview = gameState.Overview;
+        Overview.Overview = observation.Overview;
 
-        HasPlayer2 = HasPlayer2 || (gameState.Overview.Count(t => t == Tile.Player) > 1);
-        HasEnemies = HasEnemies || (gameState.Overview.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss));
-        HasPickups = HasPickups || (gameState.Overview.Any(RequiresInventory));
+        HasPlayer2 = HasPlayer2 || (observation.Overview.Count(t => t == Tile.Player) > 1);
+        HasEnemies = HasEnemies || (observation.Overview.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss));
+        HasPickups = HasPickups || (observation.Overview.Any(RequiresInventory));
     }
 
     public static bool RequiresInventory(Tile tile) => tile switch

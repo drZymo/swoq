@@ -10,7 +10,7 @@
              d:DesignHeight="450" d:DesignWidth="800"
              DataContextChanged="UserControl_DataContextChanged">
     <Grid RowDefinitions="*,auto">
-        <infraui:GameStateView DataContext="{Binding Current}"/>
+        <infraui:GameObservationView DataContext="{Binding Current}"/>
 
         <Grid Grid.Row="1" Margin="8">
             <Grid.ColumnDefinitions>

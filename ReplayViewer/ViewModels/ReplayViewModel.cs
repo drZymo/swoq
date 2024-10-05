@@ -13,7 +13,7 @@ internal class ReplayViewModel : ViewModelBase
 
     private DispatcherTimer? timer = null;
 
-    private IImmutableList<GameState> gameStates = ImmutableList<GameState>.Empty;
+    private IImmutableList<GameObservation> gameStates = ImmutableList<GameObservation>.Empty;
 
     public ReplayViewModel()
     {
@@ -56,7 +56,7 @@ internal class ReplayViewModel : ViewModelBase
         }
     }
 
-    public GameStateViewModel Current { get; } = new GameStateViewModel();
+    public GameObservationViewModel Current { get; } = new GameObservationViewModel();
 
     public int MaxTick => gameStates.Count - 1;
 
@@ -72,7 +72,7 @@ internal class ReplayViewModel : ViewModelBase
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
             var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
-            var builder = new GameStateBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange, header.UserName);
+            var builder = new GameObservationBuilder(startResponse.Height, startResponse.Width, startResponse.VisibilityRange, header.UserName);
 
             var gameState = builder.BuildNext(null, startResponse.State, startResponse.Result, Dispatcher.UIThread);
             gameStates = gameStates.Add(gameState);
@@ -88,7 +88,7 @@ internal class ReplayViewModel : ViewModelBase
         }
         catch
         {
-            gameStates = ImmutableList<GameState>.Empty;
+            gameStates = ImmutableList<GameObservation>.Empty;
             // TODO: MessageBox.Show($"Failed to load replay file\n\n{path}");
         }
         finally
@@ -112,7 +112,7 @@ internal class ReplayViewModel : ViewModelBase
         else
         {
             var gameState = gameStates[tick];
-            Current.SetGameState(gameState);
+            Current.SetGameObservation(gameState);
         }
     }
 

@@ -2,6 +2,6 @@
 
 namespace Swoq.InfraUI.Views;
 
-public partial class GameStateView : UserControl
+public partial class GameObservationView : UserControl
 {
 }

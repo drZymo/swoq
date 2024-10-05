@@ -25,7 +25,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <infraui:GroupBox Grid.Column="0" Header="Training sessions"  DataContext="{Binding GameStateMonitor}">
+            <infraui:GroupBox Grid.Column="0" Header="Training sessions"  DataContext="{Binding GameObserver}">
                 <ScrollViewer>
                     <ItemsControl ItemsSource="{Binding Sessions}">
                         <ItemsControl.ItemTemplate>
@@ -43,7 +43,7 @@
                 </ScrollViewer>
             </infraui:GroupBox>
 
-            <Grid Grid.Column="1" RowDefinitions="*,auto,auto"  DataContext="{Binding GameStateMonitor}">
+            <Grid Grid.Column="1" RowDefinitions="*,auto,auto"  DataContext="{Binding GameObserver}">
                 <infraui:GroupBox Grid.Row="0" Header="Highscores">
                     <ScrollViewer>
                         <ItemsControl ItemsSource="{Binding Scores}">
@@ -76,8 +76,8 @@
                 </infraui:GroupBox>
             </Grid>
 
-            <Grid Grid.Column="2" DataContext="{Binding GameStateMonitor}">
-                <infraui:GameStateView DataContext="{Binding GameState}"/>
+            <Grid Grid.Column="2" DataContext="{Binding GameObserver}">
+                <infraui:GameObservationView DataContext="{Binding GameObservation}"/>
                 <Canvas>
                     <Button Canvas.Top="0" Canvas.Right="0" Click="OnMaximizeClicked">
                         <Image Source="maximize.png" Width="32" Height="32"/>
@@ -86,7 +86,7 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,auto" DataContext="{Binding GameStateMonitor}">
+        <Grid Grid.Row="1" ColumnDefinitions="*,auto" DataContext="{Binding GameObserver}">
             <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
             <TextBlock Grid.Column="1" FontSize="12" Foreground="Gray">
                 <Run>Events per second: </Run>

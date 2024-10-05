@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
-public class GameStateBuilder(int height, int width, int visibilityRange, string userName)
+public class GameObservationBuilder(int height, int width, int visibilityRange, string userName)
 {
     private static readonly IImmutableDictionary<Inventory, string> InventoryNames = ImmutableDictionary<Inventory, string>.Empty.
         Add(Inventory.None, "-").
@@ -18,9 +18,9 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
 
     private readonly OverviewBuilder overviewBuilder = new(height, width, visibilityRange);
     private readonly string userName = userName;
-    private GameState? previous = null;
+    private GameObservation? previous = null;
 
-    public GameState BuildNext(ActionRequest? request, State state, Result actionResult, Dispatcher createDispatcher)
+    public GameObservation BuildNext(ActionRequest? request, State state, Result actionResult, Dispatcher createDispatcher)
     {
         // Clear whole map on new level
         if (previous == null || state.Level != previous.Level)
@@ -36,25 +36,25 @@ public class GameStateBuilder(int height, int width, int visibilityRange, string
 
         var status = state.Finished ? "Finished" : "Active";
 
-        InfraUI.Models.PlayerState? player1State = null;
+        InfraUI.Models.PlayerObservation? player1State = null;
         if (state.PlayerState != null)
         {
             var action1 = request != null
                 ? GetPlayerAction(request.HasAction ? request.Action : null)
                 : "Start";
-            player1State = new InfraUI.Models.PlayerState(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword);
+            player1State = new InfraUI.Models.PlayerObservation(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword);
         }
 
-        InfraUI.Models.PlayerState? player2State = null;
+        InfraUI.Models.PlayerObservation? player2State = null;
         if (state.Player2State != null)
         {
             var action2 = request != null
                 ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
                 : "Start";
-            player2State = new InfraUI.Models.PlayerState(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword);
+            player2State = new InfraUI.Models.PlayerObservation(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword);
         }
 
-        var gameState = createDispatcher.Invoke(() => new GameState(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), overview, player1State, player2State));
+        var gameState = createDispatcher.Invoke(() => new GameObservation(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), overview, player1State, player2State));
         previous = gameState;
         return gameState;
     }

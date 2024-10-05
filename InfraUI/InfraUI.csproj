@@ -10,15 +10,15 @@
 
     <ItemGroup>
         <None Remove="tiles.png" />
+        <None Remove="Views\GameObservationView.xaml" />
         <None Remove="Views\GroupBox.xaml" />
-        <None Remove="Views\GameStateView.xaml" />
     </ItemGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Views\GroupBox.xaml">
           <Generator>MSBuild:Compile</Generator>
         </AvaloniaResource>
-        <AvaloniaResource Include="Views\GameStateView.xaml" />
+        <AvaloniaResource Include="Views\GameObservationView.xaml" />
     </ItemGroup>
 
     <ItemGroup>

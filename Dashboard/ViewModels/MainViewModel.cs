@@ -6,10 +6,10 @@ internal class MainViewModel : ViewModelBase, IDisposable
 {
     public void Dispose()
     {
-        GameStateMonitor.Dispose();
+        GameObserver.Dispose();
     }
 
-    public GameStateMonitorViewModel GameStateMonitor { get; } = new();
+    public GameObserverViewModel GameObserver { get; } = new();
 
     private bool maximize = false;
     public bool Maximize

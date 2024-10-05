@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:Swoq.InfraUI.Views"
              xmlns:vm="clr-namespace:Swoq.InfraUI.ViewModels"
-             x:Class="Swoq.InfraUI.Views.GameStateView"
-             x:DataType="vm:GameStateViewModel"
+             x:Class="Swoq.InfraUI.Views.GameObservationView"
+             x:DataType="vm:GameObservationViewModel"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              Background="Black"
              Foreground="White">
