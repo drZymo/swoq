@@ -1,6 +1,6 @@
 ﻿using Swoq.Interface;
 
-namespace Swoq.InfraUI.ViewModels;
+namespace Swoq.InfraUI.Models;
 
 public abstract class LockedMapImage : IDisposable
 {

@@ -50,8 +50,8 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public string Player2Inventory => Current?.Player2?.Inventory ?? "Unknown";
     public string Player2HasSword => NullableBooleanString(Current?.Player2?.HasSword);
 
-    private OverviewViewModel overview = new();
-    public OverviewViewModel Overview
+    private TiledImageViewModel overview = new();
+    public TiledImageViewModel Overview
     {
         get => overview;
         private set
@@ -104,7 +104,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public void Reset()
     {
         Current = null;
-        Overview = new OverviewViewModel();
+        Overview = new TiledImageViewModel();
         HasPlayer2 = false;
         HasEnemies = false;
         HasPickups = false;
@@ -114,11 +114,11 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     {
         Current = observation;
 
-        Overview.Overview = observation.Overview;
+        Overview.TileMap = observation.Overview;
 
-        HasPlayer2 = HasPlayer2 || (observation.Overview.Count(t => t == Tile.Player) > 1);
-        HasEnemies = HasEnemies || (observation.Overview.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss));
-        HasPickups = HasPickups || (observation.Overview.Any(RequiresInventory));
+        HasPlayer2 = HasPlayer2 || (observation.Overview.Tiles.Count(t => t == Tile.Player) > 1);
+        HasEnemies = HasEnemies || (observation.Overview.Tiles.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss));
+        HasPickups = HasPickups || (observation.Overview.Tiles.Any(RequiresInventory));
     }
 
     public static bool RequiresInventory(Tile tile) => tile switch

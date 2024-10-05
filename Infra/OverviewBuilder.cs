@@ -1,4 +1,5 @@
 ﻿using Swoq.Interface;
+using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Swoq.Infra;
@@ -82,9 +83,9 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
         }
     }
 
-    public Overview CreateOverview()
+    public TileMap CreateOverview()
     {
         // Cast<T> will make it a flat array
-        return new Overview(level, height, width, tileData.Cast<Tile>(), visibilityData.Cast<bool>());
+        return new TileMap(height, width, tileData.Cast<Tile>().ToImmutableArray(), visibilityData.Cast<bool>().ToImmutableArray());
     }
 }

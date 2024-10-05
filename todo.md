@@ -2,7 +2,9 @@
 
 - [ ] Show surroundings separately in viewer
   - [X] Split map and overview in separate classes
-- [.] Allow more than 1 quest at a time in case it is needed
+  - [X] Make dedicated TiledBitmap class 
+  - [ ] Add surroundings to view models and views
+-  [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
   - [ ] dashboard

@@ -7,25 +7,25 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace Swoq.InfraUI.ViewModels;
+namespace Swoq.InfraUI.Models;
 
-internal class OverviewImage(int mapHeight, int mapWidth)
+internal class TiledImage(int height, int width)
 {
     private static readonly IImmutableDictionary<Tile, byte[]> tileSet;
 
-    static OverviewImage()
+    static TiledImage()
     {
         var currentDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
             ?? AppDomain.CurrentDomain.BaseDirectory;
         tileSet = TileSet.FromImageFile(Path.Combine(currentDir, "tiles.png"));
     }
 
-    private readonly Tile[,] tiles = new Tile[mapHeight, mapWidth];
-    private readonly bool[,] visibility = new bool[mapHeight, mapWidth];
-    private readonly WriteableBitmap image = new(new PixelSize(mapWidth * TileSet.TileWidth, mapHeight * TileSet.TileHeight), new Vector(96, 96), PixelFormats.Bgra8888, AlphaFormat.Opaque);
+    private readonly Tile[,] tiles = new Tile[height, width];
+    private readonly bool[,] visibility = new bool[height, width];
+    private readonly WriteableBitmap image = new(new PixelSize(width * TileSet.TileWidth, height * TileSet.TileHeight), new Vector(96, 96), PixelFormats.Bgra8888, AlphaFormat.Opaque);
 
-    public int MapHeight { get; } = mapHeight;
-    public int MapWidth { get; } = mapWidth;
+    public int Height { get; } = height;
+    public int Width { get; } = width;
     public IImage Image => image;
 
     public LockedMapImage Lock()
@@ -33,9 +33,9 @@ internal class OverviewImage(int mapHeight, int mapWidth)
         return new LockedMapImageImpl(this);
     }
 
-    private class LockedMapImageImpl(OverviewImage parent) : LockedMapImage
+    private class LockedMapImageImpl(TiledImage parent) : LockedMapImage
     {
-        private readonly OverviewImage parent = parent;
+        private readonly TiledImage parent = parent;
         private readonly ILockedFramebuffer framebuffer = parent.image.Lock();
 
         public override void Dispose()

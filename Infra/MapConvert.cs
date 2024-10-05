@@ -1,4 +1,5 @@
 ﻿using Swoq.Interface;
+using System.Collections.Immutable;
 
 namespace Swoq.Infra;
 
@@ -6,7 +7,7 @@ using Position = (int y, int x);
 
 public static class MapConvert
 {
-    public static Overview ToOverview(this Map map)
+    public static TileMap ToOverview(this Map map)
     {
         var tileData = new Tile[map.Height * map.Width];
         var visiblityData = new bool[map.Height * map.Width];
@@ -20,7 +21,7 @@ public static class MapConvert
             }
         }
 
-        return new Overview(map.Level, map.Height, map.Width, tileData, visiblityData);
+        return new TileMap(map.Height, map.Width, tileData.ToImmutableArray(), visiblityData.ToImmutableArray());
     }
 
     public static Tile ToVisibleTile(this Map map, Position tilePos, Position observerPos, int visibilityRange)

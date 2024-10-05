@@ -8,12 +8,12 @@ class MainViewModel : ViewModelBase
 {
     public MainViewModel()
     {
-        Overview = new OverviewViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
+        Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
         Generate = new RelayCommand(HandleGenerate);
     }
 
-    private OverviewViewModel overview = new();
-    public OverviewViewModel Overview
+    private TiledImageViewModel overview = new();
+    public TiledImageViewModel Overview
     {
         get => overview;
         private set
@@ -91,12 +91,12 @@ class MainViewModel : ViewModelBase
         try
         {
             Status = "Generating ...";
-            Overview = new OverviewViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
+            Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
             Status = "";
         }
         catch
         {
-            Overview = new OverviewViewModel();
+            Overview = new TiledImageViewModel();
             Status = "Generation failed";
         }
     }

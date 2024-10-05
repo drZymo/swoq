@@ -12,7 +12,7 @@
     <Grid ColumnDefinitions="*,300">
 
         <Grid Grid.Column="0" Background="Black">
-            <Image Source="{Binding Overview.OverviewImage}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
+            <Image Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
         <StackPanel Grid.Column="1" Orientation="Vertical" IsVisible="{Binding IsLoaded, Mode=OneWay}">
