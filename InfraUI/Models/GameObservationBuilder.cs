@@ -20,6 +20,9 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
     private readonly string userName = userName;
     private GameObservation? previous = null;
 
+    private readonly int visibilityDimension = visibilityRange * 2 + 1;
+    private readonly ImmutableArray<bool> visibility = Enumerable.Repeat(true, (visibilityRange * 2 + 1) * (visibilityRange * 2 + 1)).ToImmutableArray();
+
     public GameObservation BuildNext(ActionRequest? request, State state, Result actionResult, Dispatcher createDispatcher)
     {
         // Clear whole map on new level
@@ -36,22 +39,24 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
 
         var status = state.Finished ? "Finished" : "Active";
 
-        InfraUI.Models.PlayerObservation? player1State = null;
+        PlayerObservation? player1State = null;
         if (state.PlayerState != null)
         {
             var action1 = request != null
                 ? GetPlayerAction(request.HasAction ? request.Action : null)
                 : "Start";
-            player1State = new InfraUI.Models.PlayerObservation(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword);
+            var surroundings = new TileMap(visibilityDimension, visibilityDimension, state.PlayerState.Surroundings.ToImmutableArray(), visibility);
+            player1State = new PlayerObservation(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword, surroundings);
         }
 
-        InfraUI.Models.PlayerObservation? player2State = null;
+        PlayerObservation? player2State = null;
         if (state.Player2State != null)
         {
             var action2 = request != null
                 ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
                 : "Start";
-            player2State = new InfraUI.Models.PlayerObservation(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword);
+            var surroundings = new TileMap(visibilityDimension, visibilityDimension, state.Player2State.Surroundings.ToImmutableArray(), visibility);
+            player2State = new PlayerObservation(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword, surroundings);
         }
 
         var gameState = createDispatcher.Invoke(() => new GameObservation(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), overview, player1State, player2State));
