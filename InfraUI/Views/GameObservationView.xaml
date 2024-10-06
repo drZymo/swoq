@@ -9,13 +9,18 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              Background="Black"
              Foreground="White">
-    <Grid ColumnDefinitions="*,300">
+    <Grid ColumnDefinitions="*,300,300">
 
         <Grid Grid.Column="0" Background="Black">
             <Image Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
-        <StackPanel Grid.Column="1" Orientation="Vertical" IsVisible="{Binding IsLoaded, Mode=OneWay}">
+        <Grid Grid.Column="1" RowDefinitions="300, 300, *">
+            <Image Grid.Row="0" Source="{Binding Surroundings1.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
+            <Image Grid.Row="1" Source="{Binding Surroundings2.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
+        </Grid>
+
+        <StackPanel Grid.Column="2" Orientation="Vertical" IsVisible="{Binding IsLoaded, Mode=OneWay}">
 
             <TextBlock VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding UserName}"
                        FontSize="{DynamicResource TabItemHeaderFontSize}"

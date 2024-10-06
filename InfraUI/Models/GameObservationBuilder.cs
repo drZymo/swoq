@@ -45,7 +45,9 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
             var action1 = request != null
                 ? GetPlayerAction(request.HasAction ? request.Action : null)
                 : "Start";
-            var surroundings = new TileMap(visibilityDimension, visibilityDimension, state.PlayerState.Surroundings.ToImmutableArray(), visibility);
+            var surroundings = state.PlayerState.Surroundings.Count == visibilityDimension * visibilityDimension ?
+                new TileMap(visibilityDimension, visibilityDimension, state.PlayerState.Surroundings.ToImmutableArray(), visibility) :
+                TileMap.Empty;
             player1State = new PlayerObservation(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword, surroundings);
         }
 
@@ -55,7 +57,9 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
             var action2 = request != null
                 ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
                 : "Start";
-            var surroundings = new TileMap(visibilityDimension, visibilityDimension, state.Player2State.Surroundings.ToImmutableArray(), visibility);
+            var surroundings = state.Player2State.Surroundings.Count == visibilityDimension * visibilityDimension ?
+                new TileMap(visibilityDimension, visibilityDimension, state.Player2State.Surroundings.ToImmutableArray(), visibility) :
+                TileMap.Empty;
             player2State = new PlayerObservation(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword, surroundings);
         }
 

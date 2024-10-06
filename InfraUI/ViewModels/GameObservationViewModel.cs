@@ -1,4 +1,5 @@
-﻿using Swoq.InfraUI.Models;
+﻿using Swoq.Infra;
+using Swoq.InfraUI.Models;
 using Swoq.Interface;
 
 namespace Swoq.InfraUI.ViewModels;
@@ -44,11 +45,31 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public int Player1Health => Current?.Player1?.Health ?? -1;
     public string Player1Inventory => Current?.Player1?.Inventory ?? "Unknown";
     public string Player1HasSword => NullableBooleanString(Current?.Player1?.HasSword);
+    public TiledImageViewModel surroundings1 = new();
+    public TiledImageViewModel Surroundings1
+    {
+        get => surroundings1;
+        private set
+        {
+            surroundings1 = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string Player2Action => Current?.Player2?.LastAction ?? "Unknown";
     public int Player2Health => Current?.Player2?.Health ?? -1;
     public string Player2Inventory => Current?.Player2?.Inventory ?? "Unknown";
     public string Player2HasSword => NullableBooleanString(Current?.Player2?.HasSword);
+    public TiledImageViewModel surroundings2 = new();
+    public TiledImageViewModel Surroundings2
+    {
+        get => surroundings2;
+        private set
+        {
+            surroundings2 = value;
+            OnPropertyChanged();
+        }
+    }
 
     private TiledImageViewModel overview = new();
     public TiledImageViewModel Overview
@@ -105,6 +126,8 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     {
         Current = null;
         Overview = new TiledImageViewModel();
+        Surroundings1 = new TiledImageViewModel();
+        Surroundings2 = new TiledImageViewModel();
         HasPlayer2 = false;
         HasEnemies = false;
         HasPickups = false;
@@ -115,6 +138,8 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
         Current = observation;
 
         Overview.TileMap = observation.Overview;
+        Surroundings1.TileMap = observation.Player1?.Surroundings ?? TileMap.Empty;
+        Surroundings2.TileMap = observation.Player2?.Surroundings ?? TileMap.Empty;
 
         HasPlayer2 = HasPlayer2 || (observation.Overview.Tiles.Count(t => t == Tile.Player) > 1);
         HasEnemies = HasEnemies || (observation.Overview.Tiles.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss));
