@@ -15,8 +15,8 @@ public record GameObservation(
     int Tick,
     int Level,
     string ActionResult,
-    bool HasPickups,
     bool HasEnemies,
+    bool HasSwordPickup,
     TileMap Overview,
     PlayerObservation? Player1 = null,
     PlayerObservation? Player2 = null);

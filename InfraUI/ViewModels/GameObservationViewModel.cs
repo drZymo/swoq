@@ -24,12 +24,14 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
             OnPropertyChanged(nameof(HasPlayer2));
 
             Overview.TileMap = Current?.Overview ?? TileMap.Empty;
-            
+
             Player1.Observation = Current?.Player1;
-            Player1.ShowSwordAndHealth = Current?.HasEnemies ?? false;
+            Player1.ShowSword = Current?.HasSwordPickup ?? false;
+            Player1.ShowHealth = Current?.HasEnemies ?? false;
 
             Player2.Observation = Current?.Player2;
-            Player2.ShowSwordAndHealth = Current?.HasEnemies ?? false;
+            Player2.ShowSword = Current?.HasSwordPickup ?? false;
+            Player2.ShowHealth = Current?.HasEnemies ?? false;
         }
     }
 

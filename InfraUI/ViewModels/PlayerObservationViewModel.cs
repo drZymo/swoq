@@ -29,15 +29,29 @@ public class PlayerObservationViewModel(PlayerObservation? observation = null) :
         }
     }
 
-    private bool showSwordAndHealth = false;
-    public bool ShowSwordAndHealth
+    private bool showHealth = false;
+    public bool ShowHealth
     {
-        get => showSwordAndHealth;
+        get => showHealth;
         set
         {
-            if (showSwordAndHealth != value)
+            if (showHealth != value)
             {
-                showSwordAndHealth = value;
+                showHealth = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private bool showSword = false;
+    public bool ShowSword
+    {
+        get => showSword;
+        set
+        {
+            if (showSword != value)
+            {
+                showSword = value;
                 OnPropertyChanged();
             }
         }

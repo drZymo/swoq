@@ -11,7 +11,7 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
     private readonly OverviewBuilder overviewBuilder = new(height, width, visibilityRange);
     private readonly string userName = userName;
     private GameObservation? previous = null;
-    private bool hasPickups = false;
+    private bool hasSwordPickup = false;
     private bool hasEnemies = false;
 
     private readonly int visibilityDimension = visibilityRange * 2 + 1;
@@ -31,11 +31,11 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
         overviewBuilder.AddPlayerState(Convert(state.Player2State?.Position), state.Player2State?.Surroundings ?? [], 2);
         var overview = overviewBuilder.CreateOverview();
 
-        if (state.PlayerState?.Surroundings?.Any(IsPickup) ?? false)
+        if (state.PlayerState?.Surroundings?.Any(t => t == Tile.Sword) ?? false)
         {
-            hasPickups = true;
+            hasSwordPickup = true;
         }
-        if (state.PlayerState?.Surroundings?.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss) ?? false)
+        if (state.PlayerState?.Surroundings?.Any(t => t == Tile.Enemy || t == Tile.Boss) ?? false)
         {
             hasEnemies = true;
         }
@@ -69,8 +69,8 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
             state.Tick,
             state.Level,
             actionResult.ConvertToString(),
-            hasPickups,
             hasEnemies,
+            hasSwordPickup,
             overview,
             player1State,
             player2State));

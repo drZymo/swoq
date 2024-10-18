@@ -24,12 +24,12 @@
         <Grid ColumnDefinitions="auto,*,auto" RowDefinitions="auto,*,auto">
             <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3" Source="{Binding Surroundings.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Width="272" Height="272"/>
 
-            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" IsVisible="{Binding ShowSwordAndHealth, Mode=OneWay}">
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" IsVisible="{Binding ShowHealth, Mode=OneWay}">
                 <Image Source="icon_heart16.png" />
                 <TextBlock Text="{Binding Health, Mode=OneWay}" FontSize="24" />
             </StackPanel>
 
-            <Image Grid.Row="0" Grid.Column="2" Source="icon_no_sword.png" IsVisible="{Binding ShowSwordAndHealth, Mode=OneWay}" Width="32" Height="32" />
+            <Image Grid.Row="0" Grid.Column="2" Source="icon_no_sword.png" IsVisible="{Binding ShowSword, Mode=OneWay}" Width="32" Height="32" />
             <Image Grid.Row="0" Grid.Column="2" Source="icon_sword.png" IsVisible="{Binding HasSword, Mode=OneWay}" Width="32" Height="32" />
 
             <Image Grid.Row="2" Grid.Column="2" Source="icon_key_red.png" IsVisible="{Binding HasKeyRed, Mode=OneWay}" Width="32" Height="32" />

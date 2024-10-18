@@ -1,13 +1,5 @@
 # TODO
 
-- [ ] Show surroundings separately in viewer
-  - [X] Split map and overview in separate classes
-  - [X] Make dedicated TiledBitmap class 
-  - [X] Add surroundings to view models and views
-  - [X] Player observation types (no string for inventory)
-  - [X] HasPlayer2, HasEnemies in gamestate, so backwards in time will also disappear
-  - [ ] ShowSword only on first sword shown
-  - [ ] Cleanup gameovservationviewmodel
 -  [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
@@ -137,6 +129,14 @@
   - [X] Merge game player/enemy state into map
   - [X] Move creation of observation to map class
   - [X] Remove nullability of players in Game
+- [X] Show surroundings separately in viewer
+  - [X] Split map and overview in separate classes
+  - [X] Make dedicated TiledBitmap class 
+  - [X] Add surroundings to view models and views
+  - [X] Player observation types (no string for inventory)
+  - [X] HasPlayer2, HasEnemies in gamestate, so backwards in time will also disappear
+  - [X] ShowSword only on first sword shown
+  - [X] Cleanup gameovservationviewmodel
 
 
 # Design decisions
