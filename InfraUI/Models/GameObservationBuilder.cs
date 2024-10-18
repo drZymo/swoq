@@ -8,17 +8,11 @@ namespace Swoq.ReplayViewer.ViewModels;
 
 public class GameObservationBuilder(int height, int width, int visibilityRange, string userName)
 {
-    private static readonly IImmutableDictionary<Inventory, string> InventoryNames = ImmutableDictionary<Inventory, string>.Empty.
-        Add(Inventory.None, "-").
-        Add(Inventory.KeyRed, "Red key").
-        Add(Inventory.KeyGreen, "Green key").
-        Add(Inventory.KeyBlue, "Blue key").
-        Add(Inventory.Boulder, "Boulder").
-        Add(Inventory.Treasure, "Treasure");
-
     private readonly OverviewBuilder overviewBuilder = new(height, width, visibilityRange);
     private readonly string userName = userName;
     private GameObservation? previous = null;
+    private bool hasPickups = false;
+    private bool hasEnemies = false;
 
     private readonly int visibilityDimension = visibilityRange * 2 + 1;
     private readonly ImmutableArray<bool> visibility = Enumerable.Repeat(true, (visibilityRange * 2 + 1) * (visibilityRange * 2 + 1)).ToImmutableArray();
@@ -37,7 +31,14 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
         overviewBuilder.AddPlayerState(Convert(state.Player2State?.Position), state.Player2State?.Surroundings ?? [], 2);
         var overview = overviewBuilder.CreateOverview();
 
-        var status = state.Finished ? "Finished" : "Active";
+        if (state.PlayerState?.Surroundings?.Any(IsPickup) ?? false)
+        {
+            hasPickups = true;
+        }
+        if (state.PlayerState?.Surroundings?.Any(t => t == Tile.Sword || t == Tile.Enemy || t == Tile.Boss) ?? false)
+        {
+            hasEnemies = true;
+        }
 
         PlayerObservation? player1State = null;
         if (state.PlayerState != null)
@@ -48,7 +49,7 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
             var surroundings = state.PlayerState.Surroundings.Count == visibilityDimension * visibilityDimension ?
                 new TileMap(visibilityDimension, visibilityDimension, state.PlayerState.Surroundings.ToImmutableArray(), visibility) :
                 TileMap.Empty;
-            player1State = new PlayerObservation(action1, state.PlayerState.Health, InventoryNames[state.PlayerState.Inventory], state.PlayerState.HasSword, surroundings);
+            player1State = new PlayerObservation(action1, state.PlayerState.Health, state.PlayerState.Inventory, state.PlayerState.HasSword, surroundings);
         }
 
         PlayerObservation? player2State = null;
@@ -60,10 +61,19 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
             var surroundings = state.Player2State.Surroundings.Count == visibilityDimension * visibilityDimension ?
                 new TileMap(visibilityDimension, visibilityDimension, state.Player2State.Surroundings.ToImmutableArray(), visibility) :
                 TileMap.Empty;
-            player2State = new PlayerObservation(action2, state.Player2State.Health, InventoryNames[state.Player2State.Inventory], state.Player2State.HasSword, surroundings);
+            player2State = new PlayerObservation(action2, state.Player2State.Health, state.Player2State.Inventory, state.Player2State.HasSword, surroundings);
         }
 
-        var gameState = createDispatcher.Invoke(() => new GameObservation(userName, state.Tick, state.Level, status, actionResult.ConvertToString(), overview, player1State, player2State));
+        var gameState = createDispatcher.Invoke(() => new GameObservation(
+            userName,
+            state.Tick,
+            state.Level,
+            actionResult.ConvertToString(),
+            hasPickups,
+            hasEnemies,
+            overview,
+            player1State,
+            player2State));
         previous = gameState;
         return gameState;
     }
@@ -76,4 +86,14 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
     }
 
     private static (int y, int x) Convert(Position? position) => position == null ? PositionEx.Invalid : (position.Y, position.X);
+
+    public static bool IsPickup(Tile tile) => tile switch
+    {
+        Tile.KeyRed => true,
+        Tile.KeyGreen => true,
+        Tile.KeyBlue => true,
+        Tile.Boulder => true,
+        Tile.Treasure => true,
+        _ => false,
+    };
 }

@@ -7,7 +7,7 @@
         x:Class="Swoq.ReplayViewer.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         mc:Ignorable="d"
-        Title="Swoq Replay Viewer" Height="800" Width="1000"
+        Title="Swoq Replay Viewer" Height="900" Width="1600"
         WindowStartupLocation="CenterScreen"
         DragDrop.AllowDrop="True">
     <Grid RowDefinitions="auto,*">

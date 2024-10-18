@@ -9,36 +9,24 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              Background="Black"
              Foreground="White">
-    <Grid ColumnDefinitions="*,300,300">
+    <Grid ColumnDefinitions="*,auto">
 
-        <Grid Grid.Column="0" Background="Black">
-            <Image Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
+        <Grid Grid.Column="0" Background="Black" Grid.RowDefinitions="auto,*,auto">
+            <TextBlock Grid.Row="0" FontSize="24" HorizontalAlignment="Center">
+                <Run Text="{Binding UserName, Mode=OneWay}" />
+                <Run> - Level </Run>
+                <Run Text="{Binding Level, Mode=OneWay}" />
+            </TextBlock>
+
+            <Image Grid.Row="1" Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
-        <Grid Grid.Column="1" RowDefinitions="300, 300, *">
-            <Image Grid.Row="0" Source="{Binding Surroundings1.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
-            <Image Grid.Row="1" Source="{Binding Surroundings2.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
-        </Grid>
-
-        <StackPanel Grid.Column="2" Orientation="Vertical" IsVisible="{Binding IsLoaded, Mode=OneWay}">
-
-            <TextBlock VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding UserName}"
-                       FontSize="{DynamicResource TabItemHeaderFontSize}"
-                       FontWeight="{DynamicResource TabItemHeaderThemeFontWeight}"/>
-
-            <local:GroupBox Header="Game">
+        <Grid Grid.Column="1" RowDefinitions="auto,auto,auto,*">
+            <local:GroupBox Grid.Row="0" Header="Game">
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
                         <Run>Tick:</Run>
                         <Run Text="{Binding Tick, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock>
-                        <Run>Level:</Run>
-                        <Run Text="{Binding Level, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock>
-                        <Run>Status:</Run>
-                        <Run Text="{Binding Status, Mode=OneWay}" />
                     </TextBlock>
                     <TextBlock>
                         <Run>Action result:</Run>
@@ -47,70 +35,11 @@
                 </StackPanel>
             </local:GroupBox>
 
-            <!-- TODO: Change Header type to visual element or something -->
-            <local:GroupBox Header="Player" IsVisible="{Binding !HasPlayer2}">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock>
-                        <Run>Last action:</Run>
-                        <Run Text="{Binding Player1Action, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                        <Run>Health:</Run>
-                        <Run Text="{Binding Player1Health, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
-                        <Run>Inventory:</Run>
-                        <Run Text="{Binding Player1Inventory, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                        <Run>Has sword:</Run>
-                        <Run Text="{Binding Player1HasSword, Mode=OneWay}" />
-                    </TextBlock>
-                </StackPanel>
-            </local:GroupBox>
+            <local:PlayerObservationView Grid.Row="1" DataContext="{Binding Player1, Mode=OneWay}" Title="Player"/>
 
-            <local:GroupBox Header="Player #1" IsVisible="{Binding HasPlayer2}">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock>
-                        <Run>Last action:</Run>
-                        <Run Text="{Binding Player1Action, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                        <Run>Health:</Run>
-                        <Run Text="{Binding Player1Health, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
-                        <Run>Inventory:</Run>
-                        <Run Text="{Binding Player1Inventory, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                        <Run>Has sword:</Run>
-                        <Run Text="{Binding Player1HasSword, Mode=OneWay}" />
-                    </TextBlock>
-                </StackPanel>
-            </local:GroupBox>
-
-
-            <local:GroupBox Header="Player #2" IsVisible="{Binding HasPlayer2}">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock>
-                        <Run>Last action:</Run>
-                        <Run Text="{Binding Player2Action, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                        <Run>Health:</Run>
-                        <Run Text="{Binding Player2Health, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasPickups, Mode=OneWay}">
-                        <Run>Inventory:</Run>
-                        <Run Text="{Binding Player2Inventory, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock IsVisible="{Binding HasEnemies, Mode=OneWay}">
-                        <Run>Has sword:</Run>
-                        <Run Text="{Binding Player2HasSword, Mode=OneWay}" />
-                    </TextBlock>
-                </StackPanel>
-            </local:GroupBox>
-        </StackPanel>
+            <Grid Grid.Row="2" IsVisible="{Binding HasPlayer2, Mode=OneWay}">
+                <local:PlayerObservationView DataContext="{Binding Player2, Mode=OneWay}" Title="Player #2" />
+            </Grid>
+        </Grid>
     </Grid>
 </UserControl>

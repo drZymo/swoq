@@ -1,7 +1,22 @@
 ﻿using Swoq.Infra;
+using Swoq.Interface;
 
 namespace Swoq.InfraUI.Models;
 
-public record PlayerObservation(string LastAction, int Health, string Inventory, bool HasSword, TileMap Surroundings);
+public record PlayerObservation(
+    string LastAction,
+    int Health,
+    Inventory Inventory,
+    bool HasSword,
+    TileMap Surroundings);
 
-public record GameObservation(string UserName, int Tick, int Level, string Status, string ActionResult, TileMap Overview, PlayerObservation? Player1 = null, PlayerObservation? Player2 = null);
+public record GameObservation(
+    string UserName,
+    int Tick,
+    int Level,
+    string ActionResult,
+    bool HasPickups,
+    bool HasEnemies,
+    TileMap Overview,
+    PlayerObservation? Player1 = null,
+    PlayerObservation? Player2 = null);

@@ -1,0 +1,42 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Swoq.InfraUI.Views"
+             xmlns:vm="clr-namespace:Swoq.InfraUI.ViewModels"
+             x:Class="Swoq.InfraUI.Views.PlayerObservationView"
+             x:DataType="vm:PlayerObservationViewModel"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="300"
+             Background="Black"
+             Foreground="White"
+             Name="self">
+    <local:GroupBox Grid.Row="1">
+        <local:GroupBox.Header>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock>
+                    <Run Text="{Binding #self.Title}"/>
+                    <Run>(</Run>
+                    <Run Text="{Binding LastAction, Mode=OneWay}" />
+                    <Run>)</Run>
+                </TextBlock>
+            </StackPanel>
+        </local:GroupBox.Header>
+        <Grid ColumnDefinitions="auto,*,auto" RowDefinitions="auto,*,auto">
+            <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3" Source="{Binding Surroundings.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Width="272" Height="272"/>
+
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" IsVisible="{Binding ShowSwordAndHealth, Mode=OneWay}">
+                <Image Source="icon_heart16.png" />
+                <TextBlock Text="{Binding Health, Mode=OneWay}" FontSize="24" />
+            </StackPanel>
+
+            <Image Grid.Row="0" Grid.Column="2" Source="icon_no_sword.png" IsVisible="{Binding ShowSwordAndHealth, Mode=OneWay}" Width="32" Height="32" />
+            <Image Grid.Row="0" Grid.Column="2" Source="icon_sword.png" IsVisible="{Binding HasSword, Mode=OneWay}" Width="32" Height="32" />
+
+            <Image Grid.Row="2" Grid.Column="2" Source="icon_key_red.png" IsVisible="{Binding HasKeyRed, Mode=OneWay}" Width="32" Height="32" />
+            <Image Grid.Row="2" Grid.Column="2" Source="icon_key_green.png" IsVisible="{Binding HasKeyGreen, Mode=OneWay}" Width="32" Height="32" />
+            <Image Grid.Row="2" Grid.Column="2" Source="icon_key_blue.png" IsVisible="{Binding HasKeyBlue, Mode=OneWay}" Width="32" Height="32" />
+            <Image Grid.Row="2" Grid.Column="2" Source="icon_boulder.png" IsVisible="{Binding HasBoulder, Mode=OneWay}" Width="32" Height="32" />
+            <Image Grid.Row="2" Grid.Column="2" Source="icon_treasure.png" IsVisible="{Binding HasTreasure, Mode=OneWay}" Width="32" Height="32" />
+        </Grid>
+    </local:GroupBox>
+</UserControl>

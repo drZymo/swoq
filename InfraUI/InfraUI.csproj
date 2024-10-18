@@ -12,13 +12,33 @@
         <None Remove="tiles.png" />
         <None Remove="Views\GameObservationView.xaml" />
         <None Remove="Views\GroupBox.xaml" />
+        <None Remove="Views\icon_boulder.png" />
+        <None Remove="Views\icon_heart16.png" />
+        <None Remove="Views\icon_key_blue.png" />
+        <None Remove="Views\icon_key_green.png" />
+        <None Remove="Views\icon_key_red.png" />
+        <None Remove="Views\icon_no_sword.png" />
+        <None Remove="Views\icon_sword.png" />
+        <None Remove="Views\icon_treasure.png" />
+        <None Remove="Views\PlayerObservationView.xaml" />
     </ItemGroup>
 
     <ItemGroup>
+        <AvaloniaResource Include="Views\PlayerObservationView.xaml">
+          <Generator>MSBuild:Compile</Generator>
+        </AvaloniaResource>
         <AvaloniaResource Include="Views\GroupBox.xaml">
           <Generator>MSBuild:Compile</Generator>
         </AvaloniaResource>
         <AvaloniaResource Include="Views\GameObservationView.xaml" />
+        <AvaloniaResource Include="Views\icon_boulder.png" />
+        <AvaloniaResource Include="Views\icon_heart16.png" />
+        <AvaloniaResource Include="Views\icon_key_blue.png" />
+        <AvaloniaResource Include="Views\icon_key_green.png" />
+        <AvaloniaResource Include="Views\icon_key_red.png" />
+        <AvaloniaResource Include="Views\icon_no_sword.png" />
+        <AvaloniaResource Include="Views\icon_sword.png" />
+        <AvaloniaResource Include="Views\icon_treasure.png" />
     </ItemGroup>
 
     <ItemGroup>

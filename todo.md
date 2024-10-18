@@ -3,7 +3,11 @@
 - [ ] Show surroundings separately in viewer
   - [X] Split map and overview in separate classes
   - [X] Make dedicated TiledBitmap class 
-  - [ ] Add surroundings to view models and views
+  - [X] Add surroundings to view models and views
+  - [X] Player observation types (no string for inventory)
+  - [X] HasPlayer2, HasEnemies in gamestate, so backwards in time will also disappear
+  - [ ] ShowSword only on first sword shown
+  - [ ] Cleanup gameovservationviewmodel
 -  [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
