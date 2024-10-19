@@ -3,7 +3,7 @@
 -  [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
-  - [ ] dashboard
+  - [ ] dashboard quest tabs
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
 - [ ] Remove CheckInvariant

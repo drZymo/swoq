@@ -107,7 +107,10 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
                     if (message.QuestActed != null && gameStateBuilder != null)
                     {
-                        HandleQuestActed(message.QuestActed, gameStateBuilder);
+                        if (gameStateBuilder.GameId == message.QuestActed.GameId)
+                        {
+                            HandleQuestActed(message.QuestActed, gameStateBuilder);
+                        }
                     }
 
                     if (message.QueueUpdate != null)
@@ -155,7 +158,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
     private GameObservationBuilder HandleQuestStarted(QuestStarted update)
     {
         Dispatcher.UIThread.Invoke(() => { GameObservation.Reset(); });
-        var gameStateBuilder = new GameObservationBuilder(update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
+        var gameStateBuilder = new GameObservationBuilder(update.GameId, update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
         var gameState = gameStateBuilder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
         Dispatcher.UIThread.Invoke(() => { GameObservation.SetGameObservation(gameState); });
         return gameStateBuilder;

@@ -33,7 +33,7 @@ internal static class Parameters
 
     public const int MinIdleMoveDistance = 5;
 
-    public const int NrOfActiveQuests = 1;
+    public const int NrOfActiveQuests = 2;
 
     public static readonly TimeSpan SessionsUpdatePeriod = TimeSpan.FromMilliseconds(250);
     public static readonly TimeSpan ScoresUpdatePeriod = TimeSpan.FromMilliseconds(500);

@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
-public class GameObservationBuilder(int height, int width, int visibilityRange, string userName)
+public class GameObservationBuilder(string id, int height, int width, int visibilityRange, string userName)
 {
     private readonly OverviewBuilder overviewBuilder = new(height, width, visibilityRange);
     private readonly string userName = userName;
@@ -16,6 +16,8 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
 
     private readonly int visibilityDimension = visibilityRange * 2 + 1;
     private readonly ImmutableArray<bool> visibility = Enumerable.Repeat(true, (visibilityRange * 2 + 1) * (visibilityRange * 2 + 1)).ToImmutableArray();
+
+    public string GameId { get; } = id;
 
     public GameObservation BuildNext(ActionRequest? request, State state, Result actionResult, Dispatcher createDispatcher)
     {
