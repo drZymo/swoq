@@ -25,7 +25,6 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
             overviewBuilder.Reset();
         }
 
-        overviewBuilder.SetLevel(state.Level);
         overviewBuilder.PrepareForNextTimeStep();
         overviewBuilder.AddPlayerState(Convert(state.PlayerState?.Position), state.PlayerState?.Surroundings ?? [], 1);
         overviewBuilder.AddPlayerState(Convert(state.Player2State?.Position), state.Player2State?.Surroundings ?? [], 2);
@@ -47,7 +46,7 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
                 ? GetPlayerAction(request.HasAction ? request.Action : null)
                 : "Start";
             var surroundings = state.PlayerState.Surroundings.Count == visibilityDimension * visibilityDimension ?
-                new TileMap(visibilityDimension, visibilityDimension, state.PlayerState.Surroundings.ToImmutableArray(), visibility) :
+                new TileMap(visibilityDimension, visibilityDimension, [.. state.PlayerState.Surroundings], visibility) :
                 TileMap.Empty;
             player1State = new PlayerObservation(action1, state.PlayerState.Health, state.PlayerState.Inventory, state.PlayerState.HasSword, surroundings);
         }
@@ -59,7 +58,7 @@ public class GameObservationBuilder(int height, int width, int visibilityRange, 
                 ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
                 : "Start";
             var surroundings = state.Player2State.Surroundings.Count == visibilityDimension * visibilityDimension ?
-                new TileMap(visibilityDimension, visibilityDimension, state.Player2State.Surroundings.ToImmutableArray(), visibility) :
+                new TileMap(visibilityDimension, visibilityDimension, [.. state.Player2State.Surroundings], visibility) :
                 TileMap.Empty;
             player2State = new PlayerObservation(action2, state.Player2State.Health, state.Player2State.Inventory, state.Player2State.HasSword, surroundings);
         }

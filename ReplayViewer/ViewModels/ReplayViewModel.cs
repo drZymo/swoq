@@ -3,6 +3,7 @@ using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
@@ -66,6 +67,8 @@ internal class ReplayViewModel : ViewModelBase
     {
         try
         {
+            var sw = Stopwatch.StartNew();
+
             using var file = File.OpenRead(path);
 
             var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
@@ -85,6 +88,10 @@ internal class ReplayViewModel : ViewModelBase
                 gameState = builder.BuildNext(request, response.State, response.Result, Dispatcher.UIThread);
                 gameStates = gameStates.Add(gameState);
             }
+
+            sw.Stop();
+
+            Debug.WriteLine($"Loaded {file.Name} in {sw.Elapsed.TotalSeconds:F1} seconds.");
         }
         catch
         {
