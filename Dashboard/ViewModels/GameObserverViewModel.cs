@@ -16,6 +16,8 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
     public GameObserverViewModel()
     {
+        GameObservations = new(gameObservations);
+
         QueueUsers = new(queuedUsers);
         Sessions = new(sessions);
         Scores = new(scores);
@@ -30,7 +32,12 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         getUpdatesThread.Join();
     }
 
-    private GameObservationViewModel gameObservation = new(null);
+    private ImmutableDictionary<string, GameObservationViewModel> gameObservationIds = ImmutableDictionary<string, GameObservationViewModel>.Empty;
+
+    private ObservableCollection<GameObservationViewModel> gameObservations = new();
+    public ReadOnlyObservableCollection<GameObservationViewModel> GameObservations { get; private set; }
+
+    private GameObservationViewModel gameObservation = new();
     public GameObservationViewModel GameObservation
     {
         get => gameObservation;
@@ -157,17 +164,24 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
     private GameObservationBuilder HandleQuestStarted(QuestStarted update)
     {
-        Dispatcher.UIThread.Invoke(() => { GameObservation.Reset(); });
         var gameStateBuilder = new GameObservationBuilder(update.GameId, update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
         var gameState = gameStateBuilder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-        Dispatcher.UIThread.Invoke(() => { GameObservation.SetGameObservation(gameState); });
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            var gameObservationViewModel = new GameObservationViewModel(gameState);
+            gameObservations.Add(gameObservationViewModel);
+            gameObservationIds = gameObservationIds.Add(update.GameId, gameObservationViewModel);
+        });
         return gameStateBuilder;
     }
 
     private void HandleQuestActed(QuestActed update, GameObservationBuilder gameStateBuilder)
     {
-        var gameState = gameStateBuilder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-        Dispatcher.UIThread.Invoke(() => { GameObservation.SetGameObservation(gameState); });
+        if (gameObservationIds.TryGetValue(update.GameId, out var gameObservationViewModel))
+        {
+            var gameState = gameStateBuilder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
+            Dispatcher.UIThread.Invoke(() => { gameObservationViewModel.SetGameObservation(gameState); });
+        }
     }
 
     private void HandleQueue(QueueUpdate update)
@@ -207,6 +221,9 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
                 sessions.Remove(session);
             }
         });
+
+        // TODO: Remove game observations with this id
+
 
         // Add sessions at the start
         var sessionsToAdd = newSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();

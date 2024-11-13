@@ -9,7 +9,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public GameObservation? Current
     {
         get => current;
-        set
+        private set
         {
             current = value;
             OnPropertyChanged();
