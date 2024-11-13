@@ -17,6 +17,9 @@
   - [X] Proto file hosting per level
   - [ ] Current level
   - [ ] API description per level
+  - [ ] Show stats per level.
+    - [ ] Top 3 times (usernames)
+    - [ ] Theoretical quest times (min and average)
 - [ ] Replay shared folder
 - [ ] Hardcode dashboard colors
 - [ ] Optmize performance of Game.cs
@@ -390,21 +393,21 @@ Final enemy: Younger brother of duke.
 
 # Performance
 
-# 2024-07-17
+## 2024-07-17
 
 | Method         | Mean      | Error    | StdDev   |
 |--------------- |----------:|---------:|---------:|
 | GenerateAll    | 756.28 ms | 5.250 ms | 4.099 ms |
 | GenerateLevel1 |  37.83 ms | 0.686 ms | 0.641 ms |
 
-# 2024-07-26
+## 2024-07-26
 
 | Method         | Mean      | Error     | StdDev    |
 |--------------- |----------:|----------:|----------:|
 | GenerateAll    | 820.28 ms | 11.876 ms | 11.664 ms |
 | GenerateLevel1 |  38.70 ms |  0.719 ms |  0.883 ms |
 
-# 2024-07-29
+## 2024-07-29
 
 | Method         | Mean      | Error    | StdDev   |
 |--------------- |----------:|---------:|---------:|
@@ -412,7 +415,7 @@ Final enemy: Younger brother of duke.
 | GenerateLevel1 |  19.48 ms | 0.284 ms | 0.252 ms |
 | GenerateLevel4 |  29.48 ms | 0.584 ms | 0.573 ms |
 
-# 2024-08-27
+## 2024-08-27
 
 | Method         | Mean      | Error    | StdDev   |
 |--------------- |----------:|---------:|---------:|
@@ -420,10 +423,18 @@ Final enemy: Younger brother of duke.
 | GenerateLevel1 |  17.79 ms | 0.277 ms | 0.259 ms |
 | GenerateLevel4 |  28.19 ms | 0.395 ms | 0.369 ms |
 
-# 2024-10-04
+## 2024-10-04
 
 | Method         | Mean      | Error    | StdDev    |
 |--------------- |----------:|---------:|----------:|
 | GenerateAll    | 511.93 ms | 9.558 ms | 14.306 ms |
 | GenerateLevel1 |  18.73 ms | 0.248 ms |  0.220 ms |
 | GenerateLevel4 |  29.39 ms | 0.468 ms |  0.415 ms |
+
+## 2024-11-13 (.NET 9.0)
+
+| Method         | Mean      | Error    | StdDev    |
+|--------------- |----------:|---------:|----------:|
+| GenerateAll    | 441.53 ms | 8.497 ms | 12.455 ms |
+| GenerateLevel1 |  17.02 ms | 0.324 ms |  0.523 ms |
+| GenerateLevel4 |  26.04 ms | 0.327 ms |  0.306 ms |
