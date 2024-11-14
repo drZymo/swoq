@@ -1,5 +1,4 @@
 ﻿using Swoq.Interface;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Swoq.Infra;

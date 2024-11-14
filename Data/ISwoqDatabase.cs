@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace Swoq.Server.Data;
+namespace Swoq.Data;
 
 public interface ISwoqDatabase
 {

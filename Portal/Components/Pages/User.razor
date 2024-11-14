@@ -1,6 +1,6 @@
 ﻿@page "/user"
 @page "/user/{UserId}"
-@using Swoq.Server.Data
+@using Swoq.Data
 @inject ISwoqDatabase Database
 @inject NavigationManager NavigationManager
 
@@ -50,7 +50,7 @@ else {
 	[SupplyParameterFromQuery]
 	public bool Welcome { get; set; } = false;
 
-	public Swoq.Server.Data.User? CurrentUser { get; set; } = null;
+	public Swoq.Data.User? CurrentUser { get; set; } = null;
 
 	protected override async Task OnParametersSetAsync()
 	{

@@ -1,4 +1,5 @@
-﻿using Swoq.Infra;
+﻿using Swoq.Data;
+using Swoq.Infra;
 using Swoq.Server.Data;
 using Swoq.Server.Services;
 

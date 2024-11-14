@@ -2,7 +2,7 @@
 using MongoDB.Driver;
 using System.Collections.Immutable;
 
-namespace Swoq.Server.Data;
+namespace Swoq.Data;
 
 public class SwoqDatabase : ISwoqDatabase
 {

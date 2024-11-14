@@ -1,6 +1,6 @@
-﻿using Swoq.Infra;
+﻿using Swoq.Data;
+using Swoq.Infra;
 using Swoq.Interface;
-using Swoq.Server.Data;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -8,10 +8,10 @@ namespace Swoq.Server;
 
 public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
 {
-    private readonly object gamesWriteMutex = new();
+    private readonly Lock gamesWriteMutex = new();
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
-    private readonly object currentQuestMutex = new();
+    private readonly Lock currentQuestMutex = new();
     private ImmutableHashSet<Guid> currentQuestIds = [];
 
     private readonly QuestQueue questQueue = new();
@@ -70,8 +70,6 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         lock (currentQuestMutex)
         {
-            var now = Clock.Now;
-
             // Cleanup current quest if finished or idle for too long
             foreach (var currentQuestId in currentQuestIds)
             {

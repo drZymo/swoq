@@ -1,7 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Swoq.Data;
 using Swoq.Interface;
-using Swoq.Server.Data;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;

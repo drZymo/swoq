@@ -1,5 +1,5 @@
-﻿using Swoq.Infra;
-using Swoq.Server.Data;
+﻿using Swoq.Data;
+using Swoq.Infra;
 using System.Collections.Immutable;
 
 namespace Swoq.Server;

@@ -1,10 +1,9 @@
 ﻿using Avalonia.Threading;
 using Swoq.Infra;
-using Swoq.InfraUI.Models;
 using Swoq.Interface;
 using System.Collections.Immutable;
 
-namespace Swoq.ReplayViewer.ViewModels;
+namespace Swoq.InfraUI.Models;
 
 public class GameObservationBuilder(string id, int height, int width, int visibilityRange, string userName)
 {

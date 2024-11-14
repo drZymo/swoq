@@ -1,4 +1,4 @@
-﻿namespace Swoq.Server.Data;
+﻿namespace Swoq.Data;
 
 public class SwoqDatabaseSettings
 {

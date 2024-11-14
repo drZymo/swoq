@@ -7,7 +7,7 @@ namespace MapGeneratorBenchmark;
 public class Benchmarks
 {
     [Benchmark]
-    public void GenerateAll()
+    public static void GenerateAll()
     {
         for (var l = 0; l <= MapGenerator.MaxLevel; l++)
         {
@@ -16,13 +16,13 @@ public class Benchmarks
     }
 
     [Benchmark]
-    public void GenerateLevel1()
+    public static void GenerateLevel1()
     {
         MapGenerator.Generate(1);
     }
 
     [Benchmark]
-    public void GenerateLevel4()
+    public static void GenerateLevel4()
     {
         MapGenerator.Generate(4);
     }
@@ -34,7 +34,7 @@ public static class Program
     {
         if (args.Length == 1 && args[0] == "all")
         {
-            new Benchmarks().GenerateAll();
+            Benchmarks.GenerateAll();
         }
         else
         {

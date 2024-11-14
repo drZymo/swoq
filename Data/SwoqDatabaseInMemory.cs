@@ -1,10 +1,10 @@
 ﻿using System.Collections.Immutable;
 
-namespace Swoq.Server.Data;
+namespace Swoq.Data;
 
 public class SwoqDatabaseInMemory : ISwoqDatabase
 {
-    private readonly object usersWriteMutex = new();
+    private readonly Lock usersWriteMutex = new();
     private IImmutableDictionary<string, User> users = ImmutableDictionary<string, User>.Empty;
 
     public SwoqDatabaseInMemory()

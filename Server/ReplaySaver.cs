@@ -42,7 +42,7 @@ internal class ReplaySaver : IDisposable
     private readonly CancellationTokenSource cancel = new();
     private readonly Thread handleMessagesThread;
 
-    private readonly object filenamesWriteMutex = new();
+    private readonly Lock filenamesWriteMutex = new();
     private IImmutableDictionary<Guid, string> filenames = ImmutableDictionary<Guid, string>.Empty;
 
     private readonly SemaphoreSlim messagesSemaphore = new(0);

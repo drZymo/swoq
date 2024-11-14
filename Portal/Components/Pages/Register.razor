@@ -1,5 +1,5 @@
 ﻿@page "/register/"
-@using Swoq.Server.Data
+@using Swoq.Data
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject ISwoqDatabase Database
@@ -33,7 +33,7 @@
 
 	private void Submit()
 	{
-		var user = new Swoq.Server.Data.User() { Name = UserName };
+		var user = new Swoq.Data.User() { Name = UserName };
 		try
 		{
 			Database.CreateUser(user);

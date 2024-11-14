@@ -1,8 +1,8 @@
 ﻿using Avalonia.Threading;
 using Grpc.Net.Client;
+using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
-using Swoq.ReplayViewer.ViewModels;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -34,7 +34,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
     private ImmutableDictionary<string, GameObservationViewModel> gameObservationIds = ImmutableDictionary<string, GameObservationViewModel>.Empty;
 
-    private ObservableCollection<GameObservationViewModel> gameObservations = new();
+    private readonly ObservableCollection<GameObservationViewModel> gameObservations = new();
     public ReadOnlyObservableCollection<GameObservationViewModel> GameObservations { get; private set; }
 
     private GameObservationViewModel gameObservation = new();

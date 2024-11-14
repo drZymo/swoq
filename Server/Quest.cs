@@ -1,6 +1,6 @@
-﻿using Swoq.Infra;
+﻿using Swoq.Data;
+using Swoq.Infra;
 using Swoq.Interface;
-using Swoq.Server.Data;
 
 namespace Swoq.Server;
 

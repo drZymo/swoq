@@ -1,7 +1,7 @@
+using Swoq.Data;
 using Swoq.Infra;
 using Swoq.Interface;
 using Swoq.Server;
-using Swoq.Server.Data;
 
 namespace Swoq.Test;
 
