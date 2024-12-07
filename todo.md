@@ -1,12 +1,12 @@
 # TODO
 
--  [.] Allow more than 1 quest at a time in case it is needed
+- [ ] Codes to unlock each level, based on Advent of Code.
+- [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
   - [ ] dashboard quest tabs
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
-- [ ] Remove CheckInvariant
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Quest finished screen in dashboard
@@ -140,6 +140,7 @@
   - [X] HasPlayer2, HasEnemies in gamestate, so backwards in time will also disappear
   - [X] ShowSword only on first sword shown
   - [X] Cleanup gameovservationviewmodel
+- [X] Remove CheckInvariant
 
 
 # Design decisions
@@ -379,6 +380,15 @@ Decouple the processing. GameServer needs to be as responsive as possible. Games
 
 `GameServer` will get a few events, game added, game removed, game acted, game finished. The monitor service will subscribe and queues all events. A background thread processes the queue and updates the list. Every second the list is transmitted.
 
+## Entry Codes
+
+Advent of Code is fun with small exercises. All result in a single number to be entered. This is a great concept for unlocking the exit of each level. So, before the exit of a level can be entered a code has to be entered. This code is the solution of an exercise that is presented on the portal.
+
+- Portal show the exercise.
+- Submission of the code is done on the portal.
+- When entering an exit the game is finished with a special code (CODE_MISSING?)
+- When code is entered the exit will increase the level of the user.
+
 
 # Lore in the proto files
 
@@ -389,6 +399,9 @@ Secondary character: Male, son of miner. Likes to explore caves. Went missing 2 
 Prisoner: Duke of town.
 Final enemy: Younger brother of duke.
 
+### Update
+
+At the anual WSC (Wizardry and Sorcery Conference), a new attraction is revealed. ...
 
 
 # Performance

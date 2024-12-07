@@ -54,19 +54,15 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
         try
         {
             PerformPlayerAction(action1, map.Player1);
-            CheckInvariant();
             PerformPlayerAction(action2, map.Player2);
-            CheckInvariant();
 
             // Process enemies using previous positions of players
             foreach (var enemy in map.Enemies.Values)
             {
                 ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
-                CheckInvariant();
             }
 
             CleanupDeadCharacters();
-            CheckInvariant();
 
             // Store current positions
             StorePlayerPosition(map.Player1, ref player1Positions);
@@ -883,41 +879,4 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
     }
 
     #endregion
-
-    private void CheckInvariant()
-    {
-        foreach (var c in GetAliveCharacters())
-        {
-            var m = map[c.Position];
-            switch (m)
-            {
-                case Cell.Empty:
-                case Cell.DoorRedOpen:
-                case Cell.PressurePlateRed:
-                case Cell.DoorGreenOpen:
-                case Cell.PressurePlateGreen:
-                case Cell.DoorBlueOpen:
-                case Cell.PressurePlateBlue:
-                    break;
-                case Cell.Unknown:
-                case Cell.Wall:
-                case Cell.Exit:
-                case Cell.DoorRedClosed:
-                case Cell.KeyRed:
-                case Cell.DoorGreenClosed:
-                case Cell.KeyGreen:
-                case Cell.DoorBlueClosed:
-                case Cell.KeyBlue:
-                case Cell.Sword:
-                case Cell.Health:
-                case Cell.Boulder:
-                case Cell.PressurePlateRedWithBoulder:
-                case Cell.PressurePlateGreenWithBoulder:
-                case Cell.PressurePlateBlueWithBoulder:
-                case Cell.Treasure:
-                    Debug.Fail($"{c.Id} cannot stand on {m}");
-                    break;
-            }
-        }
-    }
 }
