@@ -1,16 +1,17 @@
 # TODO
 
-- [ ] Codes to unlock each level, based on Advent of Code.
 - [.] Allow more than 1 quest at a time in case it is needed
   - [X] game server
   - [X] unit tests
-  - [ ] dashboard quest tabs
+  - [X] dashboard quest tabs
+  - [ ] Show end of quest overlay
+  - [ ] Cleanup quest tabs after 10s after game is finished 
+- [?] Codes to unlock each level, based on Advent of Code.
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
+- [ ] Quest finished mark in high score list
 - [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
-- [ ] Quest finished screen in dashboard
-- [ ] Quest finished mark in high score
 - [ ] Allow reconnect of dashboard by resending quest started
 - [.] User portal
   - [X] user registration

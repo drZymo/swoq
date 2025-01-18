@@ -34,25 +34,28 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
     private ImmutableDictionary<string, GameObservationViewModel> gameObservationIds = ImmutableDictionary<string, GameObservationViewModel>.Empty;
 
-    private readonly ObservableCollection<GameObservationViewModel> gameObservations = new();
+    private readonly ObservableCollection<GameObservationViewModel> gameObservations = [];
     public ReadOnlyObservableCollection<GameObservationViewModel> GameObservations { get; private set; }
 
-    private GameObservationViewModel gameObservation = new();
-    public GameObservationViewModel GameObservation
+    private GameObservationViewModel? selectedObservation = null;
+    public GameObservationViewModel? SelectedObservation
     {
-        get => gameObservation;
+        get => selectedObservation;
         private set
         {
-            gameObservation = value;
+            selectedObservation = value;
             OnPropertyChanged();
         }
     }
 
+
     private readonly ObservableCollection<string> queuedUsers = [];
     public ReadOnlyObservableCollection<string> QueueUsers { get; }
 
+
     private readonly ObservableCollection<SessionViewModel> sessions = [];
     public ReadOnlyObservableCollection<SessionViewModel> Sessions { get; }
+
 
     public record Score(string UserName, int Level, int LengthTicks, int LengthSeconds);
 
@@ -171,6 +174,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
             var gameObservationViewModel = new GameObservationViewModel(gameState);
             gameObservations.Add(gameObservationViewModel);
             gameObservationIds = gameObservationIds.Add(update.GameId, gameObservationViewModel);
+            SelectedObservation = gameObservationViewModel;
         });
         return gameStateBuilder;
     }

@@ -5,6 +5,7 @@
         xmlns:vm="clr-namespace:Swoq.Dashboard.ViewModels"
         xmlns:converters="clr-namespace:Swoq.Dashboard.Converters"
         xmlns:infraui="clr-namespace:Swoq.InfraUI.Views;assembly=InfraUI"
+        xmlns:infravm="clr-namespace:Swoq.InfraUI.ViewModels;assembly=InfraUI"
         x:Class="Swoq.Dashboard.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         mc:Ignorable="d"
@@ -25,7 +26,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <infraui:GroupBox Grid.Column="0" Header="Training sessions"  DataContext="{Binding GameObserver}">
+            <infraui:GroupBox Grid.Column="0" Header="Sessions"  DataContext="{Binding GameObserver}">
                 <ScrollViewer>
                     <ItemsControl ItemsSource="{Binding Sessions}">
                         <ItemsControl.ItemTemplate>
@@ -77,7 +78,23 @@
             </Grid>
 
             <Grid Grid.Column="2" DataContext="{Binding GameObserver}">
-                <infraui:GameObservationView DataContext="{Binding GameObservation}"/>
+                <TabControl ItemsSource="{Binding GameObservations}" SelectedItem="{Binding SelectedObservation}">
+                    <TabControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <Run Text="{Binding UserName, Mode=OneWay}" />
+                                <Run> - Level </Run>
+                                <Run Text="{Binding Level, Mode=OneWay}" />
+                            </TextBlock>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate DataType="infravm:GameObservationViewModel">
+                            <infraui:GameObservationView DataContext="{Binding}" ShowHeader="false"/>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+                <!---->
                 <Canvas>
                     <Button Canvas.Top="0" Canvas.Right="0" Click="OnMaximizeClicked">
                         <Image Source="maximize.png" Width="32" Height="32"/>
