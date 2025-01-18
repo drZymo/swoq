@@ -17,6 +17,7 @@ public record GameObservation(
     string ActionResult,
     bool HasEnemies,
     bool HasSwordPickup,
+    bool IsFinished,
     TileMap Overview,
     PlayerObservation? Player1 = null,
     PlayerObservation? Player2 = null);

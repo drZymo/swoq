@@ -42,5 +42,10 @@
                 <local:PlayerObservationView DataContext="{Binding Player2, Mode=OneWay}" Title="Player #2" />
             </Grid>
         </Grid>
+
+        <Grid Grid.Column="0" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,*" IsVisible="{Binding IsFinished}">
+            <Panel Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.75" Background="Black" />
+            <TextBlock Grid.Row="1" Grid.Column="1" FontSize="24" HorizontalAlignment="Center" Text="Game finished"/>
+        </Grid>
     </Grid>
 </UserControl>
