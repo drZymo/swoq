@@ -31,7 +31,8 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         this.gameServer.QueueUpdated += OnQueueUpdated;
         this.gameServer.GameAdded += OnGameAdded;
         this.gameServer.GameRemoved += OnGameRemoved;
-        this.gameServer.GameActed += OnGameActed;
+        this.gameServer.GameUpdated += OnGameUpdated;
+        this.gameServer.StatisticsUpdated += OnStatisticsUpdated;
 
         sessionMonitorThread = new Thread(new ThreadStart(SessionMonitorThread));
         sessionMonitorThread.Start();
@@ -42,7 +43,8 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         cancellationTokenSource.Cancel();
         sessionMonitorThread.Join();
 
-        gameServer.GameActed -= OnGameActed;
+        gameServer.StatisticsUpdated -= OnStatisticsUpdated;
+        gameServer.GameUpdated -= OnGameUpdated;
         gameServer.GameRemoved -= OnGameRemoved;
         gameServer.GameAdded -= OnGameAdded;
         gameServer.QueueUpdated -= OnQueueUpdated;
@@ -138,16 +140,26 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         gameUpdatesSemaphore.Release();
     }
 
-    private void OnGameActed(object? sender, GameActedEventArgs e)
+    private void OnGameUpdated(object? sender, GameUpdatedEventArgs e)
     {
-        gameUpdates.Enqueue(new GameActedEntry(e));
+        gameUpdates.Enqueue(new GameUpdatedEntry(e));
         gameUpdatesSemaphore.Release();
+    }
+
+    private void OnStatisticsUpdated(object? sender, StatisticsUpdatedEventArgs e)
+    {
+        var update = new Update
+        {
+            StatisticsUpdate = new() { EventsPerSecond = e.EventsPerSecond },
+        };
+        updates.Enqueue(update);
+        updatesCount.Release();
     }
 
     private abstract record GameUpdateEntry(Guid GameId);
     private record GameAddedEntry(GameAddedEventArgs Args) : GameUpdateEntry(Args.GameId);
     private record GameRemovedEntry(GameRemovedEventArgs Args) : GameUpdateEntry(Args.GameId);
-    private record GameActedEntry(GameActedEventArgs Args) : GameUpdateEntry(Args.GameId);
+    private record GameUpdatedEntry(GameUpdatedEventArgs Args) : GameUpdateEntry(Args.GameId);
 
     private readonly SemaphoreSlim gameUpdatesSemaphore = new(0);
     private readonly ConcurrentQueue<GameUpdateEntry> gameUpdates = new();
@@ -171,14 +183,12 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private ImmutableDictionary<Guid, SessionEntry> sessions = ImmutableDictionary<Guid, SessionEntry>.Empty;
     private DateTime lastSessionsUpdate = DateTime.MinValue;
     private DateTime lastScoresUpdate = DateTime.MinValue;
-    private int eventCount = 0;
 
     private void SessionMonitorThread()
     {
         sessions = ImmutableDictionary<Guid, SessionEntry>.Empty;
         lastSessionsUpdate = DateTime.MinValue;
         lastScoresUpdate = DateTime.MinValue;
-        eventCount = 0;
 
         while (!cancellationTokenSource.IsCancellationRequested)
         {
@@ -203,7 +213,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                                 }
                             }
                             break;
-                        case GameActedEntry e:
+                        case GameUpdatedEntry e:
                             {
                                 if (sessions.TryGetValue(e.Args.GameId, out var session))
                                 {
@@ -213,7 +223,6 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                             }
                             break;
                     }
-                    eventCount++;
                 }
 
                 var now = DateTime.Now;
@@ -238,14 +247,10 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     {
         if (now - lastSessionsUpdate < Parameters.SessionsUpdatePeriod) return;
 
-        // Compute events per second
-        var delta = (now - lastSessionsUpdate);
-        var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
-
         // Send an updated list
         var update = new Update
         {
-            SessionsUpdate = new() { EventsPerSecond = eventsPerSecond }
+            SessionsUpdate = new()
         };
         update.SessionsUpdate.Sessions.AddRange(sessions.Values.Select(s => s.ToSession()));
         updates.Enqueue(update);
@@ -256,7 +261,6 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
 
         // Start waiting another period
         lastSessionsUpdate = now;
-        eventCount = 0;
     }
 
     private async void SendScoresUpdateIfNeeded(DateTime now)

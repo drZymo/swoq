@@ -37,4 +37,5 @@ internal static class Parameters
 
     public static readonly TimeSpan SessionsUpdatePeriod = TimeSpan.FromMilliseconds(250);
     public static readonly TimeSpan ScoresUpdatePeriod = TimeSpan.FromMilliseconds(500);
+    public static readonly TimeSpan StatisticsUpdatePeriod = TimeSpan.FromMilliseconds(250);
 }

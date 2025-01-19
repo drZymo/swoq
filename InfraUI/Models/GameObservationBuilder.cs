@@ -2,7 +2,6 @@
 using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace Swoq.InfraUI.Models;
 
@@ -21,7 +20,6 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
 
     public GameObservation BuildNext(ActionRequest? request, State state, Result actionResult, Dispatcher createDispatcher)
     {
-        Debug.WriteLine($"state = {state}");
         // Clear whole map on new level
         if (previous == null || state.Level != previous.Level)
         {

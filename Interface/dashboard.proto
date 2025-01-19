@@ -36,8 +36,7 @@ message Session {
 }
 
 message SessionsUpdate {
-    float eventsPerSecond = 1;
-    repeated Session sessions = 2;
+    repeated Session sessions = 1;
 }
 
 message Score {
@@ -51,10 +50,15 @@ message ScoresUpdate {
     repeated Score scores = 1;
 }
 
+message StatisticsUpdate {
+    float eventsPerSecond = 1;
+}
+
 message Update {
     optional QuestStarted questStarted = 1;
     optional QuestActed questActed = 2;
     optional QueueUpdate queueUpdate = 3;
     optional SessionsUpdate sessionsUpdate = 4;
     optional ScoresUpdate scoresUpdate = 5;
+    optional StatisticsUpdate statisticsUpdate = 6;
 }

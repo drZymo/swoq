@@ -16,16 +16,21 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     private readonly QuestQueue questQueue = new();
 
+    private readonly Lock statisticsMutex = new();
+    private int eventCount = 0;
+    private DateTime lastStatisticsReported = DateTime.MinValue;
 
     public event EventHandler<GameAddedEventArgs>? GameAdded;
     public event EventHandler<GameRemovedEventArgs>? GameRemoved;
-    public event EventHandler<GameActedEventArgs>? GameActed;
+    public event EventHandler<GameUpdatedEventArgs>? GameUpdated;
 
     public event EventHandler<QueueUpdatedEventArgs>? QueueUpdated
     {
         add => questQueue.Updated += value;
         remove => questQueue.Updated -= value;
     }
+
+    public event EventHandler<StatisticsUpdatedEventArgs>? StatisticsUpdated;
 
     public GameStartResult Start(string userId, int? level)
     {
@@ -49,6 +54,8 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         }
         // and remove old games
         CleanupOldGames();
+
+        RegisterActivity();
 
         return new GameStartResult(user.Name, game.Id, game.State);
     }
@@ -114,8 +121,16 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         if (!games.TryGetValue(gameId, out var game)) throw new UnknownGameIdException();
 
         // Play game
+        var prevLevel = game.Level;
+        var prevFinished = game.State.Finished;
         game.Act(action1, action2);
-        GameActed?.Invoke(this, new GameActedEventArgs(gameId, game.Level, game.State.Finished));
+        if (game.Level != prevLevel || game.State.Finished != prevFinished)
+        {
+            GameUpdated?.Invoke(this, new GameUpdatedEventArgs(gameId, game.Level, game.State.Finished));
+        }
+
+        RegisterActivity();
+
         return game.State;
     }
 
@@ -150,6 +165,31 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             {
                 GameRemoved?.Invoke(this, new GameRemovedEventArgs(id));
             }
+        }
+    }
+
+    private void RegisterActivity()
+    {
+        // Thread-safe increment
+        Interlocked.Increment(ref eventCount);
+
+        // Should we send an update
+        var now = DateTime.Now;
+        var delta = now - lastStatisticsReported;
+        if (delta < Parameters.StatisticsUpdatePeriod) return;
+
+        lock (statisticsMutex)
+        {
+            // Extra check.
+            // Maybe other thread already sent the update
+            delta = now - lastStatisticsReported;
+            if (delta < Parameters.StatisticsUpdatePeriod) return;
+
+            var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
+            StatisticsUpdated?.Invoke(this, new(eventsPerSecond));
+
+            eventCount = 0;
+            lastStatisticsReported = now;
         }
     }
 }

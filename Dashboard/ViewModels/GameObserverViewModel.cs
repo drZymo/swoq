@@ -125,18 +125,22 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
                     if (message.QueueUpdate != null)
                     {
-                        var update = message.QueueUpdate;
-                        HandleQueue(update);
+                        HandleQueueUpdate(message.QueueUpdate);
                     }
 
                     if (message.SessionsUpdate != null)
                     {
-                        UpdateSessions(message.SessionsUpdate);
+                        HandleSessionsUpdate(message.SessionsUpdate);
                     }
 
                     if (message.ScoresUpdate != null)
                     {
-                        UpdateScores(message.ScoresUpdate);
+                        HandleScoresUpdate(message.ScoresUpdate);
+                    }
+
+                    if (message.StatisticsUpdate != null)
+                    {
+                        HandleStatistics(message.StatisticsUpdate);
                     }
                 }
             }
@@ -188,7 +192,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void HandleQueue(QueueUpdate update)
+    private void HandleQueueUpdate(QueueUpdate update)
     {
         var queuedUsers = update.QueuedUsers.ToImmutableArray();
         Dispatcher.UIThread.Invoke(() =>
@@ -201,12 +205,9 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         });
     }
 
-    private void UpdateSessions(SessionsUpdate update)
+    private void HandleSessionsUpdate(SessionsUpdate update)
     {
         var newSessions = update.Sessions;
-
-        // Update events per second
-        EventsPerSecond = update.EventsPerSecond;
 
         // Find out which game ids have been added, removed and updated
         var newIds = newSessions.Select(s => s.GameId).ToImmutableHashSet();
@@ -227,7 +228,14 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         });
 
         // TODO: Remove game observations with this id
-
+        foreach (var gameId in removedSessionIds)
+        {
+            if (gameObservationIds.TryGetValue(gameId, out var gameObservation))
+            {
+                // TODO
+                Debug.WriteLine($"Finish game '{gameObservation.UserName} - Level {gameObservation.Level}'");
+            }
+        }
 
         // Add sessions at the start
         var sessionsToAdd = newSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
@@ -265,7 +273,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void UpdateScores(ScoresUpdate update)
+    private void HandleScoresUpdate(ScoresUpdate update)
     {
         var orderedScores = update.Scores.
             Select(s => new Score(s.UserName, s.Level, s.LengthTicks, s.LengthSeconds)).
@@ -282,5 +290,10 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
                 scores.Add(score);
             }
         });
+    }
+
+    private void HandleStatistics(StatisticsUpdate update)
+    {
+        EventsPerSecond = update.EventsPerSecond;
     }
 }
