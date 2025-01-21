@@ -32,7 +32,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (State.Finished) throw new GameFinishedException(State);
+        if (State.IsFinished) throw new GameFinishedException(State);
 
         LastAction = Clock.Now;
         ticks++;
@@ -43,7 +43,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
 
         // If game is completed successfully, then move to next level.
         // If game is finished unsuccessfully, then an exception has been thrown and this line is not reached.
-        if (state.Finished)
+        if (state.IsFinished)
         {
             Level++;
 
@@ -76,7 +76,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
             else
             {
                 // TODO: Report to dashboard
-                state = new GameState(ticks, Level, Finished: true);
+                state = new GameState(ticks, Level, GameStatus.FinishedSuccess);
             }
         }
 
@@ -87,5 +87,9 @@ public class Quest<MG> : IGame where MG : IMapGenerator
         State = state;
     }
 
-    public bool CheckIsActive() => currentGame.CheckIsActive();
+    public void CheckGameIsFinished()
+    {
+        currentGame.CheckGameIsFinished();
+        State = currentGame.State;
+    }
 }

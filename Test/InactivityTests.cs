@@ -50,51 +50,39 @@ internal class InactivityTests : GameTestBase
     {
         var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(10);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(9);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(2);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
     }
 
     [Test]
@@ -102,34 +90,24 @@ internal class InactivityTests : GameTestBase
     {
         var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.True);
-        });
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
+        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(21);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.False);
-            Assert.That(game.CheckIsActive(), Is.False);
-        });
-
-        Assert.Throws<NoProgressException>(() => game.Act(DirectedAction.MoveEast));
-
+        Assert.That(game.IsFinished, Is.False);
+        game.CheckGameIsFinished();
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
-            Assert.That(game.CheckIsActive(), Is.False);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedTimeout));
         });
 
         Assert.Throws<GameFinishedException>(() => game.Act(DirectedAction.MoveEast));
@@ -137,7 +115,7 @@ internal class InactivityTests : GameTestBase
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
-            Assert.That(game.CheckIsActive(), Is.False);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedTimeout));
         });
     }
 
@@ -186,13 +164,13 @@ internal class InactivityTests : GameTestBase
         // Increase time a little
         now += TimeSpan.FromSeconds(2);
         // Place boulder should now trigger inactivity
-        Assert.Throws<NoProgressException>(() => Act(DirectedAction.UseWest));
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.UseWest));
 
         // Game is finished
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
-            Assert.That(game.CheckIsActive(), Is.False);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
         });
     }
 
@@ -237,6 +215,11 @@ internal class InactivityTests : GameTestBase
             Act(DirectedAction.UseWest);
             Act(DirectedAction.UseWest);
             WalkCircle();
+            Assert.Multiple(() =>
+            {
+                Assert.That(game.IsFinished, Is.False);
+                Assert.That(game.State.Status, Is.EqualTo(GameStatus.Active));
+            });
         }
     }
 
@@ -275,10 +258,14 @@ internal class InactivityTests : GameTestBase
         }
 
         // One more circle will trigger no progress
-        Assert.Throws<NoProgressException>(() => WalkCircle());
+        Assert.Throws<GameFinishedException>(() => WalkCircle());
 
         // Game is finished
-        Assert.That(game.IsFinished, Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
+        });
     }
 
     [Test]
@@ -318,13 +305,13 @@ internal class InactivityTests : GameTestBase
         }
 
         // One more circle will trigger no progress
-        Assert.Throws<NoProgressException>(() => WalkCircle(small: true));
+        Assert.Throws<GameFinishedException>(() => WalkCircle(small: true));
 
         // Game is finished
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
-            Assert.That(game.CheckIsActive(), Is.False);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
         });
     }
 
@@ -353,22 +340,22 @@ internal class InactivityTests : GameTestBase
         });
 
         // Repeat moving west, which is not allowed.
-        // Results in no progress
+        // Results in timeout
         for (var j = 0; j < 20; j++)
         {
             now += TimeSpan.FromSeconds(1);
             Assert.Throws<MoveNotAllowedException>(() => Act(DirectedAction.MoveWest));
         }
 
-        // One more move will trigger no progress
+        // Game now timed out
         now += TimeSpan.FromSeconds(1);
-        Assert.Throws<NoProgressException>(() => Act(DirectedAction.MoveWest));
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveWest));
 
         // Game is finished
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
-            Assert.That(game.CheckIsActive(), Is.False);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedTimeout));
         });
     }
 

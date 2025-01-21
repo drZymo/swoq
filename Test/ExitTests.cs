@@ -125,18 +125,20 @@ internal class ExitTests : GameTestBase
         });
 
         // Move through exit should result in player death
-        Assert.Throws<Player1DiedException>(() => Act(DirectedAction.MoveEast));
+        Act(DirectedAction.MoveEast);
 
         // Game is finished
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedPlayerDied));
             Assert.That(game.State.Player1.Position, Is.EqualTo((-1, -1)));
             Assert.That(game.State.Player1.Health, Is.EqualTo(0));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(changes, Is.Empty);
         });
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveEast));
     }
 
     protected override Map CreateGameMap()

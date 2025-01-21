@@ -68,10 +68,10 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
             userName,
             state.Tick,
             state.Level,
+            state.Status,
             actionResult.ConvertToString(),
             hasEnemies,
             hasSwordPickup,
-            state.Finished,
             overview,
             player1State,
             player2State));

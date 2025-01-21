@@ -26,12 +26,3 @@ public class InventoryEmptyException(GameState state) : SwoqActionNotAllowedExce
 public class InventoryFullException(GameState state) : SwoqActionNotAllowedException(state);
 public class NoSwordException(GameState state) : SwoqActionNotAllowedException(state);
 
-
-// Game ended reasons
-public abstract class SwoqGameEndedException(GameState state) :
-    SwoqGameException(state)
-{ }
-public class Player1DiedException(GameState state) : SwoqGameEndedException(state);
-public class Player2DiedException(GameState state) : SwoqGameEndedException(state);
-public class NoProgressException(GameState state) : SwoqGameEndedException(state);
-

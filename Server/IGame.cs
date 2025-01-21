@@ -11,5 +11,5 @@ internal interface IGame
 
     void Act(DirectedAction? action1 = null, DirectedAction? action2 = null);
 
-    bool CheckIsActive();
+    void CheckGameIsFinished();
 }

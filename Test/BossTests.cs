@@ -148,18 +148,20 @@ internal class BossTests : GameTestBase
         });
 
         // Attack will not work, boss kills in one strike
-        Assert.Throws<Player1DiedException>(() => Act(DirectedAction.UseEast));
+        Act(DirectedAction.UseEast);
 
         // Game is finished
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
             Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedPlayerDied));
             Assert.That(game.State.Player1.Position, Is.EqualTo((-1, -1)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
             Assert.That(game.State.Player1.Health, Is.EqualTo(0));
             Assert.That(changes, Is.Empty);
         });
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.UseEast));
     }
 
     protected override Map CreateGameMap()

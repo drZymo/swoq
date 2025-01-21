@@ -6,6 +6,7 @@
   - [X] dashboard quest tabs
   - [ ] Show end of quest overlay
   - [ ] Cleanup quest tabs after 10s after game is finished 
+  - [ ] Check copy of state during checkGameIsActive() in quest is the correct way. Won't this override the final state?
 - [?] Codes to unlock each level, based on Advent of Code.
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??

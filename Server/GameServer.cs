@@ -34,6 +34,26 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     public GameStartResult Start(string userId, int? level)
     {
+        var user = GetUserOrThrow(database, userId);
+
+        // First remove old games
+        CleanupOldGames();
+
+        // Create a new game
+        IGame game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
+        lock (gamesWriteMutex)
+        {
+            games = games.Add(game.Id, game);
+            GameAdded?.Invoke(this, new GameAddedEventArgs(game.Id, user.Name, game.Level, !level.HasValue));
+        }
+
+        RegisterActivity();
+
+        return new GameStartResult(user.Name, game.Id, game.State);
+    }
+
+    private static User GetUserOrThrow(ISwoqDatabase database, string userId)
+    {
         User user;
         try
         {
@@ -44,20 +64,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         {
             throw new UnknownUserException();
         }
-
-        // Create a new game
-        IGame game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
-        lock (gamesWriteMutex)
-        {
-            games = games.Add(game.Id, game);
-            GameAdded?.Invoke(this, new GameAddedEventArgs(game.Id, user.Name, game.Level, !level.HasValue));
-        }
-        // and remove old games
-        CleanupOldGames();
-
-        RegisterActivity();
-
-        return new GameStartResult(user.Name, game.Id, game.State);
+        return user;
     }
 
     private static Game StartTraining(User user, int level)
@@ -81,7 +88,8 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             foreach (var currentQuestId in currentQuestIds)
             {
                 var currentQuest = games[currentQuestId];
-                if (currentQuest.State.Finished || !currentQuest.CheckIsActive())
+                currentQuest.CheckGameIsFinished();
+                if (currentQuest.State.IsFinished)
                 {
                     currentQuestIds = currentQuestIds.Remove(currentQuestId);
                 }
@@ -122,11 +130,11 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         // Play game
         var prevLevel = game.Level;
-        var prevFinished = game.State.Finished;
+        var prevStatus = game.State.Status;
         game.Act(action1, action2);
-        if (game.Level != prevLevel || game.State.Finished != prevFinished)
+        if (game.Level != prevLevel || game.State.Status != prevStatus)
         {
-            GameUpdated?.Invoke(this, new GameUpdatedEventArgs(gameId, game.Level, game.State.Finished));
+            GameUpdated?.Invoke(this, new GameUpdatedEventArgs(gameId, game.Level, game.State.IsFinished));
         }
 
         RegisterActivity();
@@ -138,16 +146,22 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
     {
         var now = Clock.Now;
 
+        // Check status of all active games
+        foreach (var game in games.Values.Where(g => !g.State.IsFinished))
+        {
+            game.CheckGameIsFinished();
+        }
+
         // Find games that have been finished for a while
         var idsToRemove = games.Values.
+            Where(g => g.State.IsFinished).
             Where(g => now - g.LastActionTime > Parameters.GameRetentionTime).
-            Where(g => g.State.Finished || !g.CheckIsActive()).
             Select(g => g.Id).
             ToImmutableArray();
 
         if (idsToRemove.Length > 0)
         {
-            // Update current quest
+            // Update current quest before actually removing the games
             lock (currentQuestMutex)
             {
                 foreach (var gameId in idsToRemove)
@@ -155,7 +169,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
                     currentQuestIds = currentQuestIds.Remove(gameId);
                 }
             }
-            // Before actually removing the games
+            // Remove all games in a batch
             lock (gamesWriteMutex)
             {
                 games = games.RemoveRange(idsToRemove);

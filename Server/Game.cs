@@ -9,6 +9,7 @@ using Position = (int y, int x);
 
 public class Game(Map map, TimeSpan maxInactivityTime) : IGame
 {
+    private GameStatus status = GameStatus.Active;
     private int ticks = 0;
     private int lastChangeTick = 0;
 
@@ -20,19 +21,13 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
     public GameState State => CreateState();
     public DateTime LastActionTime { get; private set; } = Clock.Now;
 
-    public bool IsFinished { get; private set; } = false;
+    public bool IsFinished => status != GameStatus.Active;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
         // Pre condition checks
-
+        CheckTimeout();
         if (IsFinished) throw new GameFinishedException(CreateState());
-
-        if (!CheckIsActive())
-        {
-            IsFinished = true;
-            throw new NoProgressException(CreateState());
-        }
 
         Debug.Assert(map.Player1 != null || map.Player2 != null);
 
@@ -68,10 +63,10 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
             StorePlayerPosition(map.Player1, ref player1Positions);
             StorePlayerPosition(map.Player2, ref player2Positions);
 
-            UpdateGameStatus();
-
             LastActionTime = Clock.Now;
             ticks++;
+
+            UpdateGameStatus();
         }
         catch (SwoqActionNotAllowedException)
         {
@@ -81,24 +76,65 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
         }
     }
 
-    public bool CheckIsActive()
+    private void CheckTimeout()
     {
+        // Time since last action was too long ago
         if ((Clock.Now - LastActionTime) > maxInactivityTime)
         {
-            return false;
+            status = GameStatus.FinishedTimeout;
+            return;
+        }
+    }
+
+    private void UpdateGameStatus()
+    {
+        if (status != GameStatus.Active) return;
+
+        // Check if one of the players has died
+        if (map.Player1 != null && !map.Player1.IsAlive)
+        {
+            status = GameStatus.FinishedPlayerDied;
+            return;
+        }
+        if (map.Player2 != null && !map.Player2.IsAlive)
+        {
+            status = GameStatus.FinishedPlayer2Died;
+            return;
         }
 
+        // Check if both players exited the map alive
+        if ((map.Player1 == null || (!map.Player1.IsPresent && map.Player1.IsAlive)) &&
+            (map.Player2 == null || (!map.Player2.IsPresent && map.Player2.IsAlive)))
+        {
+            status = GameStatus.FinishedSuccess;
+            return;
+        }
+
+        // Time since last change was too long ago
+        if ((ticks - lastChangeTick) > Parameters.MaxNoProgressTicks)
+        {
+            status = GameStatus.FinishedNoProgress;
+            return;
+        }
+
+        // Check if player positions have changed
         if (player1Positions.Count > 0 || player2Positions.Count > 0)
         {
             var player1Active = IsPlayerActive(map.Player1, player1Positions);
             var player2Active = IsPlayerActive(map.Player2, player2Positions);
             if (!player1Active && !player2Active)
             {
-                return false;
+                status = GameStatus.FinishedNoProgress;
+                return;
             }
         }
+    }
 
-        return true;
+    public void CheckGameIsFinished()
+    {
+        UpdateGameStatus();
+
+        CheckTimeout();
     }
 
     private GameState CreateState()
@@ -106,36 +142,7 @@ public class Game(Map map, TimeSpan maxInactivityTime) : IGame
         Debug.Assert(map.Player1 != null || map.Player2 != null);
         PlayerState? player1State = map.Player1 != null ? GetPlayerState(map.Player1) : null;
         PlayerState? player2State = map.Player2 != null ? GetPlayerState(map.Player2) : null;
-        return new GameState(ticks, map.Level, IsFinished, player1State, player2State);
-    }
-
-    private void UpdateGameStatus()
-    {
-        Debug.Assert(!IsFinished);
-
-        if (map.Player1 != null && !map.Player1.IsAlive)
-        {
-            IsFinished = true;
-            throw new Player1DiedException(CreateState());
-        }
-        if (map.Player2 != null && !map.Player2.IsAlive)
-        {
-            IsFinished = true;
-            throw new Player2DiedException(CreateState());
-        }
-        if ((ticks - lastChangeTick) > Parameters.MaxNoProgressTicks)
-        {
-            // Time since last change was too long ago
-            IsFinished = true;
-            throw new NoProgressException(CreateState());
-        }
-        if ((map.Player1 == null || (!map.Player1.IsPresent && map.Player1.IsAlive)) &&
-            (map.Player2 == null || (!map.Player2.IsPresent && map.Player2.IsAlive)))
-        {
-            // Both players exited the map alive
-            IsFinished = true;
-            // This is expected, so no exception
-        }
+        return new GameState(ticks, map.Level, status, player1State, player2State);
     }
 
     private static void StorePlayerPosition(Player? player, ref ImmutableList<Position> playerPositions)

@@ -347,16 +347,22 @@ internal class CrushTests : GameTestBase
 
         // Pick boulder will close door and kill player 2,
         // ending the game
-        Assert.Throws<Player2DiedException>(() => Act(DirectedAction.UseEast));
+        Act(DirectedAction.UseEast);
         changes = mapCache.GetNewChanges();
         Assert.Multiple(() =>
         {
-            Assert.That(game.State.Finished, Is.True);
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedPlayer2Died));
             Assert.That(game.State.Player1.Position, Is.EqualTo((9, 4)));
             Assert.That(game.State.Player2.Position, Is.EqualTo((-1, -1)));
             Assert.That(game.State.Player2.Health, Is.EqualTo(0));
-            Assert.That(changes, Is.Empty);
+            Assert.That(changes, Has.Count.EqualTo(3));
+            // Player 2 moved
+            Assert.That(changes[(8, 8)], Is.EqualTo((Tile.Empty, Tile.DoorGreen)));
+            Assert.That(changes[(9, 5)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateGreen)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((Tile.Player, Tile.DoorGreen)));
         });
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.UseEast));
     }
 
     protected override Map CreateGameMap()

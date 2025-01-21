@@ -42,7 +42,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public int Tick => Current?.Tick ?? -1;
     public int Level => Current?.Level ?? -1;
     public string ActionResult => Current?.ActionResult ?? "Unknown";
-    public bool IsFinished => Current?.IsFinished ?? false;
+    public bool IsFinished => Current?.Status != Interface.GameStatus.Active;
 
     private TiledImageViewModel overview = new();
     public TiledImageViewModel Overview

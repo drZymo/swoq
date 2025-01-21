@@ -20,10 +20,7 @@ internal static class ServiceUtil
             case InventoryEmptyException: return Result.InventoryEmpty;
             case InventoryFullException: return Result.InventoryFull;
             case NoSwordException: return Result.NoSword;
-            case Player1DiedException: return Result.PlayerDied;
-            case Player2DiedException: return Result.Player2Died;
             case QuestQueuedException: return Result.QuestQueued;
-            case NoProgressException: return Result.NoProgress;
         }
         logger.LogError(ex, "Internal error");
         return Result.InternalError;
@@ -35,7 +32,7 @@ internal static class ServiceUtil
         {
             Tick = gameState.Tick,
             Level = gameState.Level,
-            Finished = gameState.Finished,
+            Status = gameState.Status,
             PlayerState = gameState.Player1?.Convert(),
             Player2State = gameState.Player2?.Convert(),
         };

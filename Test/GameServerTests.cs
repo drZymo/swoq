@@ -87,7 +87,8 @@ public class GameServerTests
         Assert.Multiple(() =>
         {
             Assert.That(state.Level, Is.EqualTo(2));
-            Assert.That(state.Finished, Is.True);
+            Assert.That(state.IsFinished, Is.True);
+            Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         });
     }
 
@@ -177,7 +178,7 @@ public class GameServerTests
         Assert.That(result2, Is.Not.Null);
 
         // Acting on 1 should now fail on timeout
-        Assert.Throws<NoProgressException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
     }
 
     [Test]
@@ -220,7 +221,6 @@ public class GameServerTests
         Assert.That(result2, Is.Not.Null);
     }
 
-
     [Test]
     public void OldGamesAreCleanedUpAfterAWhile()
     {
@@ -235,7 +235,6 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         now += TimeSpan.FromSeconds(20);
-        Assert.Throws<NoProgressException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
         Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
 
         // Start training for user 2 and let it timeout
@@ -245,7 +244,6 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
         now += TimeSpan.FromSeconds(70);
-        Assert.Throws<NoProgressException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
         Assert.Throws<GameFinishedException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
 
         // Wait a while
@@ -367,7 +365,8 @@ public class GameServerTests
         Assert.Multiple(() =>
         {
             Assert.That(state.Level, Is.EqualTo(2));
-            Assert.That(state.Finished, Is.True);
+            Assert.That(state.IsFinished, Is.True);
+            Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         });
 
         // Now, since game 1 is finished, user 3 can continue

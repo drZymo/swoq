@@ -19,9 +19,6 @@ public static class Converters
         Result.InventoryFull => "InventoryFull",
         Result.InventoryEmpty => "InventoryEmpty",
         Result.NoSword => "NoSword",
-        Result.PlayerDied => "PlayerDied",
-        Result.Player2Died => "Player2Died",
-        Result.NoProgress => "NoProgress",
         _ => "Unknown",
     };
 
