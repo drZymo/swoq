@@ -26,17 +26,14 @@ _result_strings  = {
     swoq_pb2.RESULT_USER_LEVEL_TOO_LOW: 'USER_LEVEL_TOO_LOW',
     swoq_pb2.RESULT_QUEST_QUEUED: 'QUEST_QUEUED',
     swoq_pb2.RESULT_MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
-    swoq_pb2.RESULT_NO_PROGRESS: 'NO_PROGRESS',
     swoq_pb2.RESULT_UNKNOWN_ACTION: 'UNKNOWN_ACTION',
     swoq_pb2.RESULT_GAME_FINISHED: 'GAME_FINISHED',
     swoq_pb2.RESULT_PLAYER_NOT_PRESENT: 'PLAYER_NOT_PRESENT',
     swoq_pb2.RESULT_USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
     swoq_pb2.RESULT_INVENTORY_FULL: 'INVENTORY_FULL',
     swoq_pb2.RESULT_INVENTORY_EMPTY: 'INVENTORY_EMPTY',
-    swoq_pb2.RESULT_PLAYER_DIED: 'PLAYER_DIED',
     swoq_pb2.RESULT_NO_SWORD: 'NO_SWORD',
     swoq_pb2.RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
-    swoq_pb2.RESULT_PLAYER2_DIED: 'PLAYER2_DIED',
 }
 
 
@@ -132,7 +129,8 @@ class GamePlayer:
 
     def update_global_state(self, state:swoq_pb2.State) -> None:
         self.level = state.level
-        self.finished = state.finished
+        self.status = state.status
+        self.finished = state.status != swoq_pb2.GAMESTATUS_ACTIVE
 
         self.combined_health = 0
 
@@ -153,7 +151,7 @@ class GamePlayer:
         self.two_players = valid_pos(self.player1_pos) and valid_pos(self.player2_pos)
 
         if self.print:
-            print(f'finished={self.finished} level={self.level}, comb health={self.combined_health}')
+            print(f'status={self.status} level={self.level}, comb health={self.combined_health}')
             print(f'player1: pos={self.player1_pos}, health={self.player1_health}, inventory={self.player1_inventory}, has_sword={self.player1_has_sword}')
             print(f'player2: pos={self.player2_pos}, health={self.player2_health}, inventory={self.player2_inventory}, has_sword={self.player2_has_sword}')
 
