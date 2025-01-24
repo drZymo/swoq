@@ -9,18 +9,19 @@ enum Result {
     RESULT_UNKNOWN_GAME_ID = 3;
     RESULT_USER_LEVEL_TOO_LOW = 4;
     RESULT_QUEST_QUEUED = 5;
-    RESULT_MOVE_NOT_ALLOWED = 6;
-    RESULT_UNKNOWN_ACTION = 7;
-    RESULT_GAME_FINISHED = 8;
+    RESULT_QUEST_ALREADY_ACTIVE = 6;
+    RESULT_MOVE_NOT_ALLOWED = 7;
+    RESULT_UNKNOWN_ACTION = 8;
+    RESULT_GAME_FINISHED = 9;
     // Level 2 and higher:
-    RESULT_USE_NOT_ALLOWED = 9;
-    RESULT_INVENTORY_FULL = 10;
-    RESULT_INVENTORY_EMPTY = 11;
+    RESULT_USE_NOT_ALLOWED = 10;
+    RESULT_INVENTORY_FULL = 11;
+    RESULT_INVENTORY_EMPTY = 12;
     // Level 8 and higher:
-    RESULT_NO_SWORD = 12;
+    RESULT_NO_SWORD = 13;
     // Level 12 and higher:
-    RESULT_PLAYER_NOT_PRESENT = 13;
-    RESULT_PLAYER2_NOT_PRESENT = 14;
+    RESULT_PLAYER_NOT_PRESENT = 14;
+    RESULT_PLAYER2_NOT_PRESENT = 15;
 }
 
 enum GameStatus {
@@ -102,11 +103,11 @@ message PlayerState {
     Position position = 1;
     repeated Tile surroundings = 2;
     // Level 2 and higher:
-    Inventory inventory = 3;
+    optional Inventory inventory = 3;
     // Level 8 and higher:
-    int32 health = 4;
+    optional int32 health = 4;
     // Level 10 and higher:
-    bool hasSword = 5;
+    optional bool hasSword = 5;
 }
 
 message State {

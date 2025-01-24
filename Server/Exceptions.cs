@@ -6,6 +6,7 @@ public class UnknownUserException : SwoqException;
 public class UnknownGameIdException : SwoqException;
 public class UserLevelTooLowException : SwoqException;
 public class QuestQueuedException : SwoqException;
+public class QuestAlreadyActiveException : SwoqException;
 
 public abstract class SwoqGameException(GameState state) : SwoqException
 {

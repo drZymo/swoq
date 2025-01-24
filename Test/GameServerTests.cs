@@ -265,7 +265,7 @@ public class GameServerTests
         var gameServer = new GameServer<DummyGenerator>(database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
-        GivenUserRegistered(id: "u3", name: "User2");
+        GivenUserRegistered(id: "u3", name: "User3");
 
         // Start quest for user 1
         GameStartResult? result1 = null;
@@ -299,7 +299,7 @@ public class GameServerTests
         var gameServer = new GameServer<DummyGenerator>(database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
-        GivenUserRegistered(id: "u3", name: "User2");
+        GivenUserRegistered(id: "u3", name: "User3");
 
         // Start quest for user 1
         GameStartResult? result1 = null;
@@ -375,6 +375,36 @@ public class GameServerTests
         Assert.Throws<GameFinishedException>(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
         // User 2 can still act
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
+    }
+
+    [Test]
+    public void ActiveUserCannotQueueAgain()
+    {
+        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        GivenUserRegistered(id: "u1", name: "User1");
+        GivenUserRegistered(id: "u2", name: "User2");
+        GivenUserRegistered(id: "u3", name: "User3");
+
+        // Start quest for user 1
+        GameStartResult? result1 = null;
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
+        Assert.That(result1, Is.Not.Null);
+
+        // Start quest for user 2, should be queued
+        now += TimeSpan.FromSeconds(1);
+        GameStartResult? result2 = null;
+        Assert.Throws<QuestQueuedException>(() => result2 = gameServer.Start("u2", null));
+        Assert.That(result2, Is.Null);
+
+        // Start another quest for user 1, should not be allowed
+        now += TimeSpan.FromSeconds(1);
+        GameStartResult? result3 = null;
+        Assert.Throws<QuestAlreadyActiveException>(() => result3 = gameServer.Start("u1", null));
+        Assert.That(result3, Is.Null);
+
+        // Act on user 1 quest should be possible
+        now += TimeSpan.FromSeconds(1);
+        Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
     }
 
     #region Primitives

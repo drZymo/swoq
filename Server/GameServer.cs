@@ -12,7 +12,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
     private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
     private readonly Lock currentQuestMutex = new();
-    private ImmutableHashSet<Guid> currentQuestIds = [];
+    private ImmutableDictionary<Guid, string> currentQuestUserIds = ImmutableDictionary<Guid, string>.Empty;
 
     private readonly QuestQueue questQueue = new();
 
@@ -84,22 +84,17 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         lock (currentQuestMutex)
         {
-            // Cleanup current quest if finished or idle for too long
-            foreach (var currentQuestId in currentQuestIds)
+            // Check that user is not already in a quest
+            if (currentQuestUserIds.ContainsValue(user.Id))
             {
-                var currentQuest = games[currentQuestId];
-                currentQuest.CheckGameIsFinished();
-                if (currentQuest.State.IsFinished)
-                {
-                    currentQuestIds = currentQuestIds.Remove(currentQuestId);
-                }
+                throw new QuestAlreadyActiveException();
             }
 
             // Queue (or update entry) user
             questQueue.Enqueue(user);
 
             // Do not allow starting another quest when too many quests are active.
-            if (currentQuestIds.Count >= nrActiveQuests)
+            if (currentQuestUserIds.Count >= nrActiveQuests)
             {
                 throw new QuestQueuedException();
             }
@@ -118,7 +113,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
             var quest = new Quest<MG>(user, database);
-            currentQuestIds = currentQuestIds.Add(quest.Id);
+            currentQuestUserIds = currentQuestUserIds.Add(quest.Id, user.Id);
             return quest;
         }
     }
@@ -152,7 +147,21 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             game.CheckGameIsFinished();
         }
 
-        // Find games that have been finished for a while
+        // Remove games that are finished from active quests list
+        var idsFinished = games.Values.
+            Where(g => g.State.IsFinished).
+            Select(g => g.Id).
+            ToImmutableArray();
+
+        if (idsFinished.Length > 0)
+        {
+            lock (currentQuestMutex)
+            {
+                currentQuestUserIds = currentQuestUserIds.RemoveRange(idsFinished);
+            }
+        }
+
+        // Remove games that have been finished for a while from the game list
         var idsToRemove = games.Values.
             Where(g => g.State.IsFinished).
             Where(g => now - g.LastActionTime > Parameters.GameRetentionTime).
@@ -161,15 +170,6 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         if (idsToRemove.Length > 0)
         {
-            // Update current quest before actually removing the games
-            lock (currentQuestMutex)
-            {
-                foreach (var gameId in idsToRemove)
-                {
-                    currentQuestIds = currentQuestIds.Remove(gameId);
-                }
-            }
-            // Remove all games in a batch
             lock (gamesWriteMutex)
             {
                 games = games.RemoveRange(idsToRemove);

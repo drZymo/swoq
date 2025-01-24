@@ -21,6 +21,7 @@ internal static class ServiceUtil
             case InventoryFullException: return Result.InventoryFull;
             case NoSwordException: return Result.NoSword;
             case QuestQueuedException: return Result.QuestQueued;
+            case QuestAlreadyActiveException: return Result.QuestAlreadyActive;
         }
         logger.LogError(ex, "Internal error");
         return Result.InternalError;
