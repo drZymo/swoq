@@ -9,7 +9,7 @@ namespace Swoq.Server;
 public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
 {
     private readonly Lock gamesWriteMutex = new();
-    private IImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
+    private ImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
 
     private readonly Lock currentQuestMutex = new();
     private ImmutableDictionary<Guid, string> currentQuestUserIds = ImmutableDictionary<Guid, string>.Empty;
@@ -17,8 +17,8 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
     private readonly QuestQueue questQueue = new();
 
     private readonly Lock statisticsMutex = new();
-    private int eventCount = 0;
-    private DateTime lastStatisticsReported = DateTime.MinValue;
+    private DateTime lastStatisticsReportTime = DateTime.MinValue;
+    private uint eventCount = 0;
 
     public event EventHandler<GameAddedEventArgs>? GameAdded;
     public event EventHandler<GameRemovedEventArgs>? GameRemoved;
@@ -189,21 +189,21 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         // Should we send an update
         var now = DateTime.Now;
-        var delta = now - lastStatisticsReported;
-        if (delta < Parameters.StatisticsUpdatePeriod) return;
+        var deltaTime = now - lastStatisticsReportTime;
+        if (deltaTime < Parameters.StatisticsUpdatePeriod) return;
 
         lock (statisticsMutex)
         {
             // Extra check.
             // Maybe other thread already sent the update
-            delta = now - lastStatisticsReported;
-            if (delta < Parameters.StatisticsUpdatePeriod) return;
+            deltaTime = now - lastStatisticsReportTime;
+            if (deltaTime < Parameters.StatisticsUpdatePeriod) return;
 
-            var eventsPerSecond = eventCount / (float)delta.TotalSeconds;
+            var eventCount = Interlocked.Exchange(ref this.eventCount, 0);
+
+            var eventsPerSecond = eventCount / (float)deltaTime.TotalSeconds;
             StatisticsUpdated?.Invoke(this, new(eventsPerSecond));
-
-            eventCount = 0;
-            lastStatisticsReported = now;
+            lastStatisticsReportTime = now;
         }
     }
 }
