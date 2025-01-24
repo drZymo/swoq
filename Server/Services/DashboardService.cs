@@ -20,6 +20,8 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread sessionMonitorThread;
 
+    private readonly ConcurrentBag<Guid> activeQuests = new();
+
     public DashboardService(GameServicePostman gameServicePostman, IGameServer gameServer, ISwoqDatabase database)
     {
         this.gameServicePostman = gameServicePostman;
@@ -71,15 +73,11 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
     }
 
-    private Guid currentQuestGameId = Guid.Empty;
-
     private void OnStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
     {
         var isQuest = !e.request.HasLevel;
         if (isQuest)
         {
-            currentQuestGameId = e.gameId;
-
             var update = new Update
             {
                 QuestStarted = new QuestStarted
@@ -98,7 +96,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
 
     private void OnActed(object? sender, (Guid gameId, ActionRequest request, ActionResponse response) e)
     {
-        if (e.gameId == currentQuestGameId)
+        if (activeQuests.Contains(e.gameId))
         {
             var update = new Update
             {
@@ -130,12 +128,20 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
 
     private void OnGameAdded(object? sender, GameAddedEventArgs e)
     {
+        if (e.IsQuest)
+        {
+            activeQuests.Add(e.GameId);
+        }
         gameUpdates.Enqueue(new GameAddedEntry(e));
         gameUpdatesSemaphore.Release();
     }
 
     private void OnGameRemoved(object? sender, GameRemovedEventArgs e)
     {
+        if (activeQuests.Contains(e.GameId))
+        {
+            activeQuests.TryTake(out _);
+        }
         gameUpdates.Enqueue(new GameRemovedEntry(e));
         gameUpdatesSemaphore.Release();
     }

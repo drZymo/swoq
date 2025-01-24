@@ -7,7 +7,7 @@ namespace Swoq.Server;
 
 using Position = (int y, int x);
 
-public class Game(Map map, TimeSpan maxInactivityTime) : IGame
+internal class Game(Map map, TimeSpan maxInactivityTime) : IGame
 {
     private GameStatus status = GameStatus.Active;
     private int ticks = 0;
