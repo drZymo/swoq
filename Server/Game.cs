@@ -335,7 +335,8 @@ internal class Game : IGame
                 break;
 
             default:
-                throw new NotImplementedException(); // Should not be possible
+                // Should not be possible
+                throw new NotImplementedException($"CEll {map[position]} at position {position} cannot be entered by {player.Id}");
         }
     }
 

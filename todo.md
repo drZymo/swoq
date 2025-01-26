@@ -4,11 +4,12 @@
   - [X] game server
   - [X] unit tests
   - [X] dashboard quest tabs
-  - [ ] Show end of quest overlay
-  - [ ] Cleanup quest tabs after 10s after game is finished 
+  - [X] Show end of quest overlay
+  - [X] Cleanup quest tabs after 10s after game is finished 
   - [ ] Check copy of state during checkGameIsActive() in quest is the correct way. Won't this override the final state?
+- [ ] Change quest queueing. Start game, but return "queued" result at act().
 - [?] Codes to unlock each level, based on Advent of Code.
-- [ ] Run duration test to check for exceptions
+- [ ] Run duration test to check for exceptionsg
 - [ ] Remove two player dependency on sword drop??
 - [ ] Quest finished mark in high score list
 - [ ] Rework inactive states of games. Move all checks to Game class.

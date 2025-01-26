@@ -1,5 +1,6 @@
 ﻿using Swoq.Infra;
 using Swoq.InfraUI.Models;
+using Swoq.Interface;
 
 namespace Swoq.InfraUI.ViewModels;
 
@@ -42,7 +43,17 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public int Tick => Current?.Tick ?? -1;
     public int Level => Current?.Level ?? -1;
     public string ActionResult => Current?.ActionResult ?? "Unknown";
-    public bool IsFinished => Current?.Status != Interface.GameStatus.Active;
+    public bool IsFinished => Current?.Status != GameStatus.Active;
+    public string FinishedResult => Current?.Status switch
+    {
+        GameStatus.Active => "",
+        GameStatus.FinishedSuccess => "🌟 Quest completed! 🌟",
+        GameStatus.FinishedTimeout => "🛑 Timeout 🛑",
+        GameStatus.FinishedNoProgress => "🛑 No progress 🛑",
+        GameStatus.FinishedPlayerDied => "🛑 Player died 🛑",
+        GameStatus.FinishedPlayer2Died => "🛑 Player 2 died 🛑",
+        _ => throw new NotImplementedException(),
+    };
 
     private TiledImageViewModel overview = new();
     public TiledImageViewModel Overview

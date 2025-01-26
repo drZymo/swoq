@@ -30,7 +30,7 @@
                         <Run Text="{Binding Tick, Mode=OneWay}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run>Action result:</Run>
+                        <Run>Result:</Run>
                         <Run Text="{Binding ActionResult, Mode=OneWay}" />
                     </TextBlock>
                 </StackPanel>
@@ -43,9 +43,10 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.Column="0" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,*" IsVisible="{Binding IsFinished}">
-            <Panel Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.75" Background="Black" />
-            <TextBlock Grid.Row="1" Grid.Column="1" FontSize="24" HorizontalAlignment="Center" Text="Game finished"/>
+        <Grid Grid.Column="0" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,auto,*" IsVisible="{Binding IsFinished}">
+            <Panel Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.75" Background="Black" />
+            <TextBlock Grid.Row="1" Grid.Column="1" FontSize="18" HorizontalAlignment="Center" Text="Game finished"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Text="{Binding FinishedResult}"/>
         </Grid>
     </Grid>
 </UserControl>
