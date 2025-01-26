@@ -20,7 +20,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread sessionMonitorThread;
 
-    private readonly ConcurrentBag<Guid> activeQuests = new();
+    private readonly ConcurrentBag<Guid> activeQuests = [];
 
     public DashboardService(GameServicePostman gameServicePostman, IGameServer gameServer, ISwoqDatabase database)
     {

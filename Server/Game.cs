@@ -38,59 +38,56 @@ internal class Game : IGame
     {
         lock (gameMutex)
         {
-            if (IsFinished) throw new GameFinishedException(State);
+            if (IsFinished) throw new GameFinishedException();
+
+            // Store current state, so it can be reverted to when something went wrong
+            var prevState = (map, player1Positions, player2Positions);
 
             try
             {
                 // Pre condition checks
                 CheckTimeout();
-                if (IsFinished) throw new GameFinishedException(CreateState());
+                if (IsFinished) throw new GameFinishedException();
 
                 Debug.Assert(map.Player1 != null || map.Player2 != null);
 
                 if (action1 != null)
                 {
-                    if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException(CreateState());
+                    if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException();
                     Debug.Assert(map.Player1.IsAlive);
                 }
                 if (action2 != null)
                 {
-                    if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException(CreateState());
+                    if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException();
                     Debug.Assert(map.Player2.IsAlive);
                 }
 
-                // Store current state, so it can be reverted to when something went wrong
-                var prevState = (map, player1Positions, player2Positions);
-
                 // Act
-                try
+                PerformPlayerAction(action1, map.Player1);
+                PerformPlayerAction(action2, map.Player2);
+
+                // Process enemies using previous positions of players
+                foreach (var enemy in map.Enemies.Values)
                 {
-                    PerformPlayerAction(action1, map.Player1);
-                    PerformPlayerAction(action2, map.Player2);
-
-                    // Process enemies using previous positions of players
-                    foreach (var enemy in map.Enemies.Values)
-                    {
-                        ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
-                    }
-
-                    CleanupDeadCharacters();
-
-                    // Store current positions
-                    StorePlayerPosition(map.Player1, ref player1Positions);
-                    StorePlayerPosition(map.Player2, ref player2Positions);
-
-                    LastActionTime = Clock.Now;
-                    ticks++;
-
-                    UpdateGameStatus();
+                    ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
                 }
-                catch (SwoqActionNotAllowedException)
-                {
-                    // Revert state
-                    (map, player1Positions, player2Positions) = prevState;
-                    throw;
-                }
+
+                CleanupDeadCharacters();
+
+                // Store current positions
+                StorePlayerPosition(map.Player1, ref player1Positions);
+                StorePlayerPosition(map.Player2, ref player2Positions);
+
+                LastActionTime = Clock.Now;
+                ticks++;
+
+                UpdateGameStatus();
+            }
+            catch
+            {
+                // Revert state on any exception, so the user can try again.
+                (map, player1Positions, player2Positions) = prevState;
+                throw;
             }
             finally
             {
@@ -221,7 +218,7 @@ internal class Game : IGame
                 Use(ref player, actionPos);
                 break;
             default:
-                throw new UnknownActionException(CreateState());
+                throw new UnknownActionException();
         }
 
         map = map.SetCharacter(player);
@@ -243,7 +240,7 @@ internal class Game : IGame
         DirectedAction.MoveWest => (player.Position.y, player.Position.x - 1),
         DirectedAction.UseWest => (player.Position.y, player.Position.x - 1),
 
-        _ => throw new UnknownActionException(CreateState()),
+        _ => throw new UnknownActionException(),
     };
 
     private void Move(ref Player player, Position movePos)
@@ -251,7 +248,7 @@ internal class Game : IGame
         // Check if entering is allowed
         if (!CanMoveTo(movePos))
         {
-            throw new MoveNotAllowedException(CreateState());
+            throw new MoveNotAllowedException();
         }
 
         // Change pos first
@@ -362,7 +359,7 @@ internal class Game : IGame
             case Cell.Health:
             case Cell.Treasure:
                 // Cannot use on this
-                throw new UseNotAllowedException(CreateState());
+                throw new UseNotAllowedException();
 
             case Cell.Empty:
                 PlaceBoulderOnEmpty(ref player, usePos, Cell.Boulder);
@@ -408,7 +405,7 @@ internal class Game : IGame
     private void PickupInventory(ref Player player, Position position, Cell emptyCellType)
     {
         // Cannot pickup if inventory is full
-        if (player.Inventory != Inventory.None) throw new InventoryFullException(CreateState());
+        if (player.Inventory != Inventory.None) throw new InventoryFullException();
 
         // Is it an item that can be picked up?
         var item = map[position].ToInventory();
@@ -424,7 +421,7 @@ internal class Game : IGame
     private void PickupSword(ref Player player, Position position)
     {
         // Cannot pickup if player already has sword
-        if (player.HasSword) throw new InventoryFullException(CreateState());
+        if (player.HasSword) throw new InventoryFullException();
 
         // Add to player and remove from map
         player = player with { HasSword = true };
@@ -446,7 +443,7 @@ internal class Game : IGame
         {
             if (usePos.Equals(character.Position))
             {
-                if (!player.HasSword) throw new NoSwordException(CreateState());
+                if (!player.HasSword) throw new NoSwordException();
                 DealDamage(character.Id, 1);
                 return true;
             }
@@ -456,8 +453,8 @@ internal class Game : IGame
 
     private void PlaceBoulderOnEmpty(ref Player player, Position usePos, Cell placedCellType)
     {
-        if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-        if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
+        if (player.Inventory == Inventory.None) throw new InventoryEmptyException();
+        if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException();
 
         player = player with { Inventory = Inventory.None };
         map = map.Set(usePos, placedCellType);
@@ -466,8 +463,8 @@ internal class Game : IGame
 
     private void PlaceBoulderOnPressurePlate(ref Player player, Position usePos, Cell plateWithBoulderCell, Cell closedDoorCell)
     {
-        if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-        if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException(CreateState());
+        if (player.Inventory == Inventory.None) throw new InventoryEmptyException();
+        if (player.Inventory != Inventory.Boulder) throw new UseNotAllowedException();
 
         PlaceBoulderOnEmpty(ref player, usePos, plateWithBoulderCell);
         OpenAllDoors(closedDoorCell);
@@ -482,8 +479,8 @@ internal class Game : IGame
     private void UseKeyToOpenDoor(ref Player player, Position usePosition, Inventory item)
     {
         // Cannot use if item is not in inventory
-        if (player.Inventory == Inventory.None) throw new InventoryEmptyException(CreateState());
-        if (player.Inventory != item) throw new UseNotAllowedException(CreateState());
+        if (player.Inventory == Inventory.None) throw new InventoryEmptyException();
+        if (player.Inventory != item) throw new UseNotAllowedException();
 
         // Open all the doors of the same color
         var closedDoor = map[usePosition];

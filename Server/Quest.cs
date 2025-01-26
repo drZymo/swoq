@@ -33,7 +33,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     {
         lock (questMutex)
         {
-            if (State.IsFinished) throw new GameFinishedException(State);
+            if (State.IsFinished) throw new GameFinishedException();
 
             try
             {

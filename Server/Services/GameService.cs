@@ -24,15 +24,11 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 // Report
                 gameServicePostman.RaiseStarted(startResult.UserName, startResult.GameId, request, response);
             }
-            catch (SwoqGameException ex)
+            catch (GameServerException ex)
             {
-                response.Result = ServiceUtil.ResultFromException(ex, logger);
-                response.State = ex.State.Convert();
-            }
-            catch (SwoqException ex)
-            {
-                response.Result = ServiceUtil.ResultFromException(ex, logger);
-                response.State = null;
+                if (ex.Result == Result.InternalError) logger.LogError(ex, "Internal error");
+                response.Result = ex.Result;
+                response.State = ex.State?.Convert();
             }
             catch (Exception ex)
             {
@@ -67,15 +63,11 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 response.Result = Result.Ok;
                 response.State = state.Convert();
             }
-            catch (SwoqGameException ex)
+            catch (GameServerException ex)
             {
-                response.Result = ServiceUtil.ResultFromException(ex, logger);
-                response.State = ex.State.Convert();
-            }
-            catch (SwoqException ex)
-            {
-                response.Result = ServiceUtil.ResultFromException(ex, logger);
-                response.State = null;
+                if (ex.Result == Result.InternalError) logger.LogError(ex, "Internal error");
+                response.Result = ex.Result;
+                response.State = ex.State?.Convert();
             }
             catch (Exception ex)
             {

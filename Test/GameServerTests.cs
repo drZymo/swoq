@@ -23,7 +23,7 @@ public class GameServerTests
     public void UnknownUser()
     {
         var gameServer = new GameServer<DummyGenerator>(database, 1);
-        Assert.Throws<UnknownUserException>(() => gameServer.Start("u1", 0));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u1", 0)).Result, Is.EqualTo(Result.UnknownUser));
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class GameServerTests
     {
         var gameServer = new GameServer<DummyGenerator>(database, 1);
         GivenUserRegistered();
-        Assert.Throws<UserLevelTooLowException>(() => gameServer.Start("u1", 2));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u1", 2)).Result, Is.EqualTo(Result.UserLevelTooLow));
     }
 
     [Test]
@@ -107,7 +107,7 @@ public class GameServerTests
         // Start quest for user 2, it should be queued
         now += TimeSpan.FromSeconds(1);
         GameStartResult? result2 = null;
-        Assert.Throws<QuestQueuedException>(() => result2 = gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result2 = gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
         Assert.That(result2, Is.Null);
 
         // Act on user 1 quest should be possible
@@ -154,21 +154,21 @@ public class GameServerTests
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // Let both users keep responding for a while
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // Stop responding with user 1 so it times out but keep responding with user 2
         now += TimeSpan.FromSeconds(4);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(4);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // User 1 quest is inactive and was stopped
         // User 2 is now first in line and can start the quest
@@ -178,7 +178,7 @@ public class GameServerTests
         Assert.That(result2, Is.Not.Null);
 
         // Acting on 1 should now fail on timeout
-        Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth)).Result, Is.EqualTo(Result.GameFinished));
     }
 
     [Test]
@@ -194,23 +194,23 @@ public class GameServerTests
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", null));
         Assert.That(result1, Is.Not.Null);
         now += TimeSpan.FromSeconds(1);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(1);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("p3", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // Let user 1 and 3 keep responding for a while
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("p3", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(4);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("p3", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // Stop responding with user 1 so it times out but keep responding with user 3
         now += TimeSpan.FromSeconds(4);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("p3", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(4);
-        Assert.Throws<QuestQueuedException>(() => gameServer.Start("p3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Start("p3", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // User 1 quest is inactive and was stopped
         // User 2 has been removed from the queue
@@ -235,7 +235,7 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         now += TimeSpan.FromSeconds(20);
-        Assert.Throws<GameFinishedException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth)).Result, Is.EqualTo(Result.GameFinished));
 
         // Start training for user 2 and let it timeout
         GameStartResult? result2 = null;
@@ -244,7 +244,7 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
         now += TimeSpan.FromSeconds(70);
-        Assert.Throws<GameFinishedException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest)).Result, Is.EqualTo(Result.GameFinished));
 
         // Wait a while
         now += TimeSpan.FromMinutes(11);
@@ -255,8 +255,8 @@ public class GameServerTests
         Assert.That(result3, Is.Not.Null);
 
         // Oldest two games should now be removed
-        Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
-        Assert.Throws<UnknownGameIdException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth)).Result, Is.EqualTo(Result.UnknownGameId));
+        Assert.That(Assert.Throws<GameServerException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest)).Result, Is.EqualTo(Result.UnknownGameId));
     }
 
     [Test]
@@ -281,7 +281,7 @@ public class GameServerTests
         // Start quest for user 3, should be queued
         now += TimeSpan.FromSeconds(1);
         GameStartResult? result3 = null;
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         Assert.That(result3, Is.Null);
 
         // Act on user 1 quest should be possible
@@ -315,7 +315,7 @@ public class GameServerTests
         // Start quest for user 3, should be queued
         now += TimeSpan.FromSeconds(1);
         GameStartResult? result3 = null;
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         Assert.That(result3, Is.Null);
 
         // Act on user 1 quest should be possible
@@ -328,35 +328,35 @@ public class GameServerTests
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
 
         // 3 is still queued
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // Finish the game with 1 and keep moving back-and-forth with 2
         Assert.That(state.Level, Is.EqualTo(0));
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         Assert.That(state.Level, Is.EqualTo(1));
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
-        Assert.Throws<QuestQueuedException>(() => result3 = gameServer.Start("u3", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u3", null)).Result, Is.EqualTo(Result.QuestQueued));
 
         // Now enter the final exit, game should be finished
         now += TimeSpan.FromSeconds(1);
@@ -372,7 +372,7 @@ public class GameServerTests
         // Now, since game 1 is finished, user 3 can continue
         Assert.DoesNotThrow(() => result3 = gameServer.Start("u3", null));
         // User 1 cannot act anymore
-        Assert.Throws<GameFinishedException>(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        Assert.That(Assert.Throws<GameServerException>(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast)).Result, Is.EqualTo(Result.GameFinished));
         // User 2 can still act
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
     }
@@ -393,13 +393,13 @@ public class GameServerTests
         // Start quest for user 2, should be queued
         now += TimeSpan.FromSeconds(1);
         GameStartResult? result2 = null;
-        Assert.Throws<QuestQueuedException>(() => result2 = gameServer.Start("u2", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result2 = gameServer.Start("u2", null)).Result, Is.EqualTo(Result.QuestQueued));
         Assert.That(result2, Is.Null);
 
         // Start another quest for user 1, should not be allowed
         now += TimeSpan.FromSeconds(1);
         GameStartResult? result3 = null;
-        Assert.Throws<QuestAlreadyActiveException>(() => result3 = gameServer.Start("u1", null));
+        Assert.That(Assert.Throws<GameServerException>(() => result3 = gameServer.Start("u1", null)).Result, Is.EqualTo(Result.QuestAlreadyActive));
         Assert.That(result3, Is.Null);
 
         // Act on user 1 quest should be possible

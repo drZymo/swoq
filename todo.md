@@ -1,9 +1,8 @@
 # TODO
 
 - [ ] Change quest queueing. Start game, but return "queued" result at act().
-- [ ] When game exception is thrown, use state from game instead of passing it in the exception. PRevents double creation of state.
 - [?] Codes to unlock each level, based on Advent of Code.
-- [ ] Run duration test to check for exceptionsg
+- [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
 - [ ] Quest finished mark in high score list
 - [ ] Rework inactive states of games. Move all checks to Game class.

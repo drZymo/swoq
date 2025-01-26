@@ -6,6 +6,12 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
+public class GameServerException(Result result, GameState? state = null) : Exception
+{
+    public Result Result { get; } = result;
+    public GameState? State { get; } = state;
+}
+
 public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
 {
     private readonly Lock gamesWriteMutex = new();
@@ -34,22 +40,35 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     public GameStartResult Start(string userId, int? level)
     {
-        var user = GetUserOrThrow(database, userId);
+        IGame? game = null;
 
-        // First remove old games
-        CleanupOldGames();
-
-        // Create a new game
-        IGame game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
-        lock (gamesWriteMutex)
+        try
         {
-            games = games.Add(game.Id, game);
-            GameAdded?.Invoke(this, new GameAddedEventArgs(game.Id, user.Name, game.Level, !level.HasValue));
+            var user = GetUserOrThrow(database, userId);
+
+            // First remove old games
+            CleanupOldGames();
+
+            // Create a new game
+            game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
+            lock (gamesWriteMutex)
+            {
+                games = games.Add(game.Id, game);
+                GameAdded?.Invoke(this, new GameAddedEventArgs(game.Id, user.Name, game.Level, !level.HasValue));
+            }
+
+            RegisterActivity();
+
+            return new GameStartResult(user.Name, game.Id, game.State);
         }
-
-        RegisterActivity();
-
-        return new GameStartResult(user.Name, game.Id, game.State);
+        catch (SwoqException ex)
+        {
+            throw new GameServerException(ResultFromException(ex), game?.State);
+        }
+        catch
+        {
+            throw new GameServerException(Result.InternalError, game?.State);
+        }
     }
 
     private static User GetUserOrThrow(ISwoqDatabase database, string userId)
@@ -120,21 +139,34 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        // Does game exist?
-        if (!games.TryGetValue(gameId, out var game)) throw new UnknownGameIdException();
+        // Try to find game
+        if (!games.TryGetValue(gameId, out var game)) throw new GameServerException(Result.UnknownGameId, null);
 
-        // Play game
-        var prevLevel = game.Level;
-        var prevStatus = game.State.Status;
-        game.Act(action1, action2);
-        if (game.Level != prevLevel || game.State.Status != prevStatus)
+        try
         {
-            GameUpdated?.Invoke(this, new GameUpdatedEventArgs(gameId, game.Level, game.State.IsFinished));
+            // Play game
+            var prevLevel = game.Level;
+            var prevStatus = game.State.Status;
+            game.Act(action1, action2);
+
+            // Notify any changes
+            if (game.Level != prevLevel || game.State.Status != prevStatus)
+            {
+                GameUpdated?.Invoke(this, new GameUpdatedEventArgs(gameId, game.Level, game.State.IsFinished));
+            }
+
+            RegisterActivity();
+
+            return game.State;
         }
-
-        RegisterActivity();
-
-        return game.State;
+        catch (SwoqException ex)
+        {
+            throw new GameServerException(ResultFromException(ex), game?.State);
+        }
+        catch
+        {
+            throw new GameServerException(Result.InternalError, game?.State);
+        }
     }
 
     private void CleanupOldGames()
@@ -206,4 +238,23 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             lastStatisticsReportTime = now;
         }
     }
+
+    private static Result ResultFromException(SwoqException ex) => ex switch
+    {
+        UnknownUserException => Result.UnknownUser,
+        UnknownGameIdException => Result.UnknownGameId,
+        UserLevelTooLowException => Result.UserLevelTooLow,
+        QuestQueuedException => Result.QuestQueued,
+        QuestAlreadyActiveException => Result.QuestAlreadyActive,
+        MoveNotAllowedException => Result.MoveNotAllowed,
+        UnknownActionException => Result.UnknownAction,
+        GameFinishedException => Result.GameFinished,
+        UseNotAllowedException => Result.UseNotAllowed,
+        InventoryFullException => Result.InventoryFull,
+        InventoryEmptyException => Result.InventoryEmpty,
+        NoSwordException => Result.NoSword,
+        Player1NotPresentException => Result.PlayerNotPresent,
+        Player2NotPresentException => Result.Player2NotPresent,
+        _ => Result.InternalError,
+    };
 }
