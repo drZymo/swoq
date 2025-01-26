@@ -38,26 +38,27 @@ internal class Game : IGame
     {
         lock (gameMutex)
         {
-            // Pre condition checks
-            if (IsFinished) throw new GameFinishedException(CreateState());
-            CheckTimeout();
-            if (IsFinished) throw new GameFinishedException(CreateState());
-
-            Debug.Assert(map.Player1 != null || map.Player2 != null);
-
-            if (action1 != null)
-            {
-                if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException(CreateState());
-                Debug.Assert(map.Player1.IsAlive);
-            }
-            if (action2 != null)
-            {
-                if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException(CreateState());
-                Debug.Assert(map.Player2.IsAlive);
-            }
+            if (IsFinished) throw new GameFinishedException(State);
 
             try
             {
+                // Pre condition checks
+                CheckTimeout();
+                if (IsFinished) throw new GameFinishedException(CreateState());
+
+                Debug.Assert(map.Player1 != null || map.Player2 != null);
+
+                if (action1 != null)
+                {
+                    if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException(CreateState());
+                    Debug.Assert(map.Player1.IsAlive);
+                }
+                if (action2 != null)
+                {
+                    if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException(CreateState());
+                    Debug.Assert(map.Player2.IsAlive);
+                }
+
                 // Store current state, so it can be reverted to when something went wrong
                 var prevState = (map, player1Positions, player2Positions);
 

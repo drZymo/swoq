@@ -86,7 +86,7 @@ public class GameServerTests
         Assert.DoesNotThrow(() => state = gameServer.Act(result.GameId, DirectedAction.MoveEast));
         Assert.Multiple(() =>
         {
-            Assert.That(state.Level, Is.EqualTo(2));
+            Assert.That(state.Level, Is.EqualTo(1));
             Assert.That(state.IsFinished, Is.True);
             Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         });
@@ -364,7 +364,7 @@ public class GameServerTests
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
         Assert.Multiple(() =>
         {
-            Assert.That(state.Level, Is.EqualTo(2));
+            Assert.That(state.Level, Is.EqualTo(1));
             Assert.That(state.IsFinished, Is.True);
             Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         });

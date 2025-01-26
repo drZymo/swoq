@@ -1,13 +1,7 @@
 # TODO
 
-- [.] Allow more than 1 quest at a time in case it is needed
-  - [X] game server
-  - [X] unit tests
-  - [X] dashboard quest tabs
-  - [X] Show end of quest overlay
-  - [X] Cleanup quest tabs after 10s after game is finished 
-  - [ ] Check copy of state during checkGameIsActive() in quest is the correct way. Won't this override the final state?
 - [ ] Change quest queueing. Start game, but return "queued" result at act().
+- [ ] When game exception is thrown, use state from game instead of passing it in the exception. PRevents double creation of state.
 - [?] Codes to unlock each level, based on Advent of Code.
 - [ ] Run duration test to check for exceptionsg
 - [ ] Remove two player dependency on sword drop??
@@ -144,6 +138,12 @@
   - [X] ShowSword only on first sword shown
   - [X] Cleanup gameovservationviewmodel
 - [X] Remove CheckInvariant
+- [.] Allow more than 1 quest at a time in case it is needed
+  - [X] game server
+  - [X] unit tests
+  - [X] dashboard quest tabs
+  - [X] Show end of quest overlay
+  - [X] Cleanup quest tabs after 10s after game is finished 
 
 
 # Design decisions
