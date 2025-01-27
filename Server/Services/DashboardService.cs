@@ -20,7 +20,8 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread sessionMonitorThread;
 
-    private readonly ConcurrentBag<Guid> activeQuests = [];
+    private readonly Lock activeQuestsMutex = new();
+    private ImmutableHashSet<Guid> activeQuests = [];
 
     public DashboardService(GameServicePostman gameServicePostman, IGameServer gameServer, ISwoqDatabase database)
     {
@@ -130,7 +131,10 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     {
         if (e.IsQuest)
         {
-            activeQuests.Add(e.GameId);
+            lock (activeQuestsMutex)
+            {
+                activeQuests = activeQuests.Add(e.GameId);
+            }
         }
         gameUpdates.Enqueue(new GameAddedEntry(e));
         gameUpdatesSemaphore.Release();
@@ -138,10 +142,11 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
 
     private void OnGameRemoved(object? sender, GameRemovedEventArgs e)
     {
-        if (activeQuests.Contains(e.GameId))
+        lock (activeQuestsMutex)
         {
-            activeQuests.TryTake(out _);
+            activeQuests = activeQuests.Remove(e.GameId);
         }
+
         gameUpdates.Enqueue(new GameRemovedEntry(e));
         gameUpdatesSemaphore.Release();
     }

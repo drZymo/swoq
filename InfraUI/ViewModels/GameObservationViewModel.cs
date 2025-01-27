@@ -22,6 +22,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
             OnPropertyChanged(nameof(Level));
             OnPropertyChanged(nameof(ActionResult));
             OnPropertyChanged(nameof(IsFinished));
+            OnPropertyChanged(nameof(FinishedResult));
 
             OnPropertyChanged(nameof(HasPlayer2));
 

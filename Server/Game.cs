@@ -224,7 +224,7 @@ internal class Game : IGame
         map = map.SetCharacter(player);
     }
 
-    private Position GetDirectedActionPosition(Player player, DirectedAction action) => action switch
+    private static Position GetDirectedActionPosition(Player player, DirectedAction action) => action switch
     {
         DirectedAction.None => player.Position,
 
@@ -288,7 +288,7 @@ internal class Game : IGame
                 break;
 
             default:
-                throw new NotImplementedException(); // Should not be possible
+                throw new NotImplementedException($"Cell {map[position]} at position {position} cannot be left"); // Should not be possible
         }
     }
 
@@ -334,7 +334,7 @@ internal class Game : IGame
 
             default:
                 // Should not be possible
-                throw new NotImplementedException($"CEll {map[position]} at position {position} cannot be entered by {player.Id}");
+                throw new NotImplementedException($"Cell {map[position]} at position {position} cannot be entered by {player.Id}");
         }
     }
 

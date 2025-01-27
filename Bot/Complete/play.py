@@ -36,6 +36,14 @@ _result_strings  = {
     swoq_pb2.RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
 }
 
+_status_strings  = {
+    swoq_pb2.GAMESTATUS_ACTIVE: 'ACTIVE',
+    swoq_pb2.GAMESTATUS_FINISHED_SUCCESS: 'FINISHED_SUCCESS',
+    swoq_pb2.GAMESTATUS_FINISHED_TIMEOUT: 'FINISHED_TIMEOUT',
+    swoq_pb2.GAMESTATUS_FINISHED_NO_PROGRESS: 'FINISHED_NO_PROGRESS',
+    swoq_pb2.GAMESTATUS_FINISHED_PLAYER_DIED: 'FINISHED_PLAYER_DIED',
+    swoq_pb2.GAMESTATUS_FINISHED_PLAYER2_DIED: 'FINISHED_PLAYER2_DIED',
+}
 
 def find_random_pos(player_pos, player_distances) -> tuple[int,int]|None:
     positions = list(player_distances.keys())
@@ -238,9 +246,8 @@ class GamePlayer:
             print(f' finished={self.finished}')
             
         if not self.print and self.finished:
-            result = _result_strings[response.result]
             print()
-            print(f'Finished: {result}')
+            print(f'Finished: action {_result_strings[response.result]}, status {_status_strings[self.status]} ')
 
         # clear for next act
         self.action1:swoq_pb2.DirectedAction = None
