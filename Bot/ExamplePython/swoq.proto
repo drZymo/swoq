@@ -9,10 +9,17 @@ enum Result {
     RESULT_UNKNOWN_GAME_ID = 3;
     RESULT_USER_LEVEL_TOO_LOW = 4;
     RESULT_QUEST_QUEUED = 5;
-    RESULT_MOVE_NOT_ALLOWED = 6;
-    RESULT_NO_PROGRESS = 7;
+    RESULT_QUEST_ALREADY_ACTIVE = 6;
+    RESULT_MOVE_NOT_ALLOWED = 7;
     RESULT_UNKNOWN_ACTION = 8;
     RESULT_GAME_FINISHED = 9;
+}
+
+enum GameStatus {
+    GAMESTATUS_ACTIVE = 0;
+    GAMESTATUS_FINISHED_SUCCESS = 1;
+    GAMESTATUS_FINISHED_TIMEOUT = 2;
+    GAMESTATUS_FINISHED_NO_PROGRESS = 3;
 }
 
 enum Tile {
@@ -24,10 +31,11 @@ enum Tile {
 }
 
 enum DirectedAction {
-    DIRECTEDACTION_MOVE_NORTH = 0;
-    DIRECTEDACTION_MOVE_EAST = 1;
-    DIRECTEDACTION_MOVE_SOUTH = 2;
-    DIRECTEDACTION_MOVE_WEST = 3;
+    DIRECTEDACTION_NONE = 0;
+    DIRECTEDACTION_MOVE_NORTH = 1;
+    DIRECTEDACTION_MOVE_EAST = 2;
+    DIRECTEDACTION_MOVE_SOUTH = 3;
+    DIRECTEDACTION_MOVE_WEST = 4;
 }
 
 service GameService {
@@ -48,7 +56,7 @@ message PlayerState {
 message State {
     int32 tick = 1;
     int32 level = 2;
-    bool finished = 3;
+    GameStatus status = 3;
     optional PlayerState playerState = 4;
 }
 

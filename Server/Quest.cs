@@ -8,88 +8,89 @@ public class Quest<MG> : IGame where MG : IMapGenerator
 {
     private readonly User user;
     private readonly ISwoqDatabase database;
-    private readonly DateTime startTime;
 
-    private Game currentGame;
+    private readonly Lock questMutex = new();
+
+    private readonly DateTime startTime = Clock.Now;
     private int ticks = 0;
+    private Game currentGame;
 
     public Quest(User user, ISwoqDatabase database)
     {
         this.user = user;
         this.database = database;
-        this.startTime = Clock.Now;
 
-        Id = Guid.NewGuid();
         currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
-        State = currentGame.State;
+        State = currentGame.State with { Tick = ticks };
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; } = Guid.NewGuid();
     public int Level { get; private set; } = 0;
-    public DateTime LastAction { get; private set; } = Clock.Now;
     public GameState State { get; private set; }
     public DateTime LastActionTime => currentGame.LastActionTime;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (State.IsFinished) throw new GameFinishedException(State);
-
-        LastAction = Clock.Now;
-        ticks++;
-
-        // Play current game
-        currentGame.Act(action1, action2);
-        var state = currentGame.State;
-
-        // If game is completed successfully, then move to next level.
-        // If game is finished unsuccessfully, then an exception has been thrown and this line is not reached.
-        if (state.IsFinished)
+        lock (questMutex)
         {
-            Level++;
+            if (State.IsFinished) throw new GameFinishedException();
 
-            // Update user stats
-            var lengthSeconds = (int)Math.Round((LastAction - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
-            if (user.Level < Level)
+            try
             {
-                // If this level was not reached before,
-                // unlock the level and remember the length.
-                user.Level = Level;
-                user.QuestLengthTicks = ticks;
-                user.QuestLengthSeconds = lengthSeconds;
-            }
-            else if (user.Level == Level)
-            {
-                // If this level was the highest level reached before, then update the duration if it improved.
-                user.QuestLengthTicks = ticks < user.QuestLengthTicks ? ticks : user.QuestLengthTicks;
-                user.QuestLengthSeconds = Math.Min(lengthSeconds, user.QuestLengthSeconds);
-            }
+                // Play current game
+                currentGame.Act(action1, action2);
 
-            // Sync database
-            database.UpdateUserAsync(user);
+                ticks++;
 
-            // Create a new game if this was not the last level
-            if (Level <= MG.MaxLevel)
-            {
-                currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
-                state = currentGame.State;
+                // If game is completed successfully, then move to next level.
+                if (currentGame.State.Status == GameStatus.FinishedSuccess)
+                {
+                    Level++;
+
+                    // Update user stats
+                    var lengthSeconds = (int)Math.Round((LastActionTime - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
+                    if (user.Level <= Level)
+                    {
+                        if (user.Level < Level)
+                        {
+                            // If this level was not reached before,
+                            // unlock the level and remember the length.
+                            user.Level = Level;
+                            user.QuestLengthTicks = ticks;
+                            user.QuestLengthSeconds = lengthSeconds;
+                        }
+                        else if (user.Level == Level)
+                        {
+                            // If this level was the highest level reached before, then update the duration if it improved.
+                            user.QuestLengthTicks = Math.Min(ticks, user.QuestLengthTicks);
+                            user.QuestLengthSeconds = Math.Min(lengthSeconds, user.QuestLengthSeconds);
+                        }
+
+                        // Sync database
+                        database.UpdateUserAsync(user);
+                    }
+
+                    // Create a new game if this was not the last level
+                    if (Level <= MG.MaxLevel)
+                    {
+                        currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
+                    }
+                }
             }
-            else
+            finally
             {
-                // TODO: Report to dashboard
-                state = new GameState(ticks, Level, GameStatus.FinishedSuccess);
+                State = currentGame.State with { Tick = ticks };
             }
         }
-
-        // Overwrite single game ticks with whole quest ticks
-        state = state with { Tick = ticks };
-
-        // Update visible state
-        State = state;
     }
 
     public void CheckGameIsFinished()
     {
-        currentGame.CheckGameIsFinished();
-        State = currentGame.State;
+        // A mutex is needed because this function is called every time a new game is started, which can be any thread.
+        lock (questMutex)
+        {
+            currentGame.CheckGameIsFinished();
+            State = currentGame.State with { Tick = ticks };
+        }
     }
 }

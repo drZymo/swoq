@@ -19,23 +19,31 @@ to_swoq_pb2_action = {
 
 _result_strings  = {
     swoq_pb2.RESULT_OK: 'OK',
-
     swoq_pb2.RESULT_INTERNAL_ERROR: 'INTERNAL_ERROR',
     swoq_pb2.RESULT_UNKNOWN_USER: 'UNKNOWN_USER',
     swoq_pb2.RESULT_UNKNOWN_GAME_ID: 'UNKNOWN_GAME_ID',
     swoq_pb2.RESULT_USER_LEVEL_TOO_LOW: 'USER_LEVEL_TOO_LOW',
     swoq_pb2.RESULT_QUEST_QUEUED: 'QUEST_QUEUED',
+    swoq_pb2.RESULT_QUEST_ALREADY_ACTIVE: 'QUEST_ALREADY_ACTIVE',
     swoq_pb2.RESULT_MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
     swoq_pb2.RESULT_UNKNOWN_ACTION: 'UNKNOWN_ACTION',
     swoq_pb2.RESULT_GAME_FINISHED: 'GAME_FINISHED',
-    swoq_pb2.RESULT_PLAYER_NOT_PRESENT: 'PLAYER_NOT_PRESENT',
     swoq_pb2.RESULT_USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
     swoq_pb2.RESULT_INVENTORY_FULL: 'INVENTORY_FULL',
     swoq_pb2.RESULT_INVENTORY_EMPTY: 'INVENTORY_EMPTY',
     swoq_pb2.RESULT_NO_SWORD: 'NO_SWORD',
+    swoq_pb2.RESULT_PLAYER_NOT_PRESENT: 'PLAYER_NOT_PRESENT',
     swoq_pb2.RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
 }
 
+_status_strings  = {
+    swoq_pb2.GAMESTATUS_ACTIVE: 'ACTIVE',
+    swoq_pb2.GAMESTATUS_FINISHED_SUCCESS: 'FINISHED_SUCCESS',
+    swoq_pb2.GAMESTATUS_FINISHED_TIMEOUT: 'FINISHED_TIMEOUT',
+    swoq_pb2.GAMESTATUS_FINISHED_NO_PROGRESS: 'FINISHED_NO_PROGRESS',
+    swoq_pb2.GAMESTATUS_FINISHED_PLAYER_DIED: 'FINISHED_PLAYER_DIED',
+    swoq_pb2.GAMESTATUS_FINISHED_PLAYER2_DIED: 'FINISHED_PLAYER2_DIED',
+}
 
 def find_random_pos(player_pos, player_distances) -> tuple[int,int]|None:
     positions = list(player_distances.keys())
@@ -85,6 +93,9 @@ class GamePlayer:
             if self.print:
                 result = _result_strings[startResponse.result]
                 print(f'{result=}')
+        
+        if startResponse.result != swoq_pb2.RESULT_OK:
+            raise Exception(f'Failed to start game: {startResponse.result}')
 
         self.game_id = startResponse.gameId
         self.height = startResponse.height
@@ -235,9 +246,8 @@ class GamePlayer:
             print(f' finished={self.finished}')
             
         if not self.print and self.finished:
-            result = _result_strings[response.result]
             print()
-            print(f'Finished: {result}')
+            print(f'Finished: action {_result_strings[response.result]}, status {_status_strings[self.status]} ')
 
         # clear for next act
         self.action1:swoq_pb2.DirectedAction = None

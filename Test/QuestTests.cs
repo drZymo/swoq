@@ -62,23 +62,24 @@ internal class QuestTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel));
             Assert.That(quest.State.IsFinished, Is.False);
+            Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
+            Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel));
         });
 
         // Finish last by fist picking up treasure
         quest.Act(DirectedAction.MoveWest);
         quest.Act(DirectedAction.MoveEast);
         quest.Act(DirectedAction.MoveEast);
-        Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel + 1));
 
         // Quest finished now
         Assert.Multiple(() =>
         {
             Assert.That(quest.State.IsFinished, Is.True);
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.FinishedSuccess));
-            Assert.That(quest.State.Level, Is.EqualTo(MaxLevel + 1));
+            Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
+            Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel + 1));
         });
 
         // No more actions allowed

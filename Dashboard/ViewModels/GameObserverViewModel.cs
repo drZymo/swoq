@@ -14,6 +14,9 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly Thread getUpdatesThread;
 
+    private record QuestData(GameObservationBuilder Builder, GameObservationViewModel ViewModel);
+    private ImmutableDictionary<string, QuestData> quests = ImmutableDictionary<string, QuestData>.Empty;
+
     public GameObserverViewModel()
     {
         GameObservations = new(gameObservations);
@@ -31,8 +34,6 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         cancellationTokenSource.Cancel();
         getUpdatesThread.Join();
     }
-
-    private ImmutableDictionary<string, GameObservationViewModel> gameObservationIds = ImmutableDictionary<string, GameObservationViewModel>.Empty;
 
     private readonly ObservableCollection<GameObservationViewModel> gameObservations = [];
     public ReadOnlyObservableCollection<GameObservationViewModel> GameObservations { get; private set; }
@@ -97,8 +98,6 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
                 using var channel = GrpcChannel.ForAddress("http://localhost:5080");
                 var client = new DashboardService.DashboardServiceClient(channel);
 
-                GameObservationBuilder? gameStateBuilder = null;
-
                 var call = client.GetUpdates(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
                 while (await call.ResponseStream.MoveNext(cancellationTokenSource.Token))
                 {
@@ -112,15 +111,12 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
                     if (message.QuestStarted != null)
                     {
-                        gameStateBuilder = HandleQuestStarted(message.QuestStarted);
+                        HandleQuestStarted(message.QuestStarted);
                     }
 
-                    if (message.QuestActed != null && gameStateBuilder != null)
+                    if (message.QuestActed != null)
                     {
-                        if (gameStateBuilder.GameId == message.QuestActed.GameId)
-                        {
-                            HandleQuestActed(message.QuestActed, gameStateBuilder);
-                        }
+                        HandleQuestActed(message.QuestActed);
                     }
 
                     if (message.QueueUpdate != null)
@@ -169,26 +165,28 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private GameObservationBuilder HandleQuestStarted(QuestStarted update)
+    private void HandleQuestStarted(QuestStarted update)
     {
-        var gameStateBuilder = new GameObservationBuilder(update.GameId, update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
-        var gameState = gameStateBuilder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-        Dispatcher.UIThread.Invoke(() =>
+        var builder = new GameObservationBuilder(update.GameId, update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
+        var gameState = builder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
+
+        GameObservationViewModel viewModel = Dispatcher.UIThread.Invoke(() =>
         {
-            var gameObservationViewModel = new GameObservationViewModel(gameState);
-            gameObservations.Add(gameObservationViewModel);
-            gameObservationIds = gameObservationIds.Add(update.GameId, gameObservationViewModel);
-            SelectedObservation = gameObservationViewModel;
+            var vm = new GameObservationViewModel(gameState);
+            gameObservations.Add(vm);
+            SelectedObservation = vm;
+            return vm;
         });
-        return gameStateBuilder;
+
+        quests = quests.Add(update.GameId, new QuestData(builder, viewModel));
     }
 
-    private void HandleQuestActed(QuestActed update, GameObservationBuilder gameStateBuilder)
+    private void HandleQuestActed(QuestActed update)
     {
-        if (gameObservationIds.TryGetValue(update.GameId, out var gameObservationViewModel))
+        if (quests.TryGetValue(update.GameId, out var questData))
         {
-            var gameState = gameStateBuilder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-            Dispatcher.UIThread.Invoke(() => { gameObservationViewModel.SetGameObservation(gameState); });
+            var gameState = questData.Builder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
+            Dispatcher.UIThread.Invoke(() => { questData.ViewModel.SetGameObservation(gameState); });
         }
     }
 
@@ -217,30 +215,35 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         var removedSessionIds = oldIds.Except(newIds);
         var updatedSessionIds = newIds.Intersect(newIds);
 
-        // Remove sessions
+        // Remove related quests
+        var gameObservationsToRemove = ImmutableList<GameObservationViewModel>.Empty;
+        foreach (var gameId in removedSessionIds)
+        {
+            if (quests.TryGetValue(gameId, out var questData))
+            {
+                quests = quests.Remove(gameId);
+                gameObservationsToRemove = gameObservationsToRemove.Add(questData.ViewModel);
+            }
+        }
+
+        // Find sessions to remove and add
         var sessionsToRemove = sessions.Where(s => removedSessionIds.Contains(s.Id)).ToImmutableArray();
+        var sessionsToAdd = newSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
+
+        // Remove view models on the UI thread
         Dispatcher.UIThread.Invoke(() =>
         {
+            foreach (var gameObservation in gameObservationsToRemove)
+            {
+                gameObservations.Remove(gameObservation);
+            }
+
             foreach (var session in sessionsToRemove)
             {
                 sessions.Remove(session);
             }
-        });
 
-        // TODO: Remove game observations with this id
-        foreach (var gameId in removedSessionIds)
-        {
-            if (gameObservationIds.TryGetValue(gameId, out var gameObservation))
-            {
-                // TODO
-                Debug.WriteLine($"Finish game '{gameObservation.UserName} - Level {gameObservation.Level}'");
-            }
-        }
-
-        // Add sessions at the start
-        var sessionsToAdd = newSessions.Where(s => addedSessionIds.Contains(s.GameId)).ToImmutableArray();
-        Dispatcher.UIThread.Invoke(() =>
-        {
+            // Add sessions at the start/top of the list
             foreach (var session in sessionsToAdd)
             {
                 sessions.Insert(
