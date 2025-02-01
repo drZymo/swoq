@@ -98,6 +98,9 @@ public class MutableMap(int level, int height, int width)
             enemies = enemies.SetItem(enemy.Id, enemy);
         }
 
-        return new Map(Level, Height, Width, data, IsFinal, player1, player2, enemies);
+        return new Map(Level, Height, Width, data, IsFinal, player1, player2,
+            enemies.TryGetValue(GameCharacterId.Enemy1, out var e1) ? e1 : null,
+            enemies.TryGetValue(GameCharacterId.Enemy2, out var e2) ? e2 : null,
+            enemies.TryGetValue(GameCharacterId.Enemy3, out var e3) ? e3 : null);
     }
 }

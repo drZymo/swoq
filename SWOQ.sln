@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interface", "Interface\Inte
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{9FC0D75A-6FC9-45B8-B430-0E1CACF0090E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapGeneratorBenchmark", "MapGeneratorBenchmark\MapGeneratorBenchmark.csproj", "{0AF3FF6F-1E5B-4667-B798-239F588FF04D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{0AF3FF6F-1E5B-4667-B798-239F588FF04D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Portal", "Portal\Portal.csproj", "{FFABD664-570C-4D40-B8B9-2B18C3880A4B}"
 EndProject

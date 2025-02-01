@@ -67,7 +67,7 @@ internal class Game : IGame
                 PerformPlayerAction(action2, map.Player2);
 
                 // Process enemies using previous positions of players
-                foreach (var enemy in map.Enemies.Values)
+                foreach (var enemy in map.Enemies)
                 {
                     ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
                 }
@@ -703,9 +703,13 @@ internal class Game : IGame
                 DealDamage(map.Player2, damage);
                 break;
             case GameCharacterId.Enemy1:
+                DealDamage(map.Enemy1, damage);
+                break;
             case GameCharacterId.Enemy2:
+                DealDamage(map.Enemy2, damage);
+                break;
             case GameCharacterId.Enemy3:
-                DealDamage(map.Enemies[characterId], damage);
+                DealDamage(map.Enemy3, damage);
                 break;
         }
     }
@@ -743,7 +747,7 @@ internal class Game : IGame
             map = map.SetCharacter(player2);
         }
 
-        foreach (var enemy in map.Enemies.Values)
+        foreach (var enemy in map.Enemies)
         {
             var newEnemy = enemy;
             CleanupDeadCharacter(ref newEnemy);

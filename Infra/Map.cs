@@ -11,9 +11,11 @@ public class Map(
     bool isFinal,
     Player? player1,
     Player? player2,
-    ImmutableDictionary<GameCharacterId, Enemy> enemies)
+    Enemy? enemy1,
+    Enemy? enemy2,
+    Enemy? enemy3)
 {
-    public static readonly Map Empty = new(-1, 0, 0, [], false, null, null, ImmutableDictionary<GameCharacterId, Enemy>.Empty);
+    public static readonly Map Empty = new(-1, 0, 0, [], false, null, null, null, null, null);
 
     private readonly IImmutableList<Cell> cells = data.ToImmutableArray();
 
@@ -23,7 +25,9 @@ public class Map(
 
     public Player? Player1 { get; } = player1;
     public Player? Player2 { get; } = player2;
-    public ImmutableDictionary<GameCharacterId, Enemy> Enemies { get; } = enemies;
+    public Enemy? Enemy1 { get; } = enemy1;
+    public Enemy? Enemy2 { get; } = enemy2;
+    public Enemy? Enemy3 { get; } = enemy3;
 
     public bool IsFinal { get; } = isFinal;
 
@@ -34,7 +38,7 @@ public class Map(
     public Map Set(int y, int x, Cell cell)
     {
         var cells = this.cells.SetItem(y * Width + x, cell);
-        return new Map(Level, Height, Width, cells, IsFinal, Player1, Player2, Enemies);
+        return new Map(Level, Height, Width, cells, IsFinal, Player1, Player2, Enemy1, Enemy2, Enemy3);
     }
 
     public Map Set(Position pos, Cell cell) => Set(pos.y, pos.x, cell);
@@ -43,7 +47,9 @@ public class Map(
     {
         var player1 = Player1;
         var player2 = Player2;
-        var enemies = Enemies;
+        var enemy1 = Enemy1;
+        var enemy2 = Enemy2;
+        var enemy3 = Enemy3;
         switch (newCharacter.Id)
         {
             case GameCharacterId.Player1:
@@ -59,15 +65,25 @@ public class Map(
                 }
                 break;
             case GameCharacterId.Enemy1:
-            case GameCharacterId.Enemy2:
-            case GameCharacterId.Enemy3:
-                if (newCharacter is Enemy e)
+                if (newCharacter is Enemy e1)
                 {
-                    enemies = enemies.SetItem(newCharacter.Id, e);
+                    enemy1 = e1;
+                }
+                break;
+            case GameCharacterId.Enemy2:
+                if (newCharacter is Enemy e2)
+                {
+                    enemy2 = e2;
+                }
+                break;
+            case GameCharacterId.Enemy3:
+                if (newCharacter is Enemy e3)
+                {
+                    enemy3 = e3;
                 }
                 break;
         }
-        return new Map(Level, Height, Width, cells, IsFinal, player1, player2, enemies);
+        return new Map(Level, Height, Width, cells, IsFinal, player1, player2, enemy1, enemy2, enemy3);
     }
 
     public IEnumerable<GameCharacter> AllCharacters
@@ -76,7 +92,19 @@ public class Map(
         {
             if (Player1 != null) yield return Player1;
             if (Player2 != null) yield return Player2;
-            foreach (var enemy in Enemies.Values) yield return enemy;
+            if (Enemy1 != null) yield return Enemy1;
+            if (Enemy2 != null) yield return Enemy2;
+            if (Enemy3 != null) yield return Enemy3;
+        }
+    }
+
+    public IEnumerable<Enemy> Enemies
+    {
+        get
+        {
+            if (Enemy1 != null) yield return Enemy1;
+            if (Enemy2 != null) yield return Enemy2;
+            if (Enemy3 != null) yield return Enemy3;
         }
     }
 }

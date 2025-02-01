@@ -37,7 +37,7 @@ public static class MapConvert
             return Tile.Player;
         }
 
-        foreach (var enemy in map.Enemies.Values)
+        foreach (var enemy in map.Enemies)
         {
             if (enemy.IsPresent && tilePos.Equals(enemy.Position))
             {

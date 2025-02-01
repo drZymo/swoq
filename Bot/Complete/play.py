@@ -61,6 +61,8 @@ class GamePlayer:
         self.user_id = user_id
         self.plot = plot
         self.print = print
+        
+        self.actions = []
 
         self.remain_on_plate_counter = 0
         self.plate_color = None
@@ -101,6 +103,7 @@ class GamePlayer:
         self.height = startResponse.height
         self.width = startResponse.width
         self.visibility_range = startResponse.visibilityRange
+        self.actions = []
 
         self.prev_level = -1
         self.map = np.zeros((self.height, self.width), dtype=np.int8)
@@ -235,6 +238,9 @@ class GamePlayer:
         if self.print: print(f'{self.action1=}, {self.action2=}')
         response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action=self.action1, action2=self.action2))
 
+        if response.result == swoq_pb2.RESULT_OK:
+            self.actions.append((self.action1, self.action2))
+
         self.update_global_state(response.state)
 
         if self.plot:
@@ -341,8 +347,8 @@ class GamePlayer:
         # as long as both players have no sword the bottom right part is off-limits
         if not self.player1_has_sword or not self.player2_has_sword:
             new_map = self.map.copy()
-            for my in range(64-19, 64):
-                for mx in range(64-12, 64):
+            for my in range(self.height-19, self.height):
+                for mx in range(self.width-12, self.width):
                     new_map[my, mx] = swoq_pb2.TILE_WALL
                     if (my, mx) in self.player1_distances:
                         del self.player1_distances[(my, mx)]
@@ -823,7 +829,15 @@ class GamePlayer:
             # player 2 stands on plates
             # player 1 moves to plate doors
             if self.can_act1() and valid_pos(self.player2_pos): # Only with two players
-                self.move_to_closest_1(plate_doors, 'plate_door')
+                in_front_positions = []
+                for d in plate_doors:
+                    d = tuple(d)
+                    if self.map[d[0]-1, d[1]] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0]-1, d[1]))
+                    if self.map[d[0]+1, d[1]] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0]+1, d[1]))
+                    if self.map[d[0], d[1]-1] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0], d[1]-1))
+                    if self.map[d[0], d[1]+1] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0], d[1]+1))
+                
+                self.move_to_closest_1(in_front_positions, 'plate_door')
 
     def wait_at_pressure_plate_door_2(self) -> None:
         if self.plate_color_1 == swoq_pb2.TILE_PRESSURE_PLATE_RED:
@@ -839,7 +853,15 @@ class GamePlayer:
             # player 1 stands on plates
             # player 2 moves to plate doors
             if self.can_act2() and valid_pos(self.player1_pos): # Only with two players
-                self.move_to_closest_2(plate_doors, 'plate_door')
+                in_front_positions = []
+                for d in plate_doors:
+                    d = tuple(d)
+                    if self.map[d[0]-1, d[1]] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0]-1, d[1]))
+                    if self.map[d[0]+1, d[1]] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0]+1, d[1]))
+                    if self.map[d[0], d[1]-1] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0], d[1]-1))
+                    if self.map[d[0], d[1]+1] == swoq_pb2.TILE_EMPTY: in_front_positions.append((d[0], d[1]+1))
+
+                self.move_to_closest_2(in_front_positions, 'plate_door')
 
 
     def pickup_boulder(self) -> None:
