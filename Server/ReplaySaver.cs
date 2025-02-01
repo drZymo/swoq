@@ -66,7 +66,7 @@ internal class ReplaySaver : IDisposable
             filenames = filenames.Add(e.gameId, filename);
         }
 
-        logger.LogInformation("New replay started at {path}", filename);
+        //logger.LogInformation("New replay started at {path}", filename);
 
         var header = new ReplayHeader { UserName = e.userName, DateTime = Clock.Now.ToString("s") };
         Enqueue(e.gameId, header);
