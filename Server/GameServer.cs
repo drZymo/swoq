@@ -1,12 +1,13 @@
 ﻿using Swoq.Data;
 using Swoq.Infra;
 using Swoq.Interface;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Swoq.Server;
 
-public class GameServerException(Result result, GameState? state = null) : Exception
+public class GameServerException(Result result, GameState? state = null, Exception? innerException = null) : Exception(null, innerException)
 {
     public Result Result { get; } = result;
     public GameState? State { get; } = state;
@@ -14,29 +15,20 @@ public class GameServerException(Result result, GameState? state = null) : Excep
 
 public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
 {
-    private readonly Lock gamesWriteMutex = new();
-    private ImmutableDictionary<Guid, IGame> games = ImmutableDictionary<Guid, IGame>.Empty;
+    private readonly ConcurrentDictionary<Guid, IGame> games = new();
 
-    private readonly Lock currentQuestMutex = new();
-    private ImmutableDictionary<Guid, string> currentQuestUserIds = ImmutableDictionary<Guid, string>.Empty;
+    private readonly Lock startQuestMutex = new();
+    private readonly ConcurrentDictionary<Guid, string> currentQuestUserIds = new();
 
     private readonly QuestQueue questQueue = new();
 
-    private readonly Lock statisticsMutex = new();
-    private DateTime lastStatisticsReportTime = DateTime.MinValue;
-    private uint eventCount = 0;
-
-    public event EventHandler<GameAddedEventArgs>? GameAdded;
     public event EventHandler<GameRemovedEventArgs>? GameRemoved;
-    public event EventHandler<GameUpdatedEventArgs>? GameUpdated;
 
     public event EventHandler<QueueUpdatedEventArgs>? QueueUpdated
     {
         add => questQueue.Updated += value;
         remove => questQueue.Updated -= value;
     }
-
-    public event EventHandler<StatisticsUpdatedEventArgs>? StatisticsUpdated;
 
     public GameStartResult Start(string userId, int? level)
     {
@@ -51,23 +43,17 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
             // Create a new game
             game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
-            lock (gamesWriteMutex)
-            {
-                games = games.Add(game.Id, game);
-                GameAdded?.Invoke(this, new GameAddedEventArgs(game.Id, user.Name, game.Level, !level.HasValue));
-            }
-
-            RegisterActivity();
+            games.TryAdd(game.Id, game);
 
             return new GameStartResult(user.Name, game.Id, game.State);
         }
         catch (SwoqException ex)
         {
-            throw new GameServerException(ResultFromException(ex), game?.State);
+            throw new GameServerException(ResultFromException(ex), game?.State, ex);
         }
-        catch
+        catch (Exception ex)
         {
-            throw new GameServerException(Result.InternalError, game?.State);
+            throw new GameServerException(Result.InternalError, game?.State, ex);
         }
     }
 
@@ -101,10 +87,13 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
-        lock (currentQuestMutex)
+        // We must prevent too many quests starting at the same time.
+        // Due to multi-threading, two quests could try starting at the same time, exceeding the limit.
+        // Therefore, we lock the whole start process.
+        lock (startQuestMutex)
         {
             // Check that user is not already in a quest
-            if (currentQuestUserIds.ContainsValue(user.Id))
+            if (currentQuestUserIds.Any(kvp => kvp.Value == user.Id))
             {
                 throw new QuestAlreadyActiveException();
             }
@@ -132,7 +121,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
             var quest = new Quest<MG>(user, database);
-            currentQuestUserIds = currentQuestUserIds.Add(quest.Id, user.Id);
+            currentQuestUserIds.TryAdd(quest.Id, user.Id);
             return quest;
         }
     }
@@ -145,27 +134,17 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         try
         {
             // Play game
-            var prevLevel = game.Level;
-            var prevStatus = game.State.Status;
             game.Act(action1, action2);
-
-            // Notify any changes
-            if (game.Level != prevLevel || game.State.Status != prevStatus)
-            {
-                GameUpdated?.Invoke(this, new GameUpdatedEventArgs(gameId, game.Level, game.State.IsFinished));
-            }
-
-            RegisterActivity();
 
             return game.State;
         }
         catch (SwoqException ex)
         {
-            throw new GameServerException(ResultFromException(ex), game?.State);
+            throw new GameServerException(ResultFromException(ex), game?.State, ex);
         }
-        catch
+        catch (Exception ex)
         {
-            throw new GameServerException(Result.InternalError, game?.State);
+            throw new GameServerException(Result.InternalError, game?.State, ex);
         }
     }
 
@@ -187,9 +166,9 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         if (idsFinished.Length > 0)
         {
-            lock (currentQuestMutex)
+            foreach (var id in idsFinished)
             {
-                currentQuestUserIds = currentQuestUserIds.RemoveRange(idsFinished);
+                currentQuestUserIds.TryRemove(id, out _);
             }
         }
 
@@ -202,40 +181,11 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
         if (idsToRemove.Length > 0)
         {
-            lock (gamesWriteMutex)
-            {
-                games = games.RemoveRange(idsToRemove);
-            }
-            // Notify monitors
             foreach (var id in idsToRemove)
             {
+                games.TryRemove(id, out var _);
                 GameRemoved?.Invoke(this, new GameRemovedEventArgs(id));
             }
-        }
-    }
-
-    private void RegisterActivity()
-    {
-        // Thread-safe increment
-        Interlocked.Increment(ref eventCount);
-
-        // Should we send an update
-        var now = DateTime.Now;
-        var deltaTime = now - lastStatisticsReportTime;
-        if (deltaTime < Parameters.StatisticsUpdatePeriod) return;
-
-        lock (statisticsMutex)
-        {
-            // Extra check.
-            // Maybe other thread already sent the update
-            deltaTime = now - lastStatisticsReportTime;
-            if (deltaTime < Parameters.StatisticsUpdatePeriod) return;
-
-            var eventCount = Interlocked.Exchange(ref this.eventCount, 0);
-
-            var eventsPerSecond = eventCount / (float)deltaTime.TotalSeconds;
-            StatisticsUpdated?.Invoke(this, new(eventsPerSecond));
-            lastStatisticsReportTime = now;
         }
     }
 
