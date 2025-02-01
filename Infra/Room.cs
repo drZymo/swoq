@@ -2,7 +2,7 @@
 
 using Position = (int y, int x);
 
-internal record Room(int Y, int X, int Height, int Width)
+internal record Room(int Y, int X, int Height, int Width) : IComparable<Room>
 {
     public Position Center => (Y, X);
 
@@ -20,5 +20,21 @@ internal record Room(int Y, int X, int Height, int Width)
                 yield return (y, x);
             }
         }
+    }
+
+    public int CompareTo(Room? other)
+    {
+        if (other is null) return 1;
+
+        int result = Y.CompareTo(other.Y);
+        if (result != 0) return result;
+
+        result = X.CompareTo(other.X);
+        if (result != 0) return result;
+
+        result = Height.CompareTo(other.Height);
+        if (result != 0) return result;
+
+        return Width.CompareTo(other.Width);
     }
 }

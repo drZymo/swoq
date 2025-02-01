@@ -453,3 +453,19 @@ At the anual WSC (Wizardry and Sorcery Conference), a new attraction is revealed
 | GenerateAll    | 441.53 ms | 8.497 ms | 12.455 ms |
 | GenerateLevel1 |  17.02 ms | 0.324 ms |  0.523 ms |
 | GenerateLevel4 |  26.04 ms | 0.327 ms |  0.306 ms |
+
+## 2025-02-01 (Reduced use of immutable collections)
+
+| Method         | Mean      | Error    | StdDev   |
+|--------------- |----------:|---------:|---------:|
+| GenerateAll    | 335.18 ms | 2.317 ms | 1.934 ms |
+| GenerateLevel1 |  14.70 ms | 0.045 ms | 0.040 ms |
+| GenerateLevel4 |  17.85 ms | 0.118 ms | 0.104 ms |
+
+| Method     | Mean     | Error    | StdDev   |
+|----------- |---------:|---------:|---------:|
+| SingleGame | 20.45 ms | 0.115 ms | 0.108 ms |
+
+| Method        | Mean    | Error    | StdDev   |
+|-------------- |--------:|---------:|---------:|
+| StartParallel | 1.199 s | 0.0233 s | 0.0295 s |

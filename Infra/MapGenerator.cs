@@ -151,7 +151,7 @@ public class MapGenerator : IMapGenerator
                 map[pos] == Cell.Unknown;
         }
 
-        ImmutableList<Position> walls = [];
+        List<Position> walls = [];
 
         for (var y = 0; y < height; y++)
         {
@@ -163,7 +163,7 @@ public class MapGenerator : IMapGenerator
                         !IsUnknown((y, x - 1)) || !IsUnknown((y, x)) || !IsUnknown((y, x + 1)) ||
                         !IsUnknown((y + 1, x - 1)) || !IsUnknown((y + 1, x)) || !IsUnknown((y + 1, x + 1)))
                     {
-                        walls = walls.Add((y, x));
+                        walls.Add((y, x));
                     }
                 }
             }
@@ -289,7 +289,7 @@ public class MapGenerator : IMapGenerator
         var keyColor = PickRandomAvailableKeyColor();
 
         // Place wall of doors around exit
-        ImmutableList<Position> doorPositions = [];
+        List<Position> doorPositions = [];
         for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
         {
             for (var x = exitPosition.x - 1; x <= exitPosition.x + 1; x++)
@@ -298,14 +298,14 @@ public class MapGenerator : IMapGenerator
                 {
                     if (SetIfEmpty(y, x, ToDoor(keyColor)))
                     {
-                        doorPositions = doorPositions.Add((y, x));
+                        doorPositions.Add((y, x));
                     }
                 }
             }
         }
 
         // Find the minimum walk distance from each empty point on the map to one of the doors.
-        var points = ImmutableDictionary<Position, int>.Empty;
+        var points = new Dictionary<Position, int>();
         foreach (var doorPos in doorPositions)
         {
             var (distances, paths) = ComputeDistancesFrom(doorPos);
@@ -316,7 +316,7 @@ public class MapGenerator : IMapGenerator
                 {
                     minDist = Math.Min(minDist, oldDist);
                 }
-                points = points.SetItem(pt, minDist);
+                points[pt] = minDist;
             }
         }
 
@@ -379,7 +379,7 @@ public class MapGenerator : IMapGenerator
 
         // Create door for entering exit room with same color as exit
         var entryDoorCell = ToDoor(exitKeyColor);
-        ImmutableList<(Position enemyPos, Position platePos)> enemyAndPlatePositions = [];
+        List<(Position enemyPos, Position platePos)> enemyAndPlatePositions = [];
         for (var y = exitRoom.Top; y <= exitRoom.Bottom; y++)
         {
             if (SetIfEmpty(y, exitRoom.Left - 1, entryDoorCell))
@@ -388,7 +388,7 @@ public class MapGenerator : IMapGenerator
                 var platePos = (y, exitRoom.Left - 3);
                 if (IsEmpty(enemyPos) && IsEmpty(platePos))
                 {
-                    enemyAndPlatePositions = enemyAndPlatePositions.Add((enemyPos, platePos));
+                    enemyAndPlatePositions.Add((enemyPos, platePos));
                 }
             }
         }
@@ -1076,20 +1076,37 @@ public class MapGenerator : IMapGenerator
 
     private Room? CreateRandomRoom(int minSize, int maxSize, int margin)
     {
-        // Regular hashset for increased performance
-        // Only used locally, so no multi-threading risk
-        var roomPositions = availablePositions.ToHashSet();
-        // Extra map for faster lookup
-        var roomPositionsMap = new bool[height, width];
-        foreach (var (y, x) in roomPositions)
-        {
-            roomPositionsMap[y, x] = true;
-        }
-
         // Choose room size
         // always odd size, so center is really center
-        var rw = 1 + 2 * Rnd.Next(minSize, maxSize);
         var rh = 1 + 2 * Rnd.Next(minSize, maxSize);
+        var rw = 1 + 2 * Rnd.Next(minSize, maxSize);
+
+        // Find all positions that could fit the room
+        var roomPositions = GetAvailableRoomPositions(rh, rw);
+
+        // Try to create new room
+        Room? room = null;
+        if (roomPositions.Count > 0)
+        {
+            var pos = roomPositions.PickOne();
+            var ry = pos / width;
+            var rx = pos % width;
+            room = CreateRoom(ry, rx, rh, rw, margin);
+        }
+        return room;
+    }
+
+    private HashSet<int> GetAvailableRoomPositions(int rh, int rw)
+    {
+        // Regular hashset for increased performance
+        // Only used locally, so no multi-threading risk
+        var roomPositions = new HashSet<int>(availablePositions.Select(p => p.y * width + p.x));
+        // Extra map for faster lookup
+        var roomPositionsMap = new bool[height * width];
+        foreach (var p in roomPositions)
+        {
+            roomPositionsMap[p] = true;
+        }
 
         //  Include walls around room
         var areaWidth = rw + 2;
@@ -1099,42 +1116,49 @@ public class MapGenerator : IMapGenerator
         var clearX = (areaWidth - 1) / 2;
         var clearY = (areaHeight - 1) / 2;
 
+        var remove = new List<int>();
+
         // Clear X
         for (var i = 0; i < clearX; i++)
         {
-            var remove = roomPositions.
-                Where(pos => (pos.x <= 0) || !roomPositionsMap[pos.y, pos.x - 1] || (pos.x >= width - 1) || !roomPositionsMap[pos.y, pos.x + 1]).
-                ToList();
+            remove.Clear();
+            foreach (var pos in roomPositions)
+            {
+                var x = pos % width;
+                if ((x <= 0) || !roomPositionsMap[pos - 1] || (x >= width - 1) || !roomPositionsMap[pos + 1])
+                {
+                    remove.Add(pos);
+                }
+            }
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
-                roomPositionsMap[pos.y, pos.x] = false;
+                roomPositionsMap[pos] = false;
             }
+            if (roomPositions.Count == 0) break; // Early exit if no positions left
         }
 
         // Clear Y
         for (var i = 0; i < clearY; i++)
         {
-            var remove = roomPositions.
-                Where(pos => (pos.y <= 0) || !roomPositionsMap[pos.y - 1, pos.x] || (pos.y >= height - 1) || !roomPositionsMap[pos.y + 1, pos.x]).
-                ToList();
+            remove.Clear();
+            foreach (var pos in roomPositions)
+            {
+                var y = pos / width;
+                if ((y <= 0) || !roomPositionsMap[pos - width] || (y >= height - 1) || !roomPositionsMap[pos + width])
+                {
+                    remove.Add(pos);
+                }
+            }
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
-                roomPositionsMap[pos.y, pos.x] = false;
+                roomPositionsMap[pos] = false;
             }
+            if (roomPositions.Count == 0) break; // Early exit if no positions left
         }
 
-        Room? room = null;
-
-        // Try to create new room
-        if (roomPositions.Count > 0)
-        {
-            var (ry, rx) = roomPositions.PickOne();
-            room = CreateRoom(ry, rx, rh, rw, margin);
-        }
-
-        return room;
+        return roomPositions;
     }
 
     private void ConnectRoomsRandomly()
@@ -1355,7 +1379,7 @@ public class MapGenerator : IMapGenerator
         _ => throw new NotImplementedException(),
     };
 
-    private (IImmutableDictionary<Position, int> distances, IImmutableDictionary<Position, Position> paths) ComputeDistancesFrom(Position fromPos)
+    private (IReadOnlyDictionary<Position, int> distances, IReadOnlyDictionary<Position, Position> paths) ComputeDistancesFrom(Position fromPos)
     {
         // Regular containers for performance
         var distances = new Dictionary<Position, int>();
@@ -1388,7 +1412,7 @@ public class MapGenerator : IMapGenerator
             if (currentPos.x < width - 1) CheckAndAdd(currentPos, currentDist, (currentPos.y, currentPos.x + 1));
         }
 
-        return (distances.ToImmutableDictionary(), paths.ToImmutableDictionary());
+        return (distances, paths);
     }
 
     private Position ClaimRandomPositionInAvailableRoomFarthestFrom(Position[] inputPositions, int margin = 0, int minRoomHeight = 1, int minRoomWidth = 1)
@@ -1428,22 +1452,17 @@ public class MapGenerator : IMapGenerator
     private Room GetRoomFarthestPositionFrom(IEnumerable<Room> rooms, params Position[] inputPositions)
     {
         // Compute distances from each input position
-        var inputDistances = ImmutableList<IImmutableDictionary<Position, int>>.Empty;
-        foreach (var pos in inputPositions)
-        {
-            var (distances, _) = ComputeDistancesFrom(pos);
-            inputDistances = inputDistances.Add(distances);
-        }
+        var inputDistances = inputPositions.Select(p => ComputeDistancesFrom(p).distances).ToList();
 
         int bestDistance = int.MinValue;
-        var bestRooms = ImmutableHashSet<Room>.Empty;
+        var bestRooms = new List<Room>();
         foreach (var room in rooms)
         {
             var center = room.Center;
             // Get distance to this room from all input positions
-            var roomDistances = inputDistances.Where(d => d.ContainsKey(center)).Select(d => d[center]).ToImmutableArray();
+            var roomDistances = inputDistances.Where(d => d.ContainsKey(center)).Select(d => d[center]).ToList();
             // Check if it reachable from all input points
-            if (roomDistances.Length != inputDistances.Count) continue;
+            if (roomDistances.Count != inputDistances.Count) continue;
 
             var distance = roomDistances.Aggregate(1, (agg, dist) => agg * dist);
 
@@ -1454,7 +1473,7 @@ public class MapGenerator : IMapGenerator
             }
             else if (distance == bestDistance)
             {
-                bestRooms = bestRooms.Add(room);
+                bestRooms.Add(room);
             }
         }
         if (bestRooms.Count == 0) throw new MapGeneratorException("No reachable rooms found");
@@ -1474,7 +1493,7 @@ public class MapGenerator : IMapGenerator
         var (distances, _) = ComputeDistancesFrom(pos);
 
         int minDistance = int.MaxValue;
-        var minRooms = ImmutableHashSet<Room>.Empty;
+        var minRooms = new List<Room>();
 
         foreach (var room in availableRooms.Where(r => r.Height >= minRoomHeight && r.Width >= minRoomWidth))
         {
@@ -1487,7 +1506,7 @@ public class MapGenerator : IMapGenerator
                 }
                 else if (dist == minDistance)
                 {
-                    minRooms = minRooms.Add(room);
+                    minRooms.Add(room);
                 }
             }
         }
@@ -1499,12 +1518,12 @@ public class MapGenerator : IMapGenerator
 
     private Position? GetEmptyPositionInFront(Position pos)
     {
-        ImmutableList<Position> positions = [];
+        var positions = new List<Position>(4);
 
-        if (pos.y > 0 && map[pos.y - 1, pos.x] == Cell.Empty) positions = positions.Add((pos.y - 1, pos.x));
-        if (pos.y < height && map[pos.y + 1, pos.x] == Cell.Empty) positions = positions.Add((pos.y + 1, pos.x));
-        if (pos.x > 0 && map[pos.y, pos.x - 1] == Cell.Empty) positions = positions.Add((pos.y, pos.x - 1));
-        if (pos.x < width && map[pos.y, pos.x + 1] == Cell.Empty) positions = positions.Add((pos.y, pos.x + 1));
+        if (pos.y > 0 && map[pos.y - 1, pos.x] == Cell.Empty) positions.Add((pos.y - 1, pos.x));
+        if (pos.y < height && map[pos.y + 1, pos.x] == Cell.Empty) positions.Add((pos.y + 1, pos.x));
+        if (pos.x > 0 && map[pos.y, pos.x - 1] == Cell.Empty) positions.Add((pos.y, pos.x - 1));
+        if (pos.x < width && map[pos.y, pos.x + 1] == Cell.Empty) positions.Add((pos.y, pos.x + 1));
 
         return positions.Count > 0 ? positions.PickOne() : null;
     }
@@ -1542,7 +1561,7 @@ public class MapGenerator : IMapGenerator
         return (lockerKeyColor, infrontLockerDoorPos);
     }
 
-    private (int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight) CreateSplitMaze(bool twoPlayers = false)
+    private (int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight) CreateSplitMaze(bool twoPlayers = false)
     {
         var middle = width / 2;
 
@@ -1568,7 +1587,7 @@ public class MapGenerator : IMapGenerator
         return (middle, roomsLeft, roomsRight);
     }
 
-    private int ConnectLeftAndRightWithDoor(int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight, KeyColor doorColor)
+    private int ConnectLeftAndRightWithDoor(int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight, KeyColor doorColor)
     {
         var tunnelPositions = ConnectLeftAndRight(middle, roomsLeft, roomsRight);
 
@@ -1586,7 +1605,7 @@ public class MapGenerator : IMapGenerator
         return doorPosition.y;
     }
 
-    private ImmutableList<Position> ConnectLeftAndRight(int middle, ImmutableList<Room> roomsLeft, ImmutableList<Room> roomsRight)
+    private IReadOnlyList<Position> ConnectLeftAndRight(int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight)
     {
         // Connect left and right rooms closest to each other
         var minDist = double.PositiveInfinity;
@@ -1613,14 +1632,14 @@ public class MapGenerator : IMapGenerator
         availableRooms = availableRooms.Remove(minLeft).Remove(minRight);
 
         // Find position of tunnel middle
-        var tunnelPositions = ImmutableList<Position>.Empty;
+        var tunnelPositions = new List<Position>();
         var top = Math.Min(minLeft.Top, minRight.Top);
         var bottom = Math.Max(minLeft.Bottom, minRight.Bottom);
         for (var y = top; y < bottom; y++)
         {
             if (map[y, middle] == Cell.Empty)
             {
-                tunnelPositions = tunnelPositions.Add((y, middle));
+                tunnelPositions.Add((y, middle));
             }
         }
 
