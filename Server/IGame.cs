@@ -8,8 +8,7 @@ internal interface IGame
     int Level { get; }
     GameState State { get; }
     DateTime LastActionTime { get; }
+    bool IsFinished { get; }
 
     void Act(DirectedAction? action1 = null, DirectedAction? action2 = null);
-
-    void CheckGameIsFinished();
 }

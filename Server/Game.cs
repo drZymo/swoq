@@ -12,7 +12,6 @@ internal class Game : IGame
     private Map map;
     private readonly TimeSpan maxInactivityTime;
 
-    private readonly Lock gameMutex = new();
     private int ticks = 0;
     private int lastChangeTick = 0;
     private GameStatus status = GameStatus.Active;
@@ -31,97 +30,68 @@ internal class Game : IGame
     public int Level => map.Level;
     public GameState State { get; private set; }
     public DateTime LastActionTime { get; private set; } = Clock.Now;
-
-    public bool IsFinished => status != GameStatus.Active;
+    public bool IsFinished => TimedOut || status != GameStatus.Active;
+    
+    private bool TimedOut => (Clock.Now - LastActionTime) > maxInactivityTime;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        lock (gameMutex)
+        // Store current state, so it can be reverted to when something went wrong
+        var prevState = (map, player1Positions, player2Positions);
+
+        try
         {
+            // Pre condition checks
+            if (status == GameStatus.Active && TimedOut) status = GameStatus.FinishedTimeout;
             if (IsFinished) throw new GameFinishedException();
 
-            // Store current state, so it can be reverted to when something went wrong
-            var prevState = (map, player1Positions, player2Positions);
+            // As long as game is not finished one of the two players should be active
+            Debug.Assert(map.Player1 != null || map.Player2 != null);
 
-            try
+            // Make sure actions are given for players that are present
+            if (action1 != null)
             {
-                // Pre condition checks
-                CheckTimeout();
-                if (IsFinished) throw new GameFinishedException();
-
-                Debug.Assert(map.Player1 != null || map.Player2 != null);
-
-                if (action1 != null)
-                {
-                    if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException();
-                    Debug.Assert(map.Player1.IsAlive);
-                }
-                if (action2 != null)
-                {
-                    if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException();
-                    Debug.Assert(map.Player2.IsAlive);
-                }
-
-                // Act
-                PerformPlayerAction(action1, map.Player1);
-                PerformPlayerAction(action2, map.Player2);
-
-                // Process enemies using previous positions of players
-                foreach (var enemy in map.Enemies)
-                {
-                    ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
-                }
-
-                CleanupDeadCharacters();
-
-                // Store current positions
-                StorePlayerPosition(map.Player1, ref player1Positions);
-                StorePlayerPosition(map.Player2, ref player2Positions);
-
-                LastActionTime = Clock.Now;
-                ticks++;
-
-                UpdateGameStatus();
+                if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException();
+                Debug.Assert(map.Player1.IsAlive);
             }
-            catch
+            if (action2 != null)
             {
-                // Revert state on any exception, so the user can try again.
-                (map, player1Positions, player2Positions) = prevState;
-                throw;
+                if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException();
+                Debug.Assert(map.Player2.IsAlive);
             }
-            finally
+
+            // Act
+            PerformPlayerAction(action1, map.Player1);
+            PerformPlayerAction(action2, map.Player2);
+
+            // Process enemies using previous positions of players
+            foreach (var enemy in map.Enemies)
             {
-                // Always update state at the end
-                State = CreateState();
+                ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
             }
-        }
-    }
 
-    public void CheckGameIsFinished()
-    {
-        // A mutex is needed because this function is called every time a new game is started, which can be any thread.
-        lock (gameMutex)
-        {
-            var prevStatus = status;
+            // Cleanup characters that might have been killed
+            CleanupDeadCharacters();
 
+            // Store current positions to be used for idle detection
+            StorePlayerPosition(map.Player1, ref player1Positions);
+            StorePlayerPosition(map.Player2, ref player2Positions);
+
+            // Update game status
+            LastActionTime = Clock.Now;
+            ticks++;
             UpdateGameStatus();
-
-            CheckTimeout();
-
-            // Update state if status has changed
-            if (status != prevStatus)
-            {
-                State = CreateState();
-            }
         }
-    }
-
-    private void CheckTimeout()
-    {
-        // Time since last action was too long ago
-        if ((Clock.Now - LastActionTime) > maxInactivityTime)
+        catch
         {
-            status = GameStatus.FinishedTimeout;
+            // Revert state on any exception, so the user can try again.
+            (map, player1Positions, player2Positions) = prevState;
+            throw;
+        }
+        finally
+        {
+            // Always update state at the end
+            State = CreateState();
         }
     }
 

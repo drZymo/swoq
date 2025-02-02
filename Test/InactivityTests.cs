@@ -51,37 +51,25 @@ internal class InactivityTests : GameTestBase
         var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
 
         Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(10);
 
         Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.That(game.IsFinished, Is.False);
 
         Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
-        Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
         Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(9);
 
         Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.That(game.IsFinished, Is.False);
 
         Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
         Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(2);
 
-        Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
         Assert.That(game.IsFinished, Is.False);
     }
 
@@ -91,24 +79,14 @@ internal class InactivityTests : GameTestBase
         var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
 
         Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.That(game.IsFinished, Is.False);
 
         Assert.DoesNotThrow(() => game.Act(DirectedAction.MoveEast));
 
         Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.That(game.IsFinished, Is.False);
 
         now += TimeSpan.FromSeconds(21);
 
-        Assert.That(game.IsFinished, Is.False);
-        game.CheckGameIsFinished();
-        Assert.Multiple(() =>
-        {
-            Assert.That(game.IsFinished, Is.True);
-            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedTimeout));
-        });
+        Assert.That(game.IsFinished, Is.True);
 
         Assert.Throws<GameFinishedException>(() => game.Act(DirectedAction.MoveEast));
 
