@@ -26,10 +26,18 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     public int Level { get; private set; } = 0;
     public GameState State { get; private set; }
     public DateTime LastActionTime => currentGame.LastActionTime;
-    public bool IsFinished => currentGame.IsFinished;
+    public bool IsFinished => State.Status != GameStatus.Active || TimedOut;
+
+    private bool TimedOut => (Clock.Now - LastActionTime) > Parameters.MaxQuestInactivityTime;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
+        if (State.Status == GameStatus.Active && TimedOut)
+        {
+            State = State with { Status = GameStatus.FinishedTimeout };
+        }
+        if (IsFinished) throw new GameFinishedException();
+
         try
         {
             // Play current game
