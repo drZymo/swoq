@@ -3,3 +3,6 @@ indent_style = space
 
 [*.csproj]
 indent_size = 4
+
+[*.sln]
+end_of_line = crlf
