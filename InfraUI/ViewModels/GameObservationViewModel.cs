@@ -47,6 +47,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public bool IsFinished => Current?.Status != GameStatus.Active;
     public string FinishedResult => Current?.Status switch
     {
+        null => "",
         GameStatus.Active => "",
         GameStatus.FinishedSuccess => "🌟 Quest completed! 🌟",
         GameStatus.FinishedTimeout => "🛑 Timeout 🛑",
