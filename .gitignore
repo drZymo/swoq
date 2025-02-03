@@ -13,3 +13,4 @@ level*.bin
 **/BenchmarkDotNet.Artifacts/
 coveragereport/
 Test/TestResults/
+/Replays/

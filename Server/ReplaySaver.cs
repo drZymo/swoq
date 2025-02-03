@@ -51,14 +51,15 @@ internal class ReplaySaver : IDisposable
     private void OnGameStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
     {
         // Register filename for this game id
+        string sanitizedUserName = Uri.EscapeDataString(e.userName);
         string filename;
         if (e.request.HasLevel)
         {
-            filename = Path.Combine(replayStorageSettings.TrainingFolder, e.userName, $"level {e.request.Level} - {e.gameId}.bin");
+            filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.TrainingFolder, sanitizedUserName, $"level {e.request.Level} - {e.gameId}.bin");
         }
         else
         {
-            filename = Path.Combine(replayStorageSettings.QuestFolder, $"{e.userName} - {e.gameId}.bin");
+            filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.QuestFolder, $"{sanitizedUserName} - {e.gameId}.bin");
         }
 
         lock (filenamesWriteMutex)
