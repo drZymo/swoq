@@ -29,7 +29,7 @@ internal class QuestTests
         quest = new Quest<DummyGenerator>(user, database);
         Assert.Multiple(() =>
         {
-            Assert.That(quest.State.IsFinished, Is.False);
+            Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Level, Is.EqualTo(0));
         });
     }
@@ -44,7 +44,7 @@ internal class QuestTests
         Assert.Multiple(() =>
         {
             Assert.That(CurrentUser.Level, Is.EqualTo(1));
-            Assert.That(quest.State.IsFinished, Is.False);
+            Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Level, Is.EqualTo(1));
         });
     }
@@ -62,7 +62,7 @@ internal class QuestTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(quest.State.IsFinished, Is.False);
+            Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
             Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel));
@@ -76,7 +76,6 @@ internal class QuestTests
         // Quest finished now
         Assert.Multiple(() =>
         {
-            Assert.That(quest.State.IsFinished, Is.True);
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.FinishedSuccess));
             Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
             Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel + 1));
@@ -105,7 +104,7 @@ internal class QuestTests
             Assert.That(CurrentUser.Level, Is.EqualTo(5));
             Assert.That(CurrentUser.QuestLengthSeconds, Is.EqualTo(50));
             Assert.That(CurrentUser.QuestLengthTicks, Is.EqualTo(10));
-            Assert.That(quest.State.IsFinished, Is.False);
+            Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Level, Is.EqualTo(5));
         });
 
@@ -126,7 +125,7 @@ internal class QuestTests
                 Assert.That(CurrentUser.Level, Is.EqualTo(5));
                 Assert.That(CurrentUser.QuestLengthSeconds, Is.EqualTo(25)); // Faster
                 Assert.That(CurrentUser.QuestLengthTicks, Is.EqualTo(10)); // Same
-                Assert.That(newQuest.State.IsFinished, Is.False);
+                Assert.That(newQuest.State.Status, Is.EqualTo(GameStatus.Active));
                 Assert.That(newQuest.State.Level, Is.EqualTo(5));
             });
         }
@@ -147,7 +146,7 @@ internal class QuestTests
                 Assert.That(CurrentUser.Level, Is.EqualTo(5));
                 Assert.That(CurrentUser.QuestLengthSeconds, Is.EqualTo(25)); // Faster
                 Assert.That(CurrentUser.QuestLengthTicks, Is.EqualTo(5)); // Faster
-                Assert.That(newQuest.State.IsFinished, Is.False);
+                Assert.That(newQuest.State.Status, Is.EqualTo(GameStatus.Active));
                 Assert.That(newQuest.State.Level, Is.EqualTo(5));
             });
         }

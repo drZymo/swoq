@@ -2,7 +2,6 @@
 using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Concurrent;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Swoq.Server;
@@ -43,7 +42,11 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
             // Create a new game
             game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
-            games.TryAdd(game.Id, game);
+            if (!games.TryAdd(game.Id, game))
+            {
+                game = null;
+                throw new InvalidOperationException("Game could not be added");
+            }
 
             return new GameStartResult(user.Name, game.Id, game.State);
         }
@@ -59,17 +62,14 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     private static User GetUserOrThrow(ISwoqDatabase database, string userId)
     {
-        User user;
         try
         {
-            // Get user object
-            user = database.FindUserByIdAsync(userId).Result ?? throw new UnknownUserException();
+            return database.FindUserByIdAsync(userId).Result ?? throw new UnknownUserException();
         }
         catch
         {
             throw new UnknownUserException();
         }
-        return user;
     }
 
     private static Game StartTraining(User user, int level)
@@ -131,11 +131,10 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         // Try to find game
         if (!games.TryGetValue(gameId, out var game)) throw new GameServerException(Result.UnknownGameId, null);
 
+        // Play game
         try
         {
-            // Play game
             game.Act(action1, action2);
-
             return game.State;
         }
         catch (SwoqException ex)
@@ -150,40 +149,26 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     private void CleanupOldGames()
     {
-        var now = Clock.Now;
+        var finishedGames = games.Values.
+            Where(g => g.IsFinished).
+            ToList();
 
-        // Check status of all active games
-        foreach (var game in games.Values.Where(g => !g.State.IsFinished))
+        // Remove finished games from active quests list
+        var idsFinished = finishedGames.Select(g => g.Id);
+        foreach (var id in idsFinished)
         {
-            game.CheckGameIsFinished();
-        }
-
-        // Remove games that are finished from active quests list
-        var idsFinished = games.Values.
-            Where(g => g.State.IsFinished).
-            Select(g => g.Id).
-            ToImmutableArray();
-
-        if (idsFinished.Length > 0)
-        {
-            foreach (var id in idsFinished)
-            {
-                currentQuestUserIds.TryRemove(id, out _);
-            }
+            currentQuestUserIds.TryRemove(id, out _);
         }
 
         // Remove games that have been finished for a while from the game list
-        var idsToRemove = games.Values.
-            Where(g => g.State.IsFinished).
+        var now = Clock.Now;
+        var idsToRemove = finishedGames.
             Where(g => now - g.LastActionTime > Parameters.GameRetentionTime).
-            Select(g => g.Id).
-            ToImmutableArray();
-
-        if (idsToRemove.Length > 0)
+            Select(g => g.Id);
+        foreach (var id in idsToRemove)
         {
-            foreach (var id in idsToRemove)
+            if (games.TryRemove(id, out var _))
             {
-                games.TryRemove(id, out var _);
                 GameRemoved?.Invoke(this, new GameRemovedEventArgs(id));
             }
         }

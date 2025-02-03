@@ -87,7 +87,6 @@ public class GameServerTests
         Assert.Multiple(() =>
         {
             Assert.That(state.Level, Is.EqualTo(1));
-            Assert.That(state.IsFinished, Is.True);
             Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         });
     }
@@ -365,7 +364,6 @@ public class GameServerTests
         Assert.Multiple(() =>
         {
             Assert.That(state.Level, Is.EqualTo(1));
-            Assert.That(state.IsFinished, Is.True);
             Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         });
 
@@ -431,11 +429,7 @@ public class GameServerTests
             state = gameServer.Act(startResult.GameId, a1 != 0 ? (DirectedAction)a1 : null, a2 != 0 ? (DirectedAction)a2 : null);
         }
         Assert.That(state, Is.Not.Null);
-        Assert.Multiple(() =>
-        {
-            Assert.That(state.IsFinished, Is.True);
-            Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
-        });
+        Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
     }
 
     #region Primitives
