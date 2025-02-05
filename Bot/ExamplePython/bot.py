@@ -9,7 +9,7 @@ def main() -> None:
         move_east = True
         state = game.start(level)
         while not state.finished:
-            action = swoq_pb2.DIRECTEDACTION_MOVE_EAST if move_east else swoq_pb2.DIRECTEDACTION_MOVE_SOUTH
+            action = swoq_pb2.DIRECTED_ACTION_MOVE_EAST if move_east else swoq_pb2.DIRECTED_ACTION_MOVE_SOUTH
             state = game.act(action)
             move_east = not move_east
 
