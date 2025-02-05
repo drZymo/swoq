@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package Swoq.Interface;
+
+enum Result {
+    RESULT_OK = 0;
+    RESULT_INTERNAL_ERROR = 1;
+    RESULT_UNKNOWN_USER = 2;
+    RESULT_UNKNOWN_GAME_ID = 3;
+    RESULT_USER_LEVEL_TOO_LOW = 4;
+    RESULT_QUEST_QUEUED = 5;
+    RESULT_QUEST_ALREADY_ACTIVE = 6;
+    RESULT_MOVE_NOT_ALLOWED = 7;
+    RESULT_UNKNOWN_ACTION = 8;
+    RESULT_GAME_FINISHED = 9;
+}
+
+enum GameStatus {
+    GAME_STATUS_ACTIVE = 0;
+    GAME_STATUS_FINISHED_SUCCESS = 1;
+    GAME_STATUS_FINISHED_TIMEOUT = 2;
+    GAME_STATUS_FINISHED_NO_PROGRESS = 3;
+}
+
+enum Tile {
+    TILE_UNKNOWN = 0;
+    TILE_EMPTY = 1;
+    TILE_PLAYER = 2;
+    TILE_WALL = 3;
+    TILE_EXIT = 4;
+}
+
+enum DirectedAction {
+    DIRECTED_ACTION_NONE = 0;
+    DIRECTED_ACTION_MOVE_NORTH = 1;
+    DIRECTED_ACTION_MOVE_EAST = 2;
+    DIRECTED_ACTION_MOVE_SOUTH = 3;
+    DIRECTED_ACTION_MOVE_WEST = 4;
+}
+
+service GameService {
+    rpc Start(StartRequest) returns (StartResponse);
+    rpc Act(ActionRequest) returns (ActionResponse);
+}
+
+message Position {
+    int32 x = 1;
+    int32 y = 2;
+}
+
+message PlayerState {
+    Position position = 1;
+    repeated Tile surroundings = 2;
+}
+
+message State {
+    int32 tick = 1;
+    int32 level = 2;
+    GameStatus status = 3;
+    optional PlayerState playerState = 4;
+}
+
+message StartRequest {
+    string userId = 1;
+    optional int32 level = 2;
+}
+
+message StartResponse {
+    Result result = 1;
+    optional string gameId = 2;
+    optional int32 width = 3;
+    optional int32 height = 4;
+    optional int32 visibilityRange = 5;
+    optional State state = 6;
+}
+
+message ActionRequest {
+    string gameId = 1;
+    optional DirectedAction action = 2;
+}
+
+message ActionResponse {
+    Result result = 1;
+    optional State state = 2;
+}
