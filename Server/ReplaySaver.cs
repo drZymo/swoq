@@ -5,7 +5,6 @@ using Swoq.Interface;
 using Swoq.Server.Data;
 using Swoq.Server.Services;
 using System.Collections.Concurrent;
-using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
@@ -42,42 +41,36 @@ internal class ReplaySaver : IDisposable
     private readonly CancellationTokenSource cancel = new();
     private readonly Thread handleMessagesThread;
 
-    private readonly Lock filenamesWriteMutex = new();
-    private IImmutableDictionary<Guid, string> filenames = ImmutableDictionary<Guid, string>.Empty;
+    private readonly ConcurrentDictionary<Guid, string> filenames = new();
 
     private readonly SemaphoreSlim messagesSemaphore = new(0);
     private readonly ConcurrentQueue<Message> messages = new();
 
     private void OnGameStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
     {
+        // Only save replays of quests
+        if (e.request.HasLevel) return;
+
         // Register filename for this game id
         string sanitizedUserName = Uri.EscapeDataString(e.userName);
-        string filename;
-        if (e.request.HasLevel)
-        {
-            filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.TrainingFolder, sanitizedUserName, $"level {e.request.Level} - {e.gameId}.bin");
-        }
-        else
-        {
-            filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.QuestFolder, $"{sanitizedUserName} - {e.gameId}.bin");
-        }
+        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{sanitizedUserName} - {e.gameId}.bin");
+        filenames.TryAdd(e.gameId, filename);
 
-        lock (filenamesWriteMutex)
-        {
-            filenames = filenames.Add(e.gameId, filename);
-        }
-
-        //logger.LogInformation("New replay started at {path}", filename);
-
+        // Store header
         var header = new ReplayHeader { UserName = e.userName, DateTime = Clock.Now.ToString("s") };
         Enqueue(e.gameId, header);
 
+        // Store start
         Enqueue(e.gameId, e.request);
         Enqueue(e.gameId, e.response);
     }
 
     private void OnGameActed(object? sender, (Guid gameId, ActionRequest request, ActionResponse response) e)
     {
+        // Only save messages of registered games
+        if (!filenames.ContainsKey(e.gameId)) return;
+
+        // Store it
         Enqueue(e.gameId, e.request);
         Enqueue(e.gameId, e.response);
     }
@@ -88,7 +81,6 @@ internal class ReplaySaver : IDisposable
         messagesSemaphore.Release();
     }
 
-
     private void HandleMessages()
     {
         try
@@ -96,23 +88,22 @@ internal class ReplaySaver : IDisposable
             while (!cancel.IsCancellationRequested)
             {
                 messagesSemaphore.Wait(cancel.Token);
-                messages.TryDequeue(out var msg);
-                WriteMessage(msg.gameId, msg.message);
+                if (messages.TryDequeue(out var msg))
+                {
+                    WriteMessage(msg.gameId, msg.message);
+                }
             }
         }
-        catch (OperationCanceledException)
-        {
-            // Exit gracefully
-            return;
-        }
+        // Exit gracefully on cancellation
+        catch (OperationCanceledException) { return; }
     }
 
     private void WriteMessage(Guid gameId, IMessage message)
     {
         try
         {
-            // Get file name (must be registered before)
-            var filename = filenames[gameId];
+            // Is this a registered game
+            if (!filenames.TryGetValue(gameId, out var filename)) return;
 
             // Create dir if needed
             var dir = Path.GetDirectoryName(filename);
