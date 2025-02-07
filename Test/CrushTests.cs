@@ -117,7 +117,7 @@ internal class CrushTests : GameTestBase
             // Door opened
             Assert.That(changes[(2, 1)], Is.EqualTo((Tile.DoorRed, Tile.Enemy))); // Enemy stepped right in
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-            Assert.That(changes[(1, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty))); 
+            Assert.That(changes[(1, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
             // Map revealed
             Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
             Assert.That(changes[(1, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));

@@ -2,5 +2,6 @@
     <PropertyGroup>
         <Platform Condition="'$(Platform)' == ''">Any CPU</Platform>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <RestoreLockedMode>true</RestoreLockedMode>
     </PropertyGroup>
 </Project>
