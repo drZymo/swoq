@@ -13,15 +13,6 @@ enum Result {
     RESULT_MOVE_NOT_ALLOWED = 7;
     RESULT_UNKNOWN_ACTION = 8;
     RESULT_GAME_FINISHED = 9;
-    // Level 2 and higher:
-    RESULT_USE_NOT_ALLOWED = 10;
-    RESULT_INVENTORY_FULL = 11;
-    RESULT_INVENTORY_EMPTY = 12;
-    // Level 8 and higher:
-    RESULT_NO_SWORD = 13;
-    // Level 12 and higher:
-    RESULT_PLAYER_NOT_PRESENT = 14;
-    RESULT_PLAYER2_NOT_PRESENT = 15;
 }
 
 enum GameStatus {
@@ -29,10 +20,6 @@ enum GameStatus {
     GAME_STATUS_FINISHED_SUCCESS = 1;
     GAME_STATUS_FINISHED_TIMEOUT = 2;
     GAME_STATUS_FINISHED_NO_PROGRESS = 3;
-    // Level 6 and higher:
-    GAME_STATUS_FINISHED_PLAYER_DIED = 4;
-    // Level 12 and higher:
-    GAME_STATUS_FINISHED_PLAYER2_DIED = 5;
 }
 
 enum Tile {
@@ -41,39 +28,6 @@ enum Tile {
     TILE_PLAYER = 2;
     TILE_WALL = 3;
     TILE_EXIT = 4;
-    // Level 2 and higher:
-    TILE_DOOR_RED = 5;
-    TILE_KEY_RED = 6;
-    TILE_DOOR_GREEN = 7;
-    TILE_KEY_GREEN = 8;
-    TILE_DOOR_BLUE = 9;
-    TILE_KEY_BLUE = 10;
-    // Level 6 and higher:
-    TILE_BOULDER = 11;
-    // Level 7 and higher:
-    TILE_PRESSURE_PLATE_RED = 12;
-    TILE_PRESSURE_PLATE_GREEN = 13;
-    TILE_PRESSURE_PLATE_BLUE = 14;
-    // Level 8 and higher:
-    TILE_ENEMY = 15;
-    // Level 10 and higher:
-    TILE_SWORD = 16;
-    TILE_HEALTH = 17;
-    // Level 22 and higher:
-    TILE_BOSS = 18;
-    TILE_TREASURE = 19;
-}
-
-enum Inventory {
-    // Level 2 and higher:
-    INVENTORY_NONE = 0;
-    INVENTORY_KEY_RED = 1;
-    INVENTORY_KEY_GREEN = 2;
-    INVENTORY_KEY_BLUE = 3;
-    // Level 6 and higher:
-    INVENTORY_BOULDER = 4;
-    // Level 22 and higher:
-    INVENTORY_TREASURE = 5;
 }
 
 enum DirectedAction {
@@ -82,11 +36,6 @@ enum DirectedAction {
     DIRECTED_ACTION_MOVE_EAST = 2;
     DIRECTED_ACTION_MOVE_SOUTH = 3;
     DIRECTED_ACTION_MOVE_WEST = 4;
-    // Level 2 and higher:
-    DIRECTED_ACTION_USE_NORTH = 5;
-    DIRECTED_ACTION_USE_EAST = 6;
-    DIRECTED_ACTION_USE_SOUTH = 7;
-    DIRECTED_ACTION_USE_WEST = 8;
 }
 
 service GameService {
@@ -102,12 +51,6 @@ message Position {
 message PlayerState {
     Position position = 1;
     repeated Tile surroundings = 2;
-    // Level 2 and higher:
-    optional Inventory inventory = 3;
-    // Level 8 and higher:
-    optional int32 health = 4;
-    // Level 10 and higher:
-    optional bool hasSword = 5;
 }
 
 message State {
@@ -115,8 +58,6 @@ message State {
     int32 level = 2;
     GameStatus status = 3;
     optional PlayerState playerState = 4;
-    // Level 12 and higher:
-    optional PlayerState player2State = 5;
 }
 
 message StartRequest {
@@ -136,8 +77,6 @@ message StartResponse {
 message ActionRequest {
     string gameId = 1;
     optional DirectedAction action = 2;
-    // Level 12 and higher:
-    optional DirectedAction action2 = 3;
 }
 
 message ActionResponse {
