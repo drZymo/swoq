@@ -2,23 +2,13 @@
 
 internal class ReplayStorageSettings
 {
-    private string trainingFolder = "";
-    public string TrainingFolder
+    private string folder = "";
+    public string Folder
     {
-        get => trainingFolder;
+        get => folder;
         set
         {
-            trainingFolder = Environment.ExpandEnvironmentVariables(value);
-        }
-    }
-
-    private string questFolder = "";
-    public string QuestFolder
-    {
-        get => questFolder;
-        set
-        {
-            questFolder = Environment.ExpandEnvironmentVariables(value);
+            folder = Environment.ExpandEnvironmentVariables(value);
         }
     }
 }
