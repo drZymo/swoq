@@ -376,7 +376,6 @@ class GamePlayer:
 
 
     def step_level22(self) -> None:
-
         old_map = self.map
 
         player_1_on_plate = self.plate_color_1 is not None and self.remain_on_plate_counter_1 > 0
@@ -429,14 +428,17 @@ class GamePlayer:
                 self.level22_state = 'move_to_door'
 
         if self.level22_state == 'move_to_door':
+            self.remain_on_plate_counter_1 = 100 # keep player 1 on plate
             if self.player2_pos in self.plate_door_positions:
                 self.level22_state = 'trigger_boss'
             else:
                 if self.can_act2():
-                    self.move_to_closest_2(self.plate_door_positions, 'boss_door')
+                    is_adjacent = any(are_adjacent(self.player2_pos, pos) for pos in self.plate_door_positions)
+                    if not is_adjacent:
+                        self.move_to_closest_2(self.plate_door_positions, 'boss_door')
 
         if self.level22_state == 'trigger_boss':
-            self.remain_on_plate_counter_1 = 100
+            self.remain_on_plate_counter_1 = 100 # keep player 1 on plate
             if boss_moving:
                 self.level22_state = 'lure_boss'
             else:

@@ -1,11 +1,10 @@
 # TODO
 
 - [ ] Change quest queueing. Start game, but return "queued" result at act().
-- [?] Codes to unlock each level, based on Advent of Code.
+- [ ] Start response, width => mapWidth
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
 - [ ] Quest finished mark in high score list
-- [ ] Rework inactive states of games. Move all checks to Game class.
 - [ ] Activity plot (events per second) in dashboard with ScottPlot.Avalonia
 - [ ] Allow reconnect of dashboard by resending quest started
 - [.] User portal
@@ -27,14 +26,17 @@
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
 - [ ] Enemies that move towards player using path finding
-- [?] Slower with boulder in inventory. 50% change movement is executed.
-- [?] Remember health at start of level
 - [ ] Autotile in map viewer
 - [ ] Single build output/publish folder for server and dashboard
 - [ ] Auto start dashboard from server
 - [ ] Publish a single-file app
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
+
+# Ideas
+- [ ] Codes to unlock each level, based on Advent of Code.
+- [ ] Slower with boulder in inventory. 50% change movement is executed.
+- [ ] Remember health at start of level
 
 ## Done
 - [X] Act vs Move/Use
@@ -143,6 +145,7 @@
   - [X] dashboard quest tabs
   - [X] Show end of quest overlay
   - [X] Cleanup quest tabs after 10s after game is finished 
+- [X] Rework inactive states of games. Move all checks to Game class.
 
 
 # Design decisions

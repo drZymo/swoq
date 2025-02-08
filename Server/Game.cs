@@ -31,7 +31,7 @@ internal class Game : IGame
     public GameState State { get; private set; }
     public DateTime LastActionTime { get; private set; } = Clock.Now;
     public bool IsFinished => status != GameStatus.Active || TimedOut;
-    
+
     private bool TimedOut => (Clock.Now - LastActionTime) > maxInactivityTime;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)

@@ -2,5 +2,7 @@
     <PropertyGroup>
         <Platform Condition="'$(Platform)' == ''">Any CPU</Platform>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <RestoreLockedMode>true</RestoreLockedMode>
+        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
     </PropertyGroup>
 </Project>
