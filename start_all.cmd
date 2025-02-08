@@ -2,7 +2,13 @@
 
 pushd %~dp0
 
-dotnet build -c Release
+dotnet restore --locked-mode
+if %errorlevel% neq 0 (
+    popd
+    exit /b %errorlevel%
+)
+
+dotnet build -c Release --no-restore
 if %errorlevel% neq 0 (
     popd
     exit /b %errorlevel%
