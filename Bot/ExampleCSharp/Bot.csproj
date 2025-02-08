@@ -8,11 +8,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="env.json" />
       <None Remove="swoq.proto" />
     </ItemGroup>
 
     <ItemGroup>
+      <Content Include="env.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 
     <ItemGroup>
