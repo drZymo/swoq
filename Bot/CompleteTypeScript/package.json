@@ -1,0 +1,33 @@
+{
+    "name": "swoq-example-bot",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "scripts": {
+        "prepare": "npm run -s proto && npm run -s build",
+        "proto": "mkdirp src/generated && protoc --ts_out src/generated/ --proto_path protos/ swoq.proto",
+        "start": "node ./dist/index",
+        "build": "tsc",
+        "watch": "tsc --watch",
+        "train": "nodemon -w dist -w .env dist/index"
+    },
+    "keywords": [
+        "swoq"
+    ],
+    "author": "Martin Poelstra <martin@beryllium.net>",
+    "license": "MIT",
+    "description": "Example bot for SWOQ contest",
+    "devDependencies": {
+        "@protobuf-ts/plugin": "^2.9.4",
+        "@types/node": "^22.13.0",
+        "mkdirp": "^3.0.1",
+        "nodemon": "^3.1.9",
+        "source-map-support": "^0.5.21",
+        "typescript": "^5.7.3"
+    },
+    "dependencies": {
+        "@grpc/grpc-js": "^1.12.5",
+        "@protobuf-ts/grpc-transport": "^2.9.4",
+        "astar-typescript": "^1.2.7",
+        "dotenv": "^16.4.7"
+    }
+}
