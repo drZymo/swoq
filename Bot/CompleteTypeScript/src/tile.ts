@@ -16,6 +16,7 @@ export const TILE_CHARS: Record<Tile, string> = {
     [Tile.PRESSURE_PLATE_RED]: "u",
     [Tile.PRESSURE_PLATE_GREEN]: "v",
     [Tile.PRESSURE_PLATE_BLUE]: "w",
+    [Tile.ENEMY]: "E",
 };
 
 export const CHAR_TO_TILE: Record<string, Tile> = {
@@ -35,6 +36,7 @@ export const CHAR_TO_TILE: Record<string, Tile> = {
     u: Tile.PRESSURE_PLATE_RED,
     v: Tile.PRESSURE_PLATE_GREEN,
     w: Tile.PRESSURE_PLATE_BLUE,
+    E: Tile.ENEMY,
 };
 
 export enum Color {
@@ -59,6 +61,26 @@ export const COLOR_TO_PLATE_TILE: Record<Color, Tile> = {
     [Color.Red]: Tile.PRESSURE_PLATE_RED,
     [Color.Green]: Tile.PRESSURE_PLATE_GREEN,
     [Color.Blue]: Tile.PRESSURE_PLATE_BLUE,
+};
+
+export const TILE_TO_COLOR: Record<Tile, Color | undefined> = {
+    [Tile.DOOR_RED]: Color.Red,
+    [Tile.KEY_RED]: Color.Red,
+    [Tile.PRESSURE_PLATE_RED]: Color.Red,
+    [Tile.DOOR_GREEN]: Color.Green,
+    [Tile.KEY_GREEN]: Color.Green,
+    [Tile.PRESSURE_PLATE_GREEN]: Color.Green,
+    [Tile.DOOR_BLUE]: Color.Blue,
+    [Tile.KEY_BLUE]: Color.Blue,
+    [Tile.PRESSURE_PLATE_BLUE]: Color.Blue,
+
+    [Tile.UNKNOWN]: undefined,
+    [Tile.EMPTY]: undefined,
+    [Tile.PLAYER]: undefined,
+    [Tile.WALL]: undefined,
+    [Tile.EXIT]: undefined,
+    [Tile.BOULDER]: undefined,
+    [Tile.ENEMY]: undefined,
 };
 
 export function tilesFromString(str: string): Tile[][] {

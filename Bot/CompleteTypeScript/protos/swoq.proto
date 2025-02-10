@@ -17,6 +17,8 @@ enum Result {
     RESULT_USE_NOT_ALLOWED = 10;
     RESULT_INVENTORY_FULL = 11;
     RESULT_INVENTORY_EMPTY = 12;
+    // Level 8 and higher:
+    RESULT_NO_SWORD = 13;
 }
 
 enum GameStatus {
@@ -47,6 +49,8 @@ enum Tile {
     TILE_PRESSURE_PLATE_RED = 12;
     TILE_PRESSURE_PLATE_GREEN = 13;
     TILE_PRESSURE_PLATE_BLUE = 14;
+    // Level 8 and higher:
+    TILE_ENEMY = 15;
 }
 
 enum Inventory {
@@ -87,6 +91,8 @@ message PlayerState {
     repeated Tile surroundings = 2;
     // Level 2 and higher:
     optional Inventory inventory = 3;
+    // Level 8 and higher:
+    optional int32 health = 4;
 }
 
 message State {

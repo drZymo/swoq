@@ -31,6 +31,7 @@ export class Dijkstra {
             const neighbors = this.grid.getAllNeighbors(currentPosition);
             for (const neighbor of neighbors) {
                 const neighborKey = neighbor.y * width + neighbor.x;
+                // TODO larger weight for enemies?
                 const distance = currentDistance + 1; //this.grid.getCost(currentPosition, neighbor);
 
                 if (

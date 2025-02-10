@@ -1,6 +1,6 @@
 import { Position, Tile } from "./generated/swoq";
 import { addPosition, removePosition } from "./position";
-import { TILE_CHARS, tilesFromString } from "./tile";
+import { Color, TILE_CHARS, TILE_TO_COLOR, tilesFromString } from "./tile";
 
 const NEIGHBOR_COORDS: [number, number][] = [
     [-1, 0],
@@ -14,7 +14,8 @@ export class Grid {
     public readonly height: number;
     public readonly tiles: Tile[][];
     public exitPosition?: Position;
-    // public doorPositions: Partial<Record<Color, Position[]>> = {};
+    public doorPositions: Partial<Record<Color, Position[]>> = {};
+    public pressurePlatePositions: Partial<Record<Color, Position[]>> = {};
     public tilePositions: Partial<Record<Tile, Position[]>> = {};
 
     public static fromString(str: string): Grid {
@@ -51,6 +52,7 @@ export class Grid {
             case Tile.DOOR_BLUE:
             case Tile.KEY_BLUE:
             case Tile.BOULDER:
+            case Tile.ENEMY:
                 return false;
         }
     }
@@ -94,7 +96,12 @@ export class Grid {
         }
     }
 
-    private _setTile(x: number, y: number, tile: Tile): void {
+    private _setTile(
+        x: number,
+        y: number,
+        tile: Tile,
+        updatingInternal: boolean = false
+    ): void {
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
             return;
         }
@@ -113,8 +120,10 @@ export class Grid {
             this.tilePositions[prevTile],
             pos
         );
-        if (prevTile === Tile.UNKNOWN && tile === Tile.EMPTY) {
-            // Special handling for unknown tiles: only add/remove boundary nodes in the unknown tile list
+
+        // Special handling for unknown tiles: only add/remove boundary nodes in the unknown tile list
+        // Most likely: prev=UNKNOWN, tile=EMPTY, but e.g. also prev=DOOR_RED, tile=EMPTY...
+        if (!Grid.isWalkable(prevTile) && Grid.isWalkable(tile)) {
             let tp = this.tilePositions[Tile.UNKNOWN];
             for (const neigh of this.getAllNeighborsOfType(pos, Tile.UNKNOWN)) {
                 tp = addPosition(tp, neigh);
@@ -122,9 +131,60 @@ export class Grid {
             this.tilePositions[Tile.UNKNOWN] = tp;
         }
         this.tilePositions[tile] = addPosition(this.tilePositions[tile], pos);
+
+        // If doors or pressureplates disappear, we can infer what happened to
+        // their siblings / targets
+        if (!updatingInternal) {
+            // TODO: updatingInternal is ugly, but it's to prevent possible recursion
+            // because of these updates. This needs to split out to something more clear.
+            switch (prevTile) {
+                // If one door is removed, all corresponding doors are removed
+                // TODO: double-check whether this is true
+                case Tile.DOOR_RED:
+                case Tile.DOOR_GREEN:
+                case Tile.DOOR_BLUE:
+                // If pressure plate is pressed, their doors must have disappeared
+                case Tile.PRESSURE_PLATE_RED:
+                case Tile.PRESSURE_PLATE_GREEN:
+                case Tile.PRESSURE_PLATE_BLUE:
+                    {
+                        const color = TILE_TO_COLOR[prevTile]!;
+                        const doors = this.doorPositions[color] ?? [];
+                        for (const door of doors) {
+                            this._setTile(door.x, door.y, Tile.EMPTY, true);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        // Remember locations of things that can be occluded or are easier to
+        // find like this
         switch (tile) {
             case Tile.EXIT:
                 this.exitPosition = { x, y };
+                break;
+            case Tile.DOOR_RED:
+            case Tile.DOOR_GREEN:
+            case Tile.DOOR_BLUE:
+                {
+                    const color = TILE_TO_COLOR[tile]!;
+                    this.doorPositions[color] = addPosition(
+                        this.doorPositions[color],
+                        pos
+                    );
+                }
+                break;
+            case Tile.PRESSURE_PLATE_RED:
+            case Tile.PRESSURE_PLATE_GREEN:
+            case Tile.PRESSURE_PLATE_BLUE:
+                {
+                    const color = TILE_TO_COLOR[tile]!;
+                    this.pressurePlatePositions[color] = addPosition(
+                        this.pressurePlatePositions[color],
+                        pos
+                    );
+                }
                 break;
         }
     }

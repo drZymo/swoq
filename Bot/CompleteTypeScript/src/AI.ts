@@ -73,6 +73,7 @@ export class AI {
 
     private async _act(action: DirectedAction): Promise<void> {
         const state = await this.game.act(action);
+        this.player?.actionPerformed(action);
         console.log(
             `Act(${DirectedAction[action]}) state: tick=${state.tick}, level=${
                 state.level

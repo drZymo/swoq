@@ -144,7 +144,7 @@ export class Player {
     public tryOpenDoor(color: Color): DirectedAction | undefined {
         return (
             this.tryOpenDoorWithKeys(color) ??
-            this.tryOpenDoorWithPressurePlate(color)
+            this.tryOpenDoorWithPressurePlateAndBoulder(color)
         );
     }
 
@@ -168,7 +168,7 @@ export class Player {
         return this.navigateTo(key);
     }
 
-    public tryOpenDoorWithPressurePlate(
+    public tryOpenDoorWithPressurePlateAndBoulder(
         color: Color
     ): DirectedAction | undefined {
         // Try to open the door if we have the key
@@ -187,8 +187,7 @@ export class Player {
         // TODO Compute more optimal path (boulder closest to plate)
         const boulder = this.getClosestTile(Tile.BOULDER);
         if (!boulder) {
-            // No boulder in range
-            return undefined;
+            return this._tryOpenDoorWithPressurePlate(plate);
         }
         if (!!this.state.inventory) {
             console.warn(
@@ -203,6 +202,12 @@ export class Player {
             plate
         );
         return this.navigateAndUse(boulder);
+    }
+
+    private _tryOpenDoorWithPressurePlate(
+        plate: Position
+    ): DirectedAction | undefined {
+        return this.navigateTo(plate);
     }
 
     public tryExplore(): DirectedAction | undefined {
@@ -275,5 +280,9 @@ export class Player {
             return undefined;
         }
         return this.navigateAndUse(dropLocation);
+    }
+
+    public actionPerformed(action: DirectedAction): void {
+        // TODO unneeded?
     }
 }

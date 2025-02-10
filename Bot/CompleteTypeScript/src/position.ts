@@ -19,6 +19,70 @@ export function getDirection(
     }
 }
 
+export function targetPosition(
+    fromPosition: Position,
+    action: DirectedAction
+): Position {
+    let delta;
+    switch (action) {
+        case DirectedAction.NONE:
+            return fromPosition;
+        case DirectedAction.MOVE_EAST:
+        case DirectedAction.USE_EAST:
+            delta = [1, 0];
+            break;
+        case DirectedAction.MOVE_WEST:
+        case DirectedAction.USE_WEST:
+            delta = [-1, 0];
+            break;
+        case DirectedAction.MOVE_SOUTH:
+        case DirectedAction.USE_SOUTH:
+            delta = [0, 1];
+            break;
+        case DirectedAction.MOVE_NORTH:
+        case DirectedAction.USE_NORTH:
+            delta = [0, 1];
+            break;
+    }
+    return { x: fromPosition.x + delta[0], y: fromPosition.y + delta[1] };
+}
+
+export type MoveAction =
+    | DirectedAction.MOVE_EAST
+    | DirectedAction.MOVE_WEST
+    | DirectedAction.MOVE_NORTH
+    | DirectedAction.MOVE_SOUTH;
+
+export type UseAction =
+    | DirectedAction.USE_EAST
+    | DirectedAction.USE_WEST
+    | DirectedAction.USE_NORTH
+    | DirectedAction.USE_SOUTH;
+
+export function isMoveAction(action: DirectedAction): action is MoveAction {
+    switch (action) {
+        case DirectedAction.MOVE_EAST:
+        case DirectedAction.MOVE_WEST:
+        case DirectedAction.MOVE_NORTH:
+        case DirectedAction.MOVE_SOUTH:
+            return true;
+        default:
+            return false;
+    }
+}
+
+export function isUseAction(action: DirectedAction): action is UseAction {
+    switch (action) {
+        case DirectedAction.USE_EAST:
+        case DirectedAction.USE_WEST:
+        case DirectedAction.USE_NORTH:
+        case DirectedAction.USE_SOUTH:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export function getPathDirection(path: Position[]): DirectedAction | undefined {
     if (path.length < 2) {
         return undefined;
