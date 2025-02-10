@@ -28,7 +28,7 @@ export class Dijkstra {
             const [currentDistance, currentPosition] = pq.shift()!;
             // const currentKey = currentPosition.y * width + currentPosition.x;
 
-            const neighbors = this.grid.getNeighbors(currentPosition);
+            const neighbors = this.grid.getAllNeighbors(currentPosition);
             for (const neighbor of neighbors) {
                 const neighborKey = neighbor.y * width + neighbor.x;
                 const distance = currentDistance + 1; //this.grid.getCost(currentPosition, neighbor);
@@ -39,7 +39,9 @@ export class Dijkstra {
                 ) {
                     this.distances.set(neighborKey, distance);
                     this.previous.set(neighborKey, currentPosition);
-                    pq.push([distance, neighbor]);
+                    if (this.grid.isWalkable(neighbor)) {
+                        pq.push([distance, neighbor]);
+                    }
                 }
             }
         }
@@ -52,19 +54,35 @@ export class Dijkstra {
 
     getPath(to: Position): Position[] {
         const path: Position[] = [];
-        let currentKey = to.y * this.grid.width + to.x;
 
-        while (this.previous.has(currentKey)) {
-            const currentPosition = this.previous.get(currentKey)!;
-            path.unshift(currentPosition);
+        let currentPosition: Position | undefined = to;
+        let currentKey = to.y * this.grid.width + to.x;
+        while ((currentPosition = this.previous.get(currentKey))) {
             currentKey =
                 currentPosition.y * this.grid.width + currentPosition.x;
+            path.unshift(currentPosition);
         }
 
-        if (path.length === 0 || path[0] !== this.from) {
-            path.unshift(this.from);
+        if (path.length > 0) {
+            path.push(to);
         }
 
-        return path.slice(1);
+        return path;
+    }
+
+    public dump(): void {
+        console.log(
+            [...this.distances.entries()].map(([key, distance]) => {
+                const pos = this._keyToPos(key);
+                const prev = this.previous.get(key) ?? { x: -1, y: -1 };
+                return `[${pos.x},${pos.y}] = -> [${prev.x},${prev.y}] @ ${distance}`;
+            })
+        );
+    }
+
+    private _keyToPos(key: number): Position {
+        const x = key % this.grid.width;
+        const y = Math.floor(key / this.grid.width);
+        return { x, y };
     }
 }

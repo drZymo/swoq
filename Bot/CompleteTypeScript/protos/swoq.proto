@@ -13,6 +13,10 @@ enum Result {
     RESULT_MOVE_NOT_ALLOWED = 7;
     RESULT_UNKNOWN_ACTION = 8;
     RESULT_GAME_FINISHED = 9;
+    // Level 2 and higher:
+    RESULT_USE_NOT_ALLOWED = 10;
+    RESULT_INVENTORY_FULL = 11;
+    RESULT_INVENTORY_EMPTY = 12;
 }
 
 enum GameStatus {
@@ -28,6 +32,21 @@ enum Tile {
     TILE_PLAYER = 2;
     TILE_WALL = 3;
     TILE_EXIT = 4;
+    // Level 2 and higher:
+    TILE_DOOR_RED = 5;
+    TILE_KEY_RED = 6;
+    TILE_DOOR_GREEN = 7;
+    TILE_KEY_GREEN = 8;
+    TILE_DOOR_BLUE = 9;
+    TILE_KEY_BLUE = 10;
+}
+
+enum Inventory {
+    // Level 2 and higher:
+    INVENTORY_NONE = 0;
+    INVENTORY_KEY_RED = 1;
+    INVENTORY_KEY_GREEN = 2;
+    INVENTORY_KEY_BLUE = 3;
 }
 
 enum DirectedAction {
@@ -36,6 +55,11 @@ enum DirectedAction {
     DIRECTED_ACTION_MOVE_EAST = 2;
     DIRECTED_ACTION_MOVE_SOUTH = 3;
     DIRECTED_ACTION_MOVE_WEST = 4;
+    // Level 2 and higher:
+    DIRECTED_ACTION_USE_NORTH = 5;
+    DIRECTED_ACTION_USE_EAST = 6;
+    DIRECTED_ACTION_USE_SOUTH = 7;
+    DIRECTED_ACTION_USE_WEST = 8;
 }
 
 service GameService {
@@ -51,6 +75,8 @@ message Position {
 message PlayerState {
     Position position = 1;
     repeated Tile surroundings = 2;
+    // Level 2 and higher:
+    optional Inventory inventory = 3;
 }
 
 message State {
