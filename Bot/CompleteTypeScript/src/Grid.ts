@@ -41,6 +41,8 @@ export class Grid {
             case Tile.PRESSURE_PLATE_RED:
             case Tile.PRESSURE_PLATE_GREEN:
             case Tile.PRESSURE_PLATE_BLUE:
+            case Tile.HEALTH:
+            case Tile.SWORD:
                 return true;
             case Tile.PLAYER:
             case Tile.UNKNOWN:

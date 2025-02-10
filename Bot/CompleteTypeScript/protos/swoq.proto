@@ -51,6 +51,9 @@ enum Tile {
     TILE_PRESSURE_PLATE_BLUE = 14;
     // Level 8 and higher:
     TILE_ENEMY = 15;
+    // Level 10 and higher:
+    TILE_SWORD = 16;
+    TILE_HEALTH = 17;
 }
 
 enum Inventory {
@@ -93,6 +96,8 @@ message PlayerState {
     optional Inventory inventory = 3;
     // Level 8 and higher:
     optional int32 health = 4;
+    // Level 10 and higher:
+    optional bool hasSword = 5;
 }
 
 message State {

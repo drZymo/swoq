@@ -57,6 +57,8 @@ export class Player {
         const elems = [
             `pos=${posToString(this.position)}`,
             `inventory=${Inventory[this.state.inventory ?? Inventory.NONE]}`,
+            `health=${this.state.health}`,
+            this.state.hasSword ? `has_sword` : undefined,
             this.focus ? `focus=${PlayerFocus[this.focus]}` : undefined,
         ].filter((e) => !!e);
         return `Player(${elems.join(", ")})`;
@@ -139,6 +141,15 @@ export class Player {
     public navigateTo(pos: Position): DirectedAction | undefined {
         const path = this.dijkstra.getPath(pos);
         return getPathDirection(path);
+    }
+
+    public navigateToTile(tile: Tile): DirectedAction | undefined {
+        const pos = this.getClosestTile(tile);
+        if (!pos) {
+            return undefined;
+        }
+        console.debug(`Navigating to ${Tile[tile]} at`, pos);
+        return this.navigateTo(pos);
     }
 
     public tryOpenDoor(color: Color): DirectedAction | undefined {
@@ -241,8 +252,12 @@ export class Player {
         }
     }
 
-    public get hasBoulder() {
+    public get hasBoulder(): boolean {
         return this.state.inventory === Inventory.BOULDER;
+    }
+
+    public get hasSword(): boolean {
+        return !!this.state.hasSword;
     }
 
     public tryWalkExit(): DirectedAction | undefined {
@@ -284,5 +299,17 @@ export class Player {
 
     public actionPerformed(action: DirectedAction): void {
         // TODO unneeded?
+    }
+
+    public trySlayEnemy(): DirectedAction | undefined {
+        if (!this.hasSword) {
+            return undefined;
+        }
+        const enemy = this.getClosestTile(Tile.ENEMY);
+        if (!enemy) {
+            return undefined;
+        }
+        console.log(`Slaying enemy at`, enemy);
+        return this.navigateAndUse(enemy);
     }
 }

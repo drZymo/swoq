@@ -1,5 +1,5 @@
 import { Game } from "./Game";
-import { DirectedAction, GameStatus } from "./generated/swoq";
+import { DirectedAction, GameStatus, Tile } from "./generated/swoq";
 import { Grid } from "./Grid";
 import { Player } from "./Player";
 import { Color } from "./tile";
@@ -85,8 +85,13 @@ export class AI {
         // TODO: early levels: pick up key asap
         const steps = [
             () => this._focusedAction(),
+            // TODO In early levels (2?) and level 10, we can pick up key ASAP
+            () => this._tryPickupSword(),
+            () => this._tryPickupHealth(),
             () => this._tryWalkToExit(),
             () => this._tryOpenDoor(),
+            // TODO Tweak moment of enemy slaying? Is it always necessary to slay it?
+            () => this._trySlayEnemy(),
             () => this._tryExplore(),
         ];
         let action: DirectedAction | undefined = undefined;
@@ -105,6 +110,20 @@ export class AI {
         // Sanity checks
         // TODO Never walk into exit with boulder
         await this._act(action ?? DirectedAction.NONE);
+    }
+
+    private _trySlayEnemy(): DirectedAction | undefined {
+        return this.player?.trySlayEnemy();
+    }
+
+    private _tryPickupSword(): DirectedAction | undefined {
+        // Pick up any sword. Typically, we'll start to see a sword
+        // as soon as it becomes available, so it's a short stroll.
+        return this.player?.navigateToTile(Tile.SWORD);
+    }
+
+    private _tryPickupHealth(): DirectedAction | undefined {
+        return this.player?.navigateToTile(Tile.HEALTH);
     }
 
     private _focusedAction(): DirectedAction | undefined {

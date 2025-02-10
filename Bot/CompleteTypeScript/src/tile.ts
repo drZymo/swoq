@@ -17,6 +17,8 @@ export const TILE_CHARS: Record<Tile, string> = {
     [Tile.PRESSURE_PLATE_GREEN]: "v",
     [Tile.PRESSURE_PLATE_BLUE]: "w",
     [Tile.ENEMY]: "E",
+    [Tile.HEALTH]: "%",
+    [Tile.SWORD]: "/",
 };
 
 export const CHAR_TO_TILE: Record<string, Tile> = {
@@ -81,6 +83,8 @@ export const TILE_TO_COLOR: Record<Tile, Color | undefined> = {
     [Tile.EXIT]: undefined,
     [Tile.BOULDER]: undefined,
     [Tile.ENEMY]: undefined,
+    [Tile.SWORD]: undefined,
+    [Tile.HEALTH]: undefined,
 };
 
 export function tilesFromString(str: string): Tile[][] {
