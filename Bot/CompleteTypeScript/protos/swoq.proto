@@ -24,6 +24,8 @@ enum GameStatus {
     GAME_STATUS_FINISHED_SUCCESS = 1;
     GAME_STATUS_FINISHED_TIMEOUT = 2;
     GAME_STATUS_FINISHED_NO_PROGRESS = 3;
+    // Level 6 and higher:
+    GAME_STATUS_FINISHED_PLAYER_DIED = 4;
 }
 
 enum Tile {
@@ -39,6 +41,8 @@ enum Tile {
     TILE_KEY_GREEN = 8;
     TILE_DOOR_BLUE = 9;
     TILE_KEY_BLUE = 10;
+    // Level 6 and higher:
+    TILE_BOULDER = 11;
 }
 
 enum Inventory {
@@ -47,6 +51,8 @@ enum Inventory {
     INVENTORY_KEY_RED = 1;
     INVENTORY_KEY_GREEN = 2;
     INVENTORY_KEY_BLUE = 3;
+    // Level 6 and higher:
+    INVENTORY_BOULDER = 4;
 }
 
 enum DirectedAction {

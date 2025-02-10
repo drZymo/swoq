@@ -19,9 +19,9 @@ export function getDirection(
     }
 }
 
-export function getPathDirection(path: Position[]): DirectedAction {
+export function getPathDirection(path: Position[]): DirectedAction | undefined {
     if (path.length < 2) {
-        return DirectedAction.NONE;
+        return undefined;
     }
     return getDirection(path[0], path[1]);
 }
@@ -37,7 +37,9 @@ export function moveToUse(move: DirectedAction): DirectedAction {
         case DirectedAction.MOVE_SOUTH:
             return DirectedAction.USE_SOUTH;
         default:
-            return DirectedAction.NONE;
+            throw new Error(
+                `can't convert Action ${DirectedAction[move]} to Use`
+            );
     }
 }
 

@@ -47,6 +47,7 @@ export class Grid {
             case Tile.KEY_GREEN:
             case Tile.DOOR_BLUE:
             case Tile.KEY_BLUE:
+            case Tile.BOULDER:
                 return false;
         }
     }

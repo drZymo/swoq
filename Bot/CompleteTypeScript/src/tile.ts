@@ -12,6 +12,7 @@ export const TILE_CHARS: Record<Tile, string> = {
     [Tile.KEY_GREEN]: "g",
     [Tile.DOOR_BLUE]: "B",
     [Tile.KEY_BLUE]: "b",
+    [Tile.BOULDER]: "O",
 };
 
 export const CHAR_TO_TILE: Record<string, Tile> = {
@@ -27,6 +28,7 @@ export const CHAR_TO_TILE: Record<string, Tile> = {
     g: Tile.KEY_GREEN,
     B: Tile.DOOR_BLUE,
     b: Tile.KEY_BLUE,
+    O: Tile.BOULDER,
 };
 
 export enum Color {

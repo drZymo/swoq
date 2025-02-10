@@ -1,5 +1,5 @@
 import { Game } from "./Game";
-import { DirectedAction, GameStatus, Tile } from "./generated/swoq";
+import { DirectedAction, GameStatus } from "./generated/swoq";
 import { Grid } from "./Grid";
 import { Player } from "./Player";
 import { Color } from "./tile";
@@ -24,27 +24,31 @@ export class AI {
         );
 
         const level = state.level;
-        while (
-            this.game.state.status == GameStatus.ACTIVE &&
-            level === this.game.state.level
-        ) {
-            this._updateState();
-            await this._step();
+        let done = false;
+        try {
+            while (
+                this.game.state.status == GameStatus.ACTIVE &&
+                level === this.game.state.level
+            ) {
+                this._updateState();
+                await this._step();
+            }
+            done = true;
+        } finally {
+            performance.mark("end");
+            const playMeasurement = performance.measure("play", "start", "end");
+            const result =
+                done && this.game.state.status === GameStatus.FINISHED_SUCCESS
+                    ? "finished"
+                    : "ERRORED";
+            console.log(
+                `Level ${level} ${result}: ${playMeasurement.duration.toFixed(
+                    2
+                )}ms, ${this.game.state.tick} ticks, ${(
+                    playMeasurement.duration / this.game.state.tick
+                ).toFixed(2)}ms/tick`
+            );
         }
-
-        performance.mark("end");
-        const playMeasurement = performance.measure("play", "start", "end");
-        const result =
-            this.game.state.status === GameStatus.FINISHED_SUCCESS
-                ? "finished"
-                : "ERRORED";
-        console.log(
-            `Level ${level} ${result}: ${playMeasurement.duration.toFixed(
-                2
-            )}ms, ${this.game.state.tick} ticks, ${(
-                playMeasurement.duration / this.game.state.tick
-            ).toFixed(2)}ms/tick`
-        );
     }
 
     private _updateState(): void {
@@ -77,22 +81,39 @@ export class AI {
     }
 
     private async _step(): Promise<void> {
-        let direction = this._tryWalkToExit();
-        if (direction === DirectedAction.NONE) {
-            direction = this._tryOpenDoor();
-        }
-        if (direction === DirectedAction.NONE) {
-            direction = this._tryExplore();
+        // TODO: early levels: pick up key asap
+        const steps = [
+            () => this._focusedAction(),
+            () => this._tryWalkToExit(),
+            () => this._tryOpenDoor(),
+            () => this._tryExplore(),
+        ];
+        let action: DirectedAction | undefined = undefined;
+        for (const step of steps) {
+            action = step();
+            if (action !== undefined) {
+                break;
+            }
         }
 
         // TODO random walk otherwise
-        await this._act(direction);
+        if (!action && !this.player?.waiting) {
+            throw new Error(`Nothing to do`);
+        }
+
+        // Sanity checks
+        // TODO Never walk into exit with boulder
+        await this._act(action ?? DirectedAction.NONE);
     }
 
-    private _tryOpenDoor(): DirectedAction {
+    private _focusedAction(): DirectedAction | undefined {
+        return this.player?.tryFocused();
+    }
+
+    private _tryOpenDoor(): DirectedAction | undefined {
         const player = this.player;
         if (!player) {
-            return DirectedAction.NONE;
+            return undefined;
         }
         return (
             player.tryOpenDoor(Color.Red) ||
@@ -101,35 +122,11 @@ export class AI {
         );
     }
 
-    private _tryExplore(): DirectedAction {
-        const closestUnknown = this.player?.getClosest(Tile.UNKNOWN);
-        if (!closestUnknown) {
-            console.debug("No unknowns left");
-            return DirectedAction.NONE;
-        }
-        console.log("Explore to", closestUnknown);
-        if (!this.player) {
-            return DirectedAction.NONE;
-        }
-        return this.player.navigateTo(closestUnknown);
+    private _tryExplore(): DirectedAction | undefined {
+        return this.player?.tryExplore();
     }
 
-    private _tryWalkToExit(): DirectedAction {
-        if (!this.grid.exitPosition) {
-            console.log("No exit found yet");
-            return DirectedAction.NONE;
-        }
-        if (!this.player) {
-            console.log("No player");
-            return DirectedAction.NONE;
-        }
-
-        const dir = this.player.navigateTo(this.grid.exitPosition);
-        if (dir === DirectedAction.NONE) {
-            console.log("Exit unreachable");
-        } else {
-            console.log("Walking to exit... ");
-        }
-        return dir;
+    private _tryWalkToExit(): DirectedAction | undefined {
+        return this.player?.tryWalkExit();
     }
 }
