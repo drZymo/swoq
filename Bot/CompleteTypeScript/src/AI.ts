@@ -16,6 +16,7 @@ export class AI {
 
     public async play(): Promise<void> {
         let state = this.game.state;
+        const startTick = this.game.state.tick;
         performance.mark("start");
         console.log(
             `Start state: tick=${state.tick}, level=${state.level}, status=${
@@ -36,6 +37,7 @@ export class AI {
             done = true;
         } finally {
             performance.mark("end");
+            const ticks = this.game.state.tick - startTick;
             const playMeasurement = performance.measure("play", "start", "end");
             const result =
                 done && this.game.state.status === GameStatus.FINISHED_SUCCESS
@@ -44,9 +46,9 @@ export class AI {
             console.log(
                 `Level ${level} ${result}: ${playMeasurement.duration.toFixed(
                     2
-                )}ms, ${this.game.state.tick} ticks, ${(
-                    playMeasurement.duration / this.game.state.tick
-                ).toFixed(2)}ms/tick`
+                )}ms, ${ticks} ticks, ${(
+                    playMeasurement.duration / ticks
+                ).toFixed(2)}ms/tick, total ${this.game.state.tick} ticks`
             );
         }
     }
