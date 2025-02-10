@@ -9,10 +9,16 @@ import {
 import { Grid } from "./Grid";
 import { COLOR_TO_KEY_INVENTORY } from "./inventory";
 import { getPathDirection, moveToUse, posToString } from "./position";
-import { Color, COLOR_TO_DOOR_TILE, COLOR_TO_KEY_TILE } from "./tile";
+import {
+    Color,
+    COLOR_TO_DOOR_TILE,
+    COLOR_TO_KEY_TILE,
+    COLOR_TO_PLATE_TILE,
+} from "./tile";
 
 export enum PlayerFocus {
     BoulderExplore = 1,
+    OpenDoorPressurePlate = 2,
 }
 
 export class Player {
@@ -80,6 +86,12 @@ export class Player {
         return this.getClosestPosition(positions);
     }
 
+    public getClosestPressurePlate(color: Color): Position | undefined {
+        // TODO perhaps remember the plates better, as they may 'disappear' when
+        // something else steps on it.
+        return this.getClosestTile(COLOR_TO_PLATE_TILE[color]);
+    }
+
     public getClosestUnknown(): Position | undefined {
         const onlyUnknowns = this.grid.tilePositions[Tile.UNKNOWN] ?? [];
         const boulderUnknowns =
@@ -130,6 +142,13 @@ export class Player {
     }
 
     public tryOpenDoor(color: Color): DirectedAction | undefined {
+        return (
+            this.tryOpenDoorWithKeys(color) ??
+            this.tryOpenDoorWithPressurePlate(color)
+        );
+    }
+
+    public tryOpenDoorWithKeys(color: Color): DirectedAction | undefined {
         // Try to open the door if we have the key
         const door = this.getClosestTile(COLOR_TO_DOOR_TILE[color]);
         if (this.state.inventory === COLOR_TO_KEY_INVENTORY[color]) {
@@ -147,6 +166,43 @@ export class Player {
         // We can reach both, but we don't have the key, fetch that first
         console.log(`Picking up ${Color[color]} key at`, key);
         return this.navigateTo(key);
+    }
+
+    public tryOpenDoorWithPressurePlate(
+        color: Color
+    ): DirectedAction | undefined {
+        // Try to open the door if we have the key
+        const door = this.getClosestTile(COLOR_TO_DOOR_TILE[color]);
+        const plate = this.getClosestPressurePlate(color);
+        // If we can't reach a door and plate, don't try
+        if (!door || !plate) {
+            return undefined;
+        }
+        if (this.hasBoulder) {
+            // Already picked up a boulder, go put it on the plate
+            console.log(`Placing boulder on ${Color[color]} plate at`, plate);
+            return this.navigateAndUse(plate);
+        }
+        // Need to pick up boulder first
+        // TODO Compute more optimal path (boulder closest to plate)
+        const boulder = this.getClosestTile(Tile.BOULDER);
+        if (!boulder) {
+            // No boulder in range
+            return undefined;
+        }
+        if (!!this.state.inventory) {
+            console.warn(
+                "Can't pick up boulder for pressure plate, already have inventory"
+            );
+            return undefined;
+        }
+        console.log(
+            `Picking up boulder at`,
+            boulder,
+            `for ${Color[color]} pressure plate at`,
+            plate
+        );
+        return this.navigateAndUse(boulder);
     }
 
     public tryExplore(): DirectedAction | undefined {

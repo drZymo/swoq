@@ -37,6 +37,9 @@ export class Grid {
         switch (tile) {
             case Tile.EMPTY:
             case Tile.EXIT:
+            case Tile.PRESSURE_PLATE_RED:
+            case Tile.PRESSURE_PLATE_GREEN:
+            case Tile.PRESSURE_PLATE_BLUE:
                 return true;
             case Tile.PLAYER:
             case Tile.UNKNOWN:

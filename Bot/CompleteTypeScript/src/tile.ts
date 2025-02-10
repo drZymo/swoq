@@ -13,6 +13,9 @@ export const TILE_CHARS: Record<Tile, string> = {
     [Tile.DOOR_BLUE]: "B",
     [Tile.KEY_BLUE]: "b",
     [Tile.BOULDER]: "O",
+    [Tile.PRESSURE_PLATE_RED]: "u",
+    [Tile.PRESSURE_PLATE_GREEN]: "v",
+    [Tile.PRESSURE_PLATE_BLUE]: "w",
 };
 
 export const CHAR_TO_TILE: Record<string, Tile> = {
@@ -29,6 +32,9 @@ export const CHAR_TO_TILE: Record<string, Tile> = {
     B: Tile.DOOR_BLUE,
     b: Tile.KEY_BLUE,
     O: Tile.BOULDER,
+    u: Tile.PRESSURE_PLATE_RED,
+    v: Tile.PRESSURE_PLATE_GREEN,
+    w: Tile.PRESSURE_PLATE_BLUE,
 };
 
 export enum Color {
@@ -47,6 +53,12 @@ export const COLOR_TO_KEY_TILE: Record<Color, Tile> = {
     [Color.Red]: Tile.KEY_RED,
     [Color.Green]: Tile.KEY_GREEN,
     [Color.Blue]: Tile.KEY_BLUE,
+};
+
+export const COLOR_TO_PLATE_TILE: Record<Color, Tile> = {
+    [Color.Red]: Tile.PRESSURE_PLATE_RED,
+    [Color.Green]: Tile.PRESSURE_PLATE_GREEN,
+    [Color.Blue]: Tile.PRESSURE_PLATE_BLUE,
 };
 
 export function tilesFromString(str: string): Tile[][] {

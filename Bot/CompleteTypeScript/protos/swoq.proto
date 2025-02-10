@@ -43,6 +43,10 @@ enum Tile {
     TILE_KEY_BLUE = 10;
     // Level 6 and higher:
     TILE_BOULDER = 11;
+    // Level 7 and higher:
+    TILE_PRESSURE_PLATE_RED = 12;
+    TILE_PRESSURE_PLATE_GREEN = 13;
+    TILE_PRESSURE_PLATE_BLUE = 14;
 }
 
 enum Inventory {

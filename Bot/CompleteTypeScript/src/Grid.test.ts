@@ -38,7 +38,6 @@ it("detects boundaries", () => {
         #1_
         #__
     `);
-    console.log("-----------------");
     grid.updateSurroundings({ x: 1, y: 1 }, update.flat(), 1);
     const newGrid = tilesFromString(`
         ###?
