@@ -3,8 +3,6 @@ using System.Diagnostics;
 
 namespace Swoq.Infra;
 
-using Position = (int y, int x);
-
 public class OverviewBuilder(int height, int width, int visibilityRange)
 {
     private Tile[] tileData = Enumerable.Repeat(Tile.Unknown, height * width).ToArray();
@@ -21,7 +19,7 @@ public class OverviewBuilder(int height, int width, int visibilityRange)
         visibilityData = Enumerable.Repeat(false, height * width).ToArray(); ;
     }
 
-    public void AddPlayerState(Position playerPosition, IEnumerable<Tile> surroundings, int playerIndex)
+    public void AddPlayerState((int y, int x) playerPosition, IEnumerable<Tile> surroundings, int playerIndex)
     {
         if (playerIndex < 1 || playerIndex > 2) throw new ArgumentOutOfRangeException(nameof(playerIndex));
 

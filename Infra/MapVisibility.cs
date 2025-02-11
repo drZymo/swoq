@@ -1,12 +1,10 @@
 namespace Swoq.Infra;
 
-using Position = (int y, int x);
-
 public static class MapVisibility
 {
     public static bool IsVisible(this Map map, Position from, Position to, int maxRange)
     {
-        if (from == to) return true;
+        if (from.Equals(to)) return true;
         if (to.y < 0 || to.y >= map.Height) return false;
         if (to.x < 0 || to.x >= map.Width) return false;
         if (to.DistanceTo(from) > maxRange) return false;

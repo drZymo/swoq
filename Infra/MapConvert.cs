@@ -3,8 +3,6 @@ using System.Collections.Immutable;
 
 namespace Swoq.Infra;
 
-using Position = (int y, int x);
-
 public static class MapConvert
 {
     public static TileMap ToOverview(this Map map)
@@ -16,7 +14,7 @@ public static class MapConvert
         {
             for (int x = 0; x < map.Width; x++)
             {
-                tileData[y * map.Width + x] = ToTile(map, (y, x));
+                tileData[y * map.Width + x] = ToTile(map, map.Pos(y, x));
                 visiblityData[y * map.Width + x] = true;
             }
         }
@@ -45,7 +43,7 @@ public static class MapConvert
             }
         }
 
-        return map[tilePos] switch
+        return map[tilePos.y, tilePos.x] switch
         {
             Cell.Unknown => Tile.Unknown,
             Cell.Empty => Tile.Empty,

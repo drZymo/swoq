@@ -31,7 +31,7 @@ internal static class TestMaps
         map[8, 8] = Cell.Exit;
         map[1, 1] = Cell.Boulder;
 
-        map.Player1.Position = (5, 5);
+        map.Player1.Position = map.Pos(5, 5);
 
         return map.ToMap();
     }

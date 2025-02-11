@@ -218,7 +218,7 @@ internal class PressurePlateTests(char color) : GameTestBase
             }
         }
 
-        map.Player1.Position = (5, 5);
+        map.Player1.Position = map.Pos(5, 5);
         map[8, 8] = Cell.Exit;
 
         var doorCell = color switch

@@ -472,3 +472,11 @@ At the anual WSC (Wizardry and Sorcery Conference), a new attraction is revealed
 | Method        | Mean    | Error    | StdDev   |
 |-------------- |--------:|---------:|---------:|
 | StartParallel | 1.199 s | 0.0233 s | 0.0295 s |
+
+## 2025-02-11 (map.Pos)
+
+| Method         | Mean      | Error    | StdDev   |
+|--------------- |----------:|---------:|---------:|
+| GenerateAll    | 245.75 ms | 2.283 ms | 1.782 ms |
+| GenerateLevel1 |  11.46 ms | 0.087 ms | 0.077 ms |
+| GenerateLevel4 |  12.71 ms | 0.063 ms | 0.049 ms |

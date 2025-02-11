@@ -276,8 +276,8 @@ internal class OnePlayerCombatTests : GameTestBase
         map[2, 1] = Cell.Sword;
         map[5, 1] = Cell.Health;
 
-        map.Player1.Position = (1, 1);
-        map.Enemy1.Position = (5, 8);
+        map.Player1.Position = map.Pos(1, 1);
+        map.Enemy1.Position = map.Pos(5, 8);
 
         return map.ToMap();
     }

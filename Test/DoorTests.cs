@@ -179,8 +179,8 @@ internal class DoorTests(char doorColor) : GameTestBase
 
         map[8, 5] = KeyCell;
 
-        map.Player1.Position = (5, 5);
-        map.Player2.Position = (5, 8);
+        map.Player1.Position = map.Pos(5, 5);
+        map.Player2.Position = map.Pos(5, 8);
 
         return map.ToMap();
     }

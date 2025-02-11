@@ -190,10 +190,10 @@ internal class EnemyIdleMovementTests : GameTestBase
         }
 
         // Player top left
-        map.Player1.Position = (1, 1);
+        map.Player1.Position = map.Pos(1, 1);
 
         // Enemy bottom right
-        map.Enemy1.Position = (height - 2, width - 2);
+        map.Enemy1.Position = map.Pos(height - 2, width - 2);
 
         return map.ToMap();
     }

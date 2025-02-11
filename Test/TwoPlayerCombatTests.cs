@@ -192,9 +192,9 @@ internal class TwoPlayerCombatTests : GameTestBase
         map[4, 1] = Cell.Health;
         map[6, 1] = Cell.Sword;
 
-        map.Player1.Position = (1, 1);
-        map.Player2.Position = (7, 1);
-        map.Enemy1.Position = (4, 8);
+        map.Player1.Position = map.Pos(1, 1);
+        map.Player2.Position = map.Pos(7, 1);
+        map.Enemy1.Position = map.Pos(4, 8);
 
         return map.ToMap();
     }

@@ -166,7 +166,7 @@ internal class ExitTests : GameTestBase
         }
 
         // Player center
-        map.Player1.Position = (height / 2, width / 2);
+        map.Player1.Position = map.Pos(height / 2, width / 2);
 
         // Exit bottom right
         map[height - 2, width - 2] = Cell.Exit;

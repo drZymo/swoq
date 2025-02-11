@@ -2,11 +2,10 @@
 
 using Swoq.Interface;
 using System.Collections.Immutable;
-using Position = (int y, int x);
 
 public class MutableCharacter
 {
-    public Position Position { get; set; } = PositionEx.Invalid;
+    public Position Position { get; set; } = Position.Invalid;
     public Inventory Inventory { get; set; } = Inventory.None;
     public bool IsBoss { get; set; } = false;
 
@@ -58,41 +57,42 @@ public class MutableMap(int level, int height, int width)
 
     public Cell this[Position pos]
     {
-        get => data[pos.y * Width + pos.x];
-        set => data[pos.y * Width + pos.x] = value;
+        get => data[pos.index];
+        set => data[pos.index] = value;
     }
+
+    public Position Pos(int y, int x) => new(y, x, y * Width + x);
 
     public Map ToMap()
     {
-
         Player? player1 = null;
         Player? player2 = null;
         ImmutableDictionary<GameCharacterId, Enemy> enemies = ImmutableDictionary<GameCharacterId, Enemy>.Empty;
 
-        if (Player1.Position.IsValid())
+        if (Player1.Position.IsValid)
         {
             player1 = Player1.ToPlayer(GameCharacterId.Player1);
         }
-        if (Player2.Position.IsValid())
+        if (Player2.Position.IsValid)
         {
             player2 = Player2.ToPlayer(GameCharacterId.Player2);
         }
         var isTwoPlayerGame = player1 != null && player2 != null;
 
         var nextEnemyId = GameCharacterId.Enemy1;
-        if (Enemy1.Position.IsValid())
+        if (Enemy1.Position.IsValid)
         {
             var enemy = Enemy1.ToEnemy(nextEnemyId, isTwoPlayerGame);
             enemies = enemies.SetItem(enemy.Id, enemy);
             nextEnemyId++;
         }
-        if (Enemy2.Position.IsValid())
+        if (Enemy2.Position.IsValid)
         {
             var enemy = Enemy2.ToEnemy(nextEnemyId, isTwoPlayerGame);
             enemies = enemies.SetItem(enemy.Id, enemy);
             nextEnemyId++;
         }
-        if (Enemy3.Position.IsValid())
+        if (Enemy3.Position.IsValid)
         {
             var enemy = Enemy3.ToEnemy(nextEnemyId, isTwoPlayerGame);
             enemies = enemies.SetItem(enemy.Id, enemy);

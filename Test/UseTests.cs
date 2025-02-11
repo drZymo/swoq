@@ -379,15 +379,15 @@ internal class UseTests : GameTestBase
         }
 
         // Two players in center
-        map.Player1.Position = ((height - 1) / 2, (width - 1) / 2);
-        map.Player2.Position = ((height - 1) / 2, (width - 1) / 2 + 1);
+        map.Player1.Position = map.Pos((height - 1) / 2, (width - 1) / 2);
+        map.Player2.Position = map.Pos((height - 1) / 2, (width - 1) / 2 + 1);
 
         // Swords near players
         map[map.Player1.Position.y + 1, map.Player1.Position.x] = Cell.Sword;
         map[map.Player2.Position.y - 1, map.Player2.Position.x] = Cell.Sword;
 
         // One enemy in top (in wall)
-        map.Enemy1.Position = (0, (width - 1) / 2);
+        map.Enemy1.Position = map.Pos(0, (width - 1) / 2);
         map[map.Enemy1.Position] = Cell.Empty;
 
         // Boulder in left

@@ -2,8 +2,6 @@
 
 namespace Swoq.Infra;
 
-using Position = (int y, int x);
-
 public enum GameCharacterId
 {
     Player1,
@@ -21,7 +19,7 @@ public abstract record GameCharacter(
     bool HasSword)
 {
     public bool IsAlive => Health > 0;
-    public bool IsPresent => Position.IsValid();
+    public bool IsPresent => Position.IsValid;
 }
 
 public record Player(

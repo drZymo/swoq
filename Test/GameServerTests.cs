@@ -469,7 +469,7 @@ public class GameServerTests
 
             map[height - 2, width - 2] = Cell.Exit;
 
-            map.Player1.Position = (1, 1);
+            map.Player1.Position = map.Pos(1, 1);
 
             if (level == MaxLevel)
             {

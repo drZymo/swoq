@@ -385,13 +385,13 @@ internal class CrushTests : GameTestBase
         }
 
         // Player in center
-        map.Player1.Position = ((height - 1) / 2, (width - 1) / 2);
+        map.Player1.Position = map.Pos((height - 1) / 2, (width - 1) / 2);
 
         // Boulder bottom left
         map[height - 2, 1] = Cell.Boulder;
 
         // Enemy top left with red door
-        map.Enemy2.Position = (1, 1);
+        map.Enemy2.Position = map.Pos(1, 1);
         map.Enemy2.Inventory = Inventory.KeyGreen;
         map.Enemy2.IsBoss = false;
         map[1, 2] = Cell.DoorRedClosed;
@@ -401,7 +401,7 @@ internal class CrushTests : GameTestBase
         map[map.Player1.Position.y, 1] = Cell.PressurePlateRed;
 
         // Boss top right with blue door
-        map.Enemy1.Position = (1, width - 2);
+        map.Enemy1.Position = map.Pos(1, width - 2);
         map.Enemy1.Inventory = Inventory.KeyGreen;
         map.Enemy1.IsBoss = true;
         map[1, width - 3] = Cell.DoorBlueClosed;
@@ -411,7 +411,7 @@ internal class CrushTests : GameTestBase
         map[map.Player1.Position.y, width - 2] = Cell.PressurePlateBlue;
 
         // Second player bottom righ right with blue door
-        map.Player2.Position = (height - 2, width - 2);
+        map.Player2.Position = map.Pos(height - 2, width - 2);
         map[height - 2, width - 3] = Cell.DoorGreenClosed;
         map[height - 3, width - 3] = Cell.DoorGreenClosed;
         map[height - 3, width - 2] = Cell.DoorGreenClosed;
