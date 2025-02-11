@@ -4,7 +4,7 @@ export const TILE_CHARS: Record<Tile, string> = {
     [Tile.UNKNOWN]: ".",
     [Tile.WALL]: "#",
     [Tile.EMPTY]: " ",
-    [Tile.PLAYER]: "1",
+    [Tile.PLAYER]: "@",
     [Tile.EXIT]: "$",
     [Tile.DOOR_RED]: "R",
     [Tile.KEY_RED]: "r",
@@ -86,6 +86,38 @@ export const TILE_TO_COLOR: Record<Tile, Color | undefined> = {
     [Tile.SWORD]: undefined,
     [Tile.HEALTH]: undefined,
 };
+
+export function isWalkable(tile: Tile): boolean {
+    switch (tile) {
+        case Tile.EMPTY:
+        case Tile.PRESSURE_PLATE_RED:
+        case Tile.PRESSURE_PLATE_GREEN:
+        case Tile.PRESSURE_PLATE_BLUE:
+            return true;
+        // Definitely unwalkable
+        case Tile.WALL:
+        case Tile.BOULDER:
+        case Tile.UNKNOWN:
+        case Tile.DOOR_RED:
+        case Tile.DOOR_GREEN:
+        case Tile.DOOR_BLUE:
+        // Not walkable to make sure we navigate around them
+        case Tile.PLAYER:
+        case Tile.ENEMY:
+        // Not walkable to prevent accidental pickup (which may cause
+        // us getting stuck, or receive an inventory-full error)
+        case Tile.HEALTH:
+        case Tile.SWORD:
+        case Tile.KEY_RED:
+        case Tile.KEY_GREEN:
+        case Tile.KEY_BLUE:
+        // Not walkable to prevent accidentally walking
+        // into it with a boulder, or before we freed
+        // the other player.
+        case Tile.EXIT:
+            return false;
+    }
+}
 
 export function tilesFromString(str: string): Tile[][] {
     const rows = str.trim().split("\n");

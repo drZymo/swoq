@@ -1,13 +1,38 @@
 import { Game } from "./Game";
-import { DirectedAction, GameStatus, Tile } from "./generated/swoq";
+import { DirectedAction, GameStatus } from "./generated/swoq";
 import { Grid } from "./Grid";
-import { Player } from "./Player";
-import { Color } from "./tile";
+import { Player, PlayerStats, PlayerStepSettings } from "./Player";
+import { isMoveAction, samePos, targetPosition } from "./position";
+
+interface AIStats {
+    /**
+     * Number of times the first act call failed.
+     */
+    actFailed: number;
+    /**
+     * Number of times players were hugging (next to each other, but still trying to make a move).
+     */
+    hugging: number;
+    /**
+     * Number of times players were hugging for too long, and player 2 was forced to give up its move.
+     */
+    huggingBroken: number;
+
+    player1?: PlayerStats;
+    player2?: PlayerStats;
+}
 
 export class AI {
     public game: Game;
-    public player?: Player;
+    public player1?: Player;
+    public player2?: Player;
     public grid: Grid;
+    public hugging: number = 0;
+    public stats: AIStats = {
+        actFailed: 0,
+        hugging: 0,
+        huggingBroken: 0,
+    };
 
     public constructor(game: Game) {
         this.game = game;
@@ -50,105 +75,170 @@ export class AI {
                     playMeasurement.duration / ticks
                 ).toFixed(2)}ms/tick, total ${this.game.state.tick} ticks`
             );
+            console.log(this.stats);
         }
     }
 
     private _updateState(): void {
         const playerState = this.game.state.playerState;
-        if (playerState) {
-            if (!this.player) {
-                this.player = new Player(
+        if (playerState?.position && playerState.position?.x >= 0) {
+            if (!this.player1) {
+                this.player1 = new Player(
                     this.grid,
+                    playerState,
+                    this.game.visibilityRange,
+                    1
+                );
+                this.stats.player1 = this.player1.stats;
+            } else {
+                this.player1.updateState(
                     playerState,
                     this.game.visibilityRange
                 );
-            } else {
-                this.player.updateState(playerState, this.game.visibilityRange);
             }
         } else {
-            this.player = undefined;
+            this.player1 = undefined;
         }
 
-        console.log("Player: ", this.player?.toString());
+        const playerState2 = this.game.state.player2State;
+        if (playerState2?.position && playerState2.position?.x >= 0) {
+            if (!this.player2) {
+                this.player2 = new Player(
+                    this.grid,
+                    playerState2,
+                    this.game.visibilityRange,
+                    2
+                );
+                this.stats.player2 = this.player2.stats;
+            } else {
+                this.player2.updateState(
+                    playerState2,
+                    this.game.visibilityRange
+                );
+            }
+        } else {
+            this.player2 = undefined;
+        }
+        this.grid.setPlayerPositions(
+            this.player1?.position,
+            this.player2?.position
+        );
+
+        console.log("Player 1: ", this.player1?.toString());
+        console.log("Player 2: ", this.player2?.toString());
         console.log(this.grid.toString());
     }
 
-    private async _act(action: DirectedAction): Promise<void> {
-        const state = await this.game.act(action);
-        this.player?.actionPerformed(action);
+    private async _act(
+        action1: DirectedAction | undefined,
+        action2: DirectedAction | undefined
+    ): Promise<void> {
+        const state = await this.game.act(action1, action2);
         console.log(
-            `Act(${DirectedAction[action]}) state: tick=${state.tick}, level=${
-                state.level
-            }, status=${GameStatus[state.status]}`
+            `Act(${action1 ? DirectedAction[action1] : undefined},${
+                action2 ? DirectedAction[action2] : undefined
+            }) state: tick=${state.tick}, level=${state.level}, status=${
+                GameStatus[state.status]
+            }`
         );
     }
 
     private async _step(): Promise<void> {
-        // TODO: early levels: pick up key asap
-        const steps = [
-            () => this._focusedAction(),
-            // TODO In early levels (2?) and level 10, we can pick up key ASAP
-            () => this._tryPickupSword(),
-            () => this._tryPickupHealth(),
-            () => this._tryWalkToExit(),
-            () => this._tryOpenDoor(),
-            // TODO Tweak moment of enemy slaying? Is it always necessary to slay it?
-            () => this._trySlayEnemy(),
-            () => this._tryExplore(),
-        ];
-        let action: DirectedAction | undefined = undefined;
-        for (const step of steps) {
-            action = step();
-            if (action !== undefined) {
-                break;
-            }
+        const player1Settings: PlayerStepSettings = {
+            // Only allow the player to exit if the other can also leave
+            allowExit: !!(
+                this.grid.exitPosition &&
+                (this.player2?.canReach(this.grid.exitPosition) ?? true)
+            ),
+        };
+        const player2Settings: PlayerStepSettings = {
+            allowExit: !!(
+                this.grid.exitPosition &&
+                (this.player1?.canReach(this.grid.exitPosition) ?? true)
+            ),
+        };
+        let action1 = this.player1?.step(player1Settings);
+        let action2 = this.player2?.step(player2Settings);
+
+        // If there seems nothing to do, but we saw an enemy before,
+        // try to attack it (even if we didn't dare so before).
+        if (!action1 && !action2) {
+            action1 = this.player1?.trySlayEnemy(true);
+            action2 = this.player2?.trySlayEnemy(true);
         }
 
-        // TODO random walk otherwise
-        if (!action && !this.player?.waiting) {
+        // Still nothing? Pick a random spot and walk to it.
+        if (!action1 && !action2) {
+            action1 = this.player1?.tryRandomWalk();
+            action2 = this.player2?.tryRandomWalk();
+        }
+
+        if (
+            !action1 &&
+            !action2 &&
+            !this.player1?.waiting &&
+            !this.player2?.waiting
+        ) {
+            // TODO Random step/action then?
             throw new Error(`Nothing to do`);
         }
 
         // Sanity checks
-        // TODO Never walk into exit with boulder
-        await this._act(action ?? DirectedAction.NONE);
-    }
+        // TODO Never (accidentally) walk into exit with boulder
 
-    private _trySlayEnemy(): DirectedAction | undefined {
-        return this.player?.trySlayEnemy();
-    }
-
-    private _tryPickupSword(): DirectedAction | undefined {
-        // Pick up any sword. Typically, we'll start to see a sword
-        // as soon as it becomes available, so it's a short stroll.
-        return this.player?.navigateToTile(Tile.SWORD);
-    }
-
-    private _tryPickupHealth(): DirectedAction | undefined {
-        return this.player?.navigateToTile(Tile.HEALTH);
-    }
-
-    private _focusedAction(): DirectedAction | undefined {
-        return this.player?.tryFocused();
-    }
-
-    private _tryOpenDoor(): DirectedAction | undefined {
-        const player = this.player;
-        if (!player) {
-            return undefined;
+        // Prevent move into each-other
+        if (
+            this.player1 &&
+            this.player2 &&
+            isMoveAction(action1) &&
+            isMoveAction(action2)
+        ) {
+            const target1 = targetPosition(this.player1.position, action1);
+            const target2 = targetPosition(this.player2.position, action2);
+            if (samePos(target1, target2)) {
+                action2 = DirectedAction.NONE;
+            }
         }
-        return (
-            player.tryOpenDoor(Color.Red) ||
-            player.tryOpenDoor(Color.Green) ||
-            player.tryOpenDoor(Color.Blue)
-        );
-    }
 
-    private _tryExplore(): DirectedAction | undefined {
-        return this.player?.tryExplore();
-    }
+        // If players are too close and trying to walk in
+        // opposite direction, they're
+        if (
+            this.player1 &&
+            this.player2 &&
+            isMoveAction(action1) &&
+            isMoveAction(action2) &&
+            this.player1?.dijkstra.getDistance(this.player2.position) === 1
+        ) {
+            this.hugging++;
+            this.stats.hugging++;
+            if (this.hugging > 3) {
+                this.stats.huggingBroken++;
+                action2 = DirectedAction.NONE;
+            }
+        } else {
+            this.hugging = 0;
+        }
 
-    private _tryWalkToExit(): DirectedAction | undefined {
-        return this.player?.tryWalkExit();
+        action1 ??= DirectedAction.NONE;
+        action2 ??= DirectedAction.NONE;
+
+        try {
+            await this._act(
+                this.player1 ? action1 : undefined,
+                this.player2 ? action2 : undefined
+            );
+        } catch (err) {
+            console.log(
+                `Act(${action1 ? DirectedAction[action1] : undefined},${
+                    action2 ? DirectedAction[action2] : undefined
+                }) failed:`,
+                err instanceof Error ? err.message : err
+            );
+            this.stats.actFailed++;
+            await this._act(
+                this.player1?.tryRandomWalk(),
+                this.player2?.tryRandomWalk()
+            );
+        }
     }
 }

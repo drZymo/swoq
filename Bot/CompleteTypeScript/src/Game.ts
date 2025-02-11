@@ -27,10 +27,14 @@ export class Game {
         this.state = state;
     }
 
-    public async act(action: DirectedAction): Promise<State> {
+    public async act(
+        action1: DirectedAction | undefined,
+        action2: DirectedAction | undefined
+    ): Promise<State> {
         const { response } = await this.client.act({
             gameId: this.gameId,
-            action,
+            action: action1,
+            action2: action2,
         });
         if (response.state !== undefined) {
             this.state = response.state;

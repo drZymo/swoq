@@ -6,12 +6,19 @@ export class Dijkstra {
     private from: Position;
     private distances: Map<number, number> = new Map();
     private previous: Map<number, Position> = new Map();
+    private isWalkable: (pos: Position) => boolean;
 
-    constructor(grid: Grid, from: Position) {
+    constructor(
+        grid: Grid,
+        from: Position,
+        isWalkable: (pos: Position) => boolean = (pos) =>
+            this.grid.isWalkable(pos)
+    ) {
         this.grid = grid;
         this.from = from;
         this.distances = new Map();
         this.previous = new Map();
+        this.isWalkable = isWalkable;
         this.buildDistanceMatrix();
     }
 
@@ -40,7 +47,7 @@ export class Dijkstra {
                 ) {
                     this.distances.set(neighborKey, distance);
                     this.previous.set(neighborKey, currentPosition);
-                    if (this.grid.isWalkable(neighbor)) {
+                    if (this.isWalkable(neighbor)) {
                         pq.push([distance, neighbor]);
                     }
                 }
@@ -69,6 +76,21 @@ export class Dijkstra {
         }
 
         return path;
+    }
+
+    public getRandomReachablePosition(): Position | undefined {
+        const keys = [...this.distances.keys()];
+        while (keys.length > 0) {
+            const key = keys.splice(
+                Math.floor(Math.random() * keys.length),
+                1
+            )[0];
+            const pos = this._keyToPos(key);
+            if (this.isWalkable(pos)) {
+                return pos;
+            }
+        }
+        return undefined;
     }
 
     public dump(): void {

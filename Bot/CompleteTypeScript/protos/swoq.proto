@@ -19,6 +19,9 @@ enum Result {
     RESULT_INVENTORY_EMPTY = 12;
     // Level 8 and higher:
     RESULT_NO_SWORD = 13;
+    // Level 12 and higher:
+    RESULT_PLAYER_NOT_PRESENT = 14;
+    RESULT_PLAYER2_NOT_PRESENT = 15;
 }
 
 enum GameStatus {
@@ -28,6 +31,8 @@ enum GameStatus {
     GAME_STATUS_FINISHED_NO_PROGRESS = 3;
     // Level 6 and higher:
     GAME_STATUS_FINISHED_PLAYER_DIED = 4;
+    // Level 12 and higher:
+    GAME_STATUS_FINISHED_PLAYER2_DIED = 5;
 }
 
 enum Tile {
@@ -105,6 +110,8 @@ message State {
     int32 level = 2;
     GameStatus status = 3;
     optional PlayerState playerState = 4;
+    // Level 12 and higher:
+    optional PlayerState player2State = 5;
 }
 
 message StartRequest {
@@ -124,6 +131,8 @@ message StartResponse {
 message ActionRequest {
     string gameId = 1;
     optional DirectedAction action = 2;
+    // Level 12 and higher:
+    optional DirectedAction action2 = 3;
 }
 
 message ActionResponse {

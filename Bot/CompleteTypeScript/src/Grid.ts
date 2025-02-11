@@ -1,6 +1,12 @@
 import { Position, Tile } from "./generated/swoq";
 import { addPosition, removePosition } from "./position";
-import { Color, TILE_CHARS, TILE_TO_COLOR, tilesFromString } from "./tile";
+import {
+    Color,
+    isWalkable,
+    TILE_CHARS,
+    TILE_TO_COLOR,
+    tilesFromString,
+} from "./tile";
 
 const NEIGHBOR_COORDS: [number, number][] = [
     [-1, 0],
@@ -17,6 +23,8 @@ export class Grid {
     public doorPositions: Partial<Record<Color, Position[]>> = {};
     public pressurePlatePositions: Partial<Record<Color, Position[]>> = {};
     public tilePositions: Partial<Record<Tile, Position[]>> = {};
+    public player1Position: Position | undefined;
+    public player2Position: Position | undefined;
 
     public static fromString(str: string): Grid {
         const tiles = tilesFromString(str);
@@ -32,31 +40,6 @@ export class Grid {
             }
         }
         return grid;
-    }
-
-    public static isWalkable(tile: Tile): boolean {
-        switch (tile) {
-            case Tile.EMPTY:
-            case Tile.EXIT:
-            case Tile.PRESSURE_PLATE_RED:
-            case Tile.PRESSURE_PLATE_GREEN:
-            case Tile.PRESSURE_PLATE_BLUE:
-            case Tile.HEALTH:
-            case Tile.SWORD:
-                return true;
-            case Tile.PLAYER:
-            case Tile.UNKNOWN:
-            case Tile.WALL:
-            case Tile.DOOR_RED:
-            case Tile.KEY_RED:
-            case Tile.DOOR_GREEN:
-            case Tile.KEY_GREEN:
-            case Tile.DOOR_BLUE:
-            case Tile.KEY_BLUE:
-            case Tile.BOULDER:
-            case Tile.ENEMY:
-                return false;
-        }
     }
 
     constructor(width: number, height: number) {
@@ -84,7 +67,7 @@ export class Grid {
     }
 
     public isWalkable(pos: Position): boolean {
-        return Grid.isWalkable(this.tiles[pos.y][pos.x]);
+        return isWalkable(this.tiles[pos.y][pos.x]);
     }
 
     public setTile(x: number, y: number, tile: Tile): void;
@@ -125,7 +108,7 @@ export class Grid {
 
         // Special handling for unknown tiles: only add/remove boundary nodes in the unknown tile list
         // Most likely: prev=UNKNOWN, tile=EMPTY, but e.g. also prev=DOOR_RED, tile=EMPTY...
-        if (!Grid.isWalkable(prevTile) && Grid.isWalkable(tile)) {
+        if (!isWalkable(prevTile) && isWalkable(tile)) {
             let tp = this.tilePositions[Tile.UNKNOWN];
             for (const neigh of this.getAllNeighborsOfType(pos, Tile.UNKNOWN)) {
                 tp = addPosition(tp, neigh);
@@ -211,10 +194,33 @@ export class Grid {
         }
     }
 
+    public setPlayerPositions(
+        pos1: Position | undefined,
+        pos2: Position | undefined
+    ): void {
+        // We won't receive further updates, so mark players
+        // as empty when they disappeared (i.e. exited).
+        if (this.player1Position && !pos1) {
+            this.setTile(this.player1Position, Tile.EMPTY);
+        }
+        if (this.player2Position && !pos2) {
+            this.setTile(this.player2Position, Tile.EMPTY);
+        }
+        this.player1Position = pos1;
+        this.player2Position = pos2;
+    }
+
     public toString(): string {
-        return this.tiles
-            .map((row) => row.map((tile) => TILE_CHARS[tile] ?? "?").join(""))
-            .join("\n");
+        const rows = this.tiles.map((row) =>
+            row.map((tile) => TILE_CHARS[tile] ?? "?")
+        );
+        if (this.player1Position) {
+            rows[this.player1Position.y][this.player1Position.x] = "1";
+        }
+        if (this.player2Position) {
+            rows[this.player2Position.y][this.player2Position.x] = "2";
+        }
+        return rows.map((row) => row.join("")).join("\n");
     }
 
     public getNeighbors(pos: Position): Position[] {
@@ -223,7 +229,7 @@ export class Grid {
             const x = pos.x + dx;
             const y = pos.y + dy;
             if (
-                Grid.isWalkable(this.tiles[y][x]) &&
+                isWalkable(this.tiles[y][x]) &&
                 x >= 0 &&
                 x < this.width &&
                 y >= 0 &&

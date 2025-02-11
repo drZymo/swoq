@@ -59,7 +59,9 @@ export type UseAction =
     | DirectedAction.USE_NORTH
     | DirectedAction.USE_SOUTH;
 
-export function isMoveAction(action: DirectedAction): action is MoveAction {
+export function isMoveAction(
+    action: DirectedAction | undefined
+): action is MoveAction {
     switch (action) {
         case DirectedAction.MOVE_EAST:
         case DirectedAction.MOVE_WEST:
@@ -71,7 +73,9 @@ export function isMoveAction(action: DirectedAction): action is MoveAction {
     }
 }
 
-export function isUseAction(action: DirectedAction): action is UseAction {
+export function isUseAction(
+    action: DirectedAction | undefined
+): action is UseAction {
     switch (action) {
         case DirectedAction.USE_EAST:
         case DirectedAction.USE_WEST:
@@ -109,6 +113,10 @@ export function moveToUse(move: DirectedAction): DirectedAction {
 
 export function posToString(pos: Position): string {
     return `[${pos.x},${pos.y}]`;
+}
+
+export function samePos(pos1: Position, pos2: Position): boolean {
+    return pos1.x === pos2.x && pos1.y === pos2.y;
 }
 
 export function hasPosition(list: Position[], pos: Position): boolean {
