@@ -288,6 +288,14 @@ public class MapGenerator : IMapGenerator
 
         var keyColor = PickRandomAvailableKeyColor();
 
+        // Find the minimum walk distance from each empty point on the map to the exit
+        var (distances, paths) = ComputeDistancesFrom(exitPosition);
+
+        // Place a plate on a point at a fixed walk distance from the exit.
+        const int plateDistance = 5;
+        var platePos = Enumerable.Range(0, distances.Length).Where(d => distances[d] == plateDistance).PickOne();
+        map[platePos] = ToPressurePlate(keyColor);
+
         // Place wall of doors around exit
         List<Position> doorPositions = [];
         for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
@@ -304,28 +312,6 @@ public class MapGenerator : IMapGenerator
             }
         }
 
-        // Find the minimum walk distance from each empty point on the map to one of the doors.
-        var points = new Dictionary<Position, int>();
-        foreach (var doorPos in doorPositions)
-        {
-            var (distances, paths) = ComputeDistancesFrom(doorPos);
-            foreach (var (pt, dist) in distances)
-            {
-                var minDist = dist;
-                if (points.TryGetValue(pt, out var oldDist))
-                {
-                    minDist = Math.Min(minDist, oldDist);
-                }
-                points[pt] = minDist;
-            }
-        }
-
-        // Place a plate on a point at a fixed walk distance from the exit.
-        const int plateDistance = 5;
-
-        var platePos = points.Where(kvp => kvp.Value == plateDistance).Select(kvp => kvp.Key).PickOne();
-        map[platePos] = ToPressurePlate(keyColor);
-
         // Place several boulders around map
         for (var i = 0; i < 6; i++)
         {
@@ -333,6 +319,7 @@ public class MapGenerator : IMapGenerator
             map[boulderPos] = Cell.Boulder;
         }
     }
+
 
     private void GenerateLevel8()
     {
@@ -1393,32 +1380,35 @@ public class MapGenerator : IMapGenerator
         _ => throw new NotImplementedException(),
     };
 
-    private (IReadOnlyDictionary<Position, int> distances, IReadOnlyDictionary<Position, Position> paths) ComputeDistancesFrom(Position fromPos)
+    private (int[] distances, Position[] paths) ComputeDistancesFrom(Position fromPos)
     {
         // Regular containers for performance
-        var distances = new Dictionary<Position, int>();
-        var paths = new Dictionary<Position, Position>();
+        var distances = new int[height * width];
+        var paths = new Position[height * width];
         var todo = new Queue<Position>();
+
+        Array.Fill(distances, int.MaxValue);
+        Array.Fill(paths, Position.Invalid);
 
         void CheckAndAdd(Position currentPos, int currentDist, Position nextPos)
         {
             if (!map[nextPos].CanWalkOn()) return;
 
-            var nextDist = distances.TryGetValue(nextPos, out var d) ? d : int.MaxValue;
+            var nextDist = distances[nextPos.index];
             if (currentDist + 1 < nextDist)
             {
-                distances[nextPos] = currentDist + 1;
-                paths[nextPos] = currentPos;
+                distances[nextPos.index] = currentDist + 1;
+                paths[nextPos.index] = currentPos;
                 todo.Enqueue(nextPos);
             }
         }
 
-        distances.Add(fromPos, 0);
+        distances[fromPos.index] = 0;
         todo.Enqueue(fromPos);
 
         while (todo.TryDequeue(out var currentPos))
         {
-            var currentDist = distances[currentPos];
+            var currentDist = distances[currentPos.index];
 
             if (currentPos.y > 0) CheckAndAdd(currentPos, currentDist, map.Pos(currentPos.y - 1, currentPos.x));
             if (currentPos.y < height - 1) CheckAndAdd(currentPos, currentDist, map.Pos(currentPos.y + 1, currentPos.x));
@@ -1474,7 +1464,7 @@ public class MapGenerator : IMapGenerator
         {
             var center = map.Pos(room.Y, room.X);
             // Get distance to this room from all input positions
-            var roomDistances = inputDistances.Where(d => d.ContainsKey(center)).Select(d => d[center]).ToList();
+            var roomDistances = inputDistances.Select(d => d[center.index]).ToList();
             // Check if it reachable from all input points
             if (roomDistances.Count != inputDistances.Count) continue;
 
@@ -1512,17 +1502,15 @@ public class MapGenerator : IMapGenerator
         foreach (var room in availableRooms.Where(r => r.Height >= minRoomHeight && r.Width >= minRoomWidth))
         {
             var center = map.Pos(room.Y, room.X);
-            if (distances.TryGetValue(center, out var dist))
+            var dist = distances[center.index];
+            if (dist < minDistance)
             {
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    minRooms = [room];
-                }
-                else if (dist == minDistance)
-                {
-                    minRooms.Add(room);
-                }
+                minDistance = dist;
+                minRooms = [room];
+            }
+            else if (dist == minDistance)
+            {
+                minRooms.Add(room);
             }
         }
 

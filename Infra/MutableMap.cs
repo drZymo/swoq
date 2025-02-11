@@ -61,6 +61,12 @@ public class MutableMap(int level, int height, int width)
         set => data[pos.index] = value;
     }
 
+    public Cell this[int index]
+    {
+        get => data[index];
+        set => data[index] = value;
+    }
+
     public Position Pos(int y, int x) => new(y, x, y * Width + x);
 
     public Map ToMap()
