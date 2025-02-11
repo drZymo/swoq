@@ -20,8 +20,8 @@ public class MapGenerator : IMapGenerator
     private ImmutableHashSet<Position> availablePositions = [];
     private MutableMap map;
 
-    private Room playerRoom = new(-1, -1, -1, -1);
-    private Room exitRoom = new(-1, -1, -1, -1);
+    private Room playerRoom = Room.Invalid;
+    private Room exitRoom = Room.Invalid;
     private Position exitPosition;
 
     private ImmutableList<Room> rooms = [];
@@ -132,8 +132,8 @@ public class MapGenerator : IMapGenerator
         availablePositions = allPositions;
 
         // Reset all members
-        playerRoom = new(-1, -1, -1, -1);
-        exitRoom = new(-1, -1, -1, -1);
+        playerRoom = Room.Invalid;
+        exitRoom = Room.Invalid;
         exitPosition = new();
         rooms = [];
         availableRooms = [];
@@ -1016,7 +1016,7 @@ public class MapGenerator : IMapGenerator
 
     private Room CreateRoom(int y, int x, int height, int width, int margin = 0)
     {
-        var room = new Room(y, x, height, width);
+        var room = new Room(map.Pos(y, x), height, width);
 
         // Make empty
         for (var my = room.Top; my < room.Bottom; my++)
