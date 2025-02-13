@@ -6,14 +6,14 @@ from map_util import *
 from time import sleep
 
 to_swoq_pb2_action = {
-    'MN': swoq_pb2.DIRECTEDACTION_MOVE_NORTH,
-    'ME': swoq_pb2.DIRECTEDACTION_MOVE_EAST,
-    'MS': swoq_pb2.DIRECTEDACTION_MOVE_SOUTH,
-    'MW': swoq_pb2.DIRECTEDACTION_MOVE_WEST,
-    'UN': swoq_pb2.DIRECTEDACTION_USE_NORTH,
-    'UE': swoq_pb2.DIRECTEDACTION_USE_EAST,
-    'US': swoq_pb2.DIRECTEDACTION_USE_SOUTH,
-    'UW': swoq_pb2.DIRECTEDACTION_USE_WEST,
+    'MN': swoq_pb2.DIRECTED_ACTION_MOVE_NORTH,
+    'ME': swoq_pb2.DIRECTED_ACTION_MOVE_EAST,
+    'MS': swoq_pb2.DIRECTED_ACTION_MOVE_SOUTH,
+    'MW': swoq_pb2.DIRECTED_ACTION_MOVE_WEST,
+    'UN': swoq_pb2.DIRECTED_ACTION_USE_NORTH,
+    'UE': swoq_pb2.DIRECTED_ACTION_USE_EAST,
+    'US': swoq_pb2.DIRECTED_ACTION_USE_SOUTH,
+    'UW': swoq_pb2.DIRECTED_ACTION_USE_WEST,
     None: None,
 }
 
@@ -37,12 +37,12 @@ _result_strings  = {
 }
 
 _status_strings  = {
-    swoq_pb2.GAMESTATUS_ACTIVE: 'ACTIVE',
-    swoq_pb2.GAMESTATUS_FINISHED_SUCCESS: 'FINISHED_SUCCESS',
-    swoq_pb2.GAMESTATUS_FINISHED_TIMEOUT: 'FINISHED_TIMEOUT',
-    swoq_pb2.GAMESTATUS_FINISHED_NO_PROGRESS: 'FINISHED_NO_PROGRESS',
-    swoq_pb2.GAMESTATUS_FINISHED_PLAYER_DIED: 'FINISHED_PLAYER_DIED',
-    swoq_pb2.GAMESTATUS_FINISHED_PLAYER2_DIED: 'FINISHED_PLAYER2_DIED',
+    swoq_pb2.GAME_STATUS_ACTIVE: 'ACTIVE',
+    swoq_pb2.GAME_STATUS_FINISHED_SUCCESS: 'FINISHED_SUCCESS',
+    swoq_pb2.GAME_STATUS_FINISHED_TIMEOUT: 'FINISHED_TIMEOUT',
+    swoq_pb2.GAME_STATUS_FINISHED_NO_PROGRESS: 'FINISHED_NO_PROGRESS',
+    swoq_pb2.GAME_STATUS_FINISHED_PLAYER_DIED: 'FINISHED_PLAYER_DIED',
+    swoq_pb2.GAME_STATUS_FINISHED_PLAYER2_DIED: 'FINISHED_PLAYER2_DIED',
 }
 
 def find_random_pos(player_pos, player_distances) -> tuple[int,int]|None:
@@ -144,7 +144,7 @@ class GamePlayer:
     def update_global_state(self, state:swoq_pb2.State) -> None:
         self.level = state.level
         self.status = state.status
-        self.finished = state.status != swoq_pb2.GAMESTATUS_ACTIVE
+        self.finished = state.status != swoq_pb2.GAME_STATUS_ACTIVE
 
         self.combined_health = 0
 
