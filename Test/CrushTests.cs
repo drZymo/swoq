@@ -115,9 +115,9 @@ internal class CrushTests : GameTestBase
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
             Assert.That(changes, Has.Count.EqualTo(9));
             // Door opened
-            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.DoorRed, Tile.Enemy))); // Enemy stepped right in
+            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-            Assert.That(changes[(1, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
+            Assert.That(changes[(1, 2)], Is.EqualTo((Tile.DoorRed, Tile.Enemy))); // Enemy stepped right in
             // Map revealed
             Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
             Assert.That(changes[(1, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
@@ -138,15 +138,14 @@ internal class CrushTests : GameTestBase
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 2)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder)); // boulder back in inventory
-            Assert.That(changes, Has.Count.EqualTo(5));
+            Assert.That(changes, Has.Count.EqualTo(4));
             // Door closed - (1,2) not in view
-            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.Enemy, Tile.DoorRed)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.Empty, Tile.DoorRed)));
             // Boulder from plate
             Assert.That(changes[(5, 1)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateRed)));
             // Key and sword dropped by enemy
-            Assert.That(changes[(3, 1)], Is.EqualTo((Tile.Empty, Tile.Sword)));
-            Assert.That(changes[(3, 2)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
+            Assert.That(changes[(2, 3)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
         });
 
         // Place boulder back on plate
@@ -157,10 +156,14 @@ internal class CrushTests : GameTestBase
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 2)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
-            Assert.That(changes, Has.Count.EqualTo(3));
+            Assert.That(changes, Has.Count.EqualTo(5));
             // Door opened
             Assert.That(changes[(2, 1)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
+           // Enemy (was out of view) gone
+            Assert.That(changes[(1, 2)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
+            // Sword dropped on other side of door
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Empty, Tile.Sword)));
             // Boulder on plate
             Assert.That(changes[(5, 1)], Is.EqualTo((Tile.PressurePlateRed, Tile.Boulder)));
         });
@@ -219,9 +222,9 @@ internal class CrushTests : GameTestBase
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
             Assert.That(changes, Has.Count.EqualTo(9));
             // Door opened
-            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.DoorBlue, Tile.Boss))); // Boss stepped right in
+            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
-            Assert.That(changes[(1, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
+            Assert.That(changes[(1, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Boss))); // Boss stepped right in
             // Map revealed
             Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
             Assert.That(changes[(1, 10)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
@@ -244,13 +247,13 @@ internal class CrushTests : GameTestBase
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder)); // boulder back in inventory
             Assert.That(changes, Has.Count.EqualTo(5));
             // Door closed - (1,8) not in view
-            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.Boss, Tile.DoorBlue)));
+            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.Empty, Tile.DoorBlue)));
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.Empty, Tile.DoorBlue)));
             // Boulder from plate
             Assert.That(changes[(5, 9)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateBlue)));
             // Treasures dropped by enemy (key on other side of door)
-            Assert.That(changes[(3, 8)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
-            Assert.That(changes[(3, 9)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
+            Assert.That(changes[(1, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
+            Assert.That(changes[(2, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
         });
 
         // Place boulder back on plate
@@ -261,10 +264,12 @@ internal class CrushTests : GameTestBase
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 8)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
-            Assert.That(changes, Has.Count.EqualTo(4));
+            Assert.That(changes, Has.Count.EqualTo(5));
             // Door opened
             Assert.That(changes[(2, 9)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
+            // Boss (was out of view) gone
+            Assert.That(changes[(1, 8)], Is.EqualTo((Tile.Boss, Tile.Empty)));
             // Key dropped
             Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
             // Boulder on plate
