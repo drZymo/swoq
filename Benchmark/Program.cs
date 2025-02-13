@@ -68,7 +68,7 @@ public class GameServerBenchmark
     public void StartParallel()
     {
         const int nrThreads = 10;
-        var barrier = new Barrier(nrThreads + 1);
+        using var barrier = new Barrier(nrThreads + 1);
 
         // Create and start all threads
         var threads = Enumerable.Range(0, nrThreads).Select(i => new Thread(() => StartThread(barrier, $"u{i}"))).ToArray();
