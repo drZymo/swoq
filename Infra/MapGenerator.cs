@@ -144,6 +144,8 @@ public class MapGenerator : IMapGenerator
 
     private void AddWalls()
     {
+        // Replace all unknown cells that are adjacent to a known cell with walls
+
         bool IsUnknown(Position pos)
         {
             return pos.y < 0 || pos.y >= height ||
@@ -153,18 +155,16 @@ public class MapGenerator : IMapGenerator
 
         List<Position> walls = [];
 
-        for (var y = 0; y < height; y++)
+        foreach (var pos in allPositions)
         {
-            for (var x = 0; x < width; x++)
+            if (map[pos] == Cell.Unknown)
             {
-                if (map[y, x] == Cell.Unknown)
+                (int y, int x) = pos;
+                if (!IsUnknown(map.Pos(y - 1, x - 1)) || !IsUnknown(map.Pos(y - 1, x)) || !IsUnknown(map.Pos(y - 1, x + 1)) ||
+                    !IsUnknown(map.Pos(y, x - 1)) || !IsUnknown(map.Pos(y, x)) || !IsUnknown(map.Pos(y, x + 1)) ||
+                    !IsUnknown(map.Pos(y + 1, x - 1)) || !IsUnknown(map.Pos(y + 1, x)) || !IsUnknown(map.Pos(y + 1, x + 1)))
                 {
-                    if (!IsUnknown(map.Pos(y - 1, x - 1)) || !IsUnknown(map.Pos(y - 1, x)) || !IsUnknown(map.Pos(y - 1, x + 1)) ||
-                        !IsUnknown(map.Pos(y, x - 1)) || !IsUnknown(map.Pos(y, x)) || !IsUnknown(map.Pos(y, x + 1)) ||
-                        !IsUnknown(map.Pos(y + 1, x - 1)) || !IsUnknown(map.Pos(y + 1, x)) || !IsUnknown(map.Pos(y + 1, x + 1)))
-                    {
-                        walls.Add(map.Pos(y, x));
-                    }
+                    walls.Add(pos);
                 }
             }
         }
@@ -319,7 +319,6 @@ public class MapGenerator : IMapGenerator
             map[boulderPos] = Cell.Boulder;
         }
     }
-
 
     private void GenerateLevel8()
     {
@@ -1462,9 +1461,8 @@ public class MapGenerator : IMapGenerator
         var bestRooms = new List<Room>();
         foreach (var room in rooms)
         {
-            var center = map.Pos(room.Y, room.X);
             // Get distance to this room from all input positions
-            var roomDistances = inputDistances.Select(d => d[center.index]).ToList();
+            var roomDistances = inputDistances.Select(d => d[room.Center.index]).ToList();
             // Check if it reachable from all input points
             if (roomDistances.Count != inputDistances.Count) continue;
 
@@ -1501,8 +1499,7 @@ public class MapGenerator : IMapGenerator
 
         foreach (var room in availableRooms.Where(r => r.Height >= minRoomHeight && r.Width >= minRoomWidth))
         {
-            var center = map.Pos(room.Y, room.X);
-            var dist = distances[center.index];
+            var dist = distances[room.Center.index];
             if (dist < minDistance)
             {
                 minDistance = dist;

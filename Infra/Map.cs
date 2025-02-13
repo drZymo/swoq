@@ -34,6 +34,8 @@ public class Map(
 
     public Cell this[Position pos] => cells[pos.index];
 
+    public Cell this[int index] => cells[index];
+
     public Position Pos(int y, int x) => new(y, x, y * Width + x);
 
     public Map Set(int y, int x, Cell cell)
