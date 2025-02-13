@@ -69,6 +69,27 @@ internal class MovementTests : GameTestBase
     }
 
     [Test]
+    public void UnknownAction()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Do an illegal move
+        Assert.Throws<UnknownActionException>(() => Act((DirectedAction)(-1)));
+
+        // Nothing changed
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Is.Empty);
+        });
+    }
+
+    [Test]
     public void NoSecondSwordPickupAllowed()
     {
         Assert.Multiple(() =>
