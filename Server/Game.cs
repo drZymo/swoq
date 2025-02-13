@@ -408,7 +408,7 @@ internal class Game : IGame
 
     private bool TryUseOnEnemyOrPlayer(Player player, Position usePos)
     {
-        foreach (var character in GetAliveCharacters())
+        foreach (var character in GetPresentCharacters())
         {
             if (usePos.Equals(character.Position))
             {
@@ -504,18 +504,21 @@ internal class Game : IGame
 
         if (cannotExit)
         {
+            // Kill it on the spot
             player = player with { Health = 0 };
-            CleanupDeadCharacter(ref player);
-            return;
+        }
+        else
+        {
+            // Remove player from game, with health intact
+            player = player with { Position = Position.Invalid };
         }
 
-        // Remove player from game, with health intact
-        player = player with { Position = Position.Invalid };
+        lastChangeTick = ticks;
     }
 
     private void KillCharacterAtPosition(Position pos)
     {
-        foreach (var character in GetAliveCharacters())
+        foreach (var character in GetPresentCharacters())
         {
             if (pos.Equals(character.Position))
             {
@@ -657,7 +660,6 @@ internal class Game : IGame
         if (character == null) return;
         character = character with { Health = Math.Max(0, character.Health - damage) };
         lastChangeTick = ticks;
-        CleanupDeadCharacter(ref character);
         map = map.SetCharacter(character);
     }
 
@@ -690,7 +692,7 @@ internal class Game : IGame
         if (position.y < 0 || position.y >= map.Height) return false;
 
         // Check collisions with players and enemies.
-        foreach (var character in GetAliveCharacters())
+        foreach (var character in GetPresentCharacters())
         {
             if (position.Equals(character.Position)) return false;
         }
@@ -778,7 +780,7 @@ internal class Game : IGame
     {
         return !pos.IsValid ||
             map[pos] != Cell.Empty ||
-            GetAliveCharacters().Any(c => c.Position.Equals(pos));
+            GetPresentCharacters().Any(c => c.Position.Equals(pos));
     }
 
     private Position FindEmptyPosAround(Position pos)
@@ -851,9 +853,9 @@ internal class Game : IGame
         return true;
     }
 
-    private IEnumerable<GameCharacter> GetAliveCharacters()
+    private IEnumerable<GameCharacter> GetPresentCharacters()
     {
-        foreach (var character in map.AllCharacters.Where(c => c.IsAlive && c.IsPresent))
+        foreach (var character in map.AllCharacters.Where(c => c.IsPresent))
         {
             yield return character;
         }

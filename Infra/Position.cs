@@ -10,16 +10,16 @@ public readonly struct Position(int y, int x, int index) : IEquatable<Position>,
 
     public readonly bool IsValid => index >= 0;
 
+    public static readonly Position Invalid = new(-1, -1, -1);
+
     public override readonly bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is Position other && Equals(other);
     }
 
-    public override readonly int GetHashCode() => index;
-
     public readonly bool Equals(Position other) => index == other.index;
 
-    public static readonly Position Invalid = new(-1, -1, -1);
+    public override readonly int GetHashCode() => index;
 
     public readonly int CompareTo(Position other) => other.index - index;
 
