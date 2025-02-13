@@ -1,7 +1,6 @@
 namespace Swoq.Infra;
 
 using Swoq.Interface;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 public class MapGenerator : IMapGenerator
@@ -14,21 +13,21 @@ public class MapGenerator : IMapGenerator
 
     private readonly int height;
     private readonly int width;
-    private readonly ImmutableHashSet<Position> allPositions = [];
+    private readonly Position[] allPositions = [];
 
-    private ImmutableHashSet<Position> availablePositions = [];
+    private HashSet<Position> availablePositions = [];
     private MutableMap map;
 
     private Room playerRoom = Room.Invalid;
     private Room exitRoom = Room.Invalid;
     private Position exitPosition;
 
-    private ImmutableList<Room> rooms = [];
-    private ImmutableHashSet<Room> availableRooms = [];
-    private ImmutableHashSet<KeyColor> availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
+    private List<Room> rooms = [];
+    private HashSet<Room> availableRooms = [];
+    private HashSet<KeyColor> availableKeyColors = [KeyColor.Red, KeyColor.Green, KeyColor.Blue];
 
-    private ImmutableHashSet<Position> previousAvailablePositions = [];
-    private ImmutableHashSet<Position> initialRestrictedPositions = [];
+    private HashSet<Position> previousAvailablePositions = [];
+    private HashSet<Position> initialRestrictedPositions = [];
 
     public static Map Generate(int level, int height = 64, int width = 64)
     {
@@ -49,11 +48,13 @@ public class MapGenerator : IMapGenerator
         this.width = width;
 
         map = new(-1, height, width);
+        allPositions = new Position[height * width];
+        var i = 0;
         for (var y = 0; y < this.height; y++)
         {
             for (var x = 0; x < this.width; x++)
             {
-                allPositions = allPositions.Add(map.Pos(y, x));
+                allPositions[i++] = map.Pos(y, x);
             }
         }
     }
@@ -123,12 +124,8 @@ public class MapGenerator : IMapGenerator
         // Clear map with unknowns
         map = new(level, height, width);
 
-        // Fill with Unknown and make all positions unused
-        foreach (var pos in allPositions)
-        {
-            map[pos] = Cell.Unknown;
-        }
-        availablePositions = allPositions;
+        // Make all positions unused
+        availablePositions = new HashSet<Position>(allPositions);
 
         // Reset all members
         playerRoom = Room.Invalid;
@@ -459,7 +456,7 @@ public class MapGenerator : IMapGenerator
         // Fill rest with standard maze
         CreateStandardMaze();
 
-        availableRooms = availableRooms.Remove(prisonRoom);
+        availableRooms.Remove(prisonRoom);
 
         // Create prison room
         var prisonKeyColor = PickRandomAvailableKeyColor();
@@ -764,7 +761,9 @@ public class MapGenerator : IMapGenerator
         }
         var roomsLower = rooms;
 
-        rooms = initialRooms.AddRange(roomsUpper).AddRange(roomsLower);
+        rooms = initialRooms;
+        rooms.AddRange(roomsUpper);
+        rooms.AddRange(roomsLower);
 
         // Connect rooms
         ConnectRooms(playerRoom, upperEntryRoom);
@@ -772,8 +771,10 @@ public class MapGenerator : IMapGenerator
         ConnectRooms(upperExitRoom, preExitRoom);
         ConnectRooms(lowerExitRoom, preExitRoom);
         ConnectRooms(preExitRoom, exitRoom);
-        availableRooms = availableRooms.Remove(upperEntryRoom).Remove(upperExitRoom);
-        availableRooms = availableRooms.Remove(lowerEntryRoom).Remove(lowerExitRoom);
+        availableRooms.Remove(upperEntryRoom);
+        availableRooms.Remove(upperExitRoom);
+        availableRooms.Remove(lowerEntryRoom);
+        availableRooms.Remove(lowerExitRoom);
 
         // Add doors to entry and exit rooms
         var upperDoorColor = PickRandomAvailableKeyColor();
@@ -799,12 +800,12 @@ public class MapGenerator : IMapGenerator
         }
 
         // Players in player room
-        availableRooms = availableRooms.Remove(playerRoom);
+        availableRooms.Remove(playerRoom);
         map.Player1.Position = map.Pos(1, 3);
         map.Player2.Position = map.Pos(3, 1);
 
         // Exit in exit room
-        availableRooms = availableRooms.Remove(exitRoom);
+        availableRooms.Remove(exitRoom);
         exitPosition = map.Pos(exitRoom.Bottom - 1, exitRoom.Right - 1);
         map[exitPosition] = Cell.Exit;
         var (exitDoorColor, _) = AddLockAroundExit();
@@ -861,21 +862,22 @@ public class MapGenerator : IMapGenerator
         RestoreAvailablePositions();
 
         // Prevent connecting exit room
-        rooms = rooms.Remove(exitRoom);
+        rooms.Remove(exitRoom);
 
         // Fill the rest with standard maze
         RestrictAvailablePositions(maxY: height - 7);
         CreateStandardMaze(twoPlayers: true);
         RestoreAvailablePositions();
 
-        availableRooms = availableRooms.Remove(exitRoom).Remove(preExitRoom);
+        availableRooms.Remove(exitRoom);
+        availableRooms.Remove(preExitRoom);
 
         var (exitKeyColor, exitDoor) = AddLockAroundExit();
 
         // Big locker room
 
         // Make sure locker rooms is claimed
-        availableRooms = availableRooms.Remove(lockerRoom);
+        availableRooms.Remove(lockerRoom);
 
         (int cy, int cx) = lockerRoom.Center;
 
@@ -968,7 +970,7 @@ public class MapGenerator : IMapGenerator
         map.Enemy1.Position = map.Pos(bossRoom.Y, bossRoom.X);
         map.Enemy1.IsBoss = true;
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
-        availableRooms = availableRooms.Remove(bossRoom);
+        availableRooms.Remove(bossRoom);
 
         // First find or create tunnel in left side of room
         var tunnelPosX = bossRoom.Left - 1;
@@ -1012,9 +1014,11 @@ public class MapGenerator : IMapGenerator
     private Room CreateRoomTopLeft(int top, int left, int height, int width, int margin = 0)
         => CreateRoom(top + height / 2, left + width / 2, height, width, margin);
 
-    private Room CreateRoom(int y, int x, int height, int width, int margin = 0)
+    private Room CreateRoom(int y, int x, int height, int width, int margin = 0) => CreateRoom(map.Pos(y, x), height, width, margin);
+
+    private Room CreateRoom(Position center, int height, int width, int margin = 0)
     {
-        var room = new Room(map.Pos(y, x), height, width);
+        var room = new Room(center, height, width);
 
         // Make empty
         for (var my = room.Top; my < room.Bottom; my++)
@@ -1034,12 +1038,12 @@ public class MapGenerator : IMapGenerator
         {
             for (var mx = left; mx < right; mx++)
             {
-                availablePositions = availablePositions.Remove(map.Pos(my, mx));
+                availablePositions.Remove(map.Pos(my, mx));
             }
         }
 
-        rooms = rooms.Add(room);
-        availableRooms = availableRooms.Add(room);
+        rooms.Add(room);
+        availableRooms.Add(room);
         return room;
     }
 
@@ -1073,24 +1077,20 @@ public class MapGenerator : IMapGenerator
         Room? room = null;
         if (roomPositions.Count > 0)
         {
-            var pos = roomPositions.PickOne();
-            var ry = pos / width;
-            var rx = pos % width;
-            room = CreateRoom(ry, rx, rh, rw, margin);
+            var center = roomPositions.PickOne();
+            room = CreateRoom(center, rh, rw, margin);
         }
         return room;
     }
 
-    private HashSet<int> GetAvailableRoomPositions(int rh, int rw)
+    private HashSet<Position> GetAvailableRoomPositions(int rh, int rw)
     {
-        // Regular hashset for increased performance
-        // Only used locally, so no multi-threading risk
-        var roomPositions = new HashSet<int>(availablePositions.Select(p => p.y * width + p.x));
+        var roomPositions = new HashSet<Position>(availablePositions);
         // Extra map for faster lookup
         var roomPositionsMap = new bool[height * width];
         foreach (var p in roomPositions)
         {
-            roomPositionsMap[p] = true;
+            roomPositionsMap[p.index] = true;
         }
 
         //  Include walls around room
@@ -1101,7 +1101,7 @@ public class MapGenerator : IMapGenerator
         var clearX = (areaWidth - 1) / 2;
         var clearY = (areaHeight - 1) / 2;
 
-        var remove = new List<int>();
+        var remove = new List<Position>();
 
         // Clear X
         for (var i = 0; i < clearX; i++)
@@ -1109,8 +1109,7 @@ public class MapGenerator : IMapGenerator
             remove.Clear();
             foreach (var pos in roomPositions)
             {
-                var x = pos % width;
-                if ((x <= 0) || !roomPositionsMap[pos - 1] || (x >= width - 1) || !roomPositionsMap[pos + 1])
+                if ((pos.x <= 0) || !roomPositionsMap[pos.index - 1] || (pos.x >= width - 1) || !roomPositionsMap[pos.index + 1])
                 {
                     remove.Add(pos);
                 }
@@ -1118,7 +1117,7 @@ public class MapGenerator : IMapGenerator
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
-                roomPositionsMap[pos] = false;
+                roomPositionsMap[pos.index] = false;
             }
             if (roomPositions.Count == 0) break; // Early exit if no positions left
         }
@@ -1129,8 +1128,7 @@ public class MapGenerator : IMapGenerator
             remove.Clear();
             foreach (var pos in roomPositions)
             {
-                var y = pos / width;
-                if ((y <= 0) || !roomPositionsMap[pos - width] || (y >= height - 1) || !roomPositionsMap[pos + width])
+                if ((pos.y <= 0) || !roomPositionsMap[pos.index - width] || (pos.y >= height - 1) || !roomPositionsMap[pos.index + width])
                 {
                     remove.Add(pos);
                 }
@@ -1138,7 +1136,7 @@ public class MapGenerator : IMapGenerator
             foreach (var pos in remove)
             {
                 roomPositions.Remove(pos);
-                roomPositionsMap[pos] = false;
+                roomPositionsMap[pos.index] = false;
             }
             if (roomPositions.Count == 0) break; // Early exit if no positions left
         }
@@ -1148,14 +1146,14 @@ public class MapGenerator : IMapGenerator
 
     private void ConnectRoomsRandomly()
     {
-        var remaining = rooms;
+        var remaining = new List<Room>(rooms);
 
         // start with top left room
         var current = remaining.OrderBy(r => DistanceBetween(r, 0, 0)).First();
 
         while (remaining.Count > 1)
         {
-            remaining = remaining.Remove(current);
+            remaining.Remove(current);
 
             // pick one of the two closest rooms
             var closestRooms = remaining.OrderBy(r => DistanceBetween(r, current.Center.y, current.Center.x)).Take(2);
@@ -1176,8 +1174,8 @@ public class MapGenerator : IMapGenerator
         var _maxY = maxY ?? height;
         var _minX = minX ?? 0;
         var _maxX = maxX ?? width;
-        var restrictedPositions = availablePositions.Where(p => _minY <= p.y && p.y < _maxY && _minX <= p.x && p.x < _maxX).ToImmutableHashSet();
-        initialRestrictedPositions = restrictedPositions;
+        var restrictedPositions = availablePositions.Where(p => _minY <= p.y && p.y < _maxY && _minX <= p.x && p.x < _maxX).ToHashSet();
+        initialRestrictedPositions = restrictedPositions.ToHashSet();
         availablePositions = restrictedPositions;
     }
 
@@ -1185,7 +1183,11 @@ public class MapGenerator : IMapGenerator
     {
         // Check what has been removed since restriction and remove it from the initial list
         var removedPositions = initialRestrictedPositions.Except(availablePositions);
-        availablePositions = previousAvailablePositions.Except(removedPositions);
+        availablePositions = previousAvailablePositions;
+        foreach (var pos in removedPositions)
+        {
+            availablePositions.Remove(pos);
+        }
 
         previousAvailablePositions = [];
         initialRestrictedPositions = [];
@@ -1217,7 +1219,7 @@ public class MapGenerator : IMapGenerator
         // place player in top left room
         // and exit in bottom right
         playerRoom = availableRooms.OrderBy(r => DistanceBetween(r, 0, 0)).First();
-        availableRooms = availableRooms.Remove(playerRoom);
+        availableRooms.Remove(playerRoom);
         if (twoPlayers)
         {
             map.Player1.Position = map.Pos(playerRoom.Center.y + 1, playerRoom.Center.x - 1);
@@ -1229,7 +1231,7 @@ public class MapGenerator : IMapGenerator
         }
 
         exitRoom = availableRooms.OrderBy(r => DistanceBetween(r, height, width)).First();
-        availableRooms = availableRooms.Remove(exitRoom);
+        availableRooms.Remove(exitRoom);
         exitPosition = map.Pos(exitRoom.Bottom - 1, exitRoom.Right - 1);
         map[exitPosition] = Cell.Exit;
     }
@@ -1426,7 +1428,7 @@ public class MapGenerator : IMapGenerator
     private Position ClaimRandomPositionInRoomFarthestFrom(IEnumerable<Room> rooms, Position[] inputPositions, int margin = 0)
     {
         var room = GetRoomFarthestPositionFrom(rooms, inputPositions);
-        availableRooms = availableRooms.Remove(room);
+        availableRooms.Remove(room);
         return GetRandomEmptyPositionInRoom(room, margin);
     }
 
@@ -1485,7 +1487,7 @@ public class MapGenerator : IMapGenerator
     private Position ClaimRandomPositionInRandomAvailableRoom(IEnumerable<Room> rooms, int margin = 0)
     {
         var room = rooms.Where(r => availableRooms.Contains(r)).PickOne();
-        availableRooms = availableRooms.Remove(room);
+        availableRooms.Remove(room);
         return GetRandomEmptyPositionInRoom(room, margin);
     }
 
@@ -1511,20 +1513,8 @@ public class MapGenerator : IMapGenerator
         }
 
         var minRoom = minRooms.PickOne();
-        availableRooms = availableRooms.Remove(minRoom);
+        availableRooms.Remove(minRoom);
         return minRoom;
-    }
-
-    private Position? GetEmptyPositionInFront(Position pos)
-    {
-        var positions = new List<Position>(4);
-
-        if (pos.y > 0 && map[pos.y - 1, pos.x] == Cell.Empty) positions.Add(map.Pos(pos.y - 1, pos.x));
-        if (pos.y < height && map[pos.y + 1, pos.x] == Cell.Empty) positions.Add(map.Pos(pos.y + 1, pos.x));
-        if (pos.x > 0 && map[pos.y, pos.x - 1] == Cell.Empty) positions.Add(map.Pos(pos.y, pos.x - 1));
-        if (pos.x < width && map[pos.y, pos.x + 1] == Cell.Empty) positions.Add(map.Pos(pos.y, pos.x + 1));
-
-        return positions.Count > 0 ? positions.PickOne() : null;
     }
 
     private (KeyColor lockerKeyColor, Position infrontDoorPos) AddLocker(Position lockerCenter, KeyColor keyColor)
@@ -1562,6 +1552,8 @@ public class MapGenerator : IMapGenerator
     {
         var middle = width / 2;
 
+        var initialRooms = rooms;
+
         // Create left and right rooms
         rooms = [];
         RestrictAvailablePositions(maxX: middle);
@@ -1577,7 +1569,9 @@ public class MapGenerator : IMapGenerator
         ConnectRoomsRandomly();
         var roomsRight = rooms;
 
-        rooms = roomsLeft.AddRange(roomsRight);
+        rooms = initialRooms;
+        rooms.AddRange(roomsLeft);
+        rooms.AddRange(roomsRight);
 
         PlacePlayersTopLeftAndExitBottomRight(twoPlayers);
 
@@ -1626,7 +1620,8 @@ public class MapGenerator : IMapGenerator
         ConnectRooms(minLeft, minRight);
 
         // Don't use them for enemy or keys
-        availableRooms = availableRooms.Remove(minLeft).Remove(minRight);
+        availableRooms.Remove(minLeft);
+        availableRooms.Remove(minRight);
 
         // Find position of tunnel middle
         var tunnelPositions = new List<Position>();
@@ -1653,7 +1648,7 @@ public class MapGenerator : IMapGenerator
     void SetAndMakeUnavailable(Position pos, Cell value)
     {
         map[pos] = value;
-        availablePositions = availablePositions.Remove(pos);
+        availablePositions.Remove(pos);
     }
 
     private KeyColor CreateChamber(Position center, int height, int width)
@@ -1702,7 +1697,7 @@ public class MapGenerator : IMapGenerator
     private (KeyColor innerKeyColor, KeyColor outerKeyColor) CreateDoubleLockerRoom(Room lockerRoom, KeyColor lockedKeyColor)
     {
         // Make sure locker room is claimed
-        availableRooms = availableRooms.Remove(lockerRoom);
+        availableRooms.Remove(lockerRoom);
 
         (int cy, int cx) = lockerRoom.Center;
 
@@ -1738,7 +1733,7 @@ public class MapGenerator : IMapGenerator
     private KeyColor PickRandomAvailableKeyColor()
     {
         var keyColor = availableKeyColors.PickOne();
-        availableKeyColors = availableKeyColors.Remove(keyColor);
+        availableKeyColors.Remove(keyColor);
         return keyColor;
     }
 

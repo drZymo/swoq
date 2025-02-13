@@ -33,13 +33,22 @@ public class MutableCharacter
     }
 }
 
-public class MutableMap(int level, int height, int width)
+public class MutableMap
 {
-    private readonly Cell[] data = new Cell[height * width];
+    private readonly Cell[] data;
 
-    public int Level { get; } = level;
-    public int Height { get; } = height;
-    public int Width { get; } = width;
+    public MutableMap(int level, int height, int width)
+    {
+        data = new Cell[height * width];
+        Array.Fill(data, Cell.Unknown);
+        Level = level;
+        Height = height;
+        Width = width;
+    }
+
+    public int Level { get; }
+    public int Height { get; }
+    public int Width { get; }
 
     public MutableCharacter Player1 { get; } = new();
     public MutableCharacter Player2 { get; } = new();

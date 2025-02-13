@@ -6,6 +6,7 @@ public static class PickOneExtension
     {
         if (values.Count() == 1)
             return values.First();
-        return values.OrderBy(_ => Rnd.Next()).First();
+        var index = Rnd.Next(0, values.Count());
+        return values.Skip(index).First();
     }
 }
