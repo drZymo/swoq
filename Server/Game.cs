@@ -27,7 +27,6 @@ internal class Game : IGame
     }
 
     public Guid Id { get; } = Guid.NewGuid();
-    public int Level => map.Level;
     public GameState State { get; private set; }
     public DateTime LastActionTime { get; private set; } = Clock.Now;
     public bool IsFinished => status != GameStatus.Active || TimedOut;

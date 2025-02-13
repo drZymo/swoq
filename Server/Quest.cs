@@ -11,6 +11,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
 
     private readonly DateTime startTime = Clock.Now;
     private int ticks = 0;
+    private int level = 0;
     private Game currentGame;
 
     public Quest(User user, ISwoqDatabase database)
@@ -18,12 +19,11 @@ public class Quest<MG> : IGame where MG : IMapGenerator
         this.user = user;
         this.database = database;
 
-        currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
+        currentGame = new Game(MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
         State = currentGame.State with { Tick = ticks };
     }
 
     public Guid Id { get; } = Guid.NewGuid();
-    public int Level { get; private set; } = 0;
     public GameState State { get; private set; }
     public DateTime LastActionTime => currentGame.LastActionTime;
     public bool IsFinished => State.Status != GameStatus.Active || TimedOut;
@@ -48,21 +48,21 @@ public class Quest<MG> : IGame where MG : IMapGenerator
             // If game is completed successfully, then move to next level.
             if (currentGame.State.Status == GameStatus.FinishedSuccess)
             {
-                Level++;
+                level++;
 
                 // Update user stats
                 var lengthSeconds = (int)Math.Round((LastActionTime - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
-                if (user.Level <= Level)
+                if (user.Level <= level)
                 {
-                    if (user.Level < Level)
+                    if (user.Level < level)
                     {
                         // If this level was not reached before,
                         // unlock the level and remember the length.
-                        user.Level = Level;
+                        user.Level = level;
                         user.QuestLengthTicks = ticks;
                         user.QuestLengthSeconds = lengthSeconds;
                     }
-                    else if (user.Level == Level)
+                    else if (user.Level == level)
                     {
                         // If this level was the highest level reached before, then update the duration if it improved.
                         user.QuestLengthTicks = Math.Min(ticks, user.QuestLengthTicks);
@@ -74,9 +74,9 @@ public class Quest<MG> : IGame where MG : IMapGenerator
                 }
 
                 // Create a new game if this was not the last level
-                if (Level <= MG.MaxLevel)
+                if (level <= MG.MaxLevel)
                 {
-                    currentGame = new Game(MG.Generate(Level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
+                    currentGame = new Game(MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
                 }
             }
         }

@@ -86,7 +86,7 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
         return action.Value.ConvertToString();
     }
 
-    private static (int y, int x) Convert(Interface.Position? position) => position == null ? (-1, -1): (position.Y, position.X);
+    private static (int y, int x) Convert(Interface.Position? position) => position == null ? (-1, -1) : (position.Y, position.X);
 
     public static bool IsPickup(Tile tile) => tile switch
     {

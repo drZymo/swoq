@@ -160,7 +160,7 @@ internal class CrushTests : GameTestBase
             // Door opened
             Assert.That(changes[(2, 1)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
             Assert.That(changes[(2, 2)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
-           // Enemy (was out of view) gone
+            // Enemy (was out of view) gone
             Assert.That(changes[(1, 2)], Is.EqualTo((Tile.Enemy, Tile.Empty)));
             // Sword dropped on other side of door
             Assert.That(changes[(1, 1)], Is.EqualTo((Tile.Empty, Tile.Sword)));
