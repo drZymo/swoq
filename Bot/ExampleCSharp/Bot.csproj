@@ -13,7 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="env.json">
+      <Content Include="env.json" Condition="Exists('env.json')">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
