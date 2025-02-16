@@ -219,9 +219,9 @@ internal class CrushTests : GameTestBase
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
             Assert.That(changes, Has.Count.EqualTo(9));
             // Door opened
-            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.DoorBlue, Tile.Boss))); // Boss stepped right in
+            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
-            Assert.That(changes[(1, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
+            Assert.That(changes[(1, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Boss))); // Boss stepped right in
             // Map revealed
             Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Unknown, Tile.Empty)));
             Assert.That(changes[(1, 10)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
@@ -244,13 +244,13 @@ internal class CrushTests : GameTestBase
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Boulder)); // boulder back in inventory
             Assert.That(changes, Has.Count.EqualTo(5));
             // Door closed - (1,8) not in view
-            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.Boss, Tile.DoorBlue)));
+            Assert.That(changes[(2, 9)], Is.EqualTo((Tile.Empty, Tile.DoorBlue)));
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.Empty, Tile.DoorBlue)));
             // Boulder from plate
             Assert.That(changes[(5, 9)], Is.EqualTo((Tile.Boulder, Tile.PressurePlateBlue)));
             // Treasures dropped by enemy (key on other side of door)
-            Assert.That(changes[(3, 8)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
-            Assert.That(changes[(3, 9)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
+            Assert.That(changes[(1, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
+            Assert.That(changes[(2, 7)], Is.EqualTo((Tile.Empty, Tile.Treasure)));
         });
 
         // Place boulder back on plate
@@ -261,10 +261,12 @@ internal class CrushTests : GameTestBase
         {
             Assert.That(game.State.Player1.Position, Is.EqualTo((5, 8)));
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None)); // boulder removed from inventory
-            Assert.That(changes, Has.Count.EqualTo(4));
+            Assert.That(changes, Has.Count.EqualTo(5));
             // Door opened
             Assert.That(changes[(2, 9)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
             Assert.That(changes[(2, 8)], Is.EqualTo((Tile.DoorBlue, Tile.Empty)));
+            // Boss (was out of view) gone
+            Assert.That(changes[(1, 8)], Is.EqualTo((Tile.Boss, Tile.Empty)));
             // Key dropped
             Assert.That(changes[(1, 9)], Is.EqualTo((Tile.Empty, Tile.KeyGreen)));
             // Boulder on plate
@@ -385,13 +387,13 @@ internal class CrushTests : GameTestBase
         }
 
         // Player in center
-        map.Player1.Position = ((height - 1) / 2, (width - 1) / 2);
+        map.Player1.Position = map.Pos((height - 1) / 2, (width - 1) / 2);
 
         // Boulder bottom left
         map[height - 2, 1] = Cell.Boulder;
 
         // Enemy top left with red door
-        map.Enemy2.Position = (1, 1);
+        map.Enemy2.Position = map.Pos(1, 1);
         map.Enemy2.Inventory = Inventory.KeyGreen;
         map.Enemy2.IsBoss = false;
         map[1, 2] = Cell.DoorRedClosed;
@@ -401,7 +403,7 @@ internal class CrushTests : GameTestBase
         map[map.Player1.Position.y, 1] = Cell.PressurePlateRed;
 
         // Boss top right with blue door
-        map.Enemy1.Position = (1, width - 2);
+        map.Enemy1.Position = map.Pos(1, width - 2);
         map.Enemy1.Inventory = Inventory.KeyGreen;
         map.Enemy1.IsBoss = true;
         map[1, width - 3] = Cell.DoorBlueClosed;
@@ -411,7 +413,7 @@ internal class CrushTests : GameTestBase
         map[map.Player1.Position.y, width - 2] = Cell.PressurePlateBlue;
 
         // Second player bottom righ right with blue door
-        map.Player2.Position = (height - 2, width - 2);
+        map.Player2.Position = map.Pos(height - 2, width - 2);
         map[height - 2, width - 3] = Cell.DoorGreenClosed;
         map[height - 3, width - 3] = Cell.DoorGreenClosed;
         map[height - 3, width - 2] = Cell.DoorGreenClosed;

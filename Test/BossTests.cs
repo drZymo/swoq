@@ -189,10 +189,10 @@ internal class BossTests : GameTestBase
         }
 
         // Player left
-        map.Player1.Position = (3, 1);
+        map.Player1.Position = map.Pos(3, 1);
 
         // Boss right
-        map.Enemy1.Position = (3, (width - 2));
+        map.Enemy1.Position = map.Pos(3, (width - 2));
         map.Enemy1.IsBoss = true;
 
         // Sword and health

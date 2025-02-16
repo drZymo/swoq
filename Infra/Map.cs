@@ -1,7 +1,6 @@
 ﻿namespace Swoq.Infra;
 
 using System.Collections.Immutable;
-using Position = (int y, int x);
 
 public class Map(
     int level,
@@ -33,7 +32,11 @@ public class Map(
 
     public Cell this[int y, int x] => cells[y * Width + x];
 
-    public Cell this[Position pos] => this[pos.y, pos.x];
+    public Cell this[Position pos] => cells[pos.index];
+
+    public Cell this[int index] => cells[index];
+
+    public Position Pos(int y, int x) => new(y, x, y * Width + x);
 
     public Map Set(int y, int x, Cell cell)
     {

@@ -178,7 +178,7 @@ internal class QuestTests
             map[1, 3] = Cell.Exit;
             map[1, 4] = Cell.Wall;
 
-            map.Player1.Position = (1, 2);
+            map.Player1.Position = map.Pos(1, 2);
 
             if (level == MaxLevel) map.IsFinal = true;
 

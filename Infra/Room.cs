@@ -1,17 +1,18 @@
 ﻿namespace Swoq.Infra;
 
-using Position = (int y, int x);
-
-internal record Room(int Y, int X, int Height, int Width) : IComparable<Room>
+internal record Room(Position Center, int Height, int Width) : IComparable<Room>
 {
-    public Position Center => (Y, X);
+    public static readonly Room Invalid = new Room(Position.Invalid, -1, -1);
+
+    public int Y => Center.y;
+    public int X => Center.x;
 
     public int Top => Y - Height / 2;
     public int Bottom => Top + Height;
     public int Left => X - Width / 2;
     public int Right => Left + Width;
 
-    public IEnumerable<Position> GetPositions(int margin = 0)
+    public IEnumerable<(int y, int x)> GetPositions(int margin = 0)
     {
         for (var y = Top + margin; y < Bottom - margin; y++)
         {
@@ -26,10 +27,7 @@ internal record Room(int Y, int X, int Height, int Width) : IComparable<Room>
     {
         if (other is null) return 1;
 
-        int result = Y.CompareTo(other.Y);
-        if (result != 0) return result;
-
-        result = X.CompareTo(other.X);
+        int result = Center.CompareTo(other.Center);
         if (result != 0) return result;
 
         result = Height.CompareTo(other.Height);

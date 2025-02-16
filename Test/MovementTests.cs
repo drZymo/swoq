@@ -69,6 +69,27 @@ internal class MovementTests : GameTestBase
     }
 
     [Test]
+    public void UnknownAction()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Do an illegal move
+        Assert.Throws<UnknownActionException>(() => Act((DirectedAction)(-1)));
+
+        // Nothing changed
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((6, 5)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Is.Empty);
+        });
+    }
+
+    [Test]
     public void NoSecondSwordPickupAllowed()
     {
         Assert.Multiple(() =>
@@ -259,8 +280,8 @@ internal class MovementTests : GameTestBase
         }
 
         // Two players in center
-        map.Player1.Position = ((height - 1) / 2, (width - 1) / 2);
-        map.Player2.Position = ((height - 1) / 2, (width - 1) / 2 + 1);
+        map.Player1.Position = map.Pos((height - 1) / 2, (width - 1) / 2);
+        map.Player2.Position = map.Pos((height - 1) / 2, (width - 1) / 2 + 1);
 
         // Two swords near player 1
         map[map.Player1.Position.y + 1, map.Player1.Position.x] = Cell.Sword;
@@ -271,7 +292,7 @@ internal class MovementTests : GameTestBase
         map[map.Player2.Position.y + 2, map.Player2.Position.x] = Cell.KeyBlue;
 
         // One enemy in top (in wall)
-        map.Enemy1.Position = (0, (width - 1) / 2);
+        map.Enemy1.Position = map.Pos(0, (width - 1) / 2);
         map[map.Enemy1.Position.y, map.Enemy1.Position.x] = Cell.Empty;
 
         // Boulder in left

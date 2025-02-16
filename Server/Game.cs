@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
-using Position = (int y, int x);
+using Position = Infra.Position;
 
 internal class Game : IGame
 {
@@ -27,7 +27,6 @@ internal class Game : IGame
     }
 
     public Guid Id { get; } = Guid.NewGuid();
-    public int Level => map.Level;
     public GameState State { get; private set; }
     public DateTime LastActionTime { get; private set; } = Clock.Now;
     public bool IsFinished => status != GameStatus.Active || TimedOut;
@@ -194,21 +193,21 @@ internal class Game : IGame
         map = map.SetCharacter(player);
     }
 
-    private static Position GetDirectedActionPosition(Player player, DirectedAction action) => action switch
+    private Position GetDirectedActionPosition(Player player, DirectedAction action) => action switch
     {
         DirectedAction.None => player.Position,
 
-        DirectedAction.MoveNorth => (player.Position.y - 1, player.Position.x),
-        DirectedAction.UseNorth => (player.Position.y - 1, player.Position.x),
+        DirectedAction.MoveNorth => map.Pos(player.Position.y - 1, player.Position.x),
+        DirectedAction.UseNorth => map.Pos(player.Position.y - 1, player.Position.x),
 
-        DirectedAction.MoveEast => (player.Position.y, player.Position.x + 1),
-        DirectedAction.UseEast => (player.Position.y, player.Position.x + 1),
+        DirectedAction.MoveEast => map.Pos(player.Position.y, player.Position.x + 1),
+        DirectedAction.UseEast => map.Pos(player.Position.y, player.Position.x + 1),
 
-        DirectedAction.MoveSouth => (player.Position.y + 1, player.Position.x),
-        DirectedAction.UseSouth => (player.Position.y + 1, player.Position.x),
+        DirectedAction.MoveSouth => map.Pos(player.Position.y + 1, player.Position.x),
+        DirectedAction.UseSouth => map.Pos(player.Position.y + 1, player.Position.x),
 
-        DirectedAction.MoveWest => (player.Position.y, player.Position.x - 1),
-        DirectedAction.UseWest => (player.Position.y, player.Position.x - 1),
+        DirectedAction.MoveWest => map.Pos(player.Position.y, player.Position.x - 1),
+        DirectedAction.UseWest => map.Pos(player.Position.y, player.Position.x - 1),
 
         _ => throw new UnknownActionException(),
     };
@@ -409,7 +408,7 @@ internal class Game : IGame
 
     private bool TryUseOnEnemyOrPlayer(Player player, Position usePos)
     {
-        foreach (var character in GetAliveCharacters())
+        foreach (var character in GetPresentCharacters())
         {
             if (usePos.Equals(character.Position))
             {
@@ -484,7 +483,7 @@ internal class Game : IGame
         {
             for (var x = 0; x < map.Width; x++)
             {
-                Position pos = (y, x);
+                var pos = map.Pos(y, x);
                 if (map[pos] == openDoor)
                 {
                     map = map.Set(pos, closedDoor);
@@ -505,18 +504,21 @@ internal class Game : IGame
 
         if (cannotExit)
         {
+            // Kill it on the spot
             player = player with { Health = 0 };
-            CleanupDeadCharacter(ref player);
-            return;
+        }
+        else
+        {
+            // Remove player from game, with health intact
+            player = player with { Position = Position.Invalid };
         }
 
-        // Remove player from game, with health intact
-        player = player with { Position = PositionEx.Invalid };
+        lastChangeTick = ticks;
     }
 
     private void KillCharacterAtPosition(Position pos)
     {
-        foreach (var character in GetAliveCharacters())
+        foreach (var character in GetPresentCharacters())
         {
             if (pos.Equals(character.Position))
             {
@@ -633,7 +635,7 @@ internal class Game : IGame
         var dy = targetPosition.y - enemy.Position.y;
         if (Math.Abs(dy) > 0)
         {
-            var nextPosY = (enemy.Position.y + Math.Sign(dy), enemy.Position.x);
+            var nextPosY = map.Pos(enemy.Position.y + Math.Sign(dy), enemy.Position.x);
             if (CanMoveTo(nextPosY, isEnemy: true)) nextPositions = nextPositions.Add(nextPosY);
         }
 
@@ -641,7 +643,7 @@ internal class Game : IGame
         var dx = targetPosition.x - enemy.Position.x;
         if (Math.Abs(dx) > 0)
         {
-            var nextPosX = (enemy.Position.y, enemy.Position.x + Math.Sign(dx));
+            var nextPosX = map.Pos(enemy.Position.y, enemy.Position.x + Math.Sign(dx));
             if (CanMoveTo(nextPosX, isEnemy: true)) nextPositions = nextPositions.Add(nextPosX);
         }
 
@@ -658,7 +660,6 @@ internal class Game : IGame
         if (character == null) return;
         character = character with { Health = Math.Max(0, character.Health - damage) };
         lastChangeTick = ticks;
-        CleanupDeadCharacter(ref character);
         map = map.SetCharacter(character);
     }
 
@@ -691,7 +692,7 @@ internal class Game : IGame
         if (position.y < 0 || position.y >= map.Height) return false;
 
         // Check collisions with players and enemies.
-        foreach (var character in GetAliveCharacters())
+        foreach (var character in GetPresentCharacters())
         {
             if (position.Equals(character.Position)) return false;
         }
@@ -733,7 +734,7 @@ internal class Game : IGame
         var position = character.Position;
 
         // Remove character from game
-        character = character with { Position = PositionEx.Invalid };
+        character = character with { Position = Position.Invalid };
 
         // Boss drops two treasures (most important otherwise cannot exit)
         if (character is Enemy enemy && enemy.IsBoss)
@@ -769,7 +770,7 @@ internal class Game : IGame
         }
 
         // If no position can be found, then simply not place the item and lose it.
-        if (!dropPos.IsValid()) return;
+        if (!dropPos.IsValid) return;
 
         Debug.Assert(map[dropPos] == Cell.Empty);
         map = map.Set(dropPos, item);
@@ -777,9 +778,9 @@ internal class Game : IGame
 
     private bool IsOccupied(Position pos)
     {
-        return !pos.IsValid() ||
+        return !pos.IsValid ||
             map[pos] != Cell.Empty ||
-            GetAliveCharacters().Any(c => c.Position == pos);
+            GetPresentCharacters().Any(c => c.Position.Equals(pos));
     }
 
     private Position FindEmptyPosAround(Position pos)
@@ -790,16 +791,16 @@ internal class Game : IGame
             if (!IsOccupied(p)) choices = choices.Add(p);
         }
 
-        AddIfNotOccupied((pos.y - 1, pos.x - 1));
-        AddIfNotOccupied((pos.y - 1, pos.x));
-        AddIfNotOccupied((pos.y - 1, pos.x + 1));
-        AddIfNotOccupied((pos.y, pos.x - 1));
-        AddIfNotOccupied((pos.y, pos.x + 1));
-        AddIfNotOccupied((pos.y + 1, pos.x - 1));
-        AddIfNotOccupied((pos.y + 1, pos.x));
-        AddIfNotOccupied((pos.y + 1, pos.x + 1));
+        AddIfNotOccupied(map.Pos(pos.y - 1, pos.x - 1));
+        AddIfNotOccupied(map.Pos(pos.y - 1, pos.x));
+        AddIfNotOccupied(map.Pos(pos.y - 1, pos.x + 1));
+        AddIfNotOccupied(map.Pos(pos.y, pos.x - 1));
+        AddIfNotOccupied(map.Pos(pos.y, pos.x + 1));
+        AddIfNotOccupied(map.Pos(pos.y + 1, pos.x - 1));
+        AddIfNotOccupied(map.Pos(pos.y + 1, pos.x));
+        AddIfNotOccupied(map.Pos(pos.y + 1, pos.x + 1));
 
-        if (choices.Count == 0) return PositionEx.Invalid;
+        if (choices.Count == 0) return Position.Invalid;
 
         // Pick one closest to a player
         return choices.OrderBy(p => DistanceToAnyPlayer(p)).First();
@@ -852,9 +853,9 @@ internal class Game : IGame
         return true;
     }
 
-    private IEnumerable<GameCharacter> GetAliveCharacters()
+    private IEnumerable<GameCharacter> GetPresentCharacters()
     {
-        foreach (var character in map.AllCharacters.Where(c => c.IsAlive && c.IsPresent))
+        foreach (var character in map.AllCharacters.Where(c => c.IsPresent))
         {
             yield return character;
         }
@@ -884,12 +885,12 @@ internal class Game : IGame
                 for (var x = 0; x < width; x++)
                 {
                     surroundings[y * width + x] =
-                        map.ToVisibleTile((top + y, left + x), player.Position, visibilityRange);
+                        map.ToVisibleTile(map.Pos(top + y, left + x), player.Position, visibilityRange);
                 }
             }
         }
 
-        return new PlayerState(player.Position, player.Health, player.Inventory, player.HasSword, surroundings);
+        return new PlayerState((player.Position.y, player.Position.x), player.Health, player.Inventory, player.HasSword, surroundings);
     }
 
     #endregion

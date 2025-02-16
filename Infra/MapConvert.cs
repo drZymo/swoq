@@ -3,8 +3,6 @@ using System.Collections.Immutable;
 
 namespace Swoq.Infra;
 
-using Position = (int y, int x);
-
 public static class MapConvert
 {
     public static TileMap ToOverview(this Map map)
@@ -12,13 +10,10 @@ public static class MapConvert
         var tileData = new Tile[map.Height * map.Width];
         var visiblityData = new bool[map.Height * map.Width];
 
-        for (int y = 0; y < map.Height; y++)
+        for (var i = 0; i < map.Height * map.Width; i++)
         {
-            for (int x = 0; x < map.Width; x++)
-            {
-                tileData[y * map.Width + x] = ToTile(map, (y, x));
-                visiblityData[y * map.Width + x] = true;
-            }
+            tileData[i] = ToTile(map, i);
+            visiblityData[i] = true;
         }
 
         return new TileMap(map.Height, map.Width, tileData.ToImmutableArray(), visiblityData.ToImmutableArray());
@@ -26,26 +21,26 @@ public static class MapConvert
 
     public static Tile ToVisibleTile(this Map map, Position tilePos, Position observerPos, int visibilityRange)
     {
-        return map.IsVisible(from: observerPos, to: tilePos, maxRange: visibilityRange) ? map.ToTile(tilePos) : Tile.Unknown;
+        return map.IsVisible(from: observerPos, to: tilePos, maxRange: visibilityRange) ? map.ToTile(tilePos.index) : Tile.Unknown;
     }
 
-    public static Tile ToTile(this Map map, Position tilePos)
+    private static Tile ToTile(this Map map, int tileIndex)
     {
-        if ((map.Player1 != null && map.Player1.IsPresent && tilePos.Equals(map.Player1.Position)) ||
-            (map.Player2 != null && map.Player2.IsPresent && tilePos.Equals(map.Player2.Position)))
+        if ((map.Player1 != null && map.Player1.IsPresent && map.Player1.Position.index == tileIndex) ||
+            (map.Player2 != null && map.Player2.IsPresent && map.Player2.Position.index == tileIndex))
         {
             return Tile.Player;
         }
 
         foreach (var enemy in map.Enemies)
         {
-            if (enemy.IsPresent && tilePos.Equals(enemy.Position))
+            if (enemy.IsPresent && enemy.Position.index == tileIndex)
             {
                 return enemy.IsBoss ? Tile.Boss : Tile.Enemy;
             }
         }
 
-        return map[tilePos] switch
+        return map[tileIndex] switch
         {
             Cell.Unknown => Tile.Unknown,
             Cell.Empty => Tile.Empty,
