@@ -164,7 +164,7 @@ internal class QuestTests
 
     private class DummyGenerator : IMapGenerator
     {
-        public static Map Generate(int level, int height, int width)
+        public static Map Generate(int level, int height, int width, Random random)
         {
             MutableMap map = new(level, 3, 5);
             for (var x = 0; x < 5; x++)

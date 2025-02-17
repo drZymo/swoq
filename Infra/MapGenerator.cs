@@ -13,6 +13,7 @@ public class MapGenerator : IMapGenerator
 
     private readonly int height;
     private readonly int width;
+    private readonly Random random;
     private readonly Position[] allPositions = [];
 
     private HashSet<Position> availablePositions = [];
@@ -29,11 +30,11 @@ public class MapGenerator : IMapGenerator
     private HashSet<Position> previousAvailablePositions = [];
     private HashSet<Position> initialRestrictedPositions = [];
 
-    public static Map Generate(int level, int height = 64, int width = 64)
+    public static Map Generate(int level, int height, int width, Random random)
     {
         try
         {
-            var generator = new MapGenerator(height, width);
+            var generator = new MapGenerator(height, width, random);
             return generator.Generate(level);
         }
         catch (MapGeneratorException) // TODO: report
@@ -42,11 +43,11 @@ public class MapGenerator : IMapGenerator
         }
     }
 
-    public MapGenerator(int height, int width)
+    public MapGenerator(int height, int width, Random random)
     {
         this.height = height;
         this.width = width;
-
+        this.random = random;
         map = new(-1, height, width);
         allPositions = new Position[height * width];
         var i = 0;
@@ -289,7 +290,7 @@ public class MapGenerator : IMapGenerator
 
         // Place a plate on a point at a fixed walk distance from the exit.
         const int plateDistance = 5;
-        var platePos = Enumerable.Range(0, distances.Length).Where(d => distances[d] == plateDistance).PickOne();
+        var platePos = Enumerable.Range(0, distances.Length).Where(d => distances[d] == plateDistance).PickOne(random);
         map[platePos] = ToPressurePlate(keyColor);
 
         // Place wall of doors around exit
@@ -377,7 +378,7 @@ public class MapGenerator : IMapGenerator
         if (enemyAndPlatePositions.Count == 0) throw new MapGeneratorException("No empty position for enemy and plate");
 
         // Place enemy right of door
-        var (enemyPosition, platePosition) = enemyAndPlatePositions.PickOne();
+        var (enemyPosition, platePosition) = enemyAndPlatePositions.PickOne(random);
         map.Enemy1.Position = enemyPosition;
         map.Enemy1.Inventory = ToInventory(exitKeyColor);
         // and plate left of door
@@ -478,7 +479,7 @@ public class MapGenerator : IMapGenerator
 
         // Add large door with enemy guard in front
         var doorCell = ToDoor(prisonKeyColor);
-        int direction = Directions.PickOne();
+        int direction = Directions.PickOne(random);
         switch (direction)
         {
             case 'N':
@@ -1067,8 +1068,8 @@ public class MapGenerator : IMapGenerator
     {
         // Choose room size
         // always odd size, so center is really center
-        var rh = 1 + 2 * Rnd.Next(minSize, maxSize);
-        var rw = 1 + 2 * Rnd.Next(minSize, maxSize);
+        var rh = 1 + 2 * random.Next(minSize, maxSize);
+        var rw = 1 + 2 * random.Next(minSize, maxSize);
 
         // Find all positions that could fit the room
         var roomPositions = GetAvailableRoomPositions(rh, rw);
@@ -1077,7 +1078,7 @@ public class MapGenerator : IMapGenerator
         Room? room = null;
         if (roomPositions.Count > 0)
         {
-            var center = roomPositions.PickOne();
+            var center = roomPositions.PickOne(random);
             room = CreateRoom(center, rh, rw, margin);
         }
         return room;
@@ -1157,7 +1158,7 @@ public class MapGenerator : IMapGenerator
 
             // pick one of the two closest rooms
             var closestRooms = remaining.OrderBy(r => DistanceBetween(r, current.Center.y, current.Center.x)).Take(2);
-            var next = closestRooms.PickOne();
+            var next = closestRooms.PickOne(random);
 
             ConnectRooms(current, next);
             current = next;
@@ -1345,7 +1346,7 @@ public class MapGenerator : IMapGenerator
         {
             posibleDoorPositions.Add(map.Pos(roomCenter.y, roomCenter.x - 1));
         }
-        return posibleDoorPositions.PickOne();
+        return posibleDoorPositions.PickOne(random);
     }
 
     private static Cell ToDoor(KeyColor color) => color switch
@@ -1434,14 +1435,14 @@ public class MapGenerator : IMapGenerator
 
     private Position GetRandomEmptyPositionInRoom(Room room, int margin = 0)
     {
-        return room.GetPositions(margin).Select(p => map.Pos(p.y, p.x)).Where(IsEmpty).PickOne();
+        return room.GetPositions(margin).Select(p => map.Pos(p.y, p.x)).Where(IsEmpty).PickOne(random);
     }
 
     private Position? TryGetRandomEmptyPositionInRoom(Room room, int margin = 0)
     {
         var positions = room.GetPositions(margin).Select(p => map.Pos(p.y, p.x)).Where(IsEmpty).ToList();
         if (positions.Count == 0) return null;
-        return positions.PickOne();
+        return positions.PickOne(random);
     }
 
     private bool IsEmpty(Position pos)
@@ -1481,12 +1482,12 @@ public class MapGenerator : IMapGenerator
         }
         if (bestRooms.Count == 0) throw new MapGeneratorException("No reachable rooms found");
 
-        return bestRooms.PickOne();
+        return bestRooms.PickOne(random);
     }
 
     private Position ClaimRandomPositionInRandomAvailableRoom(IEnumerable<Room> rooms, int margin = 0)
     {
-        var room = rooms.Where(r => availableRooms.Contains(r)).PickOne();
+        var room = rooms.Where(r => availableRooms.Contains(r)).PickOne(random);
         availableRooms.Remove(room);
         return GetRandomEmptyPositionInRoom(room, margin);
     }
@@ -1512,7 +1513,7 @@ public class MapGenerator : IMapGenerator
             }
         }
 
-        var minRoom = minRooms.PickOne();
+        var minRoom = minRooms.PickOne(random);
         availableRooms.Remove(minRoom);
         return minRoom;
     }
@@ -1592,7 +1593,7 @@ public class MapGenerator : IMapGenerator
         // Return a position of the door where left and right side are both empty
         var doorPosition = tunnelPositions.
             Where(pos => map[pos.y, pos.x - 1] == Cell.Empty && map[pos.y, pos.x + 1] == Cell.Empty).
-            PickOne();
+            PickOne(random);
         return doorPosition.y;
     }
 
@@ -1672,7 +1673,7 @@ public class MapGenerator : IMapGenerator
         var chamberKeyColor = PickRandomAvailableKeyColor();
 
         var doorCell = ToDoor(chamberKeyColor);
-        int direction = Directions.PickOne();
+        int direction = Directions.PickOne(random);
         switch (direction)
         {
             case 'N':
@@ -1732,7 +1733,7 @@ public class MapGenerator : IMapGenerator
 
     private KeyColor PickRandomAvailableKeyColor()
     {
-        var keyColor = availableKeyColors.PickOne();
+        var keyColor = availableKeyColors.PickOne(random);
         availableKeyColors.Remove(keyColor);
         return keyColor;
     }
@@ -1755,7 +1756,7 @@ public class MapGenerator : IMapGenerator
     {
         for (var i = 0; i < 10; i++)
         {
-            var itemRoom = availableRooms.PickOne();
+            var itemRoom = availableRooms.PickOne(random);
             var itemPos = TryGetRandomEmptyPositionInRoom(itemRoom, margin: 1);
             if (itemPos.HasValue)
             {

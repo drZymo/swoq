@@ -16,10 +16,10 @@ internal abstract class GameTestBase
     public virtual void SetUp()
     {
         // Make sure all tests are reproducable by fixing the random seed
-        Rnd.SetSeed(1337);
+        var random = new Random(1337);
 
         var map = CreateGameMap();
-        game = new Game(map, TimeSpan.FromSeconds(20));
+        game = new Game(map, TimeSpan.FromSeconds(20), random);
         mapCache = new MapCache(map.Height, map.Width, 8); // TODO: Get visiblity range
         mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
         // Ignore changes of initial state

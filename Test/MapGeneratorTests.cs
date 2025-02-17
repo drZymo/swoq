@@ -10,7 +10,8 @@ public class MapGeneratorTests
     [SetUp]
     public void SetUp()
     {
-        mapGenerator = new(64, 64);
+        var random = new Random(42);
+        mapGenerator = new(64, 64, random);
     }
 
     private static readonly int[] Levels = Enumerable.Range(0, MapGenerator.MaxLevel + 1).ToArray();

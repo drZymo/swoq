@@ -11,5 +11,5 @@ static IEnumerable<int> RandomLevels()
 
 Parallel.ForEach(RandomLevels(), level =>
 {
-    MapGenerator.Generate(level, 64, 64);
+    MapGenerator.Generate(level, 64, 64, new Random());
 });
