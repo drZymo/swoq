@@ -31,7 +31,8 @@ public static class CellEx
             case Cell.PressurePlateGreenWithBoulder:
             case Cell.PressurePlateBlueWithBoulder:
                 return false;
-        };
+        }
+        ;
         return false;
     }
 
@@ -64,7 +65,8 @@ public static class CellEx
             case Cell.PressurePlateGreenWithBoulder:
             case Cell.PressurePlateBlueWithBoulder:
                 return false;
-        };
+        }
+        ;
         return false;
     }
 }

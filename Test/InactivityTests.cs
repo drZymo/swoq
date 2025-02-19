@@ -48,7 +48,8 @@ internal class InactivityTests : GameTestBase
     [Test]
     public void ActiveAfterAct()
     {
-        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
+        var random = new Random(42);
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20), random);
 
         Assert.That(game.IsFinished, Is.False);
 
@@ -76,7 +77,8 @@ internal class InactivityTests : GameTestBase
     [Test]
     public void InactiveAfterNoAction()
     {
-        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20));
+        var random = new Random(42);
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20), random);
 
         Assert.That(game.IsFinished, Is.False);
 

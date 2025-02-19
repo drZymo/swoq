@@ -11,6 +11,7 @@ internal class Game : IGame
 {
     private Map map;
     private readonly TimeSpan maxInactivityTime;
+    private readonly Random random;
 
     private int ticks = 0;
     private int lastChangeTick = 0;
@@ -18,10 +19,11 @@ internal class Game : IGame
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
 
-    public Game(Map map, TimeSpan maxInactivityTime)
+    public Game(Map map, TimeSpan maxInactivityTime, Random random)
     {
         this.map = map;
         this.maxInactivityTime = maxInactivityTime;
+        this.random = random;
 
         State = CreateState();
     }
@@ -571,7 +573,7 @@ internal class Game : IGame
         // Yes, then attack
         if (adjacentPlayers.Count > 0)
         {
-            var adjacentPlayer = adjacentPlayers.PickOne();
+            var adjacentPlayer = adjacentPlayers.PickOne(random);
             if (map.Player1 != null && adjacentPlayer == GameCharacterId.Player1) DealDamage(map.Player1, enemy.Damage);
             if (map.Player2 != null && adjacentPlayer == GameCharacterId.Player2) DealDamage(map.Player2, enemy.Damage);
         }
@@ -586,7 +588,7 @@ internal class Game : IGame
         var enemy_ = enemy;
 
         // Once in a while do not move
-        if (Rnd.Next(0, 100) < 10) return;
+        if (random.Next(0, 100) < 10) return;
 
         // Make a list of players, ordered by distance from enemy
         ImmutableList<Player> players = [];
@@ -610,7 +612,7 @@ internal class Game : IGame
         {
             // No player visible, but it was before, so simply move towards the closest player
             // at a slower pace, by randomly skipping moves
-            if (Rnd.Next(0, 100) > 50)
+            if (random.Next(0, 100) > 50)
             {
                 var closestPlayer = closestPlayers.First();
                 MoveEnemyTowards(ref enemy, closestPlayer.Position);
@@ -650,7 +652,7 @@ internal class Game : IGame
         // Take a random move towards the player
         if (nextPositions.Count > 0)
         {
-            var nextPos = nextPositions.PickOne();
+            var nextPos = nextPositions.PickOne(random);
             enemy = enemy with { Position = nextPos };
         }
     }

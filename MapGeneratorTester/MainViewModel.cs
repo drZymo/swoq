@@ -6,9 +6,11 @@ namespace Swoq.MapGeneratorTester;
 
 class MainViewModel : ViewModelBase
 {
+    private readonly Random random = new();
+
     public MainViewModel()
     {
-        Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
+        Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width, random).ToOverview());
         Generate = new RelayCommand(HandleGenerate);
     }
 
@@ -91,7 +93,7 @@ class MainViewModel : ViewModelBase
         try
         {
             Status = "Generating ...";
-            Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width).ToOverview());
+            Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width, random).ToOverview());
             Status = "";
         }
         catch

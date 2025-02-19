@@ -8,6 +8,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
 {
     private readonly User user;
     private readonly ISwoqDatabase database;
+    private readonly Random random;
 
     private readonly DateTime startTime = Clock.Now;
     private int ticks = 0;
@@ -19,7 +20,8 @@ public class Quest<MG> : IGame where MG : IMapGenerator
         this.user = user;
         this.database = database;
 
-        currentGame = new Game(MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
+        this.random = new();
+        currentGame = NewGame();
         State = currentGame.State with { Tick = ticks };
     }
 
@@ -76,7 +78,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
                 // Create a new game if this was not the last level
                 if (level <= MG.MaxLevel)
                 {
-                    currentGame = new Game(MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth), Parameters.MaxQuestInactivityTime);
+                    currentGame = NewGame();
                 }
             }
         }
@@ -84,5 +86,11 @@ public class Quest<MG> : IGame where MG : IMapGenerator
         {
             State = currentGame.State with { Tick = ticks };
         }
+    }
+
+    private Game NewGame()
+    {
+        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
+        return new Game(map, Parameters.MaxQuestInactivityTime, random);
     }
 }

@@ -29,7 +29,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         remove => questQueue.Updated -= value;
     }
 
-    public GameStartResult Start(string userId, int? level)
+    public GameStartResult Start(string userId, int? level, int? seed = null)
     {
         IGame? game = null;
 
@@ -41,7 +41,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             CleanupOldGames();
 
             // Create a new game
-            game = level.HasValue ? StartTraining(user, level.Value) : StartQuest(user);
+            game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
             if (!games.TryAdd(game.Id, game))
             {
                 game = null;
@@ -72,15 +72,16 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         }
     }
 
-    private static Game StartTraining(User user, int level)
+    private static Game StartTraining(User user, int level, int? seed)
     {
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
-        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth);
+        var random = seed.HasValue ? new Random(seed.Value) : new Random();
+        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
 
         // Create new training game
-        return new Game(map, Parameters.MaxTrainingInactivityTime);
+        return new Game(map, Parameters.MaxTrainingInactivityTime, random);
     }
 
     private Quest<MG> StartQuest(User user)
