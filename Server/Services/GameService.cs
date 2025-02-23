@@ -14,7 +14,7 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
             {
                 var startResult = server.Start(request.UserId, request.HasLevel ? request.Level : null);
 
-                response.Result = Result.Ok;
+                response.Result = StartResult.Ok;
                 response.GameId = startResult.GameId.ToString();
                 response.Height = Parameters.MapHeight;
                 response.Width = Parameters.MapWidth;
@@ -24,16 +24,16 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 // Report
                 gameServicePostman.RaiseStarted(startResult.UserName, startResult.GameId, request, response);
             }
-            catch (GameServerException ex)
+            catch (GameServerStartException ex)
             {
-                if (ex.Result == Result.InternalError) logger.LogError(ex, "Internal error");
+                if (ex.Result == StartResult.InternalError) logger.LogError(ex, "Internal error");
                 response.Result = ex.Result;
-                response.State = ex.State?.Convert();
+                response.State = null;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Internal error");
-                response.Result = Result.InternalError;
+                response.Result = StartResult.InternalError;
                 response.State = null;
             }
             return response;
@@ -60,19 +60,19 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
 
                 var state = server.Act(gameId.Value, action1, action2);
 
-                response.Result = Result.Ok;
+                response.Result = ActResult.Ok;
                 response.State = state.Convert();
             }
-            catch (GameServerException ex)
+            catch (GameServerActException ex)
             {
-                if (ex.Result == Result.InternalError) logger.LogError(ex, "Internal error");
+                if (ex.Result == ActResult.InternalError) logger.LogError(ex, "Internal error");
                 response.Result = ex.Result;
                 response.State = ex.State?.Convert();
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Internal error");
-                response.Result = Result.InternalError;
+                response.Result = ActResult.InternalError;
                 response.State = null;
             }
 

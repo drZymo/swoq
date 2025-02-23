@@ -8,7 +8,7 @@ def main() -> None:
     with GamePlayer(user_id) as game:
         move_east = True
         state = game.start(level)
-        while not state.finished:
+        while state.status == swoq_pb2.GAME_STATUS_ACTIVE:
             action = swoq_pb2.DIRECTED_ACTION_MOVE_EAST if move_east else swoq_pb2.DIRECTED_ACTION_MOVE_SOUTH
             state = game.act(action)
             move_east = not move_east

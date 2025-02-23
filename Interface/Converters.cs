@@ -2,23 +2,31 @@
 
 public static class Converters
 {
-    public static string ConvertToString(this Result result) => result switch
+    public static string ConvertToString(this StartResult result) => result switch
     {
-        Result.Ok => "OK",
-        Result.InternalError => "InternalError",
-        Result.UnknownUser => "UnknownUser",
-        Result.UnknownGameId => "UnknownGameId",
-        Result.UserLevelTooLow => "UserLevelTooLow",
-        Result.QuestQueued => "QuestQueued",
-        Result.MoveNotAllowed => "MoveNotAllowed",
-        Result.UseNotAllowed => "UseNotAllowed",
-        Result.UnknownAction => "UnknownAction",
-        Result.GameFinished => "GameFinished",
-        Result.PlayerNotPresent => "PlayerNotPresent",
-        Result.Player2NotPresent => "Player2NotPresent",
-        Result.InventoryFull => "InventoryFull",
-        Result.InventoryEmpty => "InventoryEmpty",
-        Result.NoSword => "NoSword",
+        StartResult.Ok => "OK",
+        StartResult.InternalError => "InternalError",
+        StartResult.UnknownUser => "NoSword",
+        StartResult.UserLevelTooLow => "UserLevelTooLow",
+        StartResult.QuestQueued => "QuestQueued",
+        StartResult.QuestAlreadyActive => "QuestAlreadyActive",
+        _ => "Unknown",
+    };
+
+    public static string ConvertToString(this ActResult result) => result switch
+    {
+        ActResult.Ok => "OK",
+        ActResult.InternalError => "InternalError",
+        ActResult.UnknownGameId => "UnknownGameId",
+        ActResult.MoveNotAllowed => "MoveNotAllowed",
+        ActResult.UseNotAllowed => "UseNotAllowed",
+        ActResult.UnknownAction => "UnknownAction",
+        ActResult.GameFinished => "GameFinished",
+        ActResult.PlayerNotPresent => "PlayerNotPresent",
+        ActResult.Player2NotPresent => "Player2NotPresent",
+        ActResult.InventoryFull => "InventoryFull",
+        ActResult.InventoryEmpty => "InventoryEmpty",
+        ActResult.NoSword => "NoSword",
         _ => "Unknown",
     };
 

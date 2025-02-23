@@ -1,8 +1,8 @@
 import { ChannelCredentials } from "@grpc/grpc-js";
 import { GrpcTransport } from "@protobuf-ts/grpc-transport";
 import { Game } from "./Game";
-import { GameResultError } from "./GameResultError";
-import { Result } from "./generated/swoq";
+import { GameStartResultError } from "./GameResultError";
+import { StartResult } from "./generated/swoq";
 import { GameServiceClient, IGameServiceClient } from "./generated/swoq.client";
 
 export class GameConnection {
@@ -25,8 +25,8 @@ export class GameConnection {
             level,
         });
         // TODO Add queued quest handling
-        if (response.result !== Result.OK) {
-            throw new GameResultError(response.result);
+        if (response.result !== StartResult.OK) {
+            throw new GameStartResultError(response.result);
         }
         if (
             response.gameId === undefined ||

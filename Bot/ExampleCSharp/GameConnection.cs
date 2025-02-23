@@ -29,19 +29,16 @@ internal class GameConnection : IDisposable
         {
             response = client.Start(request);
 
-            if (response.Result == Result.Ok) break;
+            if (response.Result == StartResult.Ok) break;
 
-            if (response.Result == Result.QuestQueued)
+            if (response.Result == StartResult.QuestQueued)
             {
                 Console.WriteLine("Quest queued, waiting 2 seconds before retrying ...");
                 Thread.Sleep(TimeSpan.FromSeconds(2));
                 continue;
             }
 
-            if (response.Result != Result.Ok)
-            {
-                throw new GameException($"Start failed (result {response.Result})");
-            }
+            throw new GameException($"Start failed (result {response.Result})");
         }
 
         return new Game(client, response);

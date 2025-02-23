@@ -1,5 +1,5 @@
-import { GameResultError } from "./GameResultError";
-import { DirectedAction, Result, State } from "./generated/swoq";
+import { GameActResultError } from "./GameResultError";
+import { DirectedAction, ActResult, State } from "./generated/swoq";
 import { IGameServiceClient } from "./generated/swoq.client";
 
 export class Game {
@@ -35,9 +35,9 @@ export class Game {
         if (response.state !== undefined) {
             this.state = response.state;
         }
-        if (response.result !== Result.OK) {
+        if (response.result !== ActResult.OK) {
             // TODO what to do with this.state here? (Esp if/when it is undefined on response)
-            throw new GameResultError(response.result);
+            throw new GameActResultError(response.result);
         }
         return this.state;
     }
