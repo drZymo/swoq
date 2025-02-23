@@ -40,22 +40,17 @@
 @code {
 	public string DocumentationContent { get; set; } = string.Empty;
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
+	protected override async void OnInitialized()
 	{
-		if (firstRender)
+		try
 		{
-			try
-			{
-				var userId = await UserService.GetUserIdAsync();
-				var currentUser = await Database.FindUserByIdAsync(userId);
-				DocumentationContent = GetDocumentationContent(currentUser?.Level ?? 0);
-				StateHasChanged();
-			}
-			catch
-			{
-				DocumentationContent = "No user logged in";
-			}
-
+			var currentUser = await UserService.GetCurrentUserAsync();
+			DocumentationContent = GetDocumentationContent(currentUser?.Level ?? 0);
+			StateHasChanged();
+		}
+		catch
+		{
+			DocumentationContent = "Could not read documentation";
 		}
 	}
 

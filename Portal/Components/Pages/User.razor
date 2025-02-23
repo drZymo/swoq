@@ -55,42 +55,18 @@ else
 
 	public Swoq.Data.User? CurrentUser { get; set; } = null;
 
-	private bool _hasRendered = false;
-	private string? _tempLoginUserId;
-
-	protected override async Task OnAfterRenderAsync(bool firstRender)
+	protected async override Task OnInitializedAsync()
 	{
-		if (firstRender && !_hasRendered)
-		{
-			_hasRendered = true;
-
-			try
-			{
-				var userId = await UserService.GetUserIdAsync();
-				CurrentUser = await Database.FindUserByIdAsync(userId);
-				StateHasChanged();
-			}
-			catch
-			{
-				CurrentUser = null;
-			}
-		}
-
-		if (_tempLoginUserId != null)
-		{
-			await UserService.SetUserIdAsync(_tempLoginUserId);
-			CurrentUser = await Database.FindUserByIdAsync(_tempLoginUserId);
-			StateHasChanged();
-			_tempLoginUserId = null;
-		}
+		CurrentUser = await UserService.GetCurrentUserAsync();
 	}
 
 	[SupplyParameterFromForm]
 	public string LoginUserId { get; set; } = string.Empty;
 
-	private void Submit()
+	private async void Submit()
 	{
-		_tempLoginUserId = LoginUserId;
+		await UserService.SetUserIdAsync(LoginUserId);
+		CurrentUser = await UserService.GetCurrentUserAsync();
 		StateHasChanged();
 	}
 }

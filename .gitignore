@@ -14,3 +14,4 @@ level*.bin
 coveragereport/
 Test/TestResults/
 /Replays/
+**/.avalonia-build-tasks/
