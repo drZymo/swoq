@@ -4,20 +4,20 @@ A SWOQ game is hosted by the server. Your program that plays the game should use
 
 ## `Start`
 
-With this function your program can start a new game. There are two types of games: a quest and a training. See "[[#Quest or Training]]" for more information. The function has two parameters:
+With this function your program can start a new game. There are two types of games: a quest and a training. See [Quest queueing](#quest-queueing) for more information. The function has two parameters:
 
     string userId = 1;
     optional int32 level = 2;
 
 Your unique `userId` is given during registration.
 
-The `level` parameter is optional. If you don't provide it, then a Quest game will be started. If you do provide it, then a Training game will be started.  The `level` parameter must be a number greater than or equal to 0, and less than or equal to your user level. Your user account (identified with `userId`) has a certain level. Your program can only start Training games up to the level you have achieved.
+The `level` parameter is optional. If you don't provide it, then a Quest game will be started. If you do provide it, then a Training game will be started. The `level` parameter must be a number greater than or equal to 0, and less than or equal to your user level. Your user account (identified with `userId`) has a certain level. Your program can only start Training games up to the level you have achieved.
 
 The first parameter of the server's response is a result value:
 
     StartResult result = 1;
 
-If this value is `RESULT_OK` then the game is started and more parameters are provided. For all other values it means the game was not started. See [[#Result]] for more information. If the game is started successfully, the following parameters are provided:
+If this value is `START_RESULT_OK` then the game is started and more parameters are provided. For all other values it means the game was not started. See [StartResult](#startresult) for more information. If the game is started successfully, the following parameters are provided:
 
     optional string gameId = 2;
     optional int32 width = 3;
@@ -27,9 +27,9 @@ If this value is `RESULT_OK` then the game is started and more parameters are pr
 
 `gameId` is a unique identifier for this game. It has to be provided with any follow-up action, so the server knows which game your program wants to control. *Note*: this makes it possible to run multiple Training games in parallel from the same connection.
 
-The `width` and `height` parameters denote the size of the map (see [[#Goal]]) and `visibilityRange` defines how far your player can see on that map (see [[#Surroundings]].)
+The `width` and `height` parameters denote the size of the map and `visibilityRange` defines how far your player can see on that map (see [PlayerState](#playerstate).)
 
-Finally the last, and maybe most import parameter is `state`. This structure contains the current state of the game, like where your player is currently located, and what it can currently see. For more information see [[#State]].
+Finally the last, and maybe most import parameter is `state`. This structure contains the current state of the game, like where your player is currently located, and what it can currently see. For more information see [State](#state).
 
 ### StartResult
 
@@ -39,7 +39,7 @@ Finally the last, and maybe most import parameter is `state`. This structure con
 | `START_RESULT_INTERNAL_ERROR = 1`       | Something unexpected went wrong on the server. Contact the administrators if it persists.                                                                                                                                                                          |
 | `START_RESULT_UNKNOWN_USER = 2`         | The `userId` provided does not identify an existing user. Use the id that was given to you during registration. **Note**: This is NOT your user name.                                                                                                              |
 | `START_RESULT_USER_LEVEL_TOO_LOW = 3`   | The level of the user specified with `userId` is not sufficiently high enough to start a Training game of the given `level`. Check the level of your user account on the portal or in the high-score list of the dashboard.                                        |
-| `START_RESULT_QUEST_QUEUED = 4`         | Another Quest game is already active, so your request to start a Quest game was queued by the server. See [[#Queueing]]                                                                                                                                            |
+| `START_RESULT_QUEST_QUEUED = 4`         | Another Quest game is already active, so your request to start a Quest game was queued by the server. See [Quest queueing](#quest-queueing)                                                                                                                                            |
 | `START_RESULT_QUEST_ALREADY_ACTIVE = 5` | You tried to start another Quest game while a previously started Quest game is still active. You are only allowed to have one Quest active. If the other game is inactive, then it will be automatically cleaned up by the server and you can start another quest. |
 
 ### Quest queueing
@@ -57,14 +57,14 @@ The second function the `GameService` provides is `Act`, which allows controllin
 
 The `gameId` parameter should contain the unique id that was given by the server in response to the `Start` function.
 
-The second parameter, `action`, denotes the action the player should take. See [[#DirectedAction]]. When `NONE` is given the player won't move, but the game will continue to play a tick. This could be handy in some situations. The other four values define the direction the player should move. The map should be oriented such that the top left corner is position (0, 0), with y increasing when moving down (i.e. south) and x increasing when moving right (i.e. east).
+The second parameter, `action`, denotes the action the player should take (see [DirectedAction](#directedaction)). When `NONE` is given the player won't move, but the game will continue to play a tick. This could be handy in some situations. The other four values define the direction the player should move. The map should be oriented such that the top left corner is position (0, 0), with y increasing when moving down (i.e. south) and x increasing when moving right (i.e. east).
 
 The server will perform the action in the game and respond whether this succeeded. The response has only two parameters.
 
     ActResult result = 1;
     optional State state = 2;
 
-The `result` parameter indicates whether or not the action was performed. When it is the value `ACT_RESULT_OK` the action was performance and the next parameter, `state`, contains the updated game state. For all other values of `result` it indicates the reason why the action was not performed. See [[#ActResult]] for more information.
+The `result` parameter indicates whether or not the action was performed. When it is the value `ACT_RESULT_OK` the action was performance and the next parameter, `state`, contains the updated game state. For all other values of `result` it indicates the reason why the action was not performed. See [ActResult](#actresult) for more information.
 
 ### DirectedAction
 
@@ -85,9 +85,9 @@ The following result values describe how the server processed your `Act` request
 | `ACT_RESULT_OK = 0`               | The action was processed successfully by the server.                                                                                                                                                                                                                                  |
 | `ACT_RESULT_INTERNAL_ERROR = 1`   | Something unexpected went wrong on the server. Contact the administrators if it persists.                                                                                                                                                                                             |
 | `ACT_RESULT_UNKNOWN_GAME_ID = 2`  | The provided `gameId` does not identify an active game. If it was active before, then you probably waited too long with performing an action. The server automatically cleans up inactive games. So you cannot recycle old games. If you wait too long, you have to start a new game. |
-| `ACT_RESULT_MOVE_NOT_ALLOWED = 3` | The movement your action described is not allowed. This is probably because the position you want to move your player to is a wall.                                                                                                                                                   |
+| `ACT_RESULT_MOVE_NOT_ALLOWED = 3` | The movement your action described is not allowed. For example, because the position you want to move your player to is a wall.                                                                                                                                                   |
 | `ACT_RESULT_UNKNOWN_ACTION = 4`   | The action value you provided is not a valid action. Your code is sending a wrong request.                                                                                                                                                                                            |
-| `ACT_RESULT_GAME_FINISHED = 5`    | You tried to perform an action on a game that is already finished. This could be because it was successfully exited, but could also be the result of a time out. Check [[#State]] for more information why the game was finished.                                                     |
+| `ACT_RESULT_GAME_FINISHED = 5`    | You tried to perform an action on a game that is already finished. This could be because it was successfully exited, but could also be the result of a time out. Check [GameStatus](#gamestatus) for more information why the game was finished.                                                     |
 
 ## State
 
@@ -102,7 +102,7 @@ The `tick` field denotes how many game ticks have been executed. **Tip**: If you
 
 The `level` field indicates which level your program is currently playing. For Training games this is always the same as the requested level, but for Quest games this number will increase every time your program finishes a level.
 
-As long as a game is active the `status` field is set to `GAME_STATUS_ACTIVE`. When it is equal to any other value (see [[#GameStatus]]), the game has finished and the server will no longer process future actions. Any successive call to Act will result in `ACT_RESULT_GAME_FINISHED`. Eventually the finished game will be cleaned up by the server.
+As long as a game is active the `status` field is set to `GAME_STATUS_ACTIVE`. When it is equal to any other value (see [GameStatus](#gamestatus)), the game has finished and the server will no longer process future actions. Any successive call to `Act` will result in `ACT_RESULT_GAME_FINISHED`. Eventually the finished game will be cleaned up by the server.
 
 Finally, the `playerState` field contains the information about the player.
 
@@ -115,7 +115,7 @@ This structure contains the information about the player. It contains the follow
 
 The `position` field is a structure with an integer `x` and `y` field that indicates the map position that is currently occupied by the player.
 
-The `surroundings` field is an array of `Tile` values (see [[#Tiles]]). It describes the type of each position on the map that are visible by the player. Its a flattened version of a two-dimensional grid around the player. The width and height of this grid is defined by the `visibilityRange` field given in the Start response, and are equal to `1 + 2 * visiblityRange`. The player is always in the middle of this 2D grid. It is stored in row-major order. So the first entries are all for the first row, then the second row, etc. It can visualized as depicted below (from the ReplayViewer).
+The `surroundings` field is an array of `Tile` values (see [Tiles](#tiles)). It describes the type of each position on the map that are visible by the player. Its a flattened version of a two-dimensional grid around the player. The width and height of this grid is defined by the `visibilityRange` field given in the Start response, and are equal to `1 + 2 * visiblityRange`. The player is always in the middle of this 2D grid. It is stored in row-major order. So the first entries are all for the first row, then the second row, etc. It can be visualized as depicted below (from the ReplayViewer).
 
 ![Surroundings example](images/surroundings.png)
 
@@ -128,7 +128,7 @@ The map is a grid of tiles. Each tile is of a specific type and below is the lis
 | `TILE_UNKNOWN = 0`              | ![TILE_UNKNOWN](images/tile_unknown.png)                           | This position has not been visited before, so the type of this tile is unknown. |
 | `TILE_EMPTY = 1`                | ![TILE_EMPTY](images/tile_empty.png)                               | This location is empty and can be walked upon.                                  |
 | `TILE_PLAYER = 2`               | ![TILE_PLAYER](images/tile_player.png)                             | This tile is occupied by the player.                                            |
-| `TILE_WALL = 3`                 | ![TILE_WALL](images/tile_wall.png)                                 | This tile is a wall. It blocks the movement of the player                       |
+| `TILE_WALL = 3`                 | ![TILE_WALL](images/tile_wall.png)                                 | This tile is a wall. It blocks the movement of the player.                      |
 | `TILE_EXIT = 4`                 | ![TILE_EXIT](images/tile_exit.png)                                 | This tile is the exit where the player needs to move on to finish the level.    |
 
 ### GameStatus
@@ -145,13 +145,13 @@ This value describes the status of the game. Whether or not it is finished, but 
 
 # Level 2 and higher
 
-Surprise! A new feature is introduced in level 2. There are now doors and keys on the map. You can pickup a key by moving your player over it. It will be placed in its inventory. You cannot drop a key, once picked it will remain in the inventory indefinitely. Doors can be opened by placing your player on an adjacent tile and using the new Use actions that have been added as well.
+Surprise! A new feature is introduced in level 2. There are now doors and keys on the map. You can pickup a key by moving your player over it. It will be placed in its inventory. You cannot drop a key, once picked it will remain in the inventory indefinitely. Doors can be opened by placing your player on an adjacent tile and using the new `Use` actions that have been added as well.
 
- In order to use this new feature, a few things have been added to the proto file. Make sure you copy the latest version and update your code accordingly. The following changes were made.
+In order to use this new feature, a few things have been added to the proto file. Make sure you copy the latest version and update your code accordingly. The following changes were made.
 
 ### DirectedAction
 
-The `DirectedAction` enum was extended with the some new actions. With these actions you can use an item in your player's inventory on one of the four directions around him.
+The `DirectedAction` enum was extended with the some new actions. With these actions you can use an item in your player's inventory on one of the four directions around it.
 
 | DirectedAction                  |                                                                     |
 | ------------------------------- | ------------------------------------------------------------------- |
@@ -174,7 +174,7 @@ Due to the addition of some extra actions the `ActResult` enum was extended as w
 
 ### Inventory
 
-A new field was added to the `State` structure (see [[#State]]) to describe the content of the inventory of your player.
+A new field was added to the `State` structure to describe the content of the inventory of your player.
 
     optional Inventory inventory = 3;
 
@@ -204,7 +204,7 @@ The following tiles have been added to denote the position of doors and keys on 
 
 Another feature was added to the game. From now on, boulders can be present on the map. These large rocks can be picked up by the player. They will occupy the inventory slot, so nothing else can be picked up as long as a boulder is in the inventory.
 
-Unlike keys, you cannot pick it up by moving your player over it. In fact, you cannot move through it, it blocks your player's path. Your player has to stand on an adjacent tile with an empty inventory, and then you can send a Use action to pick it up. It will then occupy the only slot in your player's inventory. Also unlike keys, a boulder can be dropped by the player. With a boulder in the inventory you can perform a Use action on an empty tile to drop the boulder there.
+Unlike keys, you cannot pick it up by moving your player over it. In fact, you cannot move through it, it blocks your player's path. Your player has to stand on an adjacent tile with an empty inventory, and then you can send a `Use` action to pick it up. It will then occupy the only slot in your player's inventory. Also unlike keys, a boulder can be dropped by the player. With a boulder in the inventory you can perform a `Use` action on an empty tile to drop the boulder there.
 
 ### Tiles
 
@@ -218,9 +218,9 @@ The following tile was added to denote the position of a boulder on the map.
 
 The `Inventory` enum was extended to also describe the state when a boulder is in the inventory of the player.
 
-| Inventory               |                                     |
-| ----------------------- | ----------------------------------- |
-| `INVENTORY_BOULDER = 4` | A boulder is your player's inventory |
+| Inventory               |                                       |
+| ----------------------- | ------------------------------------- |
+| `INVENTORY_BOULDER = 4` | A boulder is your player's inventory. |
 
 # Level 7 and higher
 
@@ -240,7 +240,7 @@ For this feature only the following tile definitions have been added.
 
 What's that? Another living being in this map? Yes, this level introduces an enemy. This is a non-playable character that will try to kill your player by attacking it with a sword. 
 
-If your player is on an adjacent tile at the start of a tick, then the enemy will attack your player and deal 1 point of damage. If your player is out of health, then it will die. The enemy can move and will chase your player. So, be sure to stay away from him.
+If your player is on an adjacent tile at the start of a tick, then the enemy will attack your player and deal 1 point of damage. If your player is out of health, then it will die. The enemy can move and will chase your player. So, be sure to stay away.
 
 ### Tiles
 
@@ -260,7 +260,7 @@ When it reaches 0, your player will die.
 
 ### ActResult
 
-Since your player has no sword (yet), then you cannot attack back. So if you try to Use on an enemy you will get the following result:
+Since your player has no sword (yet), then you cannot attack back. So if you try to `Use` on an enemy you will get the following result:
 
 | ActResult                 |                                                                              |
 | ------------------------- | ---------------------------------------------------------------------------- |
@@ -270,7 +270,7 @@ Since your player has no sword (yet), then you cannot attack back. So if you try
 
 Finally, you can fight back. This level contains a sword and extra health.
 
-A sword can be picked up by moving your player over it (like keys). It will not end up in its inventory, but it is equipped automatically, leaving the inventory slot available for keys or boulders. You can only pickup one sword. If your player has a sword in its possession, then you can send a Use action on an enemy in an adjacent tile to attack him. It will deal 1 damage to the enemy.
+A sword can be picked up by moving your player over it (like keys). It will not end up in its inventory, but it is equipped automatically, leaving the inventory slot available for keys or boulders. You can only pickup one sword. If your player has a sword in its possession, then you can send a `Use` action for an enemy on an adjacent tile to attack. The attack will deal 1 damage to the enemy.
 
 Health can be picked up indefinitely. Every time your player moves over a health tile, the health is added to the player's health (and the health tile is removed from the map).
 
