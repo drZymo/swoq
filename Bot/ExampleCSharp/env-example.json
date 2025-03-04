@@ -1,4 +1,5 @@
 {
   "UserId": "<your user id>",
+  "UserName": "<your user name>",
   "Host": "<ip or hostname of server>"
 }

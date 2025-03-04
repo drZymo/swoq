@@ -4,7 +4,7 @@ namespace Bot;
 
 internal static class Env
 {
-    private record EnvData(string UserId, string Host);
+    private record EnvData(string UserId, string UserName, string Host);
 
     private static readonly EnvData data;
 
@@ -15,5 +15,6 @@ internal static class Env
     }
 
     public static string UserId => data.UserId;
+    public static string UserName => data.UserName;
     public static string Host => data.Host;
 }

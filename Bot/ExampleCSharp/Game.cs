@@ -2,7 +2,7 @@
 
 namespace Bot;
 
-public class Game(GameService.GameServiceClient client, StartResponse response)
+internal class Game(GameService.GameServiceClient client, StartResponse response, ReplayFile replayFile)
 {
     public string GameId { get; } = response.GameId;
     public int MapWidth { get; } = response.Width;
@@ -15,6 +15,9 @@ public class Game(GameService.GameServiceClient client, StartResponse response)
         var request = new ActionRequest() { GameId = GameId, Action = action };
 
         var response = client.Act(request);
+
+        replayFile.Append(request, response);
+
         if (response.Result != ActResult.Ok)
         {
             throw new GameException($"Act failed (result {response.Result})");

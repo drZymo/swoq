@@ -1,1 +1,3 @@
-﻿internal class GameException(string message) : Exception(message);
+﻿namespace Bot;
+
+internal class GameException(string message) : Exception(message);
