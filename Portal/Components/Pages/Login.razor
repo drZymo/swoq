@@ -1,0 +1,41 @@
+﻿@page "/login/"
+
+@rendermode InteractiveServer
+
+@using Swoq.Data
+
+@inject NavigationManager NavigationManager
+@inject UserService UserService
+
+<PageTitle>SWOQ - Login</PageTitle>
+
+<h1>Login</h1>
+
+<p>Please sign in with your user ID.</p>
+
+<p>If you do not have a user ID yet, then <NavLink href="register">register here</NavLink> first.</p>
+
+<form method="post" @onsubmit="Submit" @formname="signin-plain-form">
+	<AntiforgeryToken />
+	<div>
+		<label>
+			User ID:
+			<InputText @bind-Value="LoginUserId" />
+		</label>
+	</div>
+	<div>
+		<button type="submit">Submit</button>
+	</div>
+</form>
+
+
+@code {
+	[SupplyParameterFromForm]
+	public string LoginUserId { get; set; } = string.Empty;
+
+	private async void Submit()
+	{
+		await UserService.SetUserIdAsync(LoginUserId);
+		NavigationManager.NavigateTo($"/", forceLoad: true);
+	}
+}
