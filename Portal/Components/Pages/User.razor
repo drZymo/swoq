@@ -1,13 +1,10 @@
 ﻿@page "/user/"
 
-@rendermode InteractiveServer
-
 @using Swoq.Data
 
-@inject UserService UserService
 @inject IJSRuntime JSRuntime
 
-@if (CurrentUser == null)
+@if (CurrentUserProvider?.User == null)
 {
 	<PageTitle>SWOQ - User</PageTitle>
 
@@ -17,33 +14,29 @@
 }
 else
 {
-	<PageTitle>SWOQ - User - @CurrentUser.Name</PageTitle>
+	<PageTitle>SWOQ - User - @CurrentUserProvider?.Name</PageTitle>
 
-	<h1>Hi @CurrentUser.Name</h1>
+	<h1>Hi @CurrentUserProvider?.Name</h1>
 
 	@if (Welcome)
 	{
 		<div class="alert alert-success" role="alert">
-			Welcome. You are now a registered user with unique user ID: <b>@CurrentUser.Id</b>.
+			Welcome. You are now a registered user with unique user ID: <b>@CurrentUserProvider?.Id</b>.
 			Remember this ID, it won't be provided again, and you will need it to play a game.
 		</div>
 	}
 
-	<p>Current level: @CurrentUser.Level (reached in @CurrentUser.QuestLengthTicks ticks)</p>
+	<p>Current level: @CurrentUserProvider?.Level (reached in @CurrentUserProvider?.User.QuestLengthTicks ticks)</p>
 
-	<ProtoFile Level="CurrentUser.Level" />
+	<ProtoFile Level="@(CurrentUserProvider?.Level ?? 0)" />
 }
 
 @code {
 	[SupplyParameterFromQuery]
 	public bool Welcome { get; set; } = false;
 
-	public Swoq.Data.User? CurrentUser { get; set; } = null;
-
-	protected async override Task OnInitializedAsync()
-	{
-		CurrentUser = await UserService.GetCurrentUserAsync();
-	}
+	[CascadingParameter]
+	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

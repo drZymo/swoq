@@ -1,11 +1,8 @@
 ﻿@page "/login/"
 
-@rendermode InteractiveServer
-
 @using Swoq.Data
 
 @inject NavigationManager NavigationManager
-@inject UserService UserService
 
 <PageTitle>SWOQ - Login</PageTitle>
 
@@ -33,9 +30,15 @@
 	[SupplyParameterFromForm]
 	public string LoginUserId { get; set; } = string.Empty;
 
+	[CascadingParameter]
+	private CurrentUserProvider? CurrentUserProvider { get; set; }
+
 	private async void Submit()
 	{
-		await UserService.SetUserIdAsync(LoginUserId);
-		NavigationManager.NavigateTo($"/", forceLoad: true);
+		if (CurrentUserProvider != null)
+		{
+			await CurrentUserProvider.SetUserIdAsync(LoginUserId);
+			NavigationManager.NavigateTo($"/user/", forceLoad: true);
+		}
 	}
 }
