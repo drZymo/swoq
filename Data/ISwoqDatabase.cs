@@ -2,6 +2,11 @@
 
 namespace Swoq.Data;
 
+public record UserLevelStatistic(int Level, int MinTicks, int GlobalAvgTicks)
+{
+    public int Delta => MinTicks - GlobalAvgTicks;
+}
+
 public interface ISwoqDatabase
 {
     Task CreateUserAsync(User newUser);
@@ -13,4 +18,6 @@ public interface ISwoqDatabase
     Task<IImmutableList<User>> GetAllUsers();
 
     Task AddLevelStatisticAsync(LevelStatistic stat);
+    Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId);
+
 }

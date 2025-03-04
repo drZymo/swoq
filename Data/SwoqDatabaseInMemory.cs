@@ -47,4 +47,10 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
             levelStatistics.TryAdd(stat.Id, stat);
         });
     }
+
+    public Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
+    {
+        throw new NotImplementedException();
+    }
+
 }

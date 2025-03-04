@@ -1,6 +1,9 @@
 ﻿@page "/user/"
 
 @using Swoq.Data
+@using System.Collections.Immutable
+
+@inject ISwoqDatabase Database
 
 @if (CurrentUserProvider?.User == null)
 {
@@ -29,6 +32,37 @@ else
 		<span class="h3">Level 6</span>
 	</div>
 	<p>Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds</p>
+
+	<table class="table">
+		<thead>
+			<tr><th scope="col">Level</th><th scope="col">Min ticks</th><th>Global avg</th></tr>
+		</thead>
+		<tbody>
+			@foreach (var l in LevelStatistics.OrderBy(l => l.Level))
+			{
+				<tr>
+					<td>@l.Level</td>
+					<td>@l.MinTicks</td>
+					<td>
+						@l.GlobalAvgTicks (
+						@if (l.Delta > 0)
+						{
+							<span class="text-danger">+@l.Delta</span>
+						}
+						else if (l.Delta < 0)
+						{
+							<span class="text-success">@l.Delta</span>
+						}
+						else
+						{
+							<span class="text-muted">@l.Delta</span>
+						}
+						)
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 }
 
 @code {
@@ -37,4 +71,17 @@ else
 
 	[CascadingParameter]
 	private CurrentUserProvider? CurrentUserProvider { get; set; }
+
+	private ImmutableList<UserLevelStatistic> LevelStatistics = ImmutableList<UserLevelStatistic>.Empty;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		var userId = CurrentUserProvider?.Id;
+		if (userId != null)
+		{
+			var data = await Database.GetLevelStatisticsAsync(userId);
+			LevelStatistics = data;
+			StateHasChanged();
+		}
+	}
 }

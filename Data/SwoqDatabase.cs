@@ -59,4 +59,22 @@ public class SwoqDatabase : ISwoqDatabase
     {
         await levelStatistics.InsertOneAsync(stat);
     }
+
+    public async Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
+    {
+        var globalPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
+            Group(l => l.Level, g => new ValueTuple<int, int>(g.Key, (int)g.Average(l => l.Ticks)));
+        var globalResults = await levelStatistics.Aggregate(globalPipeLine).ToListAsync();
+        var globalAvg = globalResults.ToImmutableDictionary(r => r.Item1, r => r.Item2);
+
+        var userPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
+            Match(l => l.UserId == userId).
+            Group(l => l.Level, g => new ValueTuple<int, int>(g.Key, g.Min(l => l.Ticks)));
+        var userResults = await levelStatistics.Aggregate(userPipeLine).ToListAsync();
+        var userMin = userResults.ToImmutableDictionary(r => r.Item1, r => r.Item2);
+
+        return userMin.
+            Select(kvp => new UserLevelStatistic(kvp.Key, kvp.Value, globalAvg[kvp.Key])).
+            ToImmutableList();
+    }
 }
