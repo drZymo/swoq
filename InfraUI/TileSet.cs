@@ -12,10 +12,8 @@ public static class TileSet
     public const int TileWidth = 16;
     public const int TileHeight = 16;
 
-    private static (PixelSize size, byte[] pixels) LoadBitmapPixels(string path)
+    private static (PixelSize size, byte[] pixels) LoadBitmapPixels(Bitmap bitmap)
     {
-        Bitmap bitmap = new(path);
-
         var pixels = new byte[bitmap.PixelSize.Height * bitmap.PixelSize.Width * 4];
 
         var pixelsHandle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
@@ -25,9 +23,9 @@ public static class TileSet
         return (bitmap.PixelSize, pixels);
     }
 
-    public static IImmutableDictionary<Tile, byte[]> FromImageFile(string path)
+    public static IImmutableDictionary<Tile, byte[]> FromImageFile(Bitmap bitmap)
     {
-        var (bitmapSize, bitmapPixels) = LoadBitmapPixels(path);
+        var (bitmapSize, bitmapPixels) = LoadBitmapPixels(bitmap);
 
         var tileStride = TileWidth * 4;
 
