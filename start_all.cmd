@@ -8,21 +8,21 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-dotnet build -c Release --no-restore
+dotnet publish -c Release --no-restore -r win-x64
 if %errorlevel% neq 0 (
     popd
     exit /b %errorlevel%
 )
 
-pushd Server\bin\Release\net9.0\
+pushd Server\bin\Release\net9.0\win-x64\publish\
 start Server.exe
 popd
 
-pushd Portal\bin\Release\net9.0\
+pushd Portal\bin\Release\net9.0\win-x64\publish\
 start Portal.exe
 popd
 
-pushd Dashboard\bin\Release\net9.0\
+pushd Dashboard\bin\Release\net9.0\win-x64\publish\
 start Dashboard.exe
 popd
 
