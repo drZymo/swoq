@@ -6,7 +6,8 @@ namespace Swoq.Data;
 
 public class SwoqDatabase : ISwoqDatabase
 {
-    private readonly IMongoCollection<User> usersCollection;
+    private readonly IMongoCollection<User> users;
+    private readonly IMongoCollection<LevelStatistic> levelStatistics;
 
     public SwoqDatabase(IOptions<SwoqDatabaseSettings> swoqDatabaseSettings)
     {
@@ -16,21 +17,24 @@ public class SwoqDatabase : ISwoqDatabase
         var mongoDatabase = mongoClient.GetDatabase(
             swoqDatabaseSettings.Value.DatabaseName);
 
-        usersCollection = mongoDatabase.GetCollection<User>(
+        users = mongoDatabase.GetCollection<User>(
             swoqDatabaseSettings.Value.UsersCollectionName);
+
+        levelStatistics = mongoDatabase.GetCollection<LevelStatistic>(
+            swoqDatabaseSettings.Value.LevelStatisticsCollectionName);
     }
 
     public async Task CreateUserAsync(User newUser) =>
-        await usersCollection.InsertOneAsync(newUser);
+        await users.InsertOneAsync(newUser);
 
     public void CreateUser(User newUser) =>
-        usersCollection.InsertOne(newUser);
+        users.InsertOne(newUser);
 
     public async Task<User?> FindUserByIdAsync(string id) =>
-        await usersCollection.Find(p => p.Id == id).FirstOrDefaultAsync();
+        await users.Find(p => p.Id == id).FirstOrDefaultAsync();
 
     public async Task<User?> FindUserByNameAsync(string name) =>
-        await usersCollection.Find(u => u.Name == name).FirstOrDefaultAsync();
+        await users.Find(u => u.Name == name).FirstOrDefaultAsync();
 
     public async Task UpdateUserAsync(User user)
     {
@@ -41,13 +45,18 @@ public class SwoqDatabase : ISwoqDatabase
             Set(u => u.Level, user.Level).
             Set(u => u.QuestLengthTicks, user.QuestLengthTicks).
             Set(u => u.QuestLengthSeconds, user.QuestLengthSeconds);
-        await usersCollection.UpdateOneAsync(filter, update);
+        await users.UpdateOneAsync(filter, update);
     }
 
     public async Task<IImmutableList<User>> GetAllUsers()
     {
-        var users = await usersCollection.FindAsync(u => true);
+        var users = await this.users.FindAsync(u => true);
         var usersList = await users.ToListAsync();
         return usersList.ToImmutableArray();
+    }
+
+    public async Task AddLevelStatisticAsync(LevelStatistic stat)
+    {
+        await levelStatistics.InsertOneAsync(stat);
     }
 }

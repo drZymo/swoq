@@ -12,6 +12,7 @@ internal class Game : IGame
     private Map map;
     private readonly TimeSpan maxInactivityTime;
     private readonly Random random;
+    private readonly IStatisticsReporter? reporter;
 
     private int ticks = 0;
     private int lastChangeTick = 0;
@@ -19,11 +20,12 @@ internal class Game : IGame
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
 
-    public Game(Map map, TimeSpan maxInactivityTime, Random random)
+    public Game(Map map, TimeSpan maxInactivityTime, Random random, IStatisticsReporter? reporter = null)
     {
         this.map = map;
         this.maxInactivityTime = maxInactivityTime;
         this.random = random;
+        this.reporter = reporter;
 
         State = CreateState();
     }
@@ -117,6 +119,8 @@ internal class Game : IGame
             (map.Player2 == null || (!map.Player2.IsPresent && map.Player2.IsAlive)))
         {
             status = GameStatus.FinishedSuccess;
+            // Report that game is finished
+            reporter?.GameFinishedSuccessfully(Id, map.Level, ticks);
             return;
         }
 

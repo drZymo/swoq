@@ -1,11 +1,12 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
 
 namespace Swoq.Data;
 
 public class SwoqDatabaseInMemory : ISwoqDatabase
 {
-    private readonly Lock usersWriteMutex = new();
-    private IImmutableDictionary<string, User> users = ImmutableDictionary<string, User>.Empty;
+    private readonly ConcurrentDictionary<string, User> users = new();
+    private readonly ConcurrentDictionary<string, LevelStatistic> levelStatistics = new();
 
     public SwoqDatabaseInMemory()
     { }
@@ -14,19 +15,13 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         await Task.Run(() =>
         {
             newUser.Id ??= Guid.NewGuid().ToString();
-            lock (usersWriteMutex)
-            {
-                users = users.Add(newUser.Id, newUser);
-            }
+            users.TryAdd(newUser.Id, newUser);
         });
 
     public void CreateUser(User newUser)
     {
         newUser.Id ??= Guid.NewGuid().ToString();
-        lock (usersWriteMutex)
-        {
-            users = users.Add(newUser.Id, newUser);
-        }
+        users.TryAdd(newUser.Id, newUser);
     }
 
     public async Task<User?> FindUserByIdAsync(string id) =>
@@ -38,9 +33,18 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     public async Task UpdateUserAsync(User user)
     {
         if (user.Id == null) return;
-        await Task.Run(() => users = users.SetItem(user.Id, user));
+        await Task.Run(() => users.AddOrUpdate(user.Id, user, (_, _) => user));
     }
 
     public async Task<IImmutableList<User>> GetAllUsers() =>
         await Task.FromResult(users.Values.ToImmutableArray());
+
+    public async Task AddLevelStatisticAsync(LevelStatistic stat)
+    {
+        await Task.Run(() =>
+        {
+            stat.Id ??= Guid.NewGuid().ToString();
+            levelStatistics.TryAdd(stat.Id, stat);
+        });
+    }
 }

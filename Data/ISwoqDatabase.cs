@@ -11,4 +11,6 @@ public interface ISwoqDatabase
     Task UpdateUserAsync(User user);
 
     Task<IImmutableList<User>> GetAllUsers();
+
+    Task AddLevelStatisticAsync(LevelStatistic stat);
 }
