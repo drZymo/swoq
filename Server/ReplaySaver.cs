@@ -53,8 +53,8 @@ internal class ReplaySaver : IDisposable
 
         // Register filename for this game id
         string sanitizedUserName = Uri.EscapeDataString(e.userName);
-        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{sanitizedUserName} - {e.gameId}.bin");
-        filenames.TryAdd(e.gameId, filename);
+        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{sanitizedUserName} - {e.gameId}.swoq");
+        if (!filenames.TryAdd(e.gameId, filename)) return;
 
         // Store header
         var header = new ReplayHeader { UserName = e.userName, DateTime = Clock.Now.ToString("s") };
