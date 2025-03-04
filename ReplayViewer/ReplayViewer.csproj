@@ -39,4 +39,9 @@
 		<ProjectReference Include="..\Interface\Interface.csproj" />
 	</ItemGroup>
 
+	<Target Name="ZipOutputPath" AfterTargets="Publish">
+		<ZipDirectory
+			SourceDirectory="$(OutputPath)\publish\"
+			DestinationFile="$(OutputPath)\ReplayViewer.zip" />
+	</Target>
 </Project>
