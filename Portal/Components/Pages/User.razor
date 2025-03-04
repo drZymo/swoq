@@ -29,13 +29,17 @@ else
 
 	<p>This is your personal page where you can find more information about your progress. You are currently at:</p>
 	<div class="alert alert-info text-center">
-		<span class="h3">Level 6</span>
+		<span class="h3">Level @CurrentUserProvider?.Level</span>
 	</div>
-	<p>Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds</p>
+	<p>
+		Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds.
+		With all the best scores of all users combined level @CurrentUserProvider?.Level could be reached in @OptimalQuestLength ticks, which is @(CurrentUserProvider?.User.QuestLengthTicks - OptimalQuestLength) ticks faster.
+	</p>
+	<p>Below is a table that shows how many ticks your bot at least and on average needed to finish each level successfully along with how much that is above or below the global minimum and average respectively.</p>
 
 	<table class="table">
 		<thead>
-			<tr><th scope="col">Level</th><th scope="col">Min ticks</th><th>Global avg</th></tr>
+			<tr><th scope="col">Level</th><th scope="col">Min ticks</th><th>Global min ticks (-)</th><th>Avg Ticks</th><th>Global avg ticks (+/-)</th></tr>
 		</thead>
 		<tbody>
 			@foreach (var l in LevelStatistics.OrderBy(l => l.Level))
@@ -44,18 +48,35 @@ else
 					<td>@l.Level</td>
 					<td>@l.MinTicks</td>
 					<td>
-						@l.GlobalAvgTicks (
-						@if (l.Delta > 0)
+						@l.GlobalMinTicks (
+						@if (l.DeltaMin > 0)
 						{
-							<span class="text-danger">+@l.Delta</span>
+							<span class="text-danger">+@l.DeltaMin</span>
 						}
-						else if (l.Delta < 0)
+						else if (l.DeltaMin < 0)
 						{
-							<span class="text-success">@l.Delta</span>
+							<span class="text-success">@l.DeltaMin</span>
 						}
 						else
 						{
-							<span class="text-muted">@l.Delta</span>
+							<span class="text-muted">@l.DeltaMin</span>
+						}
+						)
+					</td>
+					<td>@l.AvgTicks</td>
+					<td>
+						@l.GlobalAvgTicks (
+						@if (l.DeltaAvg > 0)
+						{
+							<span class="text-danger">+@l.DeltaAvg</span>
+						}
+						else if (l.DeltaAvg < 0)
+						{
+							<span class="text-success">@l.DeltaAvg</span>
+						}
+						else
+						{
+							<span class="text-muted">@l.DeltaAvg</span>
 						}
 						)
 					</td>
@@ -72,16 +93,20 @@ else
 	[CascadingParameter]
 	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	private ImmutableList<UserLevelStatistic> LevelStatistics = ImmutableList<UserLevelStatistic>.Empty;
+	private ImmutableList<UserLevelStatistic> LevelStatistics { get; set; } = ImmutableList<UserLevelStatistic>.Empty;
+	private int OptimalQuestLength { get; set; }
 
 	protected override async Task OnParametersSetAsync()
 	{
 		var userId = CurrentUserProvider?.Id;
 		if (userId != null)
 		{
-			var data = await Database.GetLevelStatisticsAsync(userId);
-			LevelStatistics = data;
-			StateHasChanged();
+			LevelStatistics = await Database.GetLevelStatisticsAsync(userId);
+		}
+		var level = CurrentUserProvider?.Level;
+		if (level.HasValue)
+		{
+			OptimalQuestLength = await Database.GetOptimalQuestLength(level.Value);
 		}
 	}
 }

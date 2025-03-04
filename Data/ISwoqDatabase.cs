@@ -2,9 +2,10 @@
 
 namespace Swoq.Data;
 
-public record UserLevelStatistic(int Level, int MinTicks, int GlobalAvgTicks)
+public record UserLevelStatistic(int Level, int MinTicks, int GlobalMinTicks, int AvgTicks, int GlobalAvgTicks)
 {
-    public int Delta => MinTicks - GlobalAvgTicks;
+    public int DeltaMin => MinTicks - GlobalMinTicks;
+    public int DeltaAvg => AvgTicks - GlobalAvgTicks;
 }
 
 public interface ISwoqDatabase
@@ -19,5 +20,5 @@ public interface ISwoqDatabase
 
     Task AddLevelStatisticAsync(LevelStatistic stat);
     Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId);
-
+    Task<int> GetOptimalQuestLength(int level);
 }

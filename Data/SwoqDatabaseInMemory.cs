@@ -53,4 +53,8 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         throw new NotImplementedException();
     }
 
+    public Task<int> GetOptimalQuestLength(int level)
+    {
+        throw new NotImplementedException();
+    }
 }

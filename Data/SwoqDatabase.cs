@@ -63,18 +63,32 @@ public class SwoqDatabase : ISwoqDatabase
     public async Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
     {
         var globalPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
-            Group(l => l.Level, g => new ValueTuple<int, int>(g.Key, (int)g.Average(l => l.Ticks)));
+            Group(l => l.Level, g => new ValueTuple<int, int, double>(g.Key, g.Min(l => l.Ticks), g.Average(l => l.Ticks)));
         var globalResults = await levelStatistics.Aggregate(globalPipeLine).ToListAsync();
-        var globalAvg = globalResults.ToImmutableDictionary(r => r.Item1, r => r.Item2);
+        var globalMin = globalResults.ToImmutableDictionary(r => r.Item1, r => (r.Item2, r.Item3));
 
         var userPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
             Match(l => l.UserId == userId).
-            Group(l => l.Level, g => new ValueTuple<int, int>(g.Key, g.Min(l => l.Ticks)));
+            Group(l => l.Level, g => new ValueTuple<int, int, double>(g.Key, g.Min(l => l.Ticks), g.Average(l => l.Ticks)));
         var userResults = await levelStatistics.Aggregate(userPipeLine).ToListAsync();
-        var userMin = userResults.ToImmutableDictionary(r => r.Item1, r => r.Item2);
+        var userStats = userResults.ToImmutableDictionary(r => r.Item1, r => (r.Item2, r.Item3));
 
-        return userMin.
-            Select(kvp => new UserLevelStatistic(kvp.Key, kvp.Value, globalAvg[kvp.Key])).
+        return userStats.
+            Select(kvp => new UserLevelStatistic(
+                kvp.Key,
+                kvp.Value.Item1,
+                globalMin[kvp.Key].Item1,
+                (int)Math.Round(kvp.Value.Item2, MidpointRounding.AwayFromZero),
+                (int)Math.Round(globalMin[kvp.Key].Item2, MidpointRounding.AwayFromZero))).
             ToImmutableList();
+    }
+
+    public async Task<int> GetOptimalQuestLength(int level)
+    {
+        var globalPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
+            Match(l => l.Level < level).
+            Group(l => l.Level, g => g.Min(l => l.Ticks));
+        var globalResults = await levelStatistics.Aggregate(globalPipeLine).ToListAsync();
+        return globalResults.Sum();
     }
 }
