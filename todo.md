@@ -1,8 +1,10 @@
 # TODO
 
+- [ ] Proto syntax highlighting not working (including copy button)
 - [ ] Move Game finished due to player 1 died to level 0
 - [ ] Change quest queueing. Start game, but return "queued" result at act().
 - [ ] Start response, width => mapWidth
+- [ ] ActionRequest => ActRequest
 - [ ] Check input (like action) is in valid range of level. No use actions allowed in level < 2
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
