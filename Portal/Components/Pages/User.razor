@@ -2,15 +2,13 @@
 
 @using Swoq.Data
 
-@inject IJSRuntime JSRuntime
-
 @if (CurrentUserProvider?.User == null)
 {
 	<PageTitle>SWOQ - User</PageTitle>
 
-	<h1>User</h1>
+	<h1>No access!</h1>
 
-	<p>This page is only accessable for logged in users. Please <a href="login">login</a> first.</p>
+	<p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
 }
 else
 {
@@ -26,9 +24,11 @@ else
 		</div>
 	}
 
-	<p>Current level: @CurrentUserProvider?.Level (reached in @CurrentUserProvider?.User.QuestLengthTicks ticks)</p>
-
-	<ProtoFile Level="@(CurrentUserProvider?.Level ?? 0)" />
+	<p>This is your personal page where you can find more information about your progress. You are currently at:</p>
+	<div class="alert alert-info text-center">
+		<span class="h3">Level 6</span>
+	</div>
+	<p>Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds</p>
 }
 
 @code {
@@ -37,10 +37,4 @@ else
 
 	[CascadingParameter]
 	private CurrentUserProvider? CurrentUserProvider { get; set; }
-
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		// Make sure syntax highlighting is updated after every render
-		await JSRuntime.InvokeVoidAsync("hljs.highlightAll");
-	}
 }
