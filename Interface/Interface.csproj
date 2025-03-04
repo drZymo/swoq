@@ -9,13 +9,11 @@
 
   <ItemGroup>
     <None Remove="dashboard.proto" />
-    <None Remove="replay.proto" />
     <None Remove="swoq.proto" />
   </ItemGroup>
 
   <ItemGroup>
     <Protobuf Include="dashboard.proto" />
-    <Protobuf Include="replay.proto" />
     <Protobuf Include="swoq.proto" />
   </ItemGroup>
 
