@@ -15,28 +15,22 @@
   - [ ] Show stats per level.
     - [ ] Top 3 times (usernames)
     - [ ] Theoretical quest times (min and average)
-- [ ] Replay shared folder
 - [ ] Hardcode dashboard colors
-- [ ] Optmize performance of Game.cs
-- [ ] Auto hide inactive quests in dashboard
-- [ ] Installer/Zip file for ReplayViewer
-- [ ] More level features
-  - [ ] Rolling ball
-  - [ ] Falling plates (fall after 1 sec)
 - [ ] Lore in the proto files
 - [ ] Tileset matching lore (exit should not be treasure)
 - [ ] Enemies that move towards player using path finding
 - [ ] Autotile in map viewer
 - [ ] Single build output/publish folder for server and dashboard
-- [ ] Auto start dashboard from server
-- [ ] Publish a single-file app
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
 
 # Ideas
 - [ ] Codes to unlock each level, based on Advent of Code.
-- [ ] Slower with boulder in inventory. 50% change movement is executed.
+- [ ] Slower with boulder in inventory. 50% chance movement is executed.
 - [ ] Remember health at start of level
+- [ ] More level features
+  - [ ] Rolling ball
+  - [ ] Falling plates (fall after 1 sec)
 
 ## Done
 - [X] Act vs Move/Use
@@ -146,6 +140,12 @@
   - [X] Show end of quest overlay
   - [X] Cleanup quest tabs after 10s after game is finished 
 - [X] Rework inactive states of games. Move all checks to Game class.
+- [X] Replay shared folder
+- [X] Optmize performance of Game.cs
+- [X] Auto hide inactive quests in dashboard
+- [X] Installer/Zip file for ReplayViewer
+- [X] Auto start dashboard from server
+- [X] Publish a single-file app
 
 
 # Design decisions

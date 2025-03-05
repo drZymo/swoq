@@ -15,9 +15,11 @@ internal class TiledImage(int height, int width)
 
     static TiledImage()
     {
-        var currentDir = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
-            ?? AppDomain.CurrentDomain.BaseDirectory;
-        tileSet = TileSet.FromImageFile(Path.Combine(currentDir, "tiles.png"));
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Swoq.InfraUI.tiles.png")
+                           ?? throw new InvalidOperationException("Resource 'tiles.png' not found.");
+        var bitmap = new Bitmap(stream);
+
+        tileSet = TileSet.FromImageFile(bitmap);
     }
 
     private readonly Tile[,] tiles = new Tile[height, width];

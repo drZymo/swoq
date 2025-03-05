@@ -7,6 +7,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>Swoq.ReplayViewer</RootNamespace>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+		<PublishSingleFile>true</PublishSingleFile>
+		<SelfContained>true</SelfContained>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -37,4 +39,9 @@
 		<ProjectReference Include="..\Interface\Interface.csproj" />
 	</ItemGroup>
 
+	<Target Name="ZipOutputPath" AfterTargets="Publish">
+		<ZipDirectory
+			SourceDirectory="$(OutputPath)\publish\"
+			DestinationFile="$(OutputPath)\ReplayViewer.zip" />
+	</Target>
 </Project>
