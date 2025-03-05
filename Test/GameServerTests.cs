@@ -411,7 +411,7 @@ public class GameServerTests
     public void RandomSeedIsStableOverTime()
     {
         GivenUserRegistered(id: "u1", name: "One", level: 23);
-        var gameServer = new GameServer(mapGenerator, database);
+        var gameServer = new GameServer(new MapGenerator(), database); // Use the real map generator here
 
         // These actions have been recorded by playing with the Python bot and recording all actions that resulted in 'OK' response.
         // The GameServer class was adapted to always use random seed 42 before each map was generated.
