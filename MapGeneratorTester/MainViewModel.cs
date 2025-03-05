@@ -4,27 +4,23 @@ using System.Windows.Input;
 
 namespace Swoq.MapGeneratorTester;
 
-class MainViewModel : ViewModelBase
+internal class MainViewModel : ViewModelBase, IDisposable
 {
     private static readonly Random random = new();
     private static readonly MapGenerator mapGenerator = new();
 
     public MainViewModel()
     {
-        Overview = new TiledImageViewModel(mapGenerator.Generate(Level, Height, Width, random).ToOverview());
+        Overview.TileMap = mapGenerator.Generate(Level, Height, Width, random).ToOverview();
         Generate = new RelayCommand(HandleGenerate);
     }
 
-    private TiledImageViewModel overview = new();
-    public TiledImageViewModel Overview
+    public void Dispose()
     {
-        get => overview;
-        private set
-        {
-            overview = value;
-            OnPropertyChanged();
-        }
+        Overview.Dispose();
     }
+
+    public TiledImageViewModel Overview { get; } = new();
 
     private int level = 0;
     public int Level
@@ -41,7 +37,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    public int MaxLevel => mapGenerator.MaxLevel;
+    public static int MaxLevel => mapGenerator.MaxLevel;
 
     private int width = 64;
     public int Width
@@ -91,15 +87,15 @@ class MainViewModel : ViewModelBase
 
     private void HandleGenerate(object? parameter)
     {
+        Status = "Generating ...";
         try
         {
-            Status = "Generating ...";
-            Overview = new TiledImageViewModel(mapGenerator.Generate(Level, Height, Width, random).ToOverview());
+            Overview.TileMap = mapGenerator.Generate(Level, Height, Width, random).ToOverview();
             Status = "";
         }
         catch
         {
-            Overview = new TiledImageViewModel();
+            Overview.TileMap = TileMap.Empty;
             Status = "Generation failed";
         }
     }

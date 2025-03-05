@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
 namespace Swoq.Data;
@@ -28,7 +28,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         await Task.FromResult(users.TryGetValue(id, out var u) ? u : null);
 
     public async Task<User?> FindUserByNameAsync(string name) =>
-        await Task.Run(() => users.Values.Where(u => u.Name.Equals(name)).FirstOrDefault());
+        await Task.Run(() => users.Values.Where(u => u.Name == name).FirstOrDefault());
 
     public async Task UpdateUserAsync(User user)
     {

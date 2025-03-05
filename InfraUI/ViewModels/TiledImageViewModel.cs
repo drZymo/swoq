@@ -4,7 +4,7 @@ using Swoq.InfraUI.Models;
 
 namespace Swoq.InfraUI.ViewModels;
 
-public class TiledImageViewModel : ViewModelBase
+public class TiledImageViewModel : ViewModelBase, IDisposable
 {
     // Use double buffering
     // Needed for Avalonia, because WriteableBitmaps are not correctly invalidated after unlocking.
@@ -20,6 +20,12 @@ public class TiledImageViewModel : ViewModelBase
     public TiledImageViewModel(TileMap tileMap)
     {
         TileMap = tileMap;
+    }
+
+    public void Dispose()
+    {
+        image1?.Dispose();
+        image2?.Dispose();
     }
 
     private TileMap tileMap = TileMap.Empty;
@@ -50,7 +56,9 @@ public class TiledImageViewModel : ViewModelBase
         if (TileMap.Height == 0 || TileMap.Width == 0)
         {
             useImage1 = true;
+            image1?.Dispose();
             image1 = null;
+            image2?.Dispose();
             image2 = null;
             Image = null;
         }
@@ -73,22 +81,23 @@ public class TiledImageViewModel : ViewModelBase
 
     private void Render(ref TiledImage? image)
     {
-        if (image == null || image.Height != tileMap.Height || image.Width != tileMap.Width)
+        if (image == null || image.Height != TileMap.Height || image.Width != TileMap.Width)
         {
-            image = new TiledImage(tileMap.Height, tileMap.Width);
+            image?.Dispose();
+            image = new TiledImage(TileMap.Height, TileMap.Width);
         }
 
         using var lockedBitmap = image.Lock();
 
-        for (var y = 0; y < tileMap.Height; y++)
+        for (var y = 0; y < TileMap.Height; y++)
         {
-            var rowStart = y * tileMap.Width;
-            for (var x = 0; x < tileMap.Width; x++)
+            var rowStart = y * TileMap.Width;
+            for (var x = 0; x < TileMap.Width; x++)
             {
-                var tile = tileMap.Tiles[rowStart + x];
-                var isVisible = tileMap.Visibility[rowStart + x];
+                var tile = TileMap.Tiles[rowStart + x];
+                var isVisible = TileMap.Visibility[rowStart + x];
 
-                lockedBitmap.Set(y, x, tile, isVisible);
+                lockedBitmap.SetTile(y, x, tile, isVisible);
             }
         }
     }

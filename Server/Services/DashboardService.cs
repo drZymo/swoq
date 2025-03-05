@@ -70,23 +70,23 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
     }
 
-    private void OnStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
+    private void OnStarted(object? sender, StartedEventArgs e)
     {
         // Only notify successfully started games
-        if (e.response.Result != StartResult.Ok) return;
+        if (e.Response.Result != StartResult.Ok) return;
 
         // Send quest request/response data directly to dashboard
-        var isQuest = !e.request.HasLevel;
+        var isQuest = !e.Request.HasLevel;
         if (isQuest)
         {
             var update = new Update
             {
                 QuestStarted = new QuestStarted
                 {
-                    GameId = e.gameId.ToString(),
-                    UserName = e.userName,
-                    Request = e.request,
-                    Response = e.response
+                    GameId = e.GameId.ToString(),
+                    UserName = e.UserName,
+                    Request = e.Request,
+                    Response = e.Response
                 }
             };
 
@@ -94,32 +94,32 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
             updatesCount.Release();
 
             // Rembember that this game is a quest
-            activeQuests.TryAdd(e.gameId, 1);
+            activeQuests.TryAdd(e.GameId, 1);
         }
 
         // Send all game info to session update thread
-        gameUpdates.Enqueue(new GameAddedEntry(e.gameId, e.userName, e.response.State.Level, isQuest));
+        gameUpdates.Enqueue(new GameAddedEntry(e.GameId, e.UserName, e.Response.State.Level, isQuest));
         gameUpdatesSemaphore.Release();
 
         // Register activity
         Interlocked.Increment(ref activityCount);
     }
 
-    private void OnActed(object? sender, (Guid gameId, ActionRequest request, ActionResponse response) e)
+    private void OnActed(object? sender, ActedEventArgs e)
     {
         // Only process succesful actions
-        if (e.response.Result != ActResult.Ok) return;
+        if (e.Response.Result != ActResult.Ok) return;
 
         // Send quest actions directly to dashboard
-        if (activeQuests.ContainsKey(e.gameId))
+        if (activeQuests.ContainsKey(e.GameId))
         {
             var update = new Update
             {
                 QuestActed = new QuestActed
                 {
-                    GameId = e.gameId.ToString(),
-                    Request = e.request,
-                    Response = e.response
+                    GameId = e.GameId.ToString(),
+                    Request = e.Request,
+                    Response = e.Response
                 },
             };
 
@@ -128,7 +128,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
 
         // Send all game info to session update thread
-        gameUpdates.Enqueue(new GameUpdatedEntry(e.gameId, e.response.State.Level, e.response.State.Status != GameStatus.Active));
+        gameUpdates.Enqueue(new GameUpdatedEntry(e.GameId, e.Response.State.Level, e.Response.State.Status != GameStatus.Active));
         gameUpdatesSemaphore.Release();
 
         // Register activity

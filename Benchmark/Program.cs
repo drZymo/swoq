@@ -10,7 +10,7 @@ namespace Swoq.Benchmark;
 [InProcess]
 public class MapGeneratorBenchmarks
 {
-    private static readonly MapGenerator mapGenerator = new();
+    private readonly MapGenerator mapGenerator = new();
 
     [Benchmark]
     public void GenerateAll()

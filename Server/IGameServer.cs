@@ -3,8 +3,15 @@ using System.Collections.Immutable;
 
 namespace Swoq.Server;
 
-public record GameRemovedEventArgs(Guid GameId);
-public record QueueUpdatedEventArgs(IImmutableList<string> QueuedUsers);
+public class GameRemovedEventArgs(Guid gameId) : EventArgs
+{
+    public Guid GameId { get; } = gameId;
+}
+
+public class QueueUpdatedEventArgs(IImmutableList<string> queuedUsers) : EventArgs
+{
+    public IImmutableList<string> QueuedUsers { get; } = queuedUsers;
+}
 
 public interface IGameServer
 {

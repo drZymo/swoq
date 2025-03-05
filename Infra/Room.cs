@@ -2,7 +2,7 @@
 
 internal record Room(Position Center, int Height, int Width) : IComparable<Room>
 {
-    public static readonly Room Invalid = new Room(Position.Invalid, -1, -1);
+    public static readonly Room Invalid = new(Position.Invalid, -1, -1);
 
     public int Y => Center.y;
     public int X => Center.x;

@@ -44,7 +44,7 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
             CleanupOldGames();
 
             // Create a new game
-            var game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
+            IGame game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
             if (!games.TryAdd(game.Id, game))
             {
                 throw new InvalidOperationException("Game could not be added");
@@ -74,7 +74,7 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         }
     }
 
-    private IGame StartTraining(User user, int level, int? seed)
+    private Game StartTraining(User user, int level, int? seed)
     {
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
@@ -87,7 +87,7 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         return new Game(map, Parameters.MaxTrainingInactivityTime, random, reporter);
     }
 
-    private IGame StartQuest(User user)
+    private Quest StartQuest(User user)
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 

@@ -1594,7 +1594,7 @@ internal class MapGeneratorImpl
         return doorPosition.y;
     }
 
-    private IReadOnlyList<Position> ConnectLeftAndRight(int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight)
+    private List<Position> ConnectLeftAndRight(int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight)
     {
         // Connect left and right rooms closest to each other
         var minDist = double.PositiveInfinity;

@@ -4,9 +4,9 @@ using System.Diagnostics.CodeAnalysis;
 
 public readonly struct Position(int y, int x, int index) : IEquatable<Position>, IComparable<Position>
 {
-    public readonly int y = y;
-    public readonly int x = x;
-    public readonly int index = index;
+    public int y { get; } = y;
+    public int x { get; } = x;
+    public int index { get; } = index;
 
     public readonly bool IsValid => index >= 0;
 
@@ -34,5 +34,35 @@ public readonly struct Position(int y, int x, int index) : IEquatable<Position>,
     {
         y = this.y;
         x = this.x;
+    }
+
+    public static bool operator ==(Position left, Position right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Position left, Position right)
+    {
+        return !(left == right);
+    }
+
+    public static bool operator <(Position left, Position right)
+    {
+        return left.CompareTo(right) < 0;
+    }
+
+    public static bool operator <=(Position left, Position right)
+    {
+        return left.CompareTo(right) <= 0;
+    }
+
+    public static bool operator >(Position left, Position right)
+    {
+        return left.CompareTo(right) > 0;
+    }
+
+    public static bool operator >=(Position left, Position right)
+    {
+        return left.CompareTo(right) >= 0;
     }
 }

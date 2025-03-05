@@ -6,7 +6,7 @@ using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
-internal class MainViewModel : ViewModelBase
+internal class MainViewModel : ViewModelBase, IDisposable
 {
     public MainViewModel()
     {
@@ -20,12 +20,18 @@ internal class MainViewModel : ViewModelBase
         }
     }
 
+    public void Dispose()
+    {
+        Replay.Dispose();
+    }
+
     private ReplayViewModel replay = new();
     public ReplayViewModel Replay
     {
         get => replay;
         private set
         {
+            replay.Dispose();
             replay = value;
             OnPropertyChanged();
         }
@@ -59,7 +65,7 @@ internal class MainViewModel : ViewModelBase
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
             desktop.MainWindow?.StorageProvider is not { } provider)
         {
-            throw new NullReferenceException("Missing StorageProvider instance.");
+            throw new InvalidOperationException("Missing StorageProvider instance.");
         }
 
         var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions

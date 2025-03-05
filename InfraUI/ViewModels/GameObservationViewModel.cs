@@ -4,7 +4,7 @@ using Swoq.Interface;
 
 namespace Swoq.InfraUI.ViewModels;
 
-public class GameObservationViewModel(GameObservation? observation = null) : ViewModelBase
+public class GameObservationViewModel(GameObservation? observation = null) : ViewModelBase, IDisposable
 {
     private GameObservation? current = observation;
     public GameObservation? Current
@@ -38,6 +38,13 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
         }
     }
 
+    public void Dispose()
+    {
+        Overview.Dispose();
+        Player1.Dispose();
+        Player2.Dispose();
+    }
+
     public bool IsLoaded => Current != null;
 
     public string UserName => Current?.UserName ?? "Unknown";
@@ -57,40 +64,11 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
         _ => throw new NotImplementedException(),
     };
 
-    private TiledImageViewModel overview = new();
-    public TiledImageViewModel Overview
-    {
-        get => overview;
-        private set
-        {
-            overview = value;
-            OnPropertyChanged();
-        }
-    }
-
     public bool HasPlayer2 => Current?.Player2 != null;
 
-    private PlayerObservationViewModel player1 = new();
-    public PlayerObservationViewModel Player1
-    {
-        get => player1;
-        private set
-        {
-            player1 = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private PlayerObservationViewModel player2 = new();
-    public PlayerObservationViewModel Player2
-    {
-        get => player2;
-        private set
-        {
-            player2 = value;
-            OnPropertyChanged();
-        }
-    }
+    public TiledImageViewModel Overview { get; } = new();
+    public PlayerObservationViewModel Player1 { get; } = new();
+    public PlayerObservationViewModel Player2 { get; } = new();
 
     public void Reset()
     {
