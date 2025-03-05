@@ -9,6 +9,7 @@ public class GameServerTests
 {
     private DateTime now = DateTime.Now;
 
+    private DummyGenerator mapGenerator;
     private SwoqDatabaseInMemory database;
 
     [SetUp]
@@ -16,20 +17,21 @@ public class GameServerTests
     {
         Clock.Setup(() => now);
 
+        mapGenerator = new();
         database = new();
     }
 
     [Test]
     public void UnknownUser()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", 0)).Result, Is.EqualTo(StartResult.UnknownUser));
     }
 
     [Test]
     public void UserLevelTooLow()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered();
         Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", 2)).Result, Is.EqualTo(StartResult.UserLevelTooLow));
     }
@@ -37,7 +39,7 @@ public class GameServerTests
     [Test]
     public void SingleQuestCanStartAndAct()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered();
 
         // Start a quest
@@ -54,7 +56,7 @@ public class GameServerTests
     [Test]
     public void SingleQuestCanFinish()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered();
 
         // Start a quest
@@ -94,7 +96,7 @@ public class GameServerTests
     [Test]
     public void SecondQuestStartIsQueued()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -117,7 +119,7 @@ public class GameServerTests
     [Test]
     public void TwoQuestsCanBeActive()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 2);
+        var gameServer = new GameServer(mapGenerator, database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -144,7 +146,7 @@ public class GameServerTests
     [Test]
     public void TimeoutOnQuestWillFinishItAndAllowsNextInQueueToStart()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -183,7 +185,7 @@ public class GameServerTests
     [Test]
     public void UserIsRemovedFromQuestQueueWhenItStopsCallingStart()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "p3", name: "User3");
@@ -223,7 +225,7 @@ public class GameServerTests
     [Test]
     public void OldGamesAreCleanedUpAfterAWhile()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
 
@@ -261,7 +263,7 @@ public class GameServerTests
     [Test]
     public void ThirdQuestIsQueued()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 2);
+        var gameServer = new GameServer(mapGenerator, database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "u3", name: "User3");
@@ -295,7 +297,7 @@ public class GameServerTests
     [Test]
     public void ThirdQuestBecomesActiveAfterFirstFinishes()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 2);
+        var gameServer = new GameServer(mapGenerator, database, 2);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "u3", name: "User3");
@@ -378,7 +380,7 @@ public class GameServerTests
     [Test]
     public void ActiveUserCannotQueueAgain()
     {
-        var gameServer = new GameServer<DummyGenerator>(database, 1);
+        var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered(id: "u1", name: "User1");
         GivenUserRegistered(id: "u2", name: "User2");
         GivenUserRegistered(id: "u3", name: "User3");
@@ -409,7 +411,7 @@ public class GameServerTests
     public void RandomSeedIsStableOverTime()
     {
         GivenUserRegistered(id: "u1", name: "One", level: 23);
-        var gameServer = new GameServer<MapGenerator>(database);
+        var gameServer = new GameServer(mapGenerator, database);
 
         // These actions have been recorded by playing with the Python bot and recording all actions that resulted in 'OK' response.
         // The GameServer class was adapted to always use random seed 42 before each map was generated.
@@ -442,7 +444,7 @@ public class GameServerTests
 
     private class DummyGenerator : IMapGenerator
     {
-        public static Map Generate(int level, int height, int width, Random random)
+        public Map Generate(int level, int height, int width, Random random)
         {
             width = 5;
             height = 5;
@@ -479,6 +481,6 @@ public class GameServerTests
             return map.ToMap();
         }
 
-        public static int MaxLevel { get; } = 1;
+        public int MaxLevel { get; } = 1;
     }
 }

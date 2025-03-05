@@ -17,7 +17,7 @@ public class GameServerActException(ActResult result, GameState? state, Exceptio
     public GameState? State { get; } = state;
 }
 
-public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
+public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer
 {
     private readonly ConcurrentDictionary<Guid, IGame> games = new();
 
@@ -80,7 +80,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
         var random = seed.HasValue ? new Random(seed.Value) : new Random();
-        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
+        var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         var reporter = new UserStatisticsReporter(user, database);
 
         // Create new training game
@@ -124,7 +124,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             Debug.Assert(frontUserId == user.Id);
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
-            var quest = new Quest<MG>(user, database);
+            var quest = new Quest(user, mapGenerator, database);
             currentQuestUserIds.TryAdd(quest.Id, user.Id);
             return quest;
         }

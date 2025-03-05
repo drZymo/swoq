@@ -10,9 +10,10 @@ internal class QuestTests
 {
     private const int MaxLevel = 9;
 
-    private readonly SwoqDatabaseInMemory database = new();
-    private Quest<DummyGenerator> quest;
+    private DummyGenerator mapGenerator = new();
+    private SwoqDatabaseInMemory database = new();
     private string userId;
+    private Quest quest;
 
     private DateTime now = DateTime.Now;
 
@@ -21,12 +22,15 @@ internal class QuestTests
     {
         Clock.Setup(() => now);
 
+        mapGenerator = new();
+        database = new();
+
         var user = new User() { Level = 0, Name = "McFly" };
         database.CreateUserAsync(user).Wait();
         Assert.That(user.Id, Is.Not.Null);
         userId = user.Id;
 
-        quest = new Quest<DummyGenerator>(user, database);
+        quest = new Quest(user, mapGenerator, database);
         Assert.Multiple(() =>
         {
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
@@ -111,7 +115,7 @@ internal class QuestTests
         // Do it faster with same amount of ticks
         {
             // in a new quest
-            var newQuest = new Quest<DummyGenerator>(CurrentUser, database);
+            var newQuest = new Quest(CurrentUser, mapGenerator, database);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -133,7 +137,7 @@ internal class QuestTests
         // Do it faster with less ticks
         {
             // in a new quest
-            var newQuest = new Quest<DummyGenerator>(CurrentUser, database);
+            var newQuest = new Quest(CurrentUser, mapGenerator, database);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -164,7 +168,7 @@ internal class QuestTests
 
     private class DummyGenerator : IMapGenerator
     {
-        public static Map Generate(int level, int height, int width, Random random)
+        public Map Generate(int level, int height, int width, Random random)
         {
             MutableMap map = new(level, 3, 5);
             for (var x = 0; x < 5; x++)
@@ -185,6 +189,6 @@ internal class QuestTests
             return map.ToMap();
         }
 
-        public static int MaxLevel { get; } = QuestTests.MaxLevel;
+        public int MaxLevel { get; } = QuestTests.MaxLevel;
     }
 }

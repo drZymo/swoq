@@ -6,11 +6,12 @@ namespace Swoq.MapGeneratorTester;
 
 class MainViewModel : ViewModelBase
 {
-    private readonly Random random = new();
+    private static readonly Random random = new();
+    private static readonly MapGenerator mapGenerator = new();
 
     public MainViewModel()
     {
-        Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width, random).ToOverview());
+        Overview = new TiledImageViewModel(mapGenerator.Generate(Level, Height, Width, random).ToOverview());
         Generate = new RelayCommand(HandleGenerate);
     }
 
@@ -40,7 +41,7 @@ class MainViewModel : ViewModelBase
         }
     }
 
-    public int MaxLevel { get; } = MapGenerator.MaxLevel;
+    public int MaxLevel => mapGenerator.MaxLevel;
 
     private int width = 64;
     public int Width
@@ -93,7 +94,7 @@ class MainViewModel : ViewModelBase
         try
         {
             Status = "Generating ...";
-            Overview = new TiledImageViewModel(MapGenerator.Generate(Level, Height, Width, random).ToOverview());
+            Overview = new TiledImageViewModel(mapGenerator.Generate(Level, Height, Width, random).ToOverview());
             Status = "";
         }
         catch
