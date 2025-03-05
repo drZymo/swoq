@@ -4,5 +4,7 @@
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <RestoreLockedMode>true</RestoreLockedMode>
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+        <AnalysisMode>Recommended</AnalysisMode>
+        <NoWarn>CA1805</NoWarn>
     </PropertyGroup>
 </Project>
