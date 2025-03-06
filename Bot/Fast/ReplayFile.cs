@@ -3,20 +3,21 @@ using Swoq.Interface;
 
 namespace Bot;
 
-internal class ReplayFile
+internal class ReplayFile : IDisposable
 {
-    private readonly string filename;
+    private readonly FileStream stream;
 
     public ReplayFile(string userName, StartRequest request, StartResponse response)
     {
         // Determine file name
         var sanitizedUserName = Uri.EscapeDataString(userName);
-        filename = Path.Combine(AppContext.BaseDirectory, "Replays", $"{sanitizedUserName} - {response.GameId}.swoq");
+        var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var filename = Path.Combine(AppContext.BaseDirectory, "Replays", $"{sanitizedUserName} - {dateTimeStr} - {response.GameId}.swoq");
         // Create directory first
         var directory = Path.GetDirectoryName(filename);
         if (directory != null) Directory.CreateDirectory(directory);
-        // Create a new file
-        using var stream = File.Create(filename);
+        // Create a new file, allow reading
+        stream = new FileStream(filename, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 512, FileOptions.WriteThrough);
 
         // Store header
         var header = new ReplayHeader { UserName = userName, DateTime = DateTime.Now.ToString("s") };
@@ -27,11 +28,13 @@ internal class ReplayFile
         response.WriteDelimitedTo(stream);
     }
 
+    public void Dispose()
+    {
+        stream.Dispose();
+    }
+
     public void Append(ActionRequest request, ActionResponse response)
     {
-        using var stream = File.OpenWrite(filename);
-        stream.Seek(0, SeekOrigin.End);
-
         request.WriteDelimitedTo(stream);
         response.WriteDelimitedTo(stream);
     }

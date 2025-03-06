@@ -2,8 +2,13 @@
 
 namespace Bot;
 
-internal class Game(GameService.GameServiceClient client, StartResponse response, ReplayFile? replayFile)
+internal class Game(GameService.GameServiceClient client, StartResponse response, ReplayFile? replayFile) : IDisposable
 {
+    public void Dispose()
+    {
+        replayFile?.Dispose();
+    }
+
     public string GameId { get; } = response.GameId;
     public int MapWidth { get; } = response.Width;
     public int MapHeight { get; } = response.Height;

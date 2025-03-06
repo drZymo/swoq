@@ -54,7 +54,7 @@ public static class Program
     {
         var sw = Stopwatch.StartNew();
 
-        var game = connection.Start(level);
+        using var game = connection.Start(level);
 
         var bot = new ActionPlanner(game.MapHeight, game.MapWidth, game.VisibilityRange);
 
