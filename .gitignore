@@ -7,11 +7,9 @@
 **/bin/
 **/.vs/
 **/*.user
-examples/
-**/*.pem
-level*.bin
 **/BenchmarkDotNet.Artifacts/
 coveragereport/
 Test/TestResults/
-/Replays/
+**/Replays/
 **/.avalonia-build-tasks/
+**/env.json 
