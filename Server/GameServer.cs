@@ -17,7 +17,7 @@ public class GameServerActException(ActResult result, GameState? state, Exceptio
     public GameState? State { get; } = state;
 }
 
-public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer where MG : IMapGenerator
+public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer
 {
     private readonly ConcurrentDictionary<Guid, IGame> games = new();
 
@@ -44,7 +44,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             CleanupOldGames();
 
             // Create a new game
-            var game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
+            IGame game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
             if (!games.TryAdd(game.Id, game))
             {
                 throw new InvalidOperationException("Game could not be added");
@@ -74,20 +74,20 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         }
     }
 
-    private IGame StartTraining(User user, int level, int? seed)
+    private Game StartTraining(User user, int level, int? seed)
     {
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
         var random = seed.HasValue ? new Random(seed.Value) : new Random();
-        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
+        var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         var reporter = new UserStatisticsReporter(user, database);
 
         // Create new training game
         return new Game(map, Parameters.MaxTrainingInactivityTime, random, reporter);
     }
 
-    private IGame StartQuest(User user)
+    private Quest StartQuest(User user)
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
@@ -124,7 +124,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             Debug.Assert(frontUserId == user.Id);
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
-            var quest = new Quest<MG>(user, database);
+            var quest = new Quest(user, mapGenerator, database);
             currentQuestUserIds.TryAdd(quest.Id, user.Id);
             return quest;
         }

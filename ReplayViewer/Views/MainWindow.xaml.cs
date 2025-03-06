@@ -9,11 +9,11 @@ public partial class MainWindow : Window
 {
     protected override void OnInitialized()
     {
-        AddHandler(DragDrop.DropEvent, Window_Drop);
+        AddHandler(DragDrop.DropEvent, OnDrop);
         base.OnInitialized();
     }
 
-    public void Window_Drop(object? sender, DragEventArgs e)
+    private void OnDrop(object? sender, DragEventArgs e)
     {
         if (DataContext is not MainViewModel main) return;
 

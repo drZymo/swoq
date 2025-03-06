@@ -10,13 +10,15 @@ namespace Swoq.Benchmark;
 [InProcess]
 public class MapGeneratorBenchmarks
 {
+    private readonly MapGenerator mapGenerator = new();
+
     [Benchmark]
     public void GenerateAll()
     {
         var random = new Random(42);
-        for (var l = 0; l <= MapGenerator.MaxLevel; l++)
+        for (var l = 0; l <= mapGenerator.MaxLevel; l++)
         {
-            MapGenerator.Generate(l, 64, 64, random);
+            mapGenerator.Generate(l, 64, 64, random);
         }
     }
 
@@ -24,31 +26,31 @@ public class MapGeneratorBenchmarks
     public void GenerateLevel1()
     {
         var random = new Random(42);
-        MapGenerator.Generate(1, 64, 64, random);
+        mapGenerator.Generate(1, 64, 64, random);
     }
 
     [Benchmark]
     public void GenerateLevel4()
     {
         var random = new Random(42);
-        MapGenerator.Generate(4, 64, 64, random);
+        mapGenerator.Generate(4, 64, 64, random);
     }
 }
 
 [InProcess]
 public class GameServerBenchmark
 {
-    private readonly SwoqDatabaseInMemory database;
-    private readonly GameServer<MapGenerator> server;
+    private static readonly MapGenerator mapGenerator = new();
+    private readonly SwoqDatabaseInMemory database = new();
+    private readonly GameServer server;
 
     public GameServerBenchmark()
     {
-        database = new SwoqDatabaseInMemory();
         for (var i = 0; i < 10; i++)
         {
             database.CreateUser(new User() { Id = $"u{i}", Name = $"User {i}", Level = 23 });
         }
-        server = new GameServer<MapGenerator>(database);
+        server = new GameServer(mapGenerator, database);
     }
 
     [Benchmark]

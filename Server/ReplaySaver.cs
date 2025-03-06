@@ -46,33 +46,33 @@ internal class ReplaySaver : IDisposable
     private readonly SemaphoreSlim messagesSemaphore = new(0);
     private readonly ConcurrentQueue<Message> messages = new();
 
-    private void OnGameStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
+    private void OnGameStarted(object? sender, StartedEventArgs e)
     {
         // Only save replays of quests
-        if (e.request.HasLevel) return;
+        if (e.Request.HasLevel) return;
 
         // Register filename for this game id
-        string sanitizedUserName = Uri.EscapeDataString(e.userName);
-        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{sanitizedUserName} - {e.gameId}.swoq");
-        if (!filenames.TryAdd(e.gameId, filename)) return;
+        string sanitizedUserName = Uri.EscapeDataString(e.UserName);
+        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{sanitizedUserName} - {e.GameId}.swoq");
+        if (!filenames.TryAdd(e.GameId, filename)) return;
 
         // Store header
-        var header = new ReplayHeader { UserName = e.userName, DateTime = Clock.Now.ToString("s") };
-        Enqueue(e.gameId, header);
+        var header = new ReplayHeader { UserName = e.UserName, DateTime = Clock.Now.ToString("s") };
+        Enqueue(e.GameId, header);
 
         // Store start
-        Enqueue(e.gameId, e.request);
-        Enqueue(e.gameId, e.response);
+        Enqueue(e.GameId, e.Request);
+        Enqueue(e.GameId, e.Response);
     }
 
-    private void OnGameActed(object? sender, (Guid gameId, ActionRequest request, ActionResponse response) e)
+    private void OnGameActed(object? sender, ActedEventArgs e)
     {
         // Only save messages of registered games
-        if (!filenames.ContainsKey(e.gameId)) return;
+        if (!filenames.ContainsKey(e.GameId)) return;
 
         // Store it
-        Enqueue(e.gameId, e.request);
-        Enqueue(e.gameId, e.response);
+        Enqueue(e.GameId, e.Request);
+        Enqueue(e.GameId, e.Response);
     }
 
     private void Enqueue(Guid gameId, IMessage message)

@@ -4,7 +4,7 @@ using Swoq.Interface;
 
 namespace Swoq.InfraUI.ViewModels;
 
-public class PlayerObservationViewModel(PlayerObservation? observation = null) : ViewModelBase
+public class PlayerObservationViewModel(PlayerObservation? observation = null) : ViewModelBase, IDisposable
 {
     private PlayerObservation? observation = observation;
 
@@ -27,6 +27,11 @@ public class PlayerObservationViewModel(PlayerObservation? observation = null) :
 
             Surroundings.TileMap = Observation?.Surroundings ?? TileMap.Empty;
         }
+    }
+
+    public void Dispose()
+    {
+        Surroundings.Dispose();
     }
 
     private bool showHealth = false;
@@ -66,14 +71,5 @@ public class PlayerObservationViewModel(PlayerObservation? observation = null) :
     public bool HasTreasure => Observation?.Inventory == Inventory.Treasure;
     public bool HasSword => Observation?.HasSword ?? false;
 
-    public TiledImageViewModel surroundings = new();
-    public TiledImageViewModel Surroundings
-    {
-        get => surroundings;
-        private set
-        {
-            surroundings = value;
-            OnPropertyChanged();
-        }
-    }
+    public TiledImageViewModel Surroundings { get; } = new();
 }

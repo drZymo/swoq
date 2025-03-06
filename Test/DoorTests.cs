@@ -27,7 +27,7 @@ internal class DoorTests(char doorColor) : GameTestBase
         "                 " +
         "                 " +
         "                 " +
-        "                 ").Replace('D', doorColor).Replace('k', char.ToLower(doorColor)));
+        "                 ").Replace('D', doorColor).Replace('k', char.ToLower(doorColor, System.Globalization.CultureInfo.InvariantCulture)));
 
     [SetUp]
     public override void SetUp()

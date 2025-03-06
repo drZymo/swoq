@@ -1,15 +1,17 @@
 ﻿using Swoq.Infra;
 
-static IEnumerable<int> RandomLevels()
+static IEnumerable<int> RandomLevels(IMapGenerator mapGenerator)
 {
     var random = new Random();
     while (true)
     {
-        yield return random.Next(MapGenerator.MaxLevel + 1);
+        yield return random.Next(mapGenerator.MaxLevel + 1);
     }
 }
 
-Parallel.ForEach(RandomLevels(), level =>
+var mapGenerator = new MapGenerator();
+
+Parallel.ForEach(RandomLevels(mapGenerator), level =>
 {
-    MapGenerator.Generate(level, 64, 64, new Random());
+    mapGenerator.Generate(level, 64, 64, new Random());
 });

@@ -1,5 +1,6 @@
 using Swoq.Data;
 using Swoq.Portal.Components;
+using Swoq.Portal.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://*:80", "https://*:443");

@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace Swoq.InfraUI.Models;
 
-internal class TiledImage(int height, int width)
+internal class TiledImage(int height, int width) : IDisposable
 {
     private static readonly IImmutableDictionary<Tile, byte[]> tileSet;
 
@@ -30,6 +30,11 @@ internal class TiledImage(int height, int width)
     public int Width { get; } = width;
     public IImage Image => image;
 
+    public void Dispose()
+    {
+        image.Dispose();
+    }
+
     public LockedMapImage Lock()
     {
         return new LockedMapImageImpl(this);
@@ -45,7 +50,7 @@ internal class TiledImage(int height, int width)
             framebuffer.Dispose();
         }
 
-        public override void Set(int row, int col, Tile tile, bool isVisible)
+        public override void SetTile(int row, int col, Tile tile, bool isVisible)
         {
             if (tile != parent.tiles[row, col] || isVisible != parent.visibility[row, col])
             {

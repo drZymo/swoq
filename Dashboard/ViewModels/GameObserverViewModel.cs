@@ -236,6 +236,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
             foreach (var gameObservation in gameObservationsToRemove)
             {
                 gameObservations.Remove(gameObservation);
+                gameObservation.Dispose();
             }
 
             foreach (var session in sessionsToRemove)

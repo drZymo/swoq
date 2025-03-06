@@ -14,7 +14,7 @@ public class BoolToGridLengthConverter : IValueConverter
             double targetLength = 0;
             if (parameter is double doubleValue) { targetLength = doubleValue; }
             else if (parameter is int intValue) { targetLength = intValue; }
-            else if (parameter is string stringValue) { targetLength = double.Parse(stringValue); }
+            else if (parameter is string stringValue) { targetLength = double.Parse(stringValue, CultureInfo.InvariantCulture); }
 
             return new GridLength(maximize ? 0 : targetLength);
         }

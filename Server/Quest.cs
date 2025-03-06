@@ -4,9 +4,10 @@ using Swoq.Interface;
 
 namespace Swoq.Server;
 
-public class Quest<MG> : IGame where MG : IMapGenerator
+public class Quest : IGame
 {
     private readonly User user;
+    private readonly IMapGenerator mapGenerator;
     private readonly ISwoqDatabase database;
     private readonly Random random;
     private readonly UserStatisticsReporter reporter;
@@ -16,9 +17,10 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     private int level = 0;
     private Game currentGame;
 
-    public Quest(User user, ISwoqDatabase database)
+    public Quest(User user, IMapGenerator mapGenerator, ISwoqDatabase database)
     {
         this.user = user;
+        this.mapGenerator = mapGenerator;
         this.database = database;
         this.random = new();
         this.reporter = new(user, database);
@@ -78,7 +80,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
                 }
 
                 // Create a new game if this was not the last level
-                if (level <= MG.MaxLevel)
+                if (level <= mapGenerator.MaxLevel)
                 {
                     currentGame = NewGame();
                 }
@@ -92,7 +94,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
 
     private Game NewGame()
     {
-        var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
+        var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         return new Game(map, Parameters.MaxQuestInactivityTime, random, reporter);
     }
 }

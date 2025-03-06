@@ -1,11 +1,21 @@
-namespace Swoq.Infra;
-
 using Swoq.Interface;
 using System.Diagnostics;
 
+namespace Swoq.Infra;
+
 public class MapGenerator : IMapGenerator
 {
-    private class MapGeneratorException(string message) : Exception(message) { }
+    public Map Generate(int level, int height, int width, Random random)
+    {
+        var generator = new MapGeneratorImpl(height, width, random);
+        return generator.Generate(level);
+    }
+
+    public int MaxLevel => MapGeneratorImpl.MaxLevel;
+}
+
+internal class MapGeneratorImpl
+{
     private enum KeyColor { Red, Green, Blue }
 
     private const int MaxRetries = 10;
@@ -30,20 +40,7 @@ public class MapGenerator : IMapGenerator
     private HashSet<Position> previousAvailablePositions = [];
     private HashSet<Position> initialRestrictedPositions = [];
 
-    public static Map Generate(int level, int height, int width, Random random)
-    {
-        try
-        {
-            var generator = new MapGenerator(height, width, random);
-            return generator.Generate(level);
-        }
-        catch (MapGeneratorException) // TODO: report
-        {
-            return Map.Empty;
-        }
-    }
-
-    public MapGenerator(int height, int width, Random random)
+    public MapGeneratorImpl(int height, int width, Random random)
     {
         this.height = height;
         this.width = width;
@@ -1597,7 +1594,7 @@ public class MapGenerator : IMapGenerator
         return doorPosition.y;
     }
 
-    private IReadOnlyList<Position> ConnectLeftAndRight(int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight)
+    private List<Position> ConnectLeftAndRight(int middle, IReadOnlyList<Room> roomsLeft, IReadOnlyList<Room> roomsRight)
     {
         // Connect left and right rooms closest to each other
         var minDist = double.PositiveInfinity;

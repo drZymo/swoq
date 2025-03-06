@@ -8,7 +8,7 @@ using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
-internal class ReplayViewModel : ViewModelBase
+internal class ReplayViewModel : ViewModelBase, IDisposable
 {
     private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
 
@@ -25,6 +25,11 @@ internal class ReplayViewModel : ViewModelBase
     {
         IsLoading = true;
         Task.Run(() => Load(path));
+    }
+
+    public void Dispose()
+    {
+        Current.Dispose();
     }
 
     private bool isLoading = false;
@@ -57,7 +62,7 @@ internal class ReplayViewModel : ViewModelBase
         }
     }
 
-    public GameObservationViewModel Current { get; } = new GameObservationViewModel();
+    public GameObservationViewModel Current { get; } = new();
 
     public int MaxTick => gameStates.Count - 1;
 

@@ -1,6 +1,6 @@
 ﻿namespace Swoq.Infra;
 
-public static class CellEx
+public static class CellExtensions
 {
     public static bool CanWalkOn(this Cell cell)
     {
@@ -32,7 +32,6 @@ public static class CellEx
             case Cell.PressurePlateBlueWithBoulder:
                 return false;
         }
-        ;
         return false;
     }
 
@@ -66,7 +65,6 @@ public static class CellEx
             case Cell.PressurePlateBlueWithBoulder:
                 return false;
         }
-        ;
         return false;
     }
 }

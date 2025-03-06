@@ -24,7 +24,7 @@ internal class GameConnection : IDisposable
         var request = new StartRequest() { UserId = Env.UserId };
         if (level.HasValue) request.Level = level.Value;
 
-        StartResponse? response = null;
+        StartResponse? response;
         while (true)
         {
             response = client.Start(request);
