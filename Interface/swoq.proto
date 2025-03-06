@@ -149,3 +149,9 @@ enum Inventory {
     // Level 22 and higher:
     INVENTORY_TREASURE = 5;
 }
+
+// Used by the ReplaySaver and ReplayViewer
+message ReplayHeader {
+    string userName = 1;
+    string dateTime = 2;
+}

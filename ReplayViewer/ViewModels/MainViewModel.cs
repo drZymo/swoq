@@ -66,7 +66,7 @@ internal class MainViewModel : ViewModelBase
         {
             Title = "Open replay file",
             AllowMultiple = false,
-            FileTypeFilter = [new FilePickerFileType("Replay file") { Patterns = ["*.bin"] }],
+            FileTypeFilter = [new FilePickerFileType("Replay file") { Patterns = ["*.swoq"] }],
         });
 
         if (files.Count > 0)

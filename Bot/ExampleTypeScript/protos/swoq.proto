@@ -88,3 +88,9 @@ enum Tile {
     TILE_WALL = 3;
     TILE_EXIT = 4;
 }
+
+// Used by the ReplaySaver and ReplayViewer
+message ReplayHeader {
+    string userName = 1;
+    string dateTime = 2;
+}

@@ -2,6 +2,7 @@ using Swoq.Data;
 using Swoq.Portal.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://*:80", "https://*:443");
 
 builder.Services.Configure<SwoqDatabaseSettings>(builder.Configuration.GetSection("SwoqDatabase"));
 builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabase>();

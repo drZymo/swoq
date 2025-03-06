@@ -11,7 +11,7 @@ internal class GameConnection : IDisposable
     public GameConnection()
     {
         channel = GrpcChannel.ForAddress($"http://{Env.Host}:5080");
-        client = new GameService.GameServiceClient(channel);
+        client = new(channel);
     }
 
     public void Dispose()
@@ -41,6 +41,8 @@ internal class GameConnection : IDisposable
             throw new GameException($"Start failed (result {response.Result})");
         }
 
-        return new Game(client, response);
+        var replayFile = new ReplayFile(Env.UserName, request, response);
+
+        return new Game(client, response, replayFile);
     }
 }

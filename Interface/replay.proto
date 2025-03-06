@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package Swoq.Interface;
-
-message ReplayHeader {
-    string userName = 1;
-    string dateTime = 2;
-}
