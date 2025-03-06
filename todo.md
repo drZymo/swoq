@@ -1,7 +1,5 @@
 # TODO
 
-- [ ] Proto syntax highlighting not working (including copy button)
-- [ ] Move Game finished due to player 1 died to level 0
 - [ ] Change quest queueing. Start game, but return "queued" result at act().
 - [ ] Start response, width => mapWidth
 - [ ] ActionRequest => ActRequest

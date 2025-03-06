@@ -204,7 +204,7 @@ The following tiles have been added to denote the position of doors and keys on 
 
 Another feature was added to the game. From now on, boulders can be present on the map. These large rocks can be picked up by the player. They will occupy the inventory slot, so nothing else can be picked up as long as a boulder is in the inventory.
 
-Unlike keys, you cannot pick it up by moving your player over it. In fact, you cannot move through it, it blocks your player's path. Your player has to stand on an adjacent tile with an empty inventory, and then you can send a `Use` action to pick it up. It will then occupy the only slot in your player's inventory. Also unlike keys, a boulder can be dropped by the player. With a boulder in the inventory you can perform a `Use` action on an empty tile to drop the boulder there.
+Unlike keys, you cannot pick it up by moving your player over it. In fact, you cannot move through it, it blocks your player's path. Your player has to stand on an adjacent tile with an empty inventory, and then you can send a `Use` action to pick it up. It will then occupy the only slot in your player's inventory. Also unlike keys, a boulder can be dropped by the player. With a boulder in the inventory you can perform a `Use` action on an empty tile to drop the boulder there. Be aware, a boulder is heavy, you should not keep it in your inventory forever.
 
 ### Tiles
 
