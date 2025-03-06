@@ -6,9 +6,14 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
-public class GameServerException(Result result, GameState? state = null, Exception? innerException = null) : Exception(null, innerException)
+public class GameServerStartException(StartResult result, Exception? innerException = null) : Exception($"Start result {result}", innerException)
 {
-    public Result Result { get; } = result;
+    public StartResult Result { get; } = result;
+}
+
+public class GameServerActException(ActResult result, GameState? state, Exception? innerException = null) : Exception($"Act result {result}", innerException)
+{
+    public ActResult Result { get; } = result;
     public GameState? State { get; } = state;
 }
 
@@ -31,8 +36,6 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
 
     public GameStartResult Start(string userId, int? level, int? seed = null)
     {
-        IGame? game = null;
-
         try
         {
             var user = GetUserOrThrow(database, userId);
@@ -41,22 +44,21 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             CleanupOldGames();
 
             // Create a new game
-            game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
+            var game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
             if (!games.TryAdd(game.Id, game))
             {
-                game = null;
                 throw new InvalidOperationException("Game could not be added");
             }
 
             return new GameStartResult(user.Name, game.Id, game.State);
         }
-        catch (SwoqException ex)
+        catch (SwoqStartException ex)
         {
-            throw new GameServerException(ResultFromException(ex), game?.State, ex);
+            throw new GameServerStartException(ex.Result, ex);
         }
         catch (Exception ex)
         {
-            throw new GameServerException(Result.InternalError, game?.State, ex);
+            throw new GameServerStartException(StartResult.InternalError, ex);
         }
     }
 
@@ -72,7 +74,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         }
     }
 
-    private static Game StartTraining(User user, int level, int? seed)
+    private static IGame StartTraining(User user, int level, int? seed)
     {
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
@@ -84,7 +86,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         return new Game(map, Parameters.MaxTrainingInactivityTime, random);
     }
 
-    private Quest<MG> StartQuest(User user)
+    private IGame StartQuest(User user)
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
@@ -130,7 +132,7 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
         // Try to find game
-        if (!games.TryGetValue(gameId, out var game)) throw new GameServerException(Result.UnknownGameId, null);
+        if (!games.TryGetValue(gameId, out var game)) throw new GameServerActException(ActResult.UnknownGameId, null);
 
         // Play game
         try
@@ -138,13 +140,13 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             game.Act(action1, action2);
             return game.State;
         }
-        catch (SwoqException ex)
+        catch (SwoqActException ex)
         {
-            throw new GameServerException(ResultFromException(ex), game?.State, ex);
+            throw new GameServerActException(ex.Result, game.State, ex);
         }
         catch (Exception ex)
         {
-            throw new GameServerException(Result.InternalError, game?.State, ex);
+            throw new GameServerActException(ActResult.InternalError, game.State, ex);
         }
     }
 
@@ -174,23 +176,4 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             }
         }
     }
-
-    private static Result ResultFromException(SwoqException ex) => ex switch
-    {
-        UnknownUserException => Result.UnknownUser,
-        UnknownGameIdException => Result.UnknownGameId,
-        UserLevelTooLowException => Result.UserLevelTooLow,
-        QuestQueuedException => Result.QuestQueued,
-        QuestAlreadyActiveException => Result.QuestAlreadyActive,
-        MoveNotAllowedException => Result.MoveNotAllowed,
-        UnknownActionException => Result.UnknownAction,
-        GameFinishedException => Result.GameFinished,
-        UseNotAllowedException => Result.UseNotAllowed,
-        InventoryFullException => Result.InventoryFull,
-        InventoryEmptyException => Result.InventoryEmpty,
-        NoSwordException => Result.NoSword,
-        Player1NotPresentException => Result.PlayerNotPresent,
-        Player2NotPresentException => Result.Player2NotPresent,
-        _ => Result.InternalError,
-    };
 }

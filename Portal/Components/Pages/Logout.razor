@@ -1,0 +1,26 @@
+﻿@page "/logout/"
+
+@rendermode InteractiveServer
+
+@using Swoq.Data
+
+@inject NavigationManager NavigationManager
+@inject UserService UserService
+
+<PageTitle>Logout</PageTitle>
+
+<h1>Logout</h1>
+
+<p>You are now logged out.</p>
+
+@code {
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await UserService.RemoveUserIdAsync();
+			NavigationManager.NavigateTo($"/", forceLoad: true);
+		}
+	}
+}

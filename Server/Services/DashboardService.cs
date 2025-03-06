@@ -73,7 +73,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private void OnStarted(object? sender, (string userName, Guid gameId, StartRequest request, StartResponse response) e)
     {
         // Only notify successfully started games
-        if (e.response.Result != Result.Ok) return;
+        if (e.response.Result != StartResult.Ok) return;
 
         // Send quest request/response data directly to dashboard
         var isQuest = !e.request.HasLevel;
@@ -108,7 +108,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
     private void OnActed(object? sender, (Guid gameId, ActionRequest request, ActionResponse response) e)
     {
         // Only process succesful actions
-        if (e.response.Result != Result.Ok) return;
+        if (e.response.Result != ActResult.Ok) return;
 
         // Send quest actions directly to dashboard
         if (activeQuests.ContainsKey(e.gameId))

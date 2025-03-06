@@ -1,12 +1,17 @@
-﻿@page "/user"
-@page "/user/{UserId}"
+﻿@page "/user/"
+
+@rendermode InteractiveServer
+
 @using Swoq.Data
+
 @inject ISwoqDatabase Database
 @inject NavigationManager NavigationManager
+@inject UserService UserService
 
 @if (CurrentUser == null)
 {
 	<PageTitle>User</PageTitle>
+
 	<h1>User</h1>
 
 	<p>Please sign in with your user ID.</p>
@@ -26,7 +31,8 @@
 		</div>
 	</form>
 }
-else {
+else
+{
 	<PageTitle>User - @CurrentUser.Name</PageTitle>
 
 	<h1>Hi @CurrentUser.Name</h1>
@@ -44,36 +50,23 @@ else {
 }
 
 @code {
-	[Parameter]
-	public string UserId { get; set; } = string.Empty;
-
 	[SupplyParameterFromQuery]
 	public bool Welcome { get; set; } = false;
 
 	public Swoq.Data.User? CurrentUser { get; set; } = null;
 
-	protected override async Task OnParametersSetAsync()
+	protected async override Task OnInitializedAsync()
 	{
-		if (!String.IsNullOrEmpty(UserId))
-		{
-			try
-			{
-				CurrentUser = await Database.FindUserByIdAsync(UserId);
-			}
-			catch
-			{
-				CurrentUser = null;
-			}
-		}
-
-		await base.OnParametersSetAsync();
+		CurrentUser = await UserService.GetCurrentUserAsync();
 	}
 
 	[SupplyParameterFromForm]
 	public string LoginUserId { get; set; } = string.Empty;
 
-	private void Submit()
+	private async void Submit()
 	{
-		NavigationManager.NavigateTo($"/user/{LoginUserId}");
+		await UserService.SetUserIdAsync(LoginUserId);
+		CurrentUser = await UserService.GetCurrentUserAsync();
+		StateHasChanged();
 	}
 }

@@ -38,7 +38,7 @@
 		{
 			Database.CreateUser(user);
 			var userId = user.Id;
-			NavigationManager.NavigateTo($"/user/{userId}?welcome=true", forceLoad: true);
+			NavigationManager.NavigateTo($"/user/?welcome=true", forceLoad: true);
 		}
 		catch (Exception ex) when (ex is not NavigationException)
 		{

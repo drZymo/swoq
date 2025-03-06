@@ -1,30 +1,103 @@
 ﻿@page "/doc/"
+
+@rendermode InteractiveServer
+
+@using Markdig
+@using Swoq.Data
+@using System.Text.RegularExpressions
+
+@inject ISwoqDatabase Database
+@inject IWebHostEnvironment webHostEnvironment
+@inject UserService UserService
+
 <PageTitle>SWOQ - Documentation</PageTitle>
-@((MarkupString)(new MarkdownSharp.Markdown().Transform(@"
-# Documentation
 
-The game is hosted by a server that provides a gRPC services called `GameService`.
+<style>
+	table {
+		margin-left: 10pt;
+		border-style: solid;
+		border-width: 1px;
+	}
 
-The service has two methods that can be called: `Start` and `Act`.
+	th {
+		background-color: rgb(243, 243, 243);
+		padding: 4pt;
+	}
 
-## Starting a game
+	td {
+		padding: 4pt;
+	}
 
-There are two types of games that can be started: a training session or a quest.
+</style>
 
+<div class="documentation-container">
+	@((MarkupString)(Markdown.ToHtml(DocumentationContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build())))
 
-### Training
+	<br />
+	<br />
+</div>
 
-Finishes once this level is completed. Can be run in parallel with other users. As oftern as you want.
+@code {
+	public string DocumentationContent { get; set; } = string.Empty;
 
+	protected override async void OnInitialized()
+	{
+		try
+		{
+			var currentUser = await UserService.GetCurrentUserAsync();
+			DocumentationContent = GetDocumentationContent(currentUser?.Level ?? 0);
+			StateHasChanged();
+		}
+		catch
+		{
+			DocumentationContent = "Could not read documentation";
+		}
+	}
 
-### Quest
+	private static readonly Regex LevelPattern = new Regex(@"^# Level (\d+) and higher$");
 
-Only one user at a time is allowed to play a quest. If you start a quest while another user is already playing, you will be queued. Shown on dashboard.
+	private string GetDocumentationContent(int Level)
+	{
+		try
+		{
+			// Read full proto file
+			var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.md");
+			var lines = File.ReadAllLines(path);
 
+			// Filer out all lines of too high levels
+			var filtered = new List<string>();
+			bool hide = false;
+			foreach (var line in lines)
+			{
+				var filteredLine = line;
+				if (!hide)
+				{
+					// Check if line defines level
+					var match = LevelPattern.Match(line);
+					if (match.Success)
+					{
+						var lineLevel = int.Parse(match.Groups[1].Value);
 
+						// Level too high, then hide from here
+						if (lineLevel > Level) hide = true;
 
+						if (lineLevel == Level)
+						{
+							filteredLine = $"{filteredLine} (✨ New ✨)";
+						}
+					}
+				}
 
-## Replays
+				if (hide) break;
 
-Use ReplayViewer
-")))
+				filtered.Add(filteredLine);
+			}
+
+			return string.Join("\n", filtered);
+		}
+		catch
+		{
+			return "";
+		}
+	}
+}

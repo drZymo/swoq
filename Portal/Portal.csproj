@@ -1,24 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Swoq.Portal</RootNamespace>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Swoq.Portal</RootNamespace>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MarkdownSharp" Version="2.0.5" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Markdig" Version="0.40.0" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Data\Data.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Data\Data.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <Content Update="Components\Pages\Register.razor">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
-  </ItemGroup>
+    <ItemGroup>
+        <Content Update="Components\Pages\Register.razor">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        </Content>
+    </ItemGroup>
+
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+        <!-- swoq.proto -->
+        <Exec Command="copy /Y &quot;$(ProjectDir)..\Interface\swoq.proto&quot; &quot;$(ProjectDir)wwwroot\swoq.proto&quot;" Condition=" '$(OS)' == 'Windows_NT' " />
+        <Exec Command="cp -f &quot;$(ProjectDir)../Interface/swoq.proto&quot; &quot;$(ProjectDir)wwwroot/swoq.proto&quot;" Condition=" '$(OS)' != 'Windows_NT' " />
+
+        <!-- swoq.md -->
+        <Exec Command="copy /Y &quot;$(ProjectDir)..\Documentation\swoq.md&quot; &quot;$(ProjectDir)wwwroot\swoq.md&quot;" Condition=" '$(OS)' == 'Windows_NT' " />
+        <Exec Command="copy /Y &quot;$(ProjectDir)..\Documentation\images\*.png&quot; &quot;$(ProjectDir)wwwroot\images\&quot;" Condition=" '$(OS)' == 'Windows_NT' " />
+        <Exec Command="cp -f $(ProjectDir)../Documentation/swoq.md $(ProjectDir)wwwroot/swoq.md" Condition=" '$(OS)' != 'Windows_NT' " />
+        <Exec Command="cp -f $(ProjectDir)../Documentation/images/*.png $(ProjectDir)wwwroot/images/" Condition=" '$(OS)' != 'Windows_NT' " />
+    </Target>
 
 </Project>
