@@ -270,7 +270,7 @@ Since your player has no sword (yet), then you cannot attack back. So if you try
 
 Finally, you can fight back. This level contains a sword and extra health.
 
-A sword can be picked up by moving your player over it (like keys). It will not end up in its inventory, but it is equipped automatically, leaving the inventory slot available for keys or boulders. You can only pickup one sword. If your player has a sword in its possession, then you can send a `Use` action for an enemy on an adjacent tile to attack. The attack will deal 1 damage to the enemy.
+A sword can be picked up by moving your player over it (like keys). It will not end up in its inventory, but it is equipped automatically, leaving the inventory slot available for keys or boulders. You can only pickup one sword. If you try to move over a second sword your move will not be allowed with the `ACT_RESULT_INVENTORY_FULL` result. If your player has a sword in its possession, then you can send a `Use` action for an enemy on an adjacent tile to attack. The attack will deal 1 damage to the enemy.
 
 Health can be picked up indefinitely. Every time your player moves over a health tile, the health is added to the player's health (and the health tile is removed from the map).
 
