@@ -3,7 +3,7 @@ using Swoq.Interface;
 
 using var connection = new GameConnection();
 
-var game = connection.Start(null); // null for quest, integer for train
+using var game = connection.Start(null); // null for quest, integer for train
 Console.WriteLine($"game id: {game.GameId}");
 Console.WriteLine($"map size: {game.MapHeight}x{game.MapWidth}");
 

@@ -65,11 +65,12 @@ internal class ReplayViewModel : ViewModelBase
 
     private void Load(string path)
     {
+        gameStates = ImmutableList<GameObservation>.Empty;
+
         try
         {
             var sw = Stopwatch.StartNew();
-
-            using var file = File.OpenRead(path);
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
             var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
@@ -95,8 +96,8 @@ internal class ReplayViewModel : ViewModelBase
         }
         catch
         {
-            gameStates = ImmutableList<GameObservation>.Empty;
             // TODO: MessageBox.Show($"Failed to load replay file\n\n{path}");
+            // Keep game states loaded so far
         }
         finally
         {
