@@ -1,72 +1,112 @@
 ﻿@page "/user/"
 
-@rendermode InteractiveServer
-
 @using Swoq.Data
+@using System.Collections.Immutable
 
 @inject ISwoqDatabase Database
-@inject NavigationManager NavigationManager
-@inject UserService UserService
 
-@if (CurrentUser == null)
+@if (CurrentUserProvider?.User == null)
 {
-	<PageTitle>User</PageTitle>
+	<PageTitle>SWOQ - User</PageTitle>
 
-	<h1>User</h1>
+	<h1>No access!</h1>
 
-	<p>Please sign in with your user ID.</p>
-
-	<p>If you do not have a user ID yet, then <NavLink href="register">register here</NavLink> first.</p>
-
-	<form method="post" @onsubmit="Submit" @formname="signin-plain-form">
-		<AntiforgeryToken />
-		<div>
-			<label>
-				User ID:
-				<InputText @bind-Value="LoginUserId" />
-			</label>
-		</div>
-		<div>
-			<button type="submit">Submit</button>
-		</div>
-	</form>
+	<p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
 }
 else
 {
-	<PageTitle>User - @CurrentUser.Name</PageTitle>
+	<PageTitle>SWOQ - User - @CurrentUserProvider?.Name</PageTitle>
 
-	<h1>Hi @CurrentUser.Name</h1>
+	<h1>Hi @CurrentUserProvider?.Name</h1>
 
 	@if (Welcome)
 	{
 		<div class="alert alert-success" role="alert">
-			Welcome. Your user ID is: <b>@CurrentUser.Id</b>
+			Welcome. You are now a registered user with unique user ID: <b>@CurrentUserProvider?.Id</b>.
+			Remember this ID, it won't be provided again, and you will need it to play a game.
 		</div>
 	}
 
-	<p>Current level: @CurrentUser.Level (reached in @CurrentUser.QuestLengthTicks ticks)</p>
+	<p>This is your personal page where you can find more information about your progress. You are currently at:</p>
+	<div class="alert alert-info text-center">
+		<span class="h3">Level @CurrentUserProvider?.Level</span>
+	</div>
+	<p>
+		Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds.
+		With all the best scores of all users combined level @CurrentUserProvider?.Level could be reached in @OptimalQuestLength ticks, which is @(CurrentUserProvider?.User.QuestLengthTicks - OptimalQuestLength) ticks faster.
+	</p>
+	<p>Below is a table that shows how many ticks your bot at least and on average needed to finish each level successfully along with how much that is above or below the global minimum and average respectively.</p>
 
-	<ProtoFile Level="CurrentUser.Level" />
+	<table class="table">
+		<thead>
+			<tr><th scope="col">Level</th><th scope="col">Min ticks</th><th>Global min ticks (-)</th><th>Avg Ticks</th><th>Global avg ticks (+/-)</th></tr>
+		</thead>
+		<tbody>
+			@foreach (var l in LevelStatistics.OrderBy(l => l.Level))
+			{
+				<tr>
+					<td>@l.Level</td>
+					<td>@l.MinTicks</td>
+					<td>
+						@l.GlobalMinTicks (
+						@if (l.DeltaMin > 0)
+						{
+							<span class="text-danger">+@l.DeltaMin</span>
+						}
+						else if (l.DeltaMin < 0)
+						{
+							<span class="text-success">@l.DeltaMin</span>
+						}
+						else
+						{
+							<span class="text-muted">@l.DeltaMin</span>
+						}
+						)
+					</td>
+					<td>@l.AvgTicks</td>
+					<td>
+						@l.GlobalAvgTicks (
+						@if (l.DeltaAvg > 0)
+						{
+							<span class="text-danger">+@l.DeltaAvg</span>
+						}
+						else if (l.DeltaAvg < 0)
+						{
+							<span class="text-success">@l.DeltaAvg</span>
+						}
+						else
+						{
+							<span class="text-muted">@l.DeltaAvg</span>
+						}
+						)
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 }
 
 @code {
 	[SupplyParameterFromQuery]
 	public bool Welcome { get; set; } = false;
 
-	public Swoq.Data.User? CurrentUser { get; set; } = null;
+	[CascadingParameter]
+	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	protected async override Task OnInitializedAsync()
+	private ImmutableList<UserLevelStatistic> LevelStatistics { get; set; } = ImmutableList<UserLevelStatistic>.Empty;
+	private int OptimalQuestLength { get; set; }
+
+	protected override async Task OnParametersSetAsync()
 	{
-		CurrentUser = await UserService.GetCurrentUserAsync();
-	}
-
-	[SupplyParameterFromForm]
-	public string LoginUserId { get; set; } = string.Empty;
-
-	private async void Submit()
-	{
-		await UserService.SetUserIdAsync(LoginUserId);
-		CurrentUser = await UserService.GetCurrentUserAsync();
-		StateHasChanged();
+		var userId = CurrentUserProvider?.Id;
+		if (userId != null)
+		{
+			LevelStatistics = await Database.GetLevelStatisticsAsync(userId);
+		}
+		var level = CurrentUserProvider?.Level;
+		if (level.HasValue)
+		{
+			OptimalQuestLength = await Database.GetOptimalQuestLength(level.Value);
+		}
 	}
 }

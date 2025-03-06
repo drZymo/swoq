@@ -9,6 +9,7 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     private readonly User user;
     private readonly ISwoqDatabase database;
     private readonly Random random;
+    private readonly UserStatisticsReporter reporter;
 
     private readonly DateTime startTime = Clock.Now;
     private int ticks = 0;
@@ -19,8 +20,9 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     {
         this.user = user;
         this.database = database;
-
         this.random = new();
+        this.reporter = new(user, database);
+
         currentGame = NewGame();
         State = currentGame.State with { Tick = ticks };
     }
@@ -91,6 +93,6 @@ public class Quest<MG> : IGame where MG : IMapGenerator
     private Game NewGame()
     {
         var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
-        return new Game(map, Parameters.MaxQuestInactivityTime, random);
+        return new Game(map, Parameters.MaxQuestInactivityTime, random, reporter);
     }
 }

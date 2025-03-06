@@ -1,0 +1,63 @@
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedLocalStorage LocalStorage
+@inject Swoq.Data.ISwoqDatabase Database
+
+@if (isLoaded)
+{
+	<CascadingValue Value="this">
+		@ChildContent
+	</CascadingValue>
+}
+else
+{
+	<p>Loading...</p>
+}
+
+@code {
+	private bool isLoaded;
+
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+
+	public Swoq.Data.User? User { get; set; } = null;
+
+	public string? Id => User?.Id;
+	public string? Name => User?.Name;
+	public int? Level => User?.Level;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			isLoaded = false;
+			User = await LoadCurrentUserAsync();
+			isLoaded = true;
+			StateHasChanged();
+		}
+	}
+
+	private async Task<Swoq.Data.User?> LoadCurrentUserAsync()
+	{
+		try
+		{
+			var userId = await LocalStorage.GetAsync<string>("userId");
+			if (!userId.Success || userId.Value == null) return null;
+
+			return await Database.FindUserByIdAsync(userId.Value);
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	public async Task SetUserIdAsync(string userId)
+	{
+		await LocalStorage.SetAsync("userId", userId);
+	}
+
+	public async Task RemoveUserIdAsync()
+	{
+		await LocalStorage.DeleteAsync("userId");
+	}
+}

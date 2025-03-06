@@ -1,21 +1,44 @@
-﻿@using System.Text.RegularExpressions
+﻿@page "/proto/"
+
+@using Swoq.Data
+@using System.Text.RegularExpressions
+
 @inject IWebHostEnvironment webHostEnvironment
+@inject IJSRuntime JSRuntime
 
-<h3>Proto file</h3>
+@if (CurrentUserProvider?.User == null)
+{
+	<PageTitle>SWOQ -  Proto file</PageTitle>
 
-<p>This proto file describes the interface you should use to communicate with the game server. For more information on setting up the connection and starting a game, go the general documention. (TODO).</p>
+	<h1>No access!</h1>
 
-<pre class="code"><code class="language-protobuf">@GetFileContent()</code></pre>
+	<p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
+}
+else
+{
+	<PageTitle>SWOQ - Proto file - @CurrentUserProvider?.Name</PageTitle>
+
+	<h1>Proto file</h1>
+
+	<p>This is the proto file that defines the gRPC protocol to communicate with the server. See <NavLink href="doc">Documentation</NavLink> for more information on how to use it, </p>
+
+	<pre class="code"><code class="language-protobuf">@GetFileContent(CurrentUserProvider?.Level ?? 0)</code></pre>
+}
 
 @code {
-	private static readonly Regex LevelPattern = new Regex(@"^\s*// Level (\d+) and higher:$");
-	private static readonly Regex EndOfBlockPattern = new Regex(@"^\s*\}$");
+	[CascadingParameter]
+	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	[Parameter]
-	public int Level { get; set; } = 0;
-
-	string GetFileContent()
+	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
+		// Make sure syntax highlighting is updated after every render
+		await JSRuntime.InvokeVoidAsync("hljs.highlightAll");
+	}
+
+	string GetFileContent(int level)
+	{
+		var LevelPattern = new Regex(@"^\s*// Level (\d+) and higher:$");
+		var EndOfBlockPattern = new Regex(@"^\s*\}$");
 		try
 		{
 			// Read full proto file
@@ -36,7 +59,7 @@
 						var lineLevel = int.Parse(match.Groups[1].Value);
 
 						// Level too high, then hide from here
-						if (lineLevel > Level) hide = true;
+						if (lineLevel > level) hide = true;
 					}
 				}
 				else if (EndOfBlockPattern.Match(line).Success)
@@ -69,7 +92,7 @@
 		}
 		catch
 		{
-			return "";
+			return "Proto file could not be loaded!";
 		}
 	}
 }

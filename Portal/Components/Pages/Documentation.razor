@@ -1,14 +1,10 @@
 ﻿@page "/doc/"
 
-@rendermode InteractiveServer
-
 @using Markdig
 @using Swoq.Data
 @using System.Text.RegularExpressions
 
-@inject ISwoqDatabase Database
 @inject IWebHostEnvironment webHostEnvironment
-@inject UserService UserService
 
 <PageTitle>SWOQ - Documentation</PageTitle>
 
@@ -31,7 +27,7 @@
 </style>
 
 <div class="documentation-container">
-	@((MarkupString)(Markdown.ToHtml(DocumentationContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build())))
+	@((MarkupString)(Markdown.ToHtml(GetDocumentationContent(CurrentUserProvider?.Level ?? 0), new MarkdownPipelineBuilder().UseAdvancedExtensions().Build())))
 
 	<br />
 	<br />
@@ -40,24 +36,13 @@
 @code {
 	public string DocumentationContent { get; set; } = string.Empty;
 
-	protected override async void OnInitialized()
-	{
-		try
-		{
-			var currentUser = await UserService.GetCurrentUserAsync();
-			DocumentationContent = GetDocumentationContent(currentUser?.Level ?? 0);
-			StateHasChanged();
-		}
-		catch
-		{
-			DocumentationContent = "Could not read documentation";
-		}
-	}
-
-	private static readonly Regex LevelPattern = new Regex(@"^# Level (\d+) and higher$");
+	[CascadingParameter]
+	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
 	private string GetDocumentationContent(int Level)
 	{
+		var levelPattern = new Regex(@"^# Level (\d+) and higher$");
+
 		try
 		{
 			// Read full proto file
@@ -73,7 +58,7 @@
 				if (!hide)
 				{
 					// Check if line defines level
-					var match = LevelPattern.Match(line);
+					var match = levelPattern.Match(line);
 					if (match.Success)
 					{
 						var lineLevel = int.Parse(match.Groups[1].Value);
@@ -97,7 +82,7 @@
 		}
 		catch
 		{
-			return "";
+			return "Could not read documentation!";
 		}
 	}
 }

@@ -74,16 +74,17 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
         }
     }
 
-    private static IGame StartTraining(User user, int level, int? seed)
+    private IGame StartTraining(User user, int level, int? seed)
     {
         // Check if user can play this level
         if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
 
         var random = seed.HasValue ? new Random(seed.Value) : new Random();
         var map = MG.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
+        var reporter = new UserStatisticsReporter(user, database);
 
         // Create new training game
-        return new Game(map, Parameters.MaxTrainingInactivityTime, random);
+        return new Game(map, Parameters.MaxTrainingInactivityTime, random, reporter);
     }
 
     private IGame StartQuest(User user)
@@ -170,9 +171,10 @@ public class GameServer<MG>(ISwoqDatabase database, int nrActiveQuests = Paramet
             Select(g => g.Id);
         foreach (var id in idsToRemove)
         {
-            if (games.TryRemove(id, out var _))
+            if (games.TryRemove(id, out var game))
             {
                 GameRemoved?.Invoke(this, new GameRemovedEventArgs(id));
+
             }
         }
     }
