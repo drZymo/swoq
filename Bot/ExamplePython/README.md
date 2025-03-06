@@ -8,7 +8,7 @@ Install the necessary packages, generate the gRPC code, configure your environme
 
 ## Install requirements
 
-The bot basically only requires a Python 3.12 environment and the `grpcio-tools` pacakges, which can be installed using conda or pip. It was tested with Python 3.12.9 and grpcio-tools 1.62.2 (conda) and 1.70.0 (pip).
+The bot basically only requires a Python 3.12 environment and the `grpcio-tools` packages, which can be installed using conda or pip. It was tested with Python 3.12.9 and grpcio-tools 1.62.2 (conda) and 1.70.0 (pip).
 
 ### Using conda
 
