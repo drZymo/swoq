@@ -11,7 +11,8 @@ internal class ReplayFile : IDisposable
     {
         // Determine file name
         var sanitizedUserName = Uri.EscapeDataString(userName);
-        var filename = Path.Combine(AppContext.BaseDirectory, "Replays", $"{sanitizedUserName} - {response.GameId}.swoq");
+        var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var filename = Path.Combine(AppContext.BaseDirectory, "Replays", $"{sanitizedUserName} - {dateTimeStr} - {response.GameId}.swoq");
         // Create directory first
         var directory = Path.GetDirectoryName(filename);
         if (directory != null) Directory.CreateDirectory(directory);
