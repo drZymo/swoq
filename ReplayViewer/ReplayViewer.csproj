@@ -40,6 +40,7 @@
 	</ItemGroup>
 
 	<Target Name="ZipOutputPath" AfterTargets="Publish">
+		<Delete Files="$(OutputPath)\ReplayViewer.zip" />
 		<ZipDirectory
 			SourceDirectory="$(OutputPath)\publish\"
 			DestinationFile="$(OutputPath)\ReplayViewer.zip" />
