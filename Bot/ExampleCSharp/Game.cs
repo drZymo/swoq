@@ -2,11 +2,11 @@
 
 namespace Bot;
 
-internal class Game(GameService.GameServiceClient client, StartResponse response, ReplayFile replayFile) : IDisposable
+internal class Game(GameService.GameServiceClient client, StartResponse response, ReplayFile? replayFile) : IDisposable
 {
     public void Dispose()
     {
-        replayFile.Dispose();
+        replayFile?.Dispose();
     }
 
     public string GameId { get; } = response.GameId;
@@ -14,6 +14,7 @@ internal class Game(GameService.GameServiceClient client, StartResponse response
     public int MapHeight { get; } = response.Height;
     public int VisibilityRange { get; } = response.VisibilityRange;
     public State State { get; private set; } = response.State;
+    public int? Seed { get; } = response.HasSeed ? response.Seed : null;
 
     public void Act(DirectedAction action)
     {
@@ -21,7 +22,7 @@ internal class Game(GameService.GameServiceClient client, StartResponse response
 
         var response = client.Act(request);
 
-        replayFile.Append(request, response);
+        replayFile?.Append(request, response);
 
         if (response.Result != ActResult.Ok)
         {

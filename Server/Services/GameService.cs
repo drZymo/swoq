@@ -12,7 +12,9 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
             var response = new StartResponse();
             try
             {
-                var startResult = server.Start(request.UserId, request.HasLevel ? request.Level : null);
+                var seed = request.HasSeed ? request.Seed : Random.Shared.Next();
+                int? level = request.HasLevel ? request.Level : null;
+                var startResult = server.Start(request.UserId, level, seed);
 
                 response.Result = StartResult.Ok;
                 response.GameId = startResult.GameId.ToString();
@@ -20,6 +22,7 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 response.Width = Parameters.MapWidth;
                 response.VisibilityRange = Parameters.PlayerVisibilityRange;
                 response.State = startResult.State.Convert();
+                if (request.HasLevel) response.Seed = seed; // Only return seed in training mode
 
                 // Report
                 gameServicePostman.RaiseStarted(startResult.UserName, startResult.GameId, request, response);
