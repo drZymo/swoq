@@ -2,6 +2,7 @@
 
 @using Swoq.Data
 @using System.Text.RegularExpressions
+@using Swoq.Interface
 
 @inject IWebHostEnvironment webHostEnvironment
 @inject IJSRuntime JSRuntime
@@ -37,58 +38,10 @@ else
 
 	string GetFileContent(int level)
 	{
-		var LevelPattern = new Regex(@"^\s*// Level (\d+) and higher:$");
-		var EndOfBlockPattern = new Regex(@"^\s*\}$");
 		try
 		{
-			// Read full proto file
 			var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.proto");
-			var lines = File.ReadAllLines(path);
-
-			// Filer out all lines of too high levels
-			var filtered = new List<string>();
-			bool hide = false;
-			foreach (var line in lines)
-			{
-				if (!hide)
-				{
-					// Check if line defines level
-					var match = LevelPattern.Match(line);
-					if (match.Success)
-					{
-						var lineLevel = int.Parse(match.Groups[1].Value);
-
-						// Level too high, then hide from here
-						if (lineLevel > level) hide = true;
-					}
-				}
-				else if (EndOfBlockPattern.Match(line).Success)
-				{
-					// Stop hiding at end of a block (i.e. }).
-					hide = false;
-				}
-
-				if (!hide)
-				{
-					filtered.Add(line);
-
-					if (filtered.Count >= 2)
-					{
-						// Remove empty blocks (i.e. enums)
-						if (filtered[^2].EndsWith("{") && filtered[^1].StartsWith("}"))
-						{
-							filtered = filtered[..^2];
-						}
-						// Remove second consecutive white line
-						if (string.IsNullOrWhiteSpace(filtered[^2]) && string.IsNullOrWhiteSpace(filtered[^1]))
-						{
-							filtered = filtered[..^1];
-						}
-					}
-				}
-			}
-
-			return string.Join("\n", filtered);
+			return ProtoReader.ReadProtoFileForLevel(path, level);
 		}
 		catch
 		{
