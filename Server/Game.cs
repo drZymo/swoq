@@ -52,12 +52,12 @@ internal class Game : IGame
             Debug.Assert(map.Player1 != null || map.Player2 != null);
 
             // Make sure actions are given for players that are present
-            if (action1 != null)
+            if (action1 != null && action1 != DirectedAction.None)
             {
                 if (map.Player1 == null || !map.Player1.IsPresent) throw new Player1NotPresentException();
                 Debug.Assert(map.Player1.IsAlive);
             }
-            if (action2 != null)
+            if (action2 != null && action2 != DirectedAction.None)
             {
                 if (map.Player2 == null || !map.Player2.IsPresent) throw new Player2NotPresentException();
                 Debug.Assert(map.Player2.IsAlive);
