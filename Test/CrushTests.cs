@@ -364,6 +364,69 @@ internal class CrushTests : GameTestBase
         Assert.Throws<GameFinishedException>(() => Act(DirectedAction.UseEast));
     }
 
+    [Test]
+    public void StepInClosingDoorKillsPlayer()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Move next to pressure plate
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveEast);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((9, 6)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(9, 6)], Is.EqualTo((Tile.Empty, Tile.Player)));
+        });
+
+        // Step on plate
+        Act(DirectedAction.MoveEast);
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((9, 7)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(7));
+            // Door opened
+            Assert.That(changes[(8, 9)], Is.EqualTo((Tile.DoorGreen, Tile.Empty)));
+            Assert.That(changes[(8, 8)], Is.EqualTo((Tile.DoorGreen, Tile.Empty)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((Tile.DoorGreen, Tile.Empty)));
+            // Map revealed
+            Assert.That(changes[(8, 10)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(10, 8)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            // Player moved on plate
+            Assert.That(changes[(9, 6)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(9, 7)], Is.EqualTo((Tile.PressurePlateGreen, Tile.Player)));
+        });
+
+        // Step from plate into door should kill player
+        // ending the game
+        Act(DirectedAction.MoveEast);
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedPlayerDied));
+            Assert.That(game.State.Player1.Health, Is.EqualTo(0));
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player 1 is killed, so its side of the door is not visible by player 2
+            Assert.That(changes[(8, 9)], Is.EqualTo((Tile.Empty, Tile.DoorGreen)));
+            Assert.That(changes[(9, 8)], Is.EqualTo((Tile.Empty, Tile.DoorGreen)));
+        });
+        // Game cannot proceed
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveEast));
+    }
+
     protected override Map CreateGameMap()
     {
         var width = 11;
