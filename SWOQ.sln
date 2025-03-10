@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot", "Bot\ExampleCSharp\Bo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastBot", "Bot\Fast\FastBot.csproj", "{26A95039-4518-2366-38B4-46A33A228346}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtoStripper", "ProtoStripper\ProtoStripper.csproj", "{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,10 @@ Global
 		{26A95039-4518-2366-38B4-46A33A228346}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26A95039-4518-2366-38B4-46A33A228346}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26A95039-4518-2366-38B4-46A33A228346}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,6 +113,7 @@ Global
 		{C3DA6A76-25D3-4CD8-812E-F68141EFF6C4} = {19E7D084-05F0-4CD4-B3AB-CA1C46B5D39D}
 		{0FEF1EC6-9F26-4398-8D18-5F0C1EF08EDA} = {BCA37CDB-9364-4B47-B615-365D56E9E543}
 		{26A95039-4518-2366-38B4-46A33A228346} = {BCA37CDB-9364-4B47-B615-365D56E9E543}
+		{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8} = {19E7D084-05F0-4CD4-B3AB-CA1C46B5D39D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7EF7B68E-BCA9-4AC4-9371-A3A796DCB073}
