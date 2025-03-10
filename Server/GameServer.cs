@@ -77,7 +77,7 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
     private Game StartTraining(User user, int level, int? seed)
     {
         // Check if user can play this level
-        if (level < 0 || user.Level < level) throw new UserLevelTooLowException();
+        if (level < 0 || level > user.Level || level > mapGenerator.MaxLevel) throw new InvalidLevelException();
 
         var random = seed.HasValue ? new Random(seed.Value) : new Random();
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);

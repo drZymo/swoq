@@ -10,7 +10,7 @@ public abstract class SwoqStartException(StartResult result) : Exception
     public StartResult Result { get; } = result;
 }
 public class UnknownUserException : SwoqStartException { public UnknownUserException() : base(StartResult.UnknownUser) { } }
-public class UserLevelTooLowException : SwoqStartException { public UserLevelTooLowException() : base(StartResult.UserLevelTooLow) { } }
+public class InvalidLevelException : SwoqStartException { public InvalidLevelException() : base(StartResult.InvalidLevel) { } }
 public class QuestQueuedException : SwoqStartException { public QuestQueuedException() : base(StartResult.QuestQueued) { } }
 public class QuestAlreadyActiveException : SwoqStartException { public QuestAlreadyActiveException() : base(StartResult.QuestAlreadyActive) { } }
 
