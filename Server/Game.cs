@@ -20,6 +20,9 @@ internal class Game : IGame
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
 
+    private readonly HashSet<Position> doorsToClose = [];
+    private readonly HashSet<Position> doorsToOpen = [];
+
     public Game(Map map, TimeSpan maxInactivityTime, Random random, IStatisticsReporter? reporter = null)
     {
         this.map = map;
@@ -63,9 +66,15 @@ internal class Game : IGame
                 Debug.Assert(map.Player2.IsAlive);
             }
 
+            // All door actions should have been processed
+            Debug.Assert(doorsToClose.Count == 0);
+            Debug.Assert(doorsToOpen.Count == 0);
+
             // Act
             PerformPlayerAction(action1, map.Player1);
             PerformPlayerAction(action2, map.Player2);
+
+            ProcessDoors();
 
             // Process enemies using previous positions of players
             foreach (var enemy in map.Enemies)
@@ -89,6 +98,8 @@ internal class Game : IGame
         {
             // Revert state on any exception, so the user can try again.
             (map, player1Positions, player2Positions) = prevState;
+            doorsToClose.Clear();
+            doorsToOpen.Clear();
             throw;
         }
         finally
@@ -468,15 +479,19 @@ internal class Game : IGame
 
     private void OpenAllDoors(Cell closedDoor)
     {
-        var openDoor = closedDoor.ToOpenDoor();
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (map[y, x] == closedDoor)
+                var pos = map.Pos(y, x);
+                if (map[pos] == closedDoor)
                 {
-                    map = map.Set(y, x, openDoor);
-                    lastChangeTick = ticks;
+                    // If already requested to close, then simple revert that,
+                    // otherwise add delayed open.
+                    if (!doorsToClose.Remove(pos))
+                    {
+                        doorsToOpen.Add(pos);
+                    }
                 }
             }
         }
@@ -484,7 +499,6 @@ internal class Game : IGame
 
     private void CloseAllDoors(Cell openDoor)
     {
-        var closedDoor = openDoor.ToClosedDoor();
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
@@ -492,12 +506,37 @@ internal class Game : IGame
                 var pos = map.Pos(y, x);
                 if (map[pos] == openDoor)
                 {
-                    map = map.Set(pos, closedDoor);
-                    lastChangeTick = ticks;
-                    KillCharacterAtPosition(pos);
+                    // If already requested to open, then simple revert that,
+                    // otherwise add delayed close.
+                    if (!doorsToOpen.Remove(pos))
+                    {
+                        doorsToClose.Add(pos);
+                    }
                 }
             }
         }
+    }
+
+    private void ProcessDoors()
+    {
+        foreach (var pos in doorsToOpen)
+        {
+            var closedDoor = map[pos];
+            var openDoor = closedDoor.ToOpenDoor();
+            map = map.Set(pos, openDoor);
+            lastChangeTick = ticks;
+        }
+        doorsToOpen.Clear();
+
+        foreach (var pos in doorsToClose)
+        {
+            var openDoor = map[pos];
+            var closedDoor = openDoor.ToClosedDoor();
+            map = map.Set(pos, closedDoor);
+            lastChangeTick = ticks;
+            KillCharacterAtPosition(pos);
+        }
+        doorsToClose.Clear();
     }
 
     private void ExitMap(ref Player player)
