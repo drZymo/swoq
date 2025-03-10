@@ -20,8 +20,8 @@ internal class Game : IGame
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
 
-    private readonly List<Position> doorsToClose = [];
-    private readonly List<Position> doorsToOpen = [];
+    private readonly HashSet<Position> doorsToClose = [];
+    private readonly HashSet<Position> doorsToOpen = [];
 
     public Game(Map map, TimeSpan maxInactivityTime, Random random, IStatisticsReporter? reporter = null)
     {
@@ -486,7 +486,12 @@ internal class Game : IGame
                 var pos = map.Pos(y, x);
                 if (map[pos] == closedDoor)
                 {
-                    doorsToOpen.Add(pos);
+                    // If already requested to close, then simple revert that,
+                    // otherwise add delayed open.
+                    if (!doorsToClose.Remove(pos))
+                    {
+                        doorsToOpen.Add(pos);
+                    }
                 }
             }
         }
@@ -501,7 +506,12 @@ internal class Game : IGame
                 var pos = map.Pos(y, x);
                 if (map[pos] == openDoor)
                 {
-                    doorsToClose.Add(pos);
+                    // If already requested to open, then simple revert that,
+                    // otherwise add delayed close.
+                    if (!doorsToOpen.Remove(pos))
+                    {
+                        doorsToClose.Add(pos);
+                    }
                 }
             }
         }
