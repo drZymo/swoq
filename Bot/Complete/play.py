@@ -17,37 +17,6 @@ to_swoq_pb2_action = {
     None: None,
 }
 
-_result_strings  = {
-    swoq_pb2.START_RESULT_OK: 'OK',
-    swoq_pb2.START_RESULT_INTERNAL_ERROR: 'INTERNAL_ERROR',
-    swoq_pb2.START_RESULT_UNKNOWN_USER: 'UNKNOWN_USER',
-    swoq_pb2.START_RESULT_USER_LEVEL_TOO_LOW: 'USER_LEVEL_TOO_LOW',
-    swoq_pb2.START_RESULT_QUEST_QUEUED: 'QUEST_QUEUED',
-    swoq_pb2.START_RESULT_QUEST_ALREADY_ACTIVE: 'QUEST_ALREADY_ACTIVE',
-
-    swoq_pb2.ACT_RESULT_OK: 'OK',
-    swoq_pb2.ACT_RESULT_INTERNAL_ERROR: 'INTERNAL_ERROR',
-    swoq_pb2.ACT_RESULT_UNKNOWN_GAME_ID: 'UNKNOWN_GAME_ID',
-    swoq_pb2.ACT_RESULT_MOVE_NOT_ALLOWED: 'MOVE_NOT_ALLOWED',
-    swoq_pb2.ACT_RESULT_UNKNOWN_ACTION: 'UNKNOWN_ACTION',
-    swoq_pb2.ACT_RESULT_GAME_FINISHED: 'GAME_FINISHED',
-    swoq_pb2.ACT_RESULT_USE_NOT_ALLOWED: 'USE_NOT_ALLOWED',
-    swoq_pb2.ACT_RESULT_INVENTORY_FULL: 'INVENTORY_FULL',
-    swoq_pb2.ACT_RESULT_INVENTORY_EMPTY: 'INVENTORY_EMPTY',
-    swoq_pb2.ACT_RESULT_NO_SWORD: 'NO_SWORD',
-    swoq_pb2.ACT_RESULT_PLAYER_NOT_PRESENT: 'PLAYER_NOT_PRESENT',
-    swoq_pb2.ACT_RESULT_PLAYER2_NOT_PRESENT: 'PLAYER2_NOT_PRESENT',
-}
-
-_status_strings  = {
-    swoq_pb2.GAME_STATUS_ACTIVE: 'ACTIVE',
-    swoq_pb2.GAME_STATUS_FINISHED_SUCCESS: 'FINISHED_SUCCESS',
-    swoq_pb2.GAME_STATUS_FINISHED_TIMEOUT: 'FINISHED_TIMEOUT',
-    swoq_pb2.GAME_STATUS_FINISHED_NO_PROGRESS: 'FINISHED_NO_PROGRESS',
-    swoq_pb2.GAME_STATUS_FINISHED_PLAYER_DIED: 'FINISHED_PLAYER_DIED',
-    swoq_pb2.GAME_STATUS_FINISHED_PLAYER2_DIED: 'FINISHED_PLAYER2_DIED',
-}
-
 def find_random_pos(player_pos, player_distances) -> tuple[int,int]|None:
     positions = list(player_distances.keys())
     if player_pos in positions:
@@ -89,14 +58,14 @@ class GamePlayer:
     def start(self, level:int=None) -> None:
         startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level))
         if self.print:
-            result = _result_strings[startResponse.result]
+            result = swoq_pb2.StartResult.Name(startResponse.result)
             print(f'{result=}')
 
         while startResponse.result == swoq_pb2.START_RESULT_QUEST_QUEUED:
             sleep(1)
             startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level))
             if self.print:
-                result = _result_strings[startResponse.result]
+                result = swoq_pb2.StartResult.Name(startResponse.result)
                 print(f'{result=}')
         
         if startResponse.result != swoq_pb2.START_RESULT_OK:
@@ -250,13 +219,13 @@ class GamePlayer:
             update_map(self._frame, self.map)
 
         if self.print:
-            result = _result_strings[response.result]
+            result = swoq_pb2.ActResult.Name(response.result)
             print(f'{result=}')
             print(f' finished={self.finished}')
             
         if not self.print and self.finished:
             print()
-            print(f'Finished: action {_result_strings[response.result]}, status {_status_strings[self.status]} ')
+            print(f'Finished: action {swoq_pb2.ActResult.Name(response.result)}, status {swoq_pb2.GameStatus.Name(self.status)} ')
 
         # clear for next act
         self.action1:swoq_pb2.DirectedAction = None

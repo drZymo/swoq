@@ -33,7 +33,7 @@ public class GameServerTests
     {
         var gameServer = new GameServer(mapGenerator, database, 1);
         GivenUserRegistered();
-        Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", 2)).Result, Is.EqualTo(StartResult.UserLevelTooLow));
+        Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", 2)).Result, Is.EqualTo(StartResult.InvalidLevel));
     }
 
     [Test]

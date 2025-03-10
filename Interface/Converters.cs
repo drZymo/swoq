@@ -7,7 +7,7 @@ public static class Converters
         StartResult.Ok => "OK",
         StartResult.InternalError => "InternalError",
         StartResult.UnknownUser => "NoSword",
-        StartResult.UserLevelTooLow => "UserLevelTooLow",
+        StartResult.InvalidLevel => "InvalidLevel",
         StartResult.QuestQueued => "QuestQueued",
         StartResult.QuestAlreadyActive => "QuestAlreadyActive",
         _ => "Unknown",
