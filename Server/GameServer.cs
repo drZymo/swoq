@@ -40,17 +40,20 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         {
             var user = GetUserOrThrow(database, userId);
 
+            // If seed is not given, use a random one.
+            var actualSeed = seed ?? Random.Shared.Next();
+
             // First remove old games
             CleanupOldGames();
 
             // Create a new game
-            IGame game = level.HasValue ? StartTraining(user, level.Value, seed) : StartQuest(user);
+            IGame game = level.HasValue ? StartTraining(user, level.Value, actualSeed) : StartQuest(user, actualSeed);
             if (!games.TryAdd(game.Id, game))
             {
                 throw new InvalidOperationException("Game could not be added");
             }
 
-            return new GameStartResult(user.Name, game.Id, game.State);
+            return new GameStartResult(user.Name, game.Id, game.State, actualSeed);
         }
         catch (SwoqStartException ex)
         {
@@ -74,12 +77,12 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         }
     }
 
-    private Game StartTraining(User user, int level, int? seed)
+    private Game StartTraining(User user, int level, int seed)
     {
         // Check if user can play this level
         if (level < 0 || level > user.Level || level > mapGenerator.MaxLevel) throw new InvalidLevelException();
 
-        var random = seed.HasValue ? new Random(seed.Value) : new Random();
+        var random = new Random(seed);
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         var reporter = new UserStatisticsReporter(user, database);
 
@@ -87,7 +90,7 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         return new Game(map, Parameters.MaxTrainingInactivityTime, random, reporter);
     }
 
-    private Quest StartQuest(User user)
+    private Quest StartQuest(User user, int seed)
     {
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
@@ -124,7 +127,7 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
             Debug.Assert(frontUserId == user.Id);
             Debug.Assert(frontUserName == user.Name);
             // and start a new game
-            var quest = new Quest(user, mapGenerator, database);
+            var quest = new Quest(user, mapGenerator, database, seed);
             currentQuestUserIds.TryAdd(quest.Id, user.Id);
             return quest;
         }

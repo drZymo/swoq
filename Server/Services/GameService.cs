@@ -12,8 +12,9 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
             var response = new StartResponse();
             try
             {
-                var seed = request.HasSeed ? request.Seed : Random.Shared.Next();
                 int? level = request.HasLevel ? request.Level : null;
+                // Seed may only be given for Training games. Quest games are always random.
+                int? seed = (request.HasLevel && request.HasSeed) ? request.Seed : null;
                 var startResult = server.Start(request.UserId, level, seed);
 
                 response.Result = StartResult.Ok;
@@ -22,7 +23,7 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 response.Width = Parameters.MapWidth;
                 response.VisibilityRange = Parameters.PlayerVisibilityRange;
                 response.State = startResult.State.Convert();
-                if (request.HasLevel) response.Seed = seed; // Only return seed in training mode
+                response.Seed = startResult.Seed;
 
                 // Report
                 gameServicePostman.RaiseStarted(startResult.UserName, startResult.GameId, request, response);
