@@ -9,7 +9,7 @@ public class Quest : IGame
     private readonly User user;
     private readonly IMapGenerator mapGenerator;
     private readonly ISwoqDatabase database;
-    private readonly Random random;
+    private readonly int seed;
     private readonly UserStatisticsReporter reporter;
 
     private readonly DateTime startTime = Clock.Now;
@@ -17,12 +17,12 @@ public class Quest : IGame
     private int level = 0;
     private Game currentGame;
 
-    public Quest(User user, IMapGenerator mapGenerator, ISwoqDatabase database)
+    public Quest(User user, IMapGenerator mapGenerator, ISwoqDatabase database, int seed)
     {
         this.user = user;
         this.mapGenerator = mapGenerator;
         this.database = database;
-        this.random = new();
+        this.seed = seed;
         this.reporter = new(user, database);
 
         currentGame = NewGame();
@@ -94,6 +94,9 @@ public class Quest : IGame
 
     private Game NewGame()
     {
+        // Use the same seed for every level in this quest
+        var random = new Random(seed);
+
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         return new Game(map, Parameters.MaxQuestInactivityTime, random, reporter);
     }

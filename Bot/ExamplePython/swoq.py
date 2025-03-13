@@ -63,18 +63,19 @@ class GameException(BaseException):
 
 
 class Game:
-    def __init__(self, game_service:swoq_pb2_grpc.GameServiceStub, response:swoq_pb2.StartResponse, replay_file:ReplayFile):
-        self.game_service = game_service
-        self.replay_file = replay_file
+    def __init__(self, game_service:swoq_pb2_grpc.GameServiceStub, response:swoq_pb2.StartResponse, replay_file:(ReplayFile|None)):
+        self._game_service = game_service
+        self._replay_file = replay_file
 
         self.game_id = response.gameId
         self.map_height = response.height
         self.map_width = response.width
         self.visibility_range = response.visibilityRange
         self.state = response.state
+        self.seed = response.seed if response.HasField('seed') else None
 
     def close(self) -> None:
-        self.replay_file.close()
+        if self._replay_file is not None: self._replay_file.close()
 
     def __enter__(self) -> object:
         return self
@@ -84,23 +85,24 @@ class Game:
 
     def act(self, action:swoq_pb2.DirectedAction) -> None:
         request = swoq_pb2.ActionRequest(gameId=self.game_id, action=action)
-        response = self.game_service.Act(request)
+        response = self._game_service.Act(request)
 
-        self.replay_file.append(request, response)
+        if self._replay_file is not None: self._replay_file.append(request, response)
 
         if response.result != swoq_pb2.ACT_RESULT_OK:
-            raise GameException(f'Act failed (result {response.result})')
+            raise GameException(f'Act failed (result {swoq_pb2.ActResult.Name(response.result)})')
 
         self.state = response.state
 
 
 class GameConnection:
-    def __init__(self):
-        self.channel = grpc.insecure_channel(env['Host'] + ':5080')
-        self.game_service = swoq_pb2_grpc.GameServiceStub(self.channel)
+    def __init__(self, save_replays:bool=False):
+        self._save_replays = save_replays
+        self._channel = grpc.insecure_channel(env['Host'] + ':5080')
+        self._game_service = swoq_pb2_grpc.GameServiceStub(self._channel)
 
     def close(self) -> None:
-        self.channel.close()
+        self._channel.close()
 
     def __enter__(self) -> object:
         return self
@@ -108,12 +110,12 @@ class GameConnection:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.close()
 
-    def start(self, level:(int|None)=None) -> Game:
-        request = swoq_pb2.StartRequest(userId=env['UserId'], level=level)
+    def start(self, level:(int|None)=None, seed:(int|None)=None) -> Game:
+        request = swoq_pb2.StartRequest(userId=env['UserId'], level=level, seed=seed)
 
         response:swoq_pb2.StartResponse = None
         while True:
-            response = self.game_service.Start(request)
+            response = self._game_service.Start(request)
 
             if response.result == swoq_pb2.START_RESULT_OK:
                 break
@@ -123,8 +125,8 @@ class GameConnection:
                 sleep(2)
                 continue
 
-            raise GameException(f'Start failed (result {response.result})')
+            raise GameException(f'Start failed (result {swoq_pb2.StartResult.Name(response.result)})')
 
-        replay_file = ReplayFile(env['UserName'], request, response)
+        replay_file = ReplayFile(env['UserName'], request, response) if self._save_replays else None
 
-        return Game(self.game_service, response, replay_file)
+        return Game(self._game_service, response, replay_file)

@@ -30,7 +30,7 @@ internal class QuestTests
         Assert.That(user.Id, Is.Not.Null);
         userId = user.Id;
 
-        quest = new Quest(user, mapGenerator, database);
+        quest = new Quest(user, mapGenerator, database, 42);
         Assert.Multiple(() =>
         {
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
@@ -115,7 +115,7 @@ internal class QuestTests
         // Do it faster with same amount of ticks
         {
             // in a new quest
-            var newQuest = new Quest(CurrentUser, mapGenerator, database);
+            var newQuest = new Quest(CurrentUser, mapGenerator, database, 42);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);
@@ -137,7 +137,7 @@ internal class QuestTests
         // Do it faster with less ticks
         {
             // in a new quest
-            var newQuest = new Quest(CurrentUser, mapGenerator, database);
+            var newQuest = new Quest(CurrentUser, mapGenerator, database, 42);
             for (var i = 0; i < 5; i++)
             {
                 now += TimeSpan.FromSeconds(5);

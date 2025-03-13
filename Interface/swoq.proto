@@ -10,6 +10,7 @@ service GameService {
 message StartRequest {
     string userId = 1;
     optional int32 level = 2;
+    optional int32 seed = 3;
 }
 
 message StartResponse {
@@ -19,6 +20,7 @@ message StartResponse {
     optional int32 height = 4;
     optional int32 visibilityRange = 5;
     optional State state = 6;
+    optional int32 seed = 7;
 }
 
 message ActionRequest {
