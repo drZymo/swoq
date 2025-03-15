@@ -13,8 +13,8 @@ internal class GameConnection : IDisposable
     public GameConnection(bool saveReplays = true)
     {
         this.saveReplays = saveReplays;
-        
-        channel = GrpcChannel.ForAddress($"http://{Env.Host}:5080");
+
+        channel = GrpcChannel.ForAddress($"http://{DotEnv.Host}");
         client = new(channel);
     }
 
@@ -23,11 +23,12 @@ internal class GameConnection : IDisposable
         channel.Dispose();
     }
 
-    public Game Start(int? level, int? seed = null)
+    public Game Start()
     {
-        var request = new StartRequest() { UserId = Env.UserId };
-        if (level.HasValue) request.Level = level.Value;
-        if (seed.HasValue) request.Seed = seed.Value;
+        var request = new StartRequest() { UserId = DotEnv.UserId };
+        Console.WriteLine($"Level: {DotEnv.Level}");
+        if (DotEnv.Level.HasValue) request.Level = DotEnv.Level.Value;
+        if (DotEnv.Seed.HasValue) request.Seed = DotEnv.Seed.Value;
 
         StartResponse? response;
         while (true)
@@ -46,7 +47,7 @@ internal class GameConnection : IDisposable
             throw new GameException($"Start failed (result {response.Result})");
         }
 
-        ReplayFile? replayFile = saveReplays ? new ReplayFile(Env.UserName, request, response) : null;
+        ReplayFile? replayFile = saveReplays ? new ReplayFile(DotEnv.UserName, request, response) : null;
 
         return new Game(client, response, replayFile);
     }
