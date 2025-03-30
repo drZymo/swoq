@@ -1,13 +1,10 @@
 import grpc
 import swoq_pb2
 import swoq_pb2_grpc
-import json
 import urllib.parse
 from time import sleep
 from pathlib import Path
 from datetime import datetime
-
-env = json.loads(Path('env.json').read_text())
 
 class ReplayFile:
     def __init__(self, user_name:str, start_request:swoq_pb2.StartRequest, start_response:swoq_pb2.StartResponse):
@@ -96,9 +93,11 @@ class Game:
 
 
 class GameConnection:
-    def __init__(self, save_replays:bool=False):
+    def __init__(self, user_id:(str|None)=None, user_name:(str|None)=None, host:(str|None)=None, save_replays:bool=True):
+        self._user_id = user_id
+        self._user_name= user_name
         self._save_replays = save_replays
-        self._channel = grpc.insecure_channel(env['Host'] + ':5080')
+        self._channel = grpc.insecure_channel(host)
         self._game_service = swoq_pb2_grpc.GameServiceStub(self._channel)
 
     def close(self) -> None:
@@ -111,7 +110,7 @@ class GameConnection:
         self.close()
 
     def start(self, level:(int|None)=None, seed:(int|None)=None) -> Game:
-        request = swoq_pb2.StartRequest(userId=env['UserId'], level=level, seed=seed)
+        request = swoq_pb2.StartRequest(userId=self._user_id, level=level, seed=seed)
 
         response:swoq_pb2.StartResponse = None
         while True:
@@ -127,6 +126,6 @@ class GameConnection:
 
             raise GameException(f'Start failed (result {swoq_pb2.StartResult.Name(response.result)})')
 
-        replay_file = ReplayFile(env['UserName'], request, response) if self._save_replays else None
+        replay_file = ReplayFile(self._user_name, request, response) if self._save_replays else None
 
         return Game(self._game_service, response, replay_file)
