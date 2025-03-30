@@ -34,7 +34,7 @@ public static class Program
 
     private static void Play()
     {
-        using var connection = new GameConnection(saveReplay);
+        using var connection = new GameConnection(DotEnv.UserId, DotEnv.UserName, DotEnv.Host, saveReplay);
 
         do
         {
@@ -54,7 +54,7 @@ public static class Program
     {
         var sw = Stopwatch.StartNew();
 
-        using var game = connection.Start(level);
+        using var game = connection.Start(level, DotEnv.Seed);
 
         var bot = new ActionPlanner(game.MapHeight, game.MapWidth, game.VisibilityRange);
 
