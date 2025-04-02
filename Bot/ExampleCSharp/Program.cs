@@ -1,9 +1,19 @@
 ﻿using Bot;
 using Swoq.Interface;
 
-using var connection = new GameConnection(DotEnv.UserId, DotEnv.UserName, DotEnv.Host);
+DotEnv.Load();
 
-using var game = connection.Start(DotEnv.Level, DotEnv.Seed);
+var userId = Environment.GetEnvironmentVariable("SWOQ_USER_ID");
+var userName = Environment.GetEnvironmentVariable("SWOQ_USER_NAME");
+var host = Environment.GetEnvironmentVariable("SWOQ_HOST");
+ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+ArgumentException.ThrowIfNullOrWhiteSpace(host);
+using var connection = new GameConnection(userId, userName, host);
+
+var level = DotEnv.GetEnvironmentVariableInt("SWOQ_LEVEL");
+var seed = DotEnv.GetEnvironmentVariableInt("SWOQ_SEED");
+using var game = connection.Start(level, seed);
 
 Console.WriteLine($"Game {game.GameId} started");
 if (game.Seed.HasValue) Console.WriteLine($"- seed: {game.Seed.Value}");

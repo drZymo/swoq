@@ -4,7 +4,7 @@ namespace Bot;
 
 internal static class DotEnv
 {
-    static DotEnv()
+    public static void Load()
     {
         foreach (var line in File.ReadAllLines(".env"))
         {
@@ -27,13 +27,7 @@ internal static class DotEnv
         }
     }
 
-    public static string Host => Environment.GetEnvironmentVariable("SWOQ_HOST") ?? "";
-    public static string UserId => Environment.GetEnvironmentVariable("SWOQ_USER_ID") ?? "";
-    public static string UserName => Environment.GetEnvironmentVariable("SWOQ_USER_NAME") ?? "";
-    public static int? Level => GetEnvironmentVariableInt("SWOQ_LEVEL");
-    public static int? Seed => GetEnvironmentVariableInt("SWOQ_SEED");
-
-    private static int? GetEnvironmentVariableInt(string key)
+    public static int? GetEnvironmentVariableInt(string key)
     {
         var value = Environment.GetEnvironmentVariable(key);
         if (value == null) return null;

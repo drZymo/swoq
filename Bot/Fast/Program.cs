@@ -14,6 +14,8 @@ public static class Program
 
     public static void Main(string[] args)
     {
+        DotEnv.Load();
+
         foreach (var arg in args)
         {
             if (arg == "--no-print") print = false;
@@ -34,7 +36,11 @@ public static class Program
 
     private static void Play()
     {
-        using var connection = new GameConnection(DotEnv.UserId, DotEnv.UserName, DotEnv.Host, saveReplay);
+        using var connection = new GameConnection(
+            Environment.GetEnvironmentVariable("SWOQ_USER_ID") ?? throw new ArgumentNullException(),
+            Environment.GetEnvironmentVariable("SWOQ_USER_NAME") ?? throw new ArgumentNullException(),
+            Environment.GetEnvironmentVariable("SWOQ_HOST") ?? throw new ArgumentNullException(),
+            saveReplay);
 
         do
         {
@@ -54,7 +60,7 @@ public static class Program
     {
         var sw = Stopwatch.StartNew();
 
-        using var game = connection.Start(level, DotEnv.Seed);
+        using var game = connection.Start(level, DotEnv.GetEnvironmentVariableInt("SWOQ_SEED"));
 
         var bot = new ActionPlanner(game.MapHeight, game.MapWidth, game.VisibilityRange);
 
