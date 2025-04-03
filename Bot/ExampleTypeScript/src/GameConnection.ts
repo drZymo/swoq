@@ -30,8 +30,8 @@ export class GameConnection {
         }
         if (
             response.gameId === undefined ||
-            response.width === undefined ||
-            response.height === undefined ||
+            response.mapWidth === undefined ||
+            response.mapHeight === undefined ||
             response.visibilityRange === undefined ||
             response.state === undefined
         ) {
@@ -40,8 +40,8 @@ export class GameConnection {
         return new Game(
             this.client,
             response.gameId,
-            response.width,
-            response.height,
+            response.mapWidth,
+            response.mapHeight,
             response.visibilityRange,
             response.state
         );

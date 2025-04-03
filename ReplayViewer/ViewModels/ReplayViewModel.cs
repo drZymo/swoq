@@ -81,15 +81,15 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
             var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
-            var builder = new GameObservationBuilder(startResponse.GameId, startResponse.Height, startResponse.Width, startResponse.VisibilityRange, header.UserName);
+            var builder = new GameObservationBuilder(startResponse.GameId, startResponse.MapHeight, startResponse.MapWidth, startResponse.VisibilityRange, header.UserName);
 
             var gameState = builder.BuildNext(null, startResponse.State, startResponse.Result, Dispatcher.UIThread);
             gameStates = gameStates.Add(gameState);
 
             while (file.Position < file.Length)
             {
-                var request = ActionRequest.Parser.ParseDelimitedFrom(file);
-                var response = ActionResponse.Parser.ParseDelimitedFrom(file);
+                var request = ActRequest.Parser.ParseDelimitedFrom(file);
+                var response = ActResponse.Parser.ParseDelimitedFrom(file);
 
                 gameState = builder.BuildNext(request, response.State, response.Result, Dispatcher.UIThread);
                 gameStates = gameStates.Add(gameState);

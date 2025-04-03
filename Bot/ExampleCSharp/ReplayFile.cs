@@ -33,7 +33,7 @@ internal class ReplayFile : IDisposable
         stream.Dispose();
     }
 
-    public void Append(ActionRequest request, ActionResponse response)
+    public void Append(ActRequest request, ActResponse response)
     {
         request.WriteDelimitedTo(stream);
         response.WriteDelimitedTo(stream);

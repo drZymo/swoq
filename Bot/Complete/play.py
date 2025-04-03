@@ -72,8 +72,8 @@ class GamePlayer:
             raise Exception(f'Failed to start game: {startResponse.result}')
 
         self.game_id = startResponse.gameId
-        self.height = startResponse.height
-        self.width = startResponse.width
+        self.height = startResponse.mapHeight
+        self.width = startResponse.mapWidth
         self.visibility_range = startResponse.visibilityRange
         self.actions = []
 
@@ -208,7 +208,7 @@ class GamePlayer:
             self.action2 = None
 
         if self.print: print(f'{self.action1=}, {self.action2=}')
-        response = self.stub.Act(swoq_pb2.ActionRequest(gameId=self.game_id, action=self.action1, action2=self.action2))
+        response = self.stub.Act(swoq_pb2.ActRequest(gameId=self.game_id, action=self.action1, action2=self.action2))
 
         if response.result == swoq_pb2.ACT_RESULT_OK:
             self.actions.append((self.action1, self.action2))

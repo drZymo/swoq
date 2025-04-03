@@ -35,7 +35,7 @@ class ReplayFile:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.close()
 
-    def append(self, act_request:swoq_pb2.ActionRequest, act_response:swoq_pb2.ActionResponse) -> None:
+    def append(self, act_request:swoq_pb2.ActRequest, act_response:swoq_pb2.ActResponse) -> None:
         self._write_delimited(act_request)
         self._write_delimited(act_response)
 
@@ -68,8 +68,8 @@ class Game:
         self._replay_file = replay_file
 
         self.game_id = response.gameId
-        self.map_height = response.height
-        self.map_width = response.width
+        self.map_height = response.mapHeight
+        self.map_width = response.mapWidth
         self.visibility_range = response.visibilityRange
         self.state = response.state
         self.seed = response.seed if response.HasField('seed') else None
@@ -84,7 +84,7 @@ class Game:
         self.close()
 
     def act(self, action:swoq_pb2.DirectedAction) -> None:
-        request = swoq_pb2.ActionRequest(gameId=self.game_id, action=action)
+        request = swoq_pb2.ActRequest(gameId=self.game_id, action=action)
         response = self._game_service.Act(request)
 
         if self._replay_file is not None: self._replay_file.append(request, response)

@@ -18,16 +18,16 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
 
     public string GameId { get; } = id;
 
-    public GameObservation BuildNext(ActionRequest? request, State state, StartResult actionResult, Dispatcher createDispatcher)
+    public GameObservation BuildNext(ActRequest? request, State state, StartResult actionResult, Dispatcher createDispatcher)
     {
         return BuildNext(request, state, actionResult.ConvertToString(), createDispatcher);
     }
-    public GameObservation BuildNext(ActionRequest? request, State state, ActResult actionResult, Dispatcher createDispatcher)
+    public GameObservation BuildNext(ActRequest? request, State state, ActResult actionResult, Dispatcher createDispatcher)
     {
         return BuildNext(request, state, actionResult.ConvertToString(), createDispatcher);
     }
 
-    public GameObservation BuildNext(ActionRequest? request, State state, string actionResult, Dispatcher createDispatcher)
+    public GameObservation BuildNext(ActRequest? request, State state, string actionResult, Dispatcher createDispatcher)
     {
         // Clear whole map on new level
         if (previous == null || state.Level != previous.Level)
