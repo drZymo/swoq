@@ -32,7 +32,7 @@ Run the following programs:
 - Portal
 - Server
 
-Go to `http://localhost:5001`, create a username and copy the presented user ID
+Go to `http://localhost:5080`, create a username and copy the presented user ID
 to one of the example bots. Run the example bot.
 
 Run the ReplayViewer, select "Load" and locate the bot's replay (under `Replays`

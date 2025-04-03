@@ -95,7 +95,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
             {
                 bool connected = false;
                 Dispatcher.UIThread.Invoke(() => { StatusMessage = "Connecting..."; });
-                using var channel = GrpcChannel.ForAddress("http://localhost:5080");
+                using var channel = GrpcChannel.ForAddress("http://localhost:5001");
                 var client = new DashboardService.DashboardServiceClient(channel);
 
                 var call = client.GetUpdates(new Google.Protobuf.WellKnownTypes.Empty(), callOptions);
