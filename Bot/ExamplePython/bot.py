@@ -1,11 +1,16 @@
 from swoq import GameConnection
+from os import getenv
+from dotenv import load_dotenv
 import swoq_pb2
 
-level = 0 # None for quest, 0.. (i.e. integer) for train
+def str_to_int(s:(str|None)) -> (int|None):
+    return None if s is None else int(s)
 
 def main() -> None:
-    with GameConnection() as connection:
-        with connection.start(level) as game:
+    load_dotenv()
+    
+    with GameConnection(getenv('SWOQ_USER_ID'), getenv('SWOQ_USER_NAME'), getenv('SWOQ_HOST')) as connection:
+        with connection.start(str_to_int(getenv('SWOQ_LEVEL')), str_to_int(getenv('SWOQ_SEED'))) as game:
             print(f'Game {game.game_id} started')
             if game.seed is not None: print(f'- seed: {game.seed}')
             print(f'- map size: {game.map_height}x{game.map_width}')

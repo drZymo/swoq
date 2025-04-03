@@ -14,6 +14,7 @@ internal class Game(GameService.GameServiceClient client, StartResponse response
     public int MapHeight { get; } = response.Height;
     public int VisibilityRange { get; } = response.VisibilityRange;
     public State State { get; private set; } = response.State;
+    public int? Seed { get; } = response.HasSeed ? response.Seed : null;
 
     public void Act(DirectedAction action)
     {

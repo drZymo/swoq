@@ -15,7 +15,7 @@ The bot basically only requires a Python 3.12 environment and the `grpcio-tools`
 Make sure you have a Anaconda environment installed, like [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main).
 
 - Open your Anaconda command prompt.
-- Create a new environment: `conda create -n swoq python=3.12.9 grpcio-tools=1.62.2`
+- Create a new environment: `conda create -n swoq python=3.12.9 grpcio-tools=1.62.2 python-dotenv=0.21.0`
 - Activate: `conda activate swoq`
 
 ### Using pip

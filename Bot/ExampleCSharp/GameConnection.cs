@@ -5,16 +5,20 @@ namespace Bot;
 
 internal class GameConnection : IDisposable
 {
+    private readonly string userId;
+    private readonly string userName;
     private readonly bool saveReplays;
 
     private readonly GrpcChannel channel;
     private readonly GameService.GameServiceClient client;
 
-    public GameConnection(bool saveReplays = true)
+    public GameConnection(string userId, string userName, string host, bool saveReplays = true)
     {
+        this.userId = userId;
+        this.userName = userName;
         this.saveReplays = saveReplays;
-        
-        channel = GrpcChannel.ForAddress($"http://{Env.Host}:5080");
+
+        channel = GrpcChannel.ForAddress($"http://{host}");
         client = new(channel);
     }
 
@@ -23,9 +27,9 @@ internal class GameConnection : IDisposable
         channel.Dispose();
     }
 
-    public Game Start(int? level, int? seed = null)
+    public Game Start(int? level = null, int? seed = null)
     {
-        var request = new StartRequest() { UserId = Env.UserId };
+        var request = new StartRequest() { UserId = userId };
         if (level.HasValue) request.Level = level.Value;
         if (seed.HasValue) request.Seed = seed.Value;
 
@@ -46,7 +50,7 @@ internal class GameConnection : IDisposable
             throw new GameException($"Start failed (result {response.Result})");
         }
 
-        ReplayFile? replayFile = saveReplays ? new ReplayFile(Env.UserName, request, response) : null;
+        ReplayFile? replayFile = saveReplays ? new ReplayFile(userName, request, response) : null;
 
         return new Game(client, response, replayFile);
     }

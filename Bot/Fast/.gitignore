@@ -2,4 +2,4 @@
 **/bin/
 **/.vs/
 **/*.user
-env.json
+.env

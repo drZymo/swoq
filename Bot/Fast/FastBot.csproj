@@ -8,23 +8,21 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Remove="env.json" />
       <None Remove="swoq.proto" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Include="env.json" Condition="Exists('env.json')">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <None Remove=".env" />
     </ItemGroup>
 
     <ItemGroup>
       <Protobuf Include="swoq.proto" GrpcServices="Client" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include=".env" Condition="Exists('.env')">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+    </ItemGroup>
 </Project>

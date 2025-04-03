@@ -1,11 +1,18 @@
 ﻿using Bot;
 using Swoq.Interface;
 
-int? level = 0; // null for quest, integer for train
-int? seed = null; // null for random seed, integer for fixed seed
+DotEnv.Load();
 
-using var connection = new GameConnection();
+var userId = Environment.GetEnvironmentVariable("SWOQ_USER_ID");
+var userName = Environment.GetEnvironmentVariable("SWOQ_USER_NAME");
+var host = Environment.GetEnvironmentVariable("SWOQ_HOST");
+ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+ArgumentException.ThrowIfNullOrWhiteSpace(host);
+using var connection = new GameConnection(userId, userName, host);
 
+var level = DotEnv.GetEnvironmentVariableInt("SWOQ_LEVEL");
+var seed = DotEnv.GetEnvironmentVariableInt("SWOQ_SEED");
 using var game = connection.Start(level, seed);
 
 Console.WriteLine($"Game {game.GameId} started");
