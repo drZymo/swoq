@@ -41,7 +41,7 @@ export function targetPosition(
             break;
         case DirectedAction.MOVE_NORTH:
         case DirectedAction.USE_NORTH:
-            delta = [0, 1];
+            delta = [0, -1];
             break;
     }
     return { x: fromPosition.x + delta[0], y: fromPosition.y + delta[1] };
