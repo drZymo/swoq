@@ -5,7 +5,7 @@ using Swoq.Server.Data;
 using Swoq.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://*:5080", "https://*:5443");
+builder.WebHost.UseUrls("http://*:5001");
 builder.Services.AddGrpc();
 
 builder.Services.Configure<SwoqDatabaseSettings>(builder.Configuration.GetSection("SwoqDatabase"));
