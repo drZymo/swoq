@@ -6,23 +6,23 @@ export class Game {
     private readonly client: IGameServiceClient;
 
     public readonly gameId: string;
-    public readonly width: number;
-    public readonly height: number;
+    public readonly mapWidth: number;
+    public readonly mapHeight: number;
     public readonly visibilityRange: number;
     public state: State;
 
     constructor(
         client: IGameServiceClient,
         gameId: string,
-        width: number,
-        height: number,
+        mapWidth: number,
+        mapHeight: number,
         visibilityRange: number,
         state: State
     ) {
         this.client = client;
         this.gameId = gameId;
-        this.width = width;
-        this.height = height;
+        this.mapWidth = mapWidth;
+        this.mapHeight = mapHeight;
         this.visibilityRange = visibilityRange;
         this.state = state;
     }

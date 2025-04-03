@@ -20,14 +20,14 @@ The first parameter of the server's response is a result value:
 If this value is `START_RESULT_OK` then the game is started and more parameters are provided. For all other values it means the game was not started. See [StartResult](#startresult) for more information. If the game is started successfully, the following parameters are provided:
 
     optional string gameId = 2;
-    optional int32 width = 3;
-    optional int32 height = 4;
+    optional int32 mapWidth = 3;
+    optional int32 mapHeight = 4;
     optional int32 visibilityRange = 5;
     optional State state = 6;
 
 `gameId` is a unique identifier for this game. It has to be provided with any follow-up action, so the server knows which game your program wants to control. *Note*: this makes it possible to run multiple Training games in parallel from the same connection.
 
-The `width` and `height` parameters denote the size of the map and `visibilityRange` defines how far your player can see on that map (see [PlayerState](#playerstate).)
+The `mapWidth` and `mapHeight` parameters denote the size of the map and `visibilityRange` defines how far your player can see on that map (see [PlayerState](#playerstate).)
 
 Finally the last, and maybe most import parameter is `state`. This structure contains the current state of the game, like where your player is currently located, and what it can currently see. For more information see [State](#state).
 
@@ -295,9 +295,9 @@ Ooh dear, another player has appeared! You can now play with two players at the 
 
 In order to finish a level both your players need to go through the exit. If one of the two players die it is game over.
 
-### ActionRequest
+### ActRequest
 
-In order to control the second player a field has been added to the `ActionRequest` structure to denote the action the second player needs to take.
+In order to control the second player a field has been added to the `ActRequest` structure to denote the action the second player needs to take.
 
     optional DirectedAction action2 = 3;
 

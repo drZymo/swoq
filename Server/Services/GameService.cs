@@ -19,8 +19,8 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
 
                 response.Result = StartResult.Ok;
                 response.GameId = startResult.GameId.ToString();
-                response.Height = Parameters.MapHeight;
-                response.Width = Parameters.MapWidth;
+                response.MapHeight = Parameters.MapHeight;
+                response.MapWidth = Parameters.MapWidth;
                 response.VisibilityRange = Parameters.PlayerVisibilityRange;
                 response.State = startResult.State.Convert();
                 response.Seed = startResult.Seed;
@@ -44,12 +44,12 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
         });
     }
 
-    public override Task<ActionResponse> Act(ActionRequest request, ServerCallContext context)
+    public override Task<ActResponse> Act(ActRequest request, ServerCallContext context)
     {
         return Task.Run(() =>
         {
             Guid? gameId = null;
-            var response = new ActionResponse();
+            var response = new ActResponse();
 
             try
             {

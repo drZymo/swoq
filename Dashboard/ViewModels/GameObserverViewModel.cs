@@ -167,7 +167,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
     private void HandleQuestStarted(QuestStarted update)
     {
-        var builder = new GameObservationBuilder(update.GameId, update.Response.Height, update.Response.Width, update.Response.VisibilityRange, update.UserName);
+        var builder = new GameObservationBuilder(update.GameId, update.Response.MapHeight, update.Response.MapWidth, update.Response.VisibilityRange, update.UserName);
         var gameState = builder.BuildNext(null, update.Response.State, update.Response.Result, Dispatcher.UIThread);
 
         GameObservationViewModel viewModel = Dispatcher.UIThread.Invoke(() =>

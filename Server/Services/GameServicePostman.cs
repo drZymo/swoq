@@ -10,11 +10,11 @@ public class StartedEventArgs(string userName, Guid gameId, StartRequest request
     public StartResponse Response { get; } = response;
 }
 
-public class ActedEventArgs(Guid gameId, ActionRequest request, ActionResponse response) : EventArgs
+public class ActedEventArgs(Guid gameId, ActRequest request, ActResponse response) : EventArgs
 {
     public Guid GameId { get; } = gameId;
-    public ActionRequest Request { get; } = request;
-    public ActionResponse Response { get; } = response;
+    public ActRequest Request { get; } = request;
+    public ActResponse Response { get; } = response;
 }
 
 public class GameServicePostman
@@ -25,7 +25,7 @@ public class GameServicePostman
     }
     public event EventHandler<StartedEventArgs>? Started;
 
-    public void RaiseActed(Guid gameId, ActionRequest request, ActionResponse response)
+    public void RaiseActed(Guid gameId, ActRequest request, ActResponse response)
     {
         Acted?.Invoke(this, new(gameId, request, response));
     }

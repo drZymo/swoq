@@ -1,8 +1,5 @@
 # TODO
 
-- [ ] Change quest queueing. Start game, but return "queued" result at act().
-- [ ] Start response, width => mapWidth
-- [ ] ActionRequest => ActRequest
 - [ ] Check input (like action) is in valid range of level. No use actions allowed in level < 2
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
@@ -25,6 +22,7 @@
 - [ ] Single build output/publish folder for server and dashboard
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
+- [ ] Change quest queueing. Start game, but return "queued" result at act().
 
 # Ideas
 - [ ] Codes to unlock each level, based on Advent of Code.
@@ -148,6 +146,8 @@
 - [X] Installer/Zip file for ReplayViewer
 - [X] Auto start dashboard from server
 - [X] Publish a single-file app
+- [X] Start response, width => mapWidth
+- [X] ActRequest => ActRequest
 
 
 # Design decisions

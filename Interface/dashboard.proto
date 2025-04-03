@@ -18,8 +18,8 @@ message QuestStarted {
 
 message QuestActed {
     string gameId = 1;
-    ActionRequest request = 2;
-    ActionResponse response = 3;
+    ActRequest request = 2;
+    ActResponse response = 3;
 }
 
 message QueueUpdate {

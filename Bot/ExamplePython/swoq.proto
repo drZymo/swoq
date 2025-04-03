@@ -4,7 +4,7 @@ package Swoq.Interface;
 
 service GameService {
     rpc Start(StartRequest) returns (StartResponse);
-    rpc Act(ActionRequest) returns (ActionResponse);
+    rpc Act(ActRequest) returns (ActResponse);
 }
 
 message StartRequest {
@@ -16,19 +16,19 @@ message StartRequest {
 message StartResponse {
     StartResult result = 1;
     optional string gameId = 2;
-    optional int32 width = 3;
-    optional int32 height = 4;
+    optional int32 mapWidth = 3;
+    optional int32 mapHeight = 4;
     optional int32 visibilityRange = 5;
     optional State state = 6;
     optional int32 seed = 7;
 }
 
-message ActionRequest {
+message ActRequest {
     string gameId = 1;
     optional DirectedAction action = 2;
 }
 
-message ActionResponse {
+message ActResponse {
     ActResult result = 1;
     optional State state = 2;
 }
