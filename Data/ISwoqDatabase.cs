@@ -20,5 +20,4 @@ public interface ISwoqDatabase
 
     Task AddLevelStatisticAsync(LevelStatistic stat);
     Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId);
-    Task<int> GetOptimalQuestLength(int level);
 }
