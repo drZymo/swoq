@@ -1,21 +1,23 @@
+import "disposablestack/auto";
 import "dotenv/config";
 import "source-map-support/register";
 
+import path from "path";
 import { Game } from "./Game";
 import { GameConnection } from "./GameConnection";
 import { DirectedAction, GameStatus } from "./generated/swoq";
+import { requireEnvVar } from "./util";
 
 async function main(): Promise<void> {
-    if (!process.env.SWOQ_HOST || !process.env.SWOQ_USER_ID) {
-        console.error(
-            "SWOQ_HOST and SWOQ_USER_ID environment variables are required, see README.md"
-        );
-        process.exit(1);
-    }
-
-    const gameConnection = new GameConnection(
-        process.env.SWOQ_HOST,
-        process.env.SWOQ_USER_ID
+    using gameConnection = new GameConnection(
+        requireEnvVar("SWOQ_HOST"),
+        requireEnvVar("SWOQ_USER_ID"),
+        requireEnvVar("SWOQ_USER_NAME"),
+        path.join(
+            __dirname,
+            "..",
+            process.env.SWOQ_REPLAYS_FOLDER ?? "Replays",
+        ),
     );
 
     const level = process.env.SWOQ_LEVEL
@@ -26,7 +28,7 @@ async function main(): Promise<void> {
     } else {
         console.log(`Starting training for level ${level}...`);
     }
-    const game = await gameConnection.start(level);
+    await using game = await gameConnection.start(level);
     await play(game);
 }
 
@@ -40,11 +42,12 @@ async function play(game: Game): Promise<void> {
 
     let moveEast = true;
     while (state.status == GameStatus.ACTIVE) {
+        const action = moveEast ? DirectedAction.MOVE_EAST : DirectedAction.MOVE_SOUTH;
         state = await game.act(
-            moveEast ? DirectedAction.MOVE_EAST : DirectedAction.MOVE_SOUTH
+            action
         );
         console.log(
-            `Act state: tick=${state.tick}, level=${state.level}, status=${
+            `Act(${DirectedAction[action]}): tick=${state.tick}, level=${state.level}, status=${
                 GameStatus[state.status]
             }`
         );
