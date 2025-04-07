@@ -5,7 +5,7 @@ export const TILE_CHARS: Record<Tile, string> = {
     [Tile.WALL]: "#",
     [Tile.EMPTY]: " ",
     [Tile.PLAYER]: "@",
-    [Tile.EXIT]: "$",
+    [Tile.EXIT]: "*",
     [Tile.DOOR_RED]: "R",
     [Tile.KEY_RED]: "r",
     [Tile.DOOR_GREEN]: "G",

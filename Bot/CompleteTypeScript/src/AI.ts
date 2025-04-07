@@ -36,7 +36,7 @@ export class AI {
 
     public constructor(game: Game) {
         this.game = game;
-        this.grid = new Grid(game.width, game.height);
+        this.grid = new Grid(game.mapWidth, game.mapHeight);
     }
 
     public async play(): Promise<void> {

@@ -1,49 +1,113 @@
 import { ChannelCredentials } from "@grpc/grpc-js";
 import { GrpcTransport } from "@protobuf-ts/grpc-transport";
+import { mkdir } from "fs/promises";
+import * as path from "path";
 import { Game } from "./Game";
-import { GameResultError } from "./GameResultError";
-import { Result } from "./generated/swoq";
+import { GameStartResultError } from "./GameResultError";
+import {
+    ReplayHeader,
+    StartRequest,
+    StartResponse,
+    StartResult,
+} from "./generated/swoq";
 import { GameServiceClient, IGameServiceClient } from "./generated/swoq.client";
+import { ReplayFile } from "./ReplayFile";
+import { formatDate, sleep } from "./util";
 
-export class GameConnection {
+export class GameConnection implements Disposable {
+    private readonly transport: GrpcTransport;
     private readonly client: IGameServiceClient;
+    private readonly replayFolder: string | undefined;
 
     public readonly userId: string;
+    public readonly userName: string;
 
-    constructor(host: string, userId: string) {
+    private async makeReplayFile(
+        request: StartRequest,
+        response: StartResponse,
+    ): Promise<ReplayFile> {
+        if (!this.replayFolder) {
+            throw new Error("Replay folder not specified");
+        }
+
+        // Determine file name
+        const sanitizedUserName = encodeURIComponent(this.userName);
+        const dateTimeStr = formatDate(new Date());
+
+        const filename = path.join(
+            this.replayFolder,
+            `${sanitizedUserName} - ${dateTimeStr} - ${response.gameId}.swoq`,
+        );
+
+        // Create the directory if it doesn't exist
+        const directory = path.dirname(filename);
+        await mkdir(directory, { recursive: true });
+
+        const header: ReplayHeader = {
+            userName: request.userId,
+            dateTime: new Date().toISOString(),
+        };
+        const replayFile = await ReplayFile.create(
+            filename,
+            header,
+            request,
+            response,
+        );
+        return replayFile;
+    }
+
+    constructor(
+        host: string,
+        userId: string,
+        userName: string,
+        replayFolder?: string,
+    ) {
         this.userId = userId;
-        const transport = new GrpcTransport({
+        this.userName = userName;
+        this.replayFolder = replayFolder;
+        this.transport = new GrpcTransport({
             host,
             channelCredentials: ChannelCredentials.createInsecure(),
         });
-        this.client = new GameServiceClient(transport);
+        this.client = new GameServiceClient(this.transport);
     }
 
     public async start(level?: number): Promise<Game> {
-        const { response } = await this.client.start({
+        const request: StartRequest = {
             userId: this.userId,
             level,
-        });
-        // TODO Add queued quest handling
-        if (response.result !== Result.OK) {
-            throw new GameResultError(response.result);
+        };
+
+        let response: StartResponse;
+        while (true) {
+            response = await this.client.start(request).response;
+            if (response.result === StartResult.OK) {
+                break;
+            }
+            if (response.result === StartResult.QUEST_QUEUED) {
+                const delaySeconds = 2;
+                console.log(
+                    `Quest queued, waiting ${delaySeconds} seconds before retrying ...`,
+                );
+                await sleep(delaySeconds * 1000);
+                continue;
+            }
+            throw new GameStartResultError(response.result);
         }
-        if (
-            response.gameId === undefined ||
-            response.width === undefined ||
-            response.height === undefined ||
-            response.visibilityRange === undefined ||
-            response.state === undefined
-        ) {
-            throw new Error("assertion failed: invalid start response");
-        }
-        return new Game(
-            this.client,
-            response.gameId,
-            response.width,
-            response.height,
-            response.visibilityRange,
-            response.state
-        );
+
+        // Open replay file if we need one
+        await using stack = new AsyncDisposableStack();
+        const replayFile = this.replayFolder
+            ? stack.use(await this.makeReplayFile(request, response))
+            : undefined;
+
+        // Construct game, pass ownership of replay file to it
+        const game = new Game(this.client, response, replayFile);
+        stack.move();
+        return game;
+    }
+
+    public [Symbol.dispose](): void {
+        this.transport.close();
     }
 }

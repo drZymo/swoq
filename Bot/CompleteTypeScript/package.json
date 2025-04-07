@@ -21,6 +21,7 @@
         "@types/node": "^22.13.0",
         "mkdirp": "^3.0.1",
         "nodemon": "^3.1.9",
+        "prettier": "^3.5.3",
         "source-map-support": "^0.5.21",
         "ts-jest": "^29.2.5",
         "typescript": "^5.7.3"
@@ -28,6 +29,7 @@
     "dependencies": {
         "@grpc/grpc-js": "^1.12.5",
         "@protobuf-ts/grpc-transport": "^2.9.4",
+        "disposablestack": "^1.1.7",
         "dotenv": "^16.4.7"
     }
 }

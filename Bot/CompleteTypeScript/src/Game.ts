@@ -1,48 +1,71 @@
-import { GameResultError } from "./GameResultError";
-import { DirectedAction, Result, State } from "./generated/swoq";
+import { GameActResultError } from "./GameResultError";
+import {
+    ActRequest,
+    ActResult,
+    DirectedAction,
+    StartResponse,
+    State,
+} from "./generated/swoq";
 import { IGameServiceClient } from "./generated/swoq.client";
+import { ReplayFile } from "./ReplayFile";
 
-export class Game {
+export class Game implements AsyncDisposable {
     private readonly client: IGameServiceClient;
+    private readonly replayFile?: ReplayFile;
 
     public readonly gameId: string;
-    public readonly width: number;
-    public readonly height: number;
+    public readonly mapWidth: number;
+    public readonly mapHeight: number;
     public readonly visibilityRange: number;
     public state: State;
 
     constructor(
         client: IGameServiceClient,
-        gameId: string,
-        width: number,
-        height: number,
-        visibilityRange: number,
-        state: State
+        response: StartResponse,
+        replayFile?: ReplayFile,
     ) {
         this.client = client;
-        this.gameId = gameId;
-        this.width = width;
-        this.height = height;
-        this.visibilityRange = visibilityRange;
-        this.state = state;
+        if (
+            response.gameId === undefined ||
+            response.mapWidth === undefined ||
+            response.mapHeight === undefined ||
+            response.visibilityRange === undefined ||
+            response.state === undefined
+        ) {
+            throw new Error("assertion failed: invalid start response");
+        }
+        this.gameId = response.gameId;
+        this.mapWidth = response.mapWidth;
+        this.mapHeight = response.mapHeight;
+        this.visibilityRange = response.visibilityRange;
+        this.state = response.state;
+        this.replayFile = replayFile;
     }
 
     public async act(
         action1: DirectedAction | undefined,
-        action2: DirectedAction | undefined
+        action2: DirectedAction | undefined,
     ): Promise<State> {
-        const { response } = await this.client.act({
+        const request: ActRequest = {
             gameId: this.gameId,
             action: action1,
             action2: action2,
-        });
+        };
+        const { response } = await this.client.act(request);
         if (response.state !== undefined) {
             this.state = response.state;
         }
-        if (response.result !== Result.OK) {
+
+        await this.replayFile?.append(request, response);
+
+        if (response.result !== ActResult.OK) {
             // TODO what to do with this.state here? (Esp if/when it is undefined on response)
-            throw new GameResultError(response.result);
+            throw new GameActResultError(response.result);
         }
         return this.state;
+    }
+
+    public async [Symbol.asyncDispose](): Promise<void> {
+        await this.replayFile?.[Symbol.asyncDispose]();
     }
 }
