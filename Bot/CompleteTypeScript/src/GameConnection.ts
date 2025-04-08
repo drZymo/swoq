@@ -44,7 +44,7 @@ export class GameConnection implements Disposable {
         await mkdir(directory, { recursive: true });
 
         const header: ReplayHeader = {
-            userName: request.userId,
+            userName: this.userName,
             dateTime: new Date().toISOString(),
         };
         const replayFile = await ReplayFile.create(
