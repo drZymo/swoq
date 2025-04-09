@@ -82,13 +82,4 @@ public class SwoqDatabase : ISwoqDatabase
                 (int)Math.Round(globalMin[kvp.Key].Item2, MidpointRounding.AwayFromZero))).
             ToImmutableList();
     }
-
-    public async Task<int> GetOptimalQuestLength(int level)
-    {
-        var globalPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
-            Match(l => l.Level < level).
-            Group(l => l.Level, g => g.Min(l => l.Ticks));
-        var globalResults = await levelStatistics.Aggregate(globalPipeLine).ToListAsync();
-        return globalResults.Sum();
-    }
 }
