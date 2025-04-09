@@ -3,9 +3,10 @@ import "dotenv/config";
 import "source-map-support/register";
 
 import path from "path";
+import { AI } from "./AI";
 import { Game } from "./Game";
 import { GameConnection } from "./GameConnection";
-import { DirectedAction, GameStatus } from "./generated/swoq";
+import { GameStatus } from "./generated/swoq";
 import { requireEnvVar } from "./util";
 
 async function main(): Promise<void> {
@@ -33,28 +34,11 @@ async function main(): Promise<void> {
 }
 
 async function play(game: Game): Promise<void> {
-    let state = game.state;
-    console.log(
-        `Start state: tick=${state.tick}, level=${state.level}, status=${
-            GameStatus[state.status]
-        }`
-    );
-
-    let moveEast = true;
-    while (state.status == GameStatus.ACTIVE) {
-        const action = moveEast ? DirectedAction.MOVE_EAST : DirectedAction.MOVE_SOUTH;
-        state = await game.act(
-            action
-        );
-        console.log(
-            `Act(${DirectedAction[action]}): tick=${state.tick}, level=${state.level}, status=${
-                GameStatus[state.status]
-            }`
-        );
-        moveEast = !moveEast;
+    while (game.state.status === GameStatus.ACTIVE) {
+        // Keep playing every level until the game is over
+        const ai = new AI(game);
+        await ai.play();
     }
-
-    console.log(`Done.`);
 }
 
 main().catch((err) => {

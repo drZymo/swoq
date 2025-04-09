@@ -7,7 +7,8 @@
         "proto": "mkdirp src/generated && protoc --ts_out src/generated/ --proto_path protos/ swoq.proto",
         "start": "node ./dist/index",
         "build": "tsc",
-        "watch": "tsc --watch"
+        "watch": "tsc --watch",
+        "train": "nodemon -w dist -w .env dist/index"
     },
     "keywords": [
         "swoq"
@@ -19,7 +20,9 @@
         "@protobuf-ts/plugin": "^2.9.4",
         "@types/node": "^22.13.0",
         "mkdirp": "^3.0.1",
+        "nodemon": "^3.1.9",
         "prettier": "^3.5.3",
+        "ts-jest": "^29.2.5",
         "typescript": "^5.7.3"
     },
     "dependencies": {

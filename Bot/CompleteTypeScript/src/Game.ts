@@ -22,7 +22,7 @@ export class Game implements AsyncDisposable {
     constructor(
         client: IGameServiceClient,
         response: StartResponse,
-        replayFile?: ReplayFile
+        replayFile?: ReplayFile,
     ) {
         this.client = client;
         if (
@@ -42,10 +42,14 @@ export class Game implements AsyncDisposable {
         this.replayFile = replayFile;
     }
 
-    public async act(action: DirectedAction | undefined): Promise<State> {
+    public async act(
+        action1: DirectedAction | undefined,
+        action2: DirectedAction | undefined,
+    ): Promise<State> {
         const request: ActRequest = {
             gameId: this.gameId,
-            action,
+            action: action1,
+            action2: action2,
         };
         const { response } = await this.client.act(request);
         if (response.state !== undefined) {
