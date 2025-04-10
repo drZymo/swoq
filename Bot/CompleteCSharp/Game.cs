@@ -16,9 +16,9 @@ internal class Game(GameService.GameServiceClient client, StartResponse response
     public State State { get; private set; } = response.State;
     public int? Seed { get; } = response.HasSeed ? response.Seed : null;
 
-    public void Act(DirectedAction action)
+    public void Act(DirectedAction action1, DirectedAction action2)
     {
-        var request = new ActRequest() { GameId = GameId, Action = action };
+        var request = new ActRequest() { GameId = GameId, Action = action1, Action2 = action2 };
 
         var response = client.Act(request);
 

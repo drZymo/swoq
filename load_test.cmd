@@ -22,7 +22,7 @@ pushd Dashboard\bin\Release\net9.0\
 start Dashboard.exe
 popd
 
-pushd Bot\Fast\bin\Release\net9.0\ 
+pushd Bot\CompleteCSharp\bin\Release\net9.0\ 
 start FastBot.exe --no-print --no-replay --train
 start FastBot.exe --no-print --no-replay --train
 start FastBot.exe --no-print --no-replay --train
