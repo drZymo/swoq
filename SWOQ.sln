@@ -33,7 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bot", "Bot", "{BCA37CDB-936
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot", "Bot\ExampleCSharp\Bot.csproj", "{0FEF1EC6-9F26-4398-8D18-5F0C1EF08EDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastBot", "Bot\Fast\FastBot.csproj", "{26A95039-4518-2366-38B4-46A33A228346}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastBot", "Bot\CompleteCSharp\FastBot.csproj", "{26A95039-4518-2366-38B4-46A33A228346}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtoStripper", "ProtoStripper\ProtoStripper.csproj", "{EA1BCDE8-4FFF-46E0-ACE9-83AC39607EC8}"
 EndProject

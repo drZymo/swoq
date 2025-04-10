@@ -47,6 +47,13 @@ internal class GameConnection : IDisposable
                 continue;
             }
 
+            if (response.Result == StartResult.QuestAlreadyActive)
+            {
+                Console.WriteLine("Quest already active, waiting 2 seconds before retrying ...");
+                Thread.Sleep(TimeSpan.FromSeconds(2));
+                continue;
+            }
+
             throw new GameException($"Start failed (result {response.Result})");
         }
 
