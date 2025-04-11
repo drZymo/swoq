@@ -40,9 +40,9 @@
 	</ItemGroup>
 
 	<Target Name="ZipOutputPath" AfterTargets="Publish">
-		<Delete Files="$(OutputPath)\ReplayViewer.zip" />
+		<Delete Files="$(OutputPath)\ReplayViewer-$(RuntimeIdentifier).zip" />
 		<ZipDirectory
 			SourceDirectory="$(OutputPath)\publish\"
-			DestinationFile="$(OutputPath)\ReplayViewer.zip" />
+			DestinationFile="$(OutputPath)\ReplayViewer-$(RuntimeIdentifier).zip" />
 	</Target>
 </Project>
