@@ -3,14 +3,13 @@ name: .NET
 on:
   push:
     branches: [ "master" ]
+    tags: [ "*" ]
   pull_request:
     branches: [ "master" ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
@@ -27,3 +26,19 @@ jobs:
       run: dotnet publish -r win-x64 --sc --no-restore
     - name: Publish linux-x64
       run: dotnet publish -r linux-x64 --sc --no-restore
+
+  publish-replayviewer:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload ReplayViewer for Windows
+      uses: actions/upload-artifact@v3
+      with:
+        name: ReplayViewer-win-x64
+        path: ReplayViewer/bin/Release/net9.0/win-x64/ReplayViewer.zip
+    - name: Upload ReplayViewer for Linux
+      uses: actions/upload-artifact@v3
+      with:
+        name: ReplayViewer-linux-x64
+        path: ReplayViewer/bin/Release/net9.0/linux-x64/ReplayViewer.zip
