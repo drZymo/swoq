@@ -7,12 +7,13 @@ internal class ReplayFile : IDisposable
 {
     private readonly FileStream stream;
 
-    public ReplayFile(string userName, StartRequest request, StartResponse response)
+    public ReplayFile(string userName, string replaysFolder, StartRequest request, StartResponse response)
     {
         // Determine file name
         var sanitizedUserName = Uri.EscapeDataString(userName);
         var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-        var filename = Path.Combine(AppContext.BaseDirectory, "Replays", $"{sanitizedUserName} - {dateTimeStr} - {response.GameId}.swoq");
+        var folder = Path.GetFullPath(replaysFolder, AppContext.BaseDirectory);
+        var filename = Path.Combine(folder, $"{sanitizedUserName} - {dateTimeStr} - {response.GameId}.swoq");
         // Create directory first
         var directory = Path.GetDirectoryName(filename);
         if (directory != null) Directory.CreateDirectory(directory);

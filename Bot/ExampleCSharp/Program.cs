@@ -6,10 +6,11 @@ DotEnv.Load();
 var userId = Environment.GetEnvironmentVariable("SWOQ_USER_ID");
 var userName = Environment.GetEnvironmentVariable("SWOQ_USER_NAME");
 var host = Environment.GetEnvironmentVariable("SWOQ_HOST");
+var replaysFolder = Environment.GetEnvironmentVariable("SWOQ_REPLAYS_FOLDER");
 ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 ArgumentException.ThrowIfNullOrWhiteSpace(userName);
 ArgumentException.ThrowIfNullOrWhiteSpace(host);
-using var connection = new GameConnection(userId, userName, host);
+using var connection = new GameConnection(userId, userName, host, replaysFolder);
 
 var level = DotEnv.GetEnvironmentVariableInt("SWOQ_LEVEL");
 var seed = DotEnv.GetEnvironmentVariableInt("SWOQ_SEED");
