@@ -7,16 +7,16 @@ internal class GameConnection : IDisposable
 {
     private readonly string userId;
     private readonly string userName;
-    private readonly bool saveReplays;
+    private readonly string? replaysFolder;
 
     private readonly GrpcChannel channel;
     private readonly GameService.GameServiceClient client;
 
-    public GameConnection(string userId, string userName, string host, bool saveReplays = true)
+    public GameConnection(string userId, string userName, string host, string? replaysFolder)
     {
         this.userId = userId;
         this.userName = userName;
-        this.saveReplays = saveReplays;
+        this.replaysFolder = replaysFolder;
 
         channel = GrpcChannel.ForAddress($"http://{host}");
         client = new(channel);
@@ -50,7 +50,8 @@ internal class GameConnection : IDisposable
             throw new GameException($"Start failed (result {response.Result})");
         }
 
-        ReplayFile? replayFile = saveReplays ? new ReplayFile(userName, request, response) : null;
+        ReplayFile? replayFile = string.IsNullOrWhiteSpace(replaysFolder)
+            ? null : new ReplayFile(userName, replaysFolder, request, response);
 
         return new Game(client, response, replayFile);
     }

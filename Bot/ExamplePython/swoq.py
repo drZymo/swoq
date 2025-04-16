@@ -7,10 +7,10 @@ from pathlib import Path
 from datetime import datetime
 
 class ReplayFile:
-    def __init__(self, user_name:str, start_request:swoq_pb2.StartRequest, start_response:swoq_pb2.StartResponse):
+    def __init__(self, user_name:str, replays_folder:str, start_request:swoq_pb2.StartRequest, start_response:swoq_pb2.StartResponse):
         sanitized_user_name = urllib.parse.quote(user_name)
         dateTimeStr = datetime.now().strftime('%Y%m%d-%H%M%S')
-        filename = Path() / 'Replays' / f'{sanitized_user_name} - {dateTimeStr} - {start_response.gameId}.swoq'
+        filename = Path(replays_folder) / f'{sanitized_user_name} - {dateTimeStr} - {start_response.gameId}.swoq'
 
         if not filename.parent.exists():
             filename.parent.mkdir(parents=True)
@@ -93,10 +93,10 @@ class Game:
 
 
 class GameConnection:
-    def __init__(self, user_id:(str|None)=None, user_name:(str|None)=None, host:(str|None)=None, save_replays:bool=True):
+    def __init__(self, user_id:(str|None)=None, user_name:(str|None)=None, host:(str|None)=None, replays_folder:(str|None)=None):
         self._user_id = user_id
         self._user_name= user_name
-        self._save_replays = save_replays
+        self._replays_folder = replays_folder
         self._channel = grpc.insecure_channel(host)
         self._game_service = swoq_pb2_grpc.GameServiceStub(self._channel)
 
@@ -126,6 +126,6 @@ class GameConnection:
 
             raise GameException(f'Start failed (result {swoq_pb2.StartResult.Name(response.result)})')
 
-        replay_file = ReplayFile(self._user_name, request, response) if self._save_replays else None
+        replay_file = ReplayFile(self._user_name, self._replays_folder, request, response) if self._replays_folder else None
 
         return Game(self._game_service, response, replay_file)

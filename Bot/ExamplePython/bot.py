@@ -9,7 +9,7 @@ def str_to_int(s:(str|None)) -> (int|None):
 def main() -> None:
     load_dotenv()
     
-    with GameConnection(getenv('SWOQ_USER_ID'), getenv('SWOQ_USER_NAME'), getenv('SWOQ_HOST')) as connection:
+    with GameConnection(getenv('SWOQ_USER_ID'), getenv('SWOQ_USER_NAME'), getenv('SWOQ_HOST'), getenv('SWOQ_REPLAYS_FOLDER')) as connection:
         with connection.start(str_to_int(getenv('SWOQ_LEVEL')), str_to_int(getenv('SWOQ_SEED'))) as game:
             print(f'Game {game.game_id} started')
             if game.seed is not None: print(f'- seed: {game.seed}')

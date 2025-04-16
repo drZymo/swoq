@@ -10,7 +10,6 @@ public static class Program
     private const int MaxLevel = 21;
 
     private static bool print = true;
-    private static bool saveReplay = true;
     private static bool train = false;
     private static bool once = false;
 
@@ -23,7 +22,6 @@ public static class Program
         foreach (var arg in args)
         {
             if (arg == "--no-print") print = false;
-            if (arg == "--no-replay") saveReplay = false;
             if (arg == "--train") train = true;
             if (arg == "--once") once = true;
         }
@@ -44,7 +42,7 @@ public static class Program
             Environment.GetEnvironmentVariable("SWOQ_USER_ID") ?? throw new ArgumentNullException(),
             Environment.GetEnvironmentVariable("SWOQ_USER_NAME") ?? throw new ArgumentNullException(),
             Environment.GetEnvironmentVariable("SWOQ_HOST") ?? throw new ArgumentNullException(),
-            saveReplay);
+            Environment.GetEnvironmentVariable("SWOQ_REPLAYS_FOLDER"));
 
         do
         {
