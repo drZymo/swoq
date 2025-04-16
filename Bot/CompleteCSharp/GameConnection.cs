@@ -57,7 +57,8 @@ internal class GameConnection : IDisposable
             throw new GameException($"Start failed (result {response.Result})");
         }
 
-        ReplayFile? replayFile = replaysFolder != null ? new ReplayFile(userName, replaysFolder, request, response) : null;
+        ReplayFile? replayFile = string.IsNullOrWhiteSpace(replaysFolder)
+            ? null : new ReplayFile(userName, replaysFolder, request, response);
 
         return new Game(client, response, replayFile);
     }
