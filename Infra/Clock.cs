@@ -2,11 +2,6 @@
 
 public static class Clock
 {
-    public static void Reset()
-    {
-        now = null;
-    }
-
     public static void Setup(Func<DateTime> now)
     {
         Clock.now = now;

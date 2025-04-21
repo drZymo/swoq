@@ -20,7 +20,7 @@ public class RandomStableTests
     {
         var random = new Random(42);
         var map = mapGenerator.Generate(20, 64, 64, random);
-        var game = new Game(map, Parameters.MaxQuestInactivityTime, random);
+        var game = new Game(map, Parameters.MaxQuestInactivityTime, Parameters.MaxLevelTicks, Parameters.MaxLevelDuration, random);
 
         // These actions have been recorded by playing with the Python bot and recording all actions that resulted in 'OK' response.
         // The GameServer class was adapted to always use random seed 42 before each map was generated.

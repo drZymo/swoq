@@ -87,7 +87,13 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         var reporter = new UserStatisticsReporter(user, database);
 
         // Create new training game
-        return new Game(map, Parameters.MaxTrainingInactivityTime, random, reporter);
+        return new Game(
+            map,
+            Parameters.MaxTrainingInactivityTime,
+            Parameters.MaxLevelTicks,
+            Parameters.MaxLevelDuration,
+            random,
+            reporter);
     }
 
     private Quest StartQuest(User user, int seed)

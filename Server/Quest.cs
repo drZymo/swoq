@@ -98,6 +98,11 @@ public class Quest : IGame
         var random = new Random(seed);
 
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
-        return new Game(map, Parameters.MaxQuestInactivityTime, random, reporter);
+        return new Game(map,
+                        Parameters.MaxQuestInactivityTime,
+                        Parameters.MaxLevelTicks,
+                        Parameters.MaxLevelDuration,
+                        random,
+                        reporter);
     }
 }

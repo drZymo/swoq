@@ -12,9 +12,9 @@ internal class InactivityTests : GameTestBase
         "                 " +
         "                 " +
         "                 " +
-        "    #########    " +
-        "   #.........#   " +
-        "   #.........#   " +
+        "     ########    " +
+        "    R........#   " +
+        "   #_........#   " +
         "   #.........#   " +
         "   #.........#   " +
         "   #....p....#   " +
@@ -49,7 +49,7 @@ internal class InactivityTests : GameTestBase
     public void ActiveAfterAct()
     {
         var random = new Random(42);
-        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20), random);
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20), 1000, TimeSpan.FromSeconds(120), random);
 
         Assert.That(game.IsFinished, Is.False);
 
@@ -78,7 +78,7 @@ internal class InactivityTests : GameTestBase
     public void InactiveAfterNoAction()
     {
         var random = new Random(42);
-        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20), random);
+        var game = new Game(TestMaps.SquareMap, TimeSpan.FromSeconds(20), 1000, TimeSpan.FromSeconds(120), random);
 
         Assert.That(game.IsFinished, Is.False);
 
@@ -133,7 +133,7 @@ internal class InactivityTests : GameTestBase
         });
 
         // Continuously pickup and place the boulder (i.e. use) 
-        for (var i = 0; i < 500 - 8; i++)
+        for (var i = 0; i < 149; i++)
         {
             // Increase time a little
             now += TimeSpan.FromSeconds(2);
@@ -188,8 +188,8 @@ internal class InactivityTests : GameTestBase
         });
 
         // Repeat walking around in circles, picking up and placing boulders.
-        // Should never fail.
-        for (var j = 0; j < 100; j++)
+        // Should not fail until max ticks.
+        for (var j = 0; j < 66; j++)
         {
             // Place and pickup boulder to trigger map changes
             Act(DirectedAction.UseWest);
@@ -201,6 +201,23 @@ internal class InactivityTests : GameTestBase
                 Assert.That(game.State.Status, Is.EqualTo(GameStatus.Active));
             });
         }
+
+        // Almost max ticks
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.False);
+            Assert.That(game.State.Tick, Is.EqualTo(1988));
+        });
+
+        // One more circle will trigger no progress
+        Assert.Throws<GameFinishedException>(() => WalkCircle());
+
+        // Game is finished
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
+        });
     }
 
     [Test]
@@ -339,6 +356,131 @@ internal class InactivityTests : GameTestBase
         });
     }
 
+    [Test]
+    public void GameTimesOutAfterMaxTicks()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Move to plate
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((2, 1)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(5));
+            // Player moved to plate
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.PressurePlateRed, Tile.Player)));
+            // Door open
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
+            // Map revealed
+            Assert.That(changes[(0, 1)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(1, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+        });
+
+        // Constantly step off plate, walk a circle, and step back on plate.
+        // Should be seen as activity.
+        for (var j = 0; j < 71; j++)
+        {
+            for (var i = 0; i < 8; i++) Act(DirectedAction.MoveEast);
+            for (var i = 0; i < 6; i++) Act(DirectedAction.MoveSouth);
+            for (var i = 0; i < 8; i++) Act(DirectedAction.MoveWest);
+            for (var i = 0; i < 6; i++) Act(DirectedAction.MoveNorth);
+            Assert.Multiple(() =>
+            {
+                Assert.That(game.IsFinished, Is.False);
+                Assert.That(game.State.Status, Is.EqualTo(GameStatus.Active));
+            });
+        }
+
+        // Almost at the threshold
+        // #ticks = 7 + 71*(8+6+8+6) = 1995
+        Assert.That(game.State.Tick, Is.EqualTo(1995));
+        // Move a few steps
+        for (var i = 0; i < 5; i++) Act(DirectedAction.MoveEast);
+        // Game should be finished now
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.IsFinished, Is.True);
+            Assert.That(game.State.Tick, Is.EqualTo(2000));
+        });
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveSouth));
+        Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
+    }
+
+    [Test]
+    public void GameTimesOutAfterMaxDuration()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+        });
+
+        // Move to plate
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveWest);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveNorth);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((2, 1)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(changes, Has.Count.EqualTo(5));
+            // Player moved to plate
+            Assert.That(changes[(5, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(2, 1)], Is.EqualTo((Tile.PressurePlateRed, Tile.Player)));
+            // Door open
+            Assert.That(changes[(1, 1)], Is.EqualTo((Tile.DoorRed, Tile.Empty)));
+            // Map revealed
+            Assert.That(changes[(0, 1)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+            Assert.That(changes[(1, 0)], Is.EqualTo((Tile.Unknown, Tile.Wall)));
+        });
+
+        // Constantly (but slowly) step off plate, walk a circle, and step back on plate.
+        // Should be seen as activity.
+        for (var j = 0; j < 18; j++)
+        {
+            for (var i = 0; i < 8; i++) Act(DirectedAction.MoveEast);
+            now += TimeSpan.FromSeconds(4);
+            for (var i = 0; i < 6; i++) Act(DirectedAction.MoveSouth);
+            now += TimeSpan.FromSeconds(4);
+            for (var i = 0; i < 8; i++) Act(DirectedAction.MoveWest);
+            now += TimeSpan.FromSeconds(4);
+            for (var i = 0; i < 6; i++) Act(DirectedAction.MoveNorth);
+            now += TimeSpan.FromSeconds(4);
+            Assert.Multiple(() =>
+            {
+                Assert.That(game.IsFinished, Is.False);
+                Assert.That(game.State.Status, Is.EqualTo(GameStatus.Active));
+            });
+        }
+        // 18 * 16 = 288 seconds
+
+        // Move slowly
+        Act(DirectedAction.MoveEast);
+        now += TimeSpan.FromSeconds(6);
+        Act(DirectedAction.MoveEast);
+        now += TimeSpan.FromSeconds(6);
+        // Game should be finished now
+        Assert.That(game.IsFinished, Is.True);
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveSouth));
+        Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
+    }
+
     private void WalkCircle(bool small = false)
     {
         int vertical = (small ? 4 : 8);
@@ -395,6 +537,11 @@ internal class InactivityTests : GameTestBase
 
         // Some items to pickup
         map[height - 2, 1] = Cell.Boulder;
+
+        // Door top left
+        // with plate to open next to it
+        map[1, 1] = Cell.DoorRedClosed;
+        map[2, 1] = Cell.PressurePlateRed;
 
         return map.ToMap();
     }
