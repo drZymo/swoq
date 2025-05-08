@@ -11,8 +11,12 @@ internal class Game : IGame
 {
     private Map map;
     private readonly TimeSpan maxInactivityTime;
+    private readonly int maxLevelTicks;
+    private readonly TimeSpan maxLevelDuration;
     private readonly Random random;
     private readonly IStatisticsReporter? reporter;
+
+    private readonly DateTime startTime;
 
     private int ticks = 0;
     private int lastChangeTick = 0;
@@ -23,12 +27,22 @@ internal class Game : IGame
     private readonly HashSet<Position> doorsToClose = [];
     private readonly HashSet<Position> doorsToOpen = [];
 
-    public Game(Map map, TimeSpan maxInactivityTime, Random random, IStatisticsReporter? reporter = null)
+    public Game(
+        Map map,
+        TimeSpan maxInactivityTime,
+        int maxLevelTicks,
+        TimeSpan maxLevelDuration,
+        Random random,
+        IStatisticsReporter? reporter = null)
     {
         this.map = map;
         this.maxInactivityTime = maxInactivityTime;
+        this.maxLevelTicks = maxLevelTicks;
+        this.maxLevelDuration = maxLevelDuration;
         this.random = random;
         this.reporter = reporter;
+
+        startTime = Clock.Now;
 
         State = CreateState();
     }
@@ -36,9 +50,11 @@ internal class Game : IGame
     public Guid Id { get; } = Guid.NewGuid();
     public GameState State { get; private set; }
     public DateTime LastActionTime { get; private set; } = Clock.Now;
-    public bool IsFinished => status != GameStatus.Active || TimedOut;
+    public bool IsFinished => status != GameStatus.Active || TimedOut || NoProgress;
 
     private bool TimedOut => (Clock.Now - LastActionTime) > maxInactivityTime;
+
+    private bool NoProgress => (ticks >= maxLevelTicks) || (Clock.Now - startTime) >= maxLevelDuration;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
@@ -49,6 +65,7 @@ internal class Game : IGame
         {
             // Pre condition checks
             if (status == GameStatus.Active && TimedOut) status = GameStatus.FinishedTimeout;
+            if (status == GameStatus.Active && NoProgress) status = GameStatus.FinishedNoProgress;
             if (IsFinished) throw new GameFinishedException();
 
             // As long as game is not finished one of the two players should be active
