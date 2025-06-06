@@ -9,6 +9,8 @@
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 		<PublishSingleFile>true</PublishSingleFile>
 		<SelfContained>true</SelfContained>
+		<!-- disable implicit inclusion of local runtime identifier in packages.lock.json -->
+		<UseCurrentRuntimeIfImplicitlyRequired>false</UseCurrentRuntimeIfImplicitlyRequired>
 	</PropertyGroup>
 
 	<ItemGroup>
