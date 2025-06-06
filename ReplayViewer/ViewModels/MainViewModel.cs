@@ -66,9 +66,11 @@ internal class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public void LoadFile(string path)
+    public void LoadFile(string path, bool tailMode = false)
     {
-        Replay = new ReplayViewModel(path);
+        var mode = tailMode ? "Tail" : "Load";
+        Console.WriteLine($"{mode} file: {path}");
+        Replay = new ReplayViewModel(path, tailMode);
         CurrentFile = path;
     }
 

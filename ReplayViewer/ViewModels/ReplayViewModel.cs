@@ -11,8 +11,11 @@ namespace Swoq.ReplayViewer.ViewModels;
 internal class ReplayViewModel : ViewModelBase, IDisposable
 {
     private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan TailModeFrameDelay = TimeSpan.FromMilliseconds(20);
 
-    private DispatcherTimer? timer = null;
+    private DispatcherTimer? playTimer = null;
+    private DispatcherTimer? tailTimer = null;
+    private bool tailMode = false;
 
     private IImmutableList<GameObservation> gameStates = ImmutableList<GameObservation>.Empty;
 
@@ -21,9 +24,14 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
         PlayPauseCommand = new RelayCommand(PlayPause);
     }
 
-    public ReplayViewModel(string path) : this()
+    public ReplayViewModel(string path, bool tailMode = false) : this()
     {
-        IsLoading = true;
+        IsLoading = !tailMode;
+        this.tailMode = tailMode;
+        if (tailMode)
+        {
+            tailTimer = new DispatcherTimer(TailModeFrameDelay, DispatcherPriority.Normal, OnTailTimer);
+        }
         Task.Run(() => Load(path));
     }
 
@@ -55,7 +63,14 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
         {
             if (tick != value)
             {
-                tick = Math.Clamp(value, 0, MaxTick);
+                if (MaxTick >= 0)
+                {
+                    tick = Math.Clamp(value, 0, MaxTick);
+                }
+                else
+                {
+                    tick = 0;
+                }
                 OnPropertyChanged();
                 OnTickChanged();
             }
@@ -70,12 +85,12 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
 
     private void Load(string path)
     {
-        gameStates = ImmutableList<GameObservation>.Empty;
-
         try
         {
             var sw = Stopwatch.StartNew();
-            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using Stream file = tailMode
+                ? new TailStream(path)
+                : new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
             var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
@@ -86,31 +101,46 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
             var gameState = builder.BuildNext(null, startResponse.State, startResponse.Result, Dispatcher.UIThread);
             gameStates = gameStates.Add(gameState);
 
-            while (file.Position < file.Length)
+            do
             {
+                if (!tailMode && file.Position >= file.Length)
+                {
+                    // End of file reached (e.g. bot crashed)
+                    break;
+                }
                 var request = ActRequest.Parser.ParseDelimitedFrom(file);
                 var response = ActResponse.Parser.ParseDelimitedFrom(file);
 
                 gameState = builder.BuildNext(request, response.State, response.Result, Dispatcher.UIThread);
                 gameStates = gameStates.Add(gameState);
-            }
-
+            } while (gameState.Status == GameStatus.Active);
             sw.Stop();
 
-            Debug.WriteLine($"Loaded {file.Name} in {sw.Elapsed.TotalSeconds:F1} seconds.");
+            Debug.WriteLine($"Loaded {path} in {sw.Elapsed.TotalSeconds:F1} seconds, {gameStates.Count - 1} ticks.");
         }
-        catch
+        catch (Exception error)
         {
             // TODO: MessageBox.Show($"Failed to load replay file\n\n{path}");
             // Keep game states loaded so far
+            Console.WriteLine($"Failed to load replay file: {path}\n{error}");
         }
         finally
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                Tick = 0;
                 OnPropertyChanged(nameof(MaxTick));
-                OnTickChanged();
+                if (tailMode)
+                {
+                    tailMode = false;
+                    // Jump to the end if the user didn't pause before.
+                    Tick = gameStates.Count - 1;
+                    tailTimer?.Stop();
+                    tailTimer = null;
+                }
+                else
+                {
+                    OnTickChanged();
+                }
                 IsLoading = false;
             });
         }
@@ -131,19 +161,41 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
 
     private void PlayPause(object? _)
     {
-        if (timer == null)
+        if (tailMode)
         {
-            timer = new DispatcherTimer(FrameDelay, DispatcherPriority.Normal, OnTimer);
+            // Stop tail mode when 'manually' pressing play/pause (but keep parsing in background)
+            tailMode = false;
+        }
+        else if (playTimer == null)
+        {
+            playTimer = new DispatcherTimer(FrameDelay, DispatcherPriority.Normal, OnPlayTimer);
         }
         else
         {
-            timer.Stop();
-            timer = null;
+            playTimer.Stop();
+            playTimer = null;
         }
     }
 
-    private void OnTimer(object? sender, EventArgs e)
+    private void OnPlayTimer(object? sender, EventArgs e)
     {
-        Tick++;
+        if (Tick >= MaxTick)
+        {
+            // Reached the end of the replay, stop playing
+            PlayPause(null);
+        }
+        else
+        {
+            Tick++;
+        }
+    }
+
+    private void OnTailTimer(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(MaxTick));
+        if (tailMode)
+        {
+            Tick = gameStates.Count - 1;
+        }
     }
 }
