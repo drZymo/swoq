@@ -95,11 +95,13 @@ internal class MainViewModel : ViewModelBase, IDisposable
             throw new InvalidOperationException("Missing StorageProvider instance.");
         }
 
+        var currentDirectory = await provider.TryGetFolderFromPathAsync(Environment.CurrentDirectory);
         var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open replay file",
             AllowMultiple = false,
             FileTypeFilter = [new FilePickerFileType("Replay file") { Patterns = ["*.swoq"] }],
+            SuggestedStartLocation = currentDirectory
         });
 
         if (files.Count > 0)
