@@ -504,3 +504,17 @@ At the anual WSC (Wizardry and Sorcery Conference), a new attraction is revealed
 |-------------- |----------:|----------:|----------:|----------:|
 | SingleGame    |  18.24 ms |  0.069 ms |  0.058 ms |  18.25 ms |
 | StartParallel | 343.36 ms | 18.862 ms | 55.615 ms | 366.49 ms |
+
+
+## 2025-06-08 (New exit position)
+
+| Method         | Mean      | Error     | StdDev    |
+|--------------- |----------:|----------:|----------:|
+| GenerateAll    | 78.186 ms | 0.2606 ms | 0.2176 ms |
+| GenerateLevel1 |  3.548 ms | 0.0263 ms | 0.0246 ms |
+| GenerateLevel4 |  3.933 ms | 0.0167 ms | 0.0156 ms |
+
+| Method        | Mean      | Error    | StdDev    |
+|-------------- |----------:|---------:|----------:|
+| SingleGame    |  20.20 ms | 0.121 ms |  0.113 ms |
+| StartParallel | 344.77 ms | 6.741 ms | 10.294 ms |
