@@ -6,11 +6,11 @@ namespace Swoq.MapGeneratorTester;
 
 internal class MainViewModel : ViewModelBase, IDisposable
 {
-    private static readonly Random random = new();
     private static readonly MapGenerator mapGenerator = new();
 
     public MainViewModel()
     {
+        var random = new Random(seed ?? Random.Shared.Next());
         Overview.TileMap = mapGenerator.Generate(Level, Height, Width, random).ToOverview();
         Generate = new RelayCommand(HandleGenerate);
     }
@@ -69,6 +69,21 @@ internal class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private int? seed = null;
+    public int? Seed
+    {
+        get => seed;
+        set
+        {
+            if (seed != value)
+            {
+                seed = value;
+                OnPropertyChanged();
+                HandleGenerate(null);
+            }
+        }
+    }
+
     private string status = "";
     public string Status
     {
@@ -90,6 +105,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
         Status = "Generating ...";
         try
         {
+            var random = new Random(seed ?? Random.Shared.Next());
             Overview.TileMap = mapGenerator.Generate(Level, Height, Width, random).ToOverview();
             Status = "";
         }

@@ -55,15 +55,15 @@ class GamePlayer:
         self.close()
 
 
-    def start(self, level:int=None) -> None:
-        startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level))
+    def start(self, level:int=None, seed:int=None) -> None:
+        startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level, seed=seed))
         if self.print:
             result = swoq_pb2.StartResult.Name(startResponse.result)
             print(f'{result=}')
 
         while startResponse.result == swoq_pb2.START_RESULT_QUEST_QUEUED:
             sleep(1)
-            startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level))
+            startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level, seed=seed))
             if self.print:
                 result = swoq_pb2.StartResult.Name(startResponse.result)
                 print(f'{result=}')

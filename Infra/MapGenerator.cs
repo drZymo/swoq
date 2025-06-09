@@ -175,7 +175,7 @@ internal class MapGeneratorImpl
 
         var room = CreateRoom(height / 2, width / 2, 10, 10);
         map.Player1.Position = map.Pos(room.Top, room.Left);
-        map[room.Bottom - 1, room.Right - 1] = Cell.Exit;
+        AddExit(room.Bottom - 1, room.Right);
     }
 
     private void GenerateLevel1()
@@ -804,8 +804,7 @@ internal class MapGeneratorImpl
 
         // Exit in exit room
         availableRooms.Remove(exitRoom);
-        exitPosition = map.Pos(exitRoom.Bottom - 1, exitRoom.Right - 1);
-        map[exitPosition] = Cell.Exit;
+        AddExit(exitRoom.Bottom - 1, exitRoom.Right);
         var (exitDoorColor, _) = AddLockAroundExit();
 
         // Add pressure plates for entering parts
@@ -864,8 +863,10 @@ internal class MapGeneratorImpl
 
         // Fill the rest with standard maze
         RestrictAvailablePositions(maxY: height - 7);
-        CreateStandardMaze(twoPlayers: true);
+        CreateRandomRooms(maxRooms: 200, minSize: 1, maxSize: 7, margin: 1);
+        ConnectRoomsRandomly();
         RestoreAvailablePositions();
+        PlacePlayersTopLeftAndExitBottomRight(true);
 
         availableRooms.Remove(exitRoom);
         availableRooms.Remove(preExitRoom);
@@ -1211,6 +1212,18 @@ internal class MapGeneratorImpl
         var dx = a.X - b.X;
         return Math.Sqrt(dy * dy + dx * dx);
     }
+    private void AddExit(int x, int y)
+    {
+        var exitPos = map.Pos(x, y);
+        AddExit(exitPos);
+    }
+
+    private void AddExit(Position exitPos)
+    {
+        map[exitPos] = Cell.Exit;
+        exitPosition = exitPos;
+        availablePositions.Remove(exitPos);
+    }
 
     private void PlacePlayersTopLeftAndExitBottomRight(bool twoPlayers)
     {
@@ -1230,8 +1243,7 @@ internal class MapGeneratorImpl
 
         exitRoom = availableRooms.OrderBy(r => DistanceBetween(r, height, width)).First();
         availableRooms.Remove(exitRoom);
-        exitPosition = map.Pos(exitRoom.Bottom - 1, exitRoom.Right - 1);
-        map[exitPosition] = Cell.Exit;
+        AddExit(exitRoom.Bottom - 1, exitRoom.Right);
     }
 
     private (Position innerKeyPos, KeyColor innerColor, Position outerKeyPos, KeyColor outerColor) CreateDoubleLockerRoomMaze(bool twoPlayers = false)
@@ -1305,21 +1317,15 @@ internal class MapGeneratorImpl
         // pick a random key color
         var keyColor = PickRandomAvailableKeyColor();
 
-        // Place wall of doors around exit
-        Position doorPos = new();
-        for (var y = exitPosition.y - 1; y <= exitPosition.y + 1; y++)
+        // Place door in front of exit
+        var doorPos = map.Pos(exitPosition.y, exitPosition.x - 1);
+        if (!SetIfEmpty(doorPos.y, doorPos.x, ToDoor(keyColor)))
         {
-            for (var x = exitPosition.x - 1; x <= exitPosition.x + 1; x++)
-            {
-                if (0 <= y && y < height && 0 <= x && x < width)
-                {
-                    if (SetIfEmpty(y, x, ToDoor(keyColor)))
-                    {
-                        doorPos = map.Pos(y, x);
-                    }
-                }
-            }
+            throw new MapGeneratorException("Could not add door around exit");
         }
+        // And walls for exit tunnel
+        SetIfEmpty(exitPosition.y - 1, exitPosition.x - 1, Cell.Wall);
+        SetIfEmpty(exitPosition.y + 1, exitPosition.x - 1, Cell.Wall);
 
         return (keyColor, doorPos);
     }
