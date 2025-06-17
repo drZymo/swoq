@@ -1,10 +1,11 @@
-﻿using Avalonia.Threading;
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Windows.Input;
+using Avalonia.Threading;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Windows.Input;
+using Swoq.ReplayViewer.Util;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
