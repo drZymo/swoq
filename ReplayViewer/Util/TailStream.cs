@@ -16,7 +16,7 @@ public class TailStream : Stream
     /// Creates a new TailStream for the specified file path.
     /// </summary>
     /// <param name="filePath">The file to tail.</param>
-    /// <param name="pollingInterval">Polling interval in case of missed watcher events. Defaults to 50ms.</param>
+    /// <param name="pollingInterval">Polling interval in case of missed watcher events. Defaults to 100ms.</param>
     public TailStream(string filePath, TimeSpan? pollingInterval = null)
     {
         this.pollingInterval = pollingInterval ?? TimeSpan.FromMilliseconds(100);
