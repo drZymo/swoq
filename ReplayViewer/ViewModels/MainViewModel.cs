@@ -1,8 +1,10 @@
-﻿using Avalonia;
+﻿using System.Reactive.Linq;
+using System.Windows.Input;
+using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Swoq.InfraUI.ViewModels;
-using System.Windows.Input;
+using Swoq.ReplayViewer.Util;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
@@ -12,16 +14,27 @@ internal class MainViewModel : ViewModelBase, IDisposable
     {
         LoadCommand = new RelayCommand(Load);
 
-        // Load file given at command line
+        // Load file given at command line, or start watch mode
         var args = Environment.GetCommandLineArgs();
-        if (args.Length > 1)
+        if (args.Length > 1 && (args[1] == "--watch" || args[1] == "-w"))
+        {
+            if (args.Length <= 2)
+            {
+                throw new ArgumentException("Missing folder path for --watch argument.");
+            }
+            StartWatchingFolder(Path.GetFullPath(args[2]));
+        }
+        else if (args.Length > 1)
         {
             Task.Run(() => LoadFile(args[1]));
         }
     }
 
+    private IDisposable? fileWatcherSubscription;
+
     public void Dispose()
     {
+        fileWatcherSubscription?.Dispose();
         Replay.Dispose();
     }
 
@@ -53,10 +66,27 @@ internal class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public void LoadFile(string path)
+    public void LoadFile(string path, bool tailMode = false)
     {
-        Replay = new ReplayViewModel(path);
+        var mode = tailMode ? "Tail" : "Load";
+        Console.WriteLine($"{mode} file: {path}");
+        Replay = new ReplayViewModel(path, tailMode);
         CurrentFile = path;
+    }
+
+    private void StartWatchingFolder(string folderPath)
+    {
+        if (SynchronizationContext.Current == null)
+        {
+            throw new InvalidOperationException("This method must be called on the UI thread.");
+        }
+        Console.WriteLine($"Watching folder: {folderPath}");
+        fileWatcherSubscription = FileWatcherObservable.WatchSwoqFiles(folderPath)
+            .ObserveOn(SynchronizationContext.Current)
+            .Subscribe(
+                eventArgs => LoadFile(eventArgs.FullPath, true),
+                onError: e => Console.WriteLine($"Can't watch folder {folderPath}: {e.Message}")
+            );
     }
 
     private async void Load(object? param)
@@ -77,6 +107,9 @@ internal class MainViewModel : ViewModelBase, IDisposable
 
         if (files.Count > 0)
         {
+            fileWatcherSubscription?.Dispose();
+            fileWatcherSubscription = null;
+
             var localPath = files[0].TryGetLocalPath();
             if (localPath != null)
             {
