@@ -16,7 +16,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
 
         // Load file given at command line, or start watch mode
         var args = Environment.GetCommandLineArgs();
-        if (args.Length > 1 && args[1] == "--watch")
+        if (args.Length > 1 && (args[1] == "--watch" || args[1] == "-w"))
         {
             if (args.Length <= 2)
             {
