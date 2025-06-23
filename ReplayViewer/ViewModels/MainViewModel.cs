@@ -83,7 +83,10 @@ internal class MainViewModel : ViewModelBase, IDisposable
         Console.WriteLine($"Watching folder: {folderPath}");
         fileWatcherSubscription = FileWatcherObservable.WatchSwoqFiles(folderPath)
             .ObserveOn(SynchronizationContext.Current)
-            .Subscribe(eventArgs => LoadFile(eventArgs.FullPath, true));
+            .Subscribe(
+                eventArgs => LoadFile(eventArgs.FullPath, true),
+                onError: e => Console.WriteLine($"Can't watch folder {folderPath}: {e.Message}")
+            );
     }
 
     private async void Load(object? param)

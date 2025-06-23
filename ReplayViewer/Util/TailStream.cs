@@ -112,7 +112,7 @@ public class TailStream : Stream
     /// <inheritdoc />
     public override long Seek(long offset, SeekOrigin origin)
     {
-        throw new NotSupportedException("Seek is not supported in TailStream.");
+        return fileStream.Seek(offset, origin);
     }
 
     /// <inheritdoc />
