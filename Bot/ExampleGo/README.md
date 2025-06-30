@@ -16,6 +16,10 @@ This is a starter kit to write your own bot for the Sioux Weekend of Quest, usin
 
         protoc --go_out=Mproto/swoq.proto=proto/swoq:. --go-grpc_out=Mproto/swoq.proto=proto/swoq:. proto/swoq.proto
 
+  - If `protoc` can't find the plugin, ensure they're in your path, or use the `--plugin` option to specify their location. E.g.:
+
+        --plugin=$HOME/go/bin/protoc-gen-go --plugin=$HOME/go/bin/protoc-gen-go-grpc
+
 - Copy `example.env` to `.env` and edit its contents.
 - Compile and run with `go run bot`.
 
