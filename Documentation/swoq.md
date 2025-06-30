@@ -33,20 +33,19 @@ Finally the last, and maybe most import parameter is `state`. This structure con
 
 ### StartResult
 
-| StartResult                             |                                                                                                                                                                                                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `START_RESULT_OK = 0`                   | A game was started successfully.                                                                                                                                                                                                                                   |
-| `START_RESULT_INTERNAL_ERROR = 1`       | Something unexpected went wrong on the server. Contact the administrators if it persists.                                                                                                                                                                          |
-| `START_RESULT_UNKNOWN_USER = 2`         | The `userId` provided does not identify an existing user. Use the id that was given to you during registration. **Note**: This is NOT your user name.                                                                                                              |
-| `START_RESULT_INVALID_LEVEL = 3`        | The level specified is not a valid value for the given user. It could be out-of-range, or the user specified with `userId` does not have a sufficiently high enough level. Check the level of your user account on the portal or in the high-score list of the dashboard. |
-| `START_RESULT_QUEST_QUEUED = 4`         | Another Quest game is already active, so your request to start a Quest game was queued by the server. See [Quest queueing](#quest-queueing)                                                                                                                                            |
-| `START_RESULT_QUEST_ALREADY_ACTIVE = 5` | You tried to start another Quest game while a previously started Quest game is still active. You are only allowed to have one Quest active. If the other game is inactive, then it will be automatically cleaned up by the server and you can start another quest. |
+| StartResult                       |                                                                                                                                                                                                                                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `START_RESULT_OK = 0`             | A game was started successfully.                                                                                                                                                                                                                                          |
+| `START_RESULT_INTERNAL_ERROR = 1` | Something unexpected went wrong on the server. Contact the administrators if it persists.                                                                                                                                                                                 |
+| `START_RESULT_UNKNOWN_USER = 2`   | The `userId` provided does not identify an existing user. Use the id that was given to you during registration. **Note**: This is NOT your user name.                                                                                                                     |
+| `START_RESULT_INVALID_LEVEL = 3`  | The level specified is not a valid value for the given user. It could be out-of-range, or the user specified with `userId` does not have a sufficiently high enough level. Check the level of your user account on the portal or in the high-score list of the dashboard. |
+| `START_RESULT_QUEST_QUEUED = 4`   | Another Quest game is already active, so your request to start a Quest game was queued by the server. See [Quest queueing](#quest-queueing)                                                                                                                               |
 
 ### Quest queueing
 
-If you start a Quest game and there is already another Quest game active, your start request will be queued. You have to keep your spot in the queue active by periodically sending another Quest start request. Do not do this too quick, but also not too slow. Somewhere between every 1 second and every 5 seconds. 
+If you start a Quest game and there is already another Quest game active by another user, your start request will be queued. The server will wait a minute before responding back. If your spot in the queue becomes available the quest will be started and you will get a `START_RESULT_OK` response. If in this period your spot did not become available, you will received a `START_RESULT_QUEST_QUEUED` response, and you have to keep your spot in the queue active by sending another Quest start request. The server will then again wait another minute for your spot to become available. If you do not request another start, your spot in the queue will eventually be given to the next user in the queue.
 
-As soon as it is your turn your start request will return `RESULT_OK` instead. If you don't retry within 10 seconds your spot will be given to the next user in the queue.
+If you have a Quest active  and you send another start request, then your previous active Quest will be cancelled and your new request will be placed at the end of the queue.
 
 ## `Act`
 
@@ -142,6 +141,7 @@ This value describes the status of the game. Whether or not it is finished, but 
 | `GAME_STATUS_FINISHED_TIMEOUT = 2`     | The time since the last action was too long ago and the game has been terminated by the server.      |
 | `GAME_STATUS_FINISHED_NO_PROGRESS = 3` | The server did not detect any notable changes while playing for a long time and terminated the game. |
 | `GAME_STATUS_FINISHED_PLAYER_DIED = 4` | The last action resulted in the player's death, causing the game to end.                             |
+| `GAME_STATUS_FINISHED_CANCELLED = 5`   | The game was cancelled by another request. This can happen if you start a new quest while a quest is still active. |
 
 # Level 2 and higher
 
@@ -326,7 +326,7 @@ When player #2 dies, the game is finished and you will get the following `GameRe
 
 | GameStatus                              |                                                                              |
 | --------------------------------------- | ---------------------------------------------------------------------------- |
-| `GAME_STATUS_FINISHED_PLAYER2_DIED = 5` | The last action resulted in the death of player #2, causing the game to end. |
+| `GAME_STATUS_FINISHED_PLAYER2_DIED = 6` | The last action resulted in the death of player #2, causing the game to end. |
 
 # Level 22 and higher
 

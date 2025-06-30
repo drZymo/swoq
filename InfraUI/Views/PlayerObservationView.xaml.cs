@@ -13,4 +13,20 @@ public partial class PlayerObservationView : UserControl
         get { return GetValue(TitleProperty); }
         set { SetValue(TitleProperty, value); }
     }
+
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        // Make sure the size is square
+        var minSize = Math.Min(availableSize.Width, availableSize.Height);
+        var size = new Size(minSize, minSize);
+        return base.MeasureOverride(size);
+    }
+
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        // Make sure the size is square
+        var minSize = Math.Min(finalSize.Width, finalSize.Height);
+        var size = new Size(minSize, minSize);
+        return base.ArrangeOverride(size);
+    }
 }

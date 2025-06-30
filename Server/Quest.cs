@@ -92,6 +92,12 @@ public class Quest : IGame
         }
     }
 
+    public void Cancel()
+    {
+        currentGame.Cancel();
+        State = currentGame.State with { Tick = ticks, Status = GameStatus.FinishedCancelled };
+    }
+
     private Game NewGame()
     {
         // Use the same seed for every level in this quest

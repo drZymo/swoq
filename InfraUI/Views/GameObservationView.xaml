@@ -22,7 +22,7 @@
             <Image Grid.Row="1" Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
-        <Grid Grid.Column="1" RowDefinitions="auto,auto,auto,*">
+        <Grid Grid.Column="1" RowDefinitions="auto,*,*">
             <local:GroupBox Grid.Row="0" Header="Game">
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
@@ -36,7 +36,7 @@
                 </StackPanel>
             </local:GroupBox>
 
-            <local:PlayerObservationView Grid.Row="1" DataContext="{Binding Player1, Mode=OneWay}" Title="Player"/>
+            <local:PlayerObservationView Grid.Row="1" DataContext="{Binding Player1, Mode=OneWay}" Title="Player" />
 
             <Grid Grid.Row="2" IsVisible="{Binding HasPlayer2, Mode=OneWay}">
                 <local:PlayerObservationView DataContext="{Binding Player2, Mode=OneWay}" Title="Player #2" />

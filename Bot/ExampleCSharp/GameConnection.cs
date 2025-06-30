@@ -33,20 +33,14 @@ internal class GameConnection : IDisposable
         if (level.HasValue) request.Level = level.Value;
         if (seed.HasValue) request.Seed = seed.Value;
 
-        StartResponse? response;
-        while (true)
+        var response = client.Start(request);
+        while (response.Result == StartResult.QuestQueued)
         {
+            Console.WriteLine("Quest queued, retrying ...");
             response = client.Start(request);
-
-            if (response.Result == StartResult.Ok) break;
-
-            if (response.Result == StartResult.QuestQueued)
-            {
-                Console.WriteLine("Quest queued, waiting 2 seconds before retrying ...");
-                Thread.Sleep(TimeSpan.FromSeconds(2));
-                continue;
-            }
-
+        }
+        if (response.Result != StartResult.Ok)
+        {
             throw new GameException($"Start failed (result {response.Result})");
         }
 

@@ -41,7 +41,6 @@ enum StartResult {
     START_RESULT_UNKNOWN_USER = 2;
     START_RESULT_INVALID_LEVEL = 3;
     START_RESULT_QUEST_QUEUED = 4;
-    START_RESULT_QUEST_ALREADY_ACTIVE = 5;
 }
 
 enum ActResult {
@@ -90,8 +89,9 @@ enum GameStatus {
     GAME_STATUS_FINISHED_TIMEOUT = 2;
     GAME_STATUS_FINISHED_NO_PROGRESS = 3;
     GAME_STATUS_FINISHED_PLAYER_DIED = 4;
+    GAME_STATUS_FINISHED_CANCELLED = 5;
     // Level 12 and higher:
-    GAME_STATUS_FINISHED_PLAYER2_DIED = 5;
+    GAME_STATUS_FINISHED_PLAYER2_DIED = 6;
 }
 
 message PlayerState {
@@ -134,6 +134,9 @@ enum Tile {
     // Level 10 and higher:
     TILE_SWORD = 16;
     TILE_HEALTH = 17;
+    // Level 22 and higher:
+    TILE_BOSS = 18;
+    TILE_TREASURE = 19;
 }
 
 enum Inventory {
@@ -144,6 +147,8 @@ enum Inventory {
     INVENTORY_KEY_BLUE = 3;
     // Level 6 and higher:
     INVENTORY_BOULDER = 4;
+    // Level 22 and higher:
+    INVENTORY_TREASURE = 5;
 }
 
 // Used by the ReplaySaver and ReplayViewer

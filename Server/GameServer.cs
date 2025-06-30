@@ -17,14 +17,13 @@ public class GameServerActException(ActResult result, GameState? state, Exceptio
     public GameState? State { get; } = state;
 }
 
-public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int nrActiveQuests = Parameters.NrOfActiveQuests) : IGameServer
+internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase database) : IGameServer
 {
-    private readonly ConcurrentDictionary<Guid, IGame> games = new();
+    protected readonly IMapGenerator mapGenerator = mapGenerator;
+    protected readonly ISwoqDatabase database = database;
 
-    private readonly Lock startQuestMutex = new();
-    private readonly ConcurrentDictionary<Guid, string> currentQuestUserIds = new();
-
-    private readonly QuestQueue questQueue = new();
+    protected readonly ConcurrentDictionary<Guid, IGame> games = new();
+    protected readonly QuestQueue questQueue = new();
 
     public event EventHandler<GameRemovedEventArgs>? GameRemoved;
 
@@ -43,11 +42,19 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
             // If seed is not given, use a random one.
             var actualSeed = seed ?? Random.Shared.Next();
 
-            // First remove old games
-            CleanupOldGames();
-
             // Create a new game
-            IGame game = level.HasValue ? StartTraining(user, level.Value, actualSeed) : StartQuest(user, actualSeed);
+            IGame game;
+            if (level.HasValue)
+            {
+                // Check if user can play this level
+                if (level < 0 || level > user.Level || level > mapGenerator.MaxLevel) throw new InvalidLevelException();
+                game = StartTraining(user, level.Value, ref actualSeed);
+            }
+            else
+            {
+                game = StartQuest(user, ref actualSeed);
+            }
+
             if (!games.TryAdd(game.Id, game))
             {
                 throw new InvalidOperationException("Game could not be added");
@@ -77,67 +84,9 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         }
     }
 
-    private Game StartTraining(User user, int level, int seed)
-    {
-        // Check if user can play this level
-        if (level < 0 || level > user.Level || level > mapGenerator.MaxLevel) throw new InvalidLevelException();
+    protected abstract Game StartTraining(User user, int level, ref int seed);
 
-        var random = new Random(seed);
-        var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
-        var reporter = new UserStatisticsReporter(user, database);
-
-        // Create new training game
-        return new Game(
-            map,
-            Parameters.MaxTrainingInactivityTime,
-            Parameters.MaxLevelTicks,
-            Parameters.MaxLevelDuration,
-            random,
-            reporter);
-    }
-
-    private Quest StartQuest(User user, int seed)
-    {
-        if (user.Id == null) throw new ArgumentNullException(nameof(user));
-
-        // We must prevent too many quests starting at the same time.
-        // Due to multi-threading, two quests could try starting at the same time, exceeding the limit.
-        // Therefore, we lock the whole start process.
-        lock (startQuestMutex)
-        {
-            // Check that user is not already in a quest
-            if (currentQuestUserIds.Any(kvp => kvp.Value == user.Id))
-            {
-                throw new QuestAlreadyActiveException();
-            }
-
-            // Queue (or update entry) user
-            questQueue.Enqueue(user);
-
-            // Do not allow starting another quest when too many quests are active.
-            if (currentQuestUserIds.Count >= nrActiveQuests)
-            {
-                throw new QuestQueuedException();
-            }
-
-            // Is this user the first entry in the queue?
-            if (questQueue.FrontUserId != user.Id)
-            {
-                throw new QuestQueuedException();
-            }
-
-            // No quests active
-            // User first in queue
-            // Dequeue
-            var (frontUserId, frontUserName) = questQueue.Dequeue();
-            Debug.Assert(frontUserId == user.Id);
-            Debug.Assert(frontUserName == user.Name);
-            // and start a new game
-            var quest = new Quest(user, mapGenerator, database, seed);
-            currentQuestUserIds.TryAdd(quest.Id, user.Id);
-            return quest;
-        }
-    }
+    protected abstract Quest StartQuest(User user, ref int seed);
 
     public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
@@ -160,6 +109,106 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         }
     }
 
+    protected void RemoveGame(Guid gameId)
+    {
+        if (games.TryRemove(gameId, out var game))
+        {
+            GameRemoved?.Invoke(this, new GameRemovedEventArgs(gameId));
+        }
+    }
+}
+
+internal class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int? maxNrActiveQuests = null, int? questPollCount = null, TimeSpan? questPollPeriod = null)
+    : GameServerBase(mapGenerator, database), IDisposable
+{
+    private readonly int maxNrActiveQuests = maxNrActiveQuests ?? Parameters.NrOfActiveQuests;
+    private readonly int questPollCount = questPollCount ?? Parameters.QuestPollCount;
+    private readonly TimeSpan questPollPeriod = questPollPeriod ?? Parameters.QuestPollPeriod;
+
+    private readonly Lock startQuestMutex = new();
+    private readonly ConcurrentDictionary<Guid, string> activeQuests = new();
+    private readonly AutoResetEvent activeQuestsChanged = new(false);
+
+    public void Dispose()
+    {
+        activeQuestsChanged.Dispose();
+    }
+
+    protected override Game StartTraining(User user, int level, ref int seed)
+    {
+        CleanupOldGames();
+
+        // Check if user can play this level
+        if (level < 0 || level > user.Level || level > mapGenerator.MaxLevel) throw new InvalidLevelException();
+
+        var random = new Random(seed);
+        var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
+        var reporter = new UserStatisticsReporter(user, database);
+
+        // Create new training game
+        return new Game(
+            map,
+            Parameters.MaxTrainingInactivityTime,
+            Parameters.MaxLevelTicks,
+            Parameters.MaxLevelDuration,
+            random,
+            reporter);
+    }
+
+    protected override Quest StartQuest(User user, ref int seed)
+    {
+        Debug.Assert(user.Id != null);
+
+        // Cancel any quests the user started earlier
+        var activeQuestsByUser = activeQuests.Where(kvp => kvp.Value == user.Id);
+        foreach (var activeQuest in activeQuestsByUser)
+        {
+            if (activeQuests.TryRemove(activeQuest))
+            {
+                activeQuestsChanged.Set();
+            }
+            if (games.TryGetValue(activeQuest.Key, out var game))
+            {
+                game.Cancel();
+            }
+        }
+
+        for (var i = 0; i < questPollCount; i++)
+        {
+            CleanupOldGames();
+
+            // We must prevent too many quests starting at the same time.
+            // Due to multi-threading, two quests could try starting at the same time, exceeding the limit.
+            // Therefore, we lock the whole start process.
+            lock (startQuestMutex)
+            {
+                // Queue (or update entry) user
+                questQueue.Enqueue(user);
+
+                // Do not allow starting another quest when too many quests are active.
+                // Is this user the first entry in the queue?
+                if (activeQuests.Count < maxNrActiveQuests && questQueue.FrontUserId == user.Id)
+                {
+                    // Dequeue
+                    var (frontUserId, frontUserName) = questQueue.Dequeue();
+                    Debug.Assert(frontUserId == user.Id);
+                    Debug.Assert(frontUserName == user.Name);
+                    // and start a new game
+                    var quest = new Quest(user, mapGenerator, database, seed);
+                    if (activeQuests.TryAdd(quest.Id, user.Id))
+                    {
+                        activeQuestsChanged.Set();
+                    }
+                    return quest;
+                }
+            }
+
+            // Wait a while before checking again, or when the active quests have changed
+            activeQuestsChanged.WaitOne(questPollPeriod);
+        }
+        throw new QuestQueuedException();
+    }
+
     private void CleanupOldGames()
     {
         var finishedGames = games.Values.
@@ -170,7 +219,10 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
         var idsFinished = finishedGames.Select(g => g.Id);
         foreach (var id in idsFinished)
         {
-            currentQuestUserIds.TryRemove(id, out _);
+            if (activeQuests.TryRemove(id, out _))
+            {
+                activeQuestsChanged.Set();
+            }
         }
 
         // Remove games that have been finished for a while from the game list
@@ -180,11 +232,75 @@ public class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, int 
             Select(g => g.Id);
         foreach (var id in idsToRemove)
         {
-            if (games.TryRemove(id, out var game))
-            {
-                GameRemoved?.Invoke(this, new GameRemovedEventArgs(id));
-
-            }
+            RemoveGame(id);
         }
+    }
+}
+
+internal class FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IConfiguration config)
+    : GameServerBase(mapGenerator, database), IDisposable
+{
+    private readonly HashSet<string> finalUserIds = (config["final"] ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet();
+    private readonly ConcurrentBag<string> startedUserIds = [];
+    private readonly AutoResetEvent questStarted = new(false);
+
+    private readonly int finalSeed = Random.Shared.Next();
+    private readonly bool countdownEnabled = config["countdown"] != "no";
+
+    public void Dispose()
+    {
+        questStarted.Dispose();
+    }
+
+    protected override Game StartTraining(User user, int level, ref int seed)
+    {
+        throw new InvalidOperationException("Not allowed to start training games during final quest");
+    }
+
+    protected override Quest StartQuest(User user, ref int seed)
+    {
+        Debug.Assert(user.Id != null);
+
+        // Override seed, so all quests use the same seed
+        seed = finalSeed;
+
+        // Check that user is in the list of allowed final users
+        if (!finalUserIds.Contains(user.Id))
+        {
+            throw new InvalidOperationException("User not allowed to compete in final quest");
+        }
+        // Or has already started
+        if (startedUserIds.Contains(user.Id))
+        {
+            throw new InvalidOperationException("User already started a quest");
+        }
+
+        // Start quest (ignore given seed, use the same seed for all users)
+        var quest = new Quest(user, mapGenerator, database, seed);
+
+        // Store in list of active quests
+        startedUserIds.Add(user.Id);
+        questStarted.Set();
+
+        // Wait until all started
+        while (startedUserIds.Count != finalUserIds.Count)
+        {
+            questStarted.WaitOne(100);
+        }
+
+        if (countdownEnabled)
+        {
+            // Show count down
+            for (var i = 5; i > 0; i--)
+            {
+                Console.WriteLine($"Quest starting for {user.Name} in {i} ...");
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
+            Console.WriteLine($"Quest starting for {user.Name} ...");
+        }
+
+        return quest;
     }
 }

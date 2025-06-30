@@ -21,6 +21,7 @@ internal class QuestQueue
         if (user.Id == null) throw new ArgumentNullException(nameof(user));
 
         var now = Clock.Now;
+        var queueChanged = false;
 
         // Cleanup inactive queued users.
         var inactiveQuests = entries.
@@ -35,6 +36,7 @@ internal class QuestQueue
         if (inactiveUserNames.Length > 0)
         {
             queuedUsers = queuedUsers.RemoveRange(inactiveUserNames);
+            queueChanged = true;
         }
 
         if (entries.TryGetValue(user.Id, out var entry))
@@ -48,6 +50,11 @@ internal class QuestQueue
             entry = new QueueEntry(user.Id, user.Name, now, now);
             entries = entries.Add(user.Id, entry);
             queuedUsers = queuedUsers.Add(user.Name);
+            queueChanged = true;
+        }
+
+        if (queueChanged)
+        {
             OnUpdated();
         }
     }

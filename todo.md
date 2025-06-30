@@ -22,7 +22,10 @@
 - [ ] Single build output/publish folder for server and dashboard
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
-- [ ] Change quest queueing. Start game, but return "queued" result at act().
+- [ ] ConvertToString make real strings with spaces instead of simply enum.ToString clone
+- [ ] Extra ActStatus for InvalidOperationException?
+- [ ] Switch from MongoDB to DuckDB
+- [ ] Update example map in documentation to new theme
 
 # Ideas
 - [ ] Codes to unlock each level, based on Advent of Code.

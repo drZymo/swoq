@@ -15,7 +15,14 @@ builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabase>();
 builder.Services.AddSingleton<IMapGenerator, MapGenerator>();
 builder.Services.AddSingleton<GameServicePostman>();
 builder.Services.AddSingleton<ReplaySaver>();
-builder.Services.AddSingleton<IGameServer, GameServer>();
+if (args.Contains("--final"))
+{
+    builder.Services.AddSingleton<IGameServer, FinalGameServer>();
+}
+else
+{
+    builder.Services.AddSingleton<IGameServer, GameServer>();
+}
 
 var app = builder.Build();
 app.MapGrpcService<GameService>();

@@ -9,7 +9,6 @@ public static class Converters
         StartResult.UnknownUser => "NoSword",
         StartResult.InvalidLevel => "InvalidLevel",
         StartResult.QuestQueued => "QuestQueued",
-        StartResult.QuestAlreadyActive => "QuestAlreadyActive",
         _ => "Unknown",
     };
 

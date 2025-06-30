@@ -85,11 +85,7 @@ export class GameConnection implements Disposable {
                 break;
             }
             if (response.result === StartResult.QUEST_QUEUED) {
-                const delaySeconds = 2;
-                console.log(
-                    `Quest queued, waiting ${delaySeconds} seconds before retrying ...`,
-                );
-                await sleep(delaySeconds * 1000);
+                console.log(`Quest queued, retrying ...`);
                 continue;
             }
             throw new GameStartResultError(response.result);

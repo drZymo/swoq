@@ -78,22 +78,18 @@
             </Grid>
 
             <Grid Grid.Column="2" DataContext="{Binding GameObserver}">
-                <TabControl ItemsSource="{Binding GameObservations}" SelectedItem="{Binding SelectedObservation}">
-                    <TabControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock>
-                                <Run Text="{Binding UserName, Mode=OneWay}" />
-                                <Run> - Level </Run>
-                                <Run Text="{Binding Level, Mode=OneWay}" />
-                            </TextBlock>
-                        </DataTemplate>
-                    </TabControl.ItemTemplate>
-                    <TabControl.ContentTemplate>
+                <ItemsControl ItemsSource="{Binding GameObservations}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid  Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="infravm:GameObservationViewModel">
-                            <infraui:GameObservationView DataContext="{Binding}" ShowHeader="false"/>
+                            <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true"/>
                         </DataTemplate>
-                    </TabControl.ContentTemplate>
-                </TabControl>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 <!---->
                 <Canvas>
                     <Button Canvas.Top="0" Canvas.Right="0" Click="OnMaximizeClicked">
