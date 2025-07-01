@@ -38,24 +38,19 @@ func (g GameConnection) Start(level *int32, seed *int32) (*Game, error) {
 	defer cancel()
 	startRequest := &swoq.StartRequest{UserId: g.userId, Level: level, Seed: seed}
 
-	var startResponse *swoq.StartResponse
-	for {
-		var err error
+	startResponse, err := g.client.Start(ctx, startRequest)
+	if err != nil {
+		return nil, err
+	}
+	for startResponse.Result == swoq.StartResult_START_RESULT_QUEST_QUEUED {
+		log.Printf("Quest queued, retrying ...")
 		startResponse, err = g.client.Start(ctx, startRequest)
 		if err != nil {
 			return nil, err
 		}
-
-		if startResponse.Result == swoq.StartResult_START_RESULT_OK {
-			break
-		}
-
-		if startResponse.Result != swoq.StartResult_START_RESULT_QUEST_QUEUED {
-			return nil, fmt.Errorf("Start failed (result %s)", startResponse.Result.String())
-		}
-
-		log.Printf("Quest queued, waiting 2 seconds before retrying ...")
-		time.Sleep(2 * time.Second)
+	}
+	if startResponse.Result != swoq.StartResult_START_RESULT_OK {
+		return nil, fmt.Errorf("Start failed (result %s)", startResponse.Result.String())
 	}
 
 	var replayFile *ReplayFile = nil
