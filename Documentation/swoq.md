@@ -39,7 +39,7 @@ Finally the last, and maybe most import parameter is `state`. This structure con
 | `START_RESULT_INTERNAL_ERROR = 1` | Something unexpected went wrong on the server. Contact the administrators if it persists.                                                                                                                                                                                 |
 | `START_RESULT_UNKNOWN_USER = 2`   | The `userId` provided does not identify an existing user. Use the id that was given to you during registration. **Note**: This is NOT your user name.                                                                                                                     |
 | `START_RESULT_INVALID_LEVEL = 3`  | The level specified is not a valid value for the given user. It could be out-of-range, or the user specified with `userId` does not have a sufficiently high enough level. Check the level of your user account on the portal or in the high-score list of the dashboard. |
-| `START_RESULT_QUEST_QUEUED = 4`   | Another Quest game is already active, so your request to start a Quest game was queued by the server. See [Quest queueing](#quest-queueing)                                                                                                                               |
+| `START_RESULT_NOT_ALLOWED = 4`    | The user is not allowed to start the game. The server might have disabled certain game types or the user does not have the access rights to start a certain game                                                                                                          |
 
 ### Quest queueing
 
@@ -238,7 +238,7 @@ For this feature only the following tile definitions have been added.
 
 # Level 8 and higher
 
-What's that? Another living being in this map? Yes, this level introduces an enemy. This is a non-playable character that will try to kill your player by attacking it with a sword. 
+What's that? Another living being in this map? Yes, this level introduces an enemy. This is a non-playable character that will try to kill your player by attacking it with a sword.
 
 If your player is on an adjacent tile at the start of a tick, then the enemy will attack your player and deal 1 point of damage. If your player is out of health, then it will die. The enemy can move and will chase your player. So, be sure to stay away.
 

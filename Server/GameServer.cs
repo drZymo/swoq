@@ -256,7 +256,8 @@ internal class FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase databas
 
     protected override Game StartTraining(User user, int level, ref int seed)
     {
-        throw new InvalidOperationException("Not allowed to start training games during final quest");
+        // Not allowed to start training games during final quest
+        throw new NotAllowedException();
     }
 
     protected override Quest StartQuest(User user, ref int seed)
@@ -269,12 +270,12 @@ internal class FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase databas
         // Check that user is in the list of allowed final users
         if (!finalUserIds.Contains(user.Id))
         {
-            throw new InvalidOperationException("User not allowed to compete in final quest");
+            throw new NotAllowedException();
         }
         // Or has already started
         if (startedUserIds.Contains(user.Id))
         {
-            throw new InvalidOperationException("User already started a quest");
+            throw new NotAllowedException();
         }
 
         // Start quest (ignore given seed, use the same seed for all users)

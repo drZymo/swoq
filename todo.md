@@ -22,7 +22,6 @@
 - [ ] Single build output/publish folder for server and dashboard
 - [ ] Tile size (w/h) dynamic in InfraUI
 - [ ] Extend .editorconfig
-- [ ] ConvertToString make real strings with spaces instead of simply enum.ToString clone
 - [ ] Extra ActStatus for InvalidOperationException?
 - [ ] Switch from MongoDB to DuckDB
 - [ ] Update example map in documentation to new theme

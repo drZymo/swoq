@@ -12,6 +12,7 @@ public abstract class SwoqStartException(StartResult result) : Exception
 public class UnknownUserException() : SwoqStartException(StartResult.UnknownUser) { }
 public class InvalidLevelException() : SwoqStartException(StartResult.InvalidLevel) { }
 public class QuestQueuedException() : SwoqStartException(StartResult.QuestQueued) { }
+public class NotAllowedException() : SwoqStartException(StartResult.NotAllowed) { }
 
 // Act
 public abstract class SwoqActException(ActResult result) : Exception

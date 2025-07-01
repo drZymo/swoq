@@ -39,6 +39,7 @@ enum StartResult {
     START_RESULT_UNKNOWN_USER = 2;
     START_RESULT_INVALID_LEVEL = 3;
     START_RESULT_QUEST_QUEUED = 4;
+    START_RESULT_NOT_ALLOWED = 5;
 }
 
 enum ActResult {

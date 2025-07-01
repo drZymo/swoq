@@ -50,7 +50,7 @@ public class FinalGameServerTests
     {
         Assert.That(
             Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", 0)).Result,
-            Is.EqualTo(StartResult.InternalError));
+            Is.EqualTo(StartResult.NotAllowed));
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class FinalGameServerTests
     {
         Assert.That(
             Assert.Throws<GameServerStartException>(() => gameServer.Start("u3", null)).Result,
-            Is.EqualTo(StartResult.InternalError));
+            Is.EqualTo(StartResult.NotAllowed));
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class FinalGameServerTests
         // Another start is not allowed
         Assert.That(
             Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", null)).Result,
-            Is.EqualTo(StartResult.InternalError));
+            Is.EqualTo(StartResult.NotAllowed));
     }
 
     private class DummyGenerator : IMapGenerator
