@@ -237,7 +237,7 @@ internal class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, in
     }
 }
 
-internal class FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IConfiguration config)
+internal class FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IConfiguration config, int? finalSeed = null)
     : GameServerBase(mapGenerator, database), IDisposable
 {
     private readonly HashSet<string> finalUserIds = (config["final"] ?? "")
@@ -246,7 +246,7 @@ internal class FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase databas
     private readonly ConcurrentBag<string> startedUserIds = [];
     private readonly AutoResetEvent questStarted = new(false);
 
-    private readonly int finalSeed = Random.Shared.Next();
+    private readonly int finalSeed = finalSeed ?? Random.Shared.Next();
     private readonly bool countdownEnabled = config["countdown"] != "no";
 
     public void Dispose()

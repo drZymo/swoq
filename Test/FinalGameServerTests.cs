@@ -8,7 +8,7 @@ namespace Swoq.Test;
 
 public class FinalGameServerTests
 {
-    private DateTime now = DateTime.Now;
+    private readonly DateTime now = DateTime.Now;
 
     private DummyGenerator mapGenerator;
     private SwoqDatabaseInMemory database;
@@ -28,7 +28,7 @@ public class FinalGameServerTests
         database.CreateUser(new User { Id = "u1", Name = "User1", Level = 1 });
         database.CreateUser(new User { Id = "u2", Name = "User2", Level = 1 });
         database.CreateUser(new User { Id = "u3", Name = "User3", Level = 1 });
-        gameServer = new FinalGameServer(mapGenerator, database, configuration);
+        gameServer = new FinalGameServer(mapGenerator, database, configuration, finalSeed: 42);
     }
 
     [TearDown]
