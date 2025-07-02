@@ -195,7 +195,9 @@ public class GameServerTests
         Assert.That(result2, Is.Not.Null);
 
         // Acting on 1 should now fail on timeout
-        Assert.That(Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth)).Result, Is.EqualTo(ActResult.GameFinished));
+        var exception1 = Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.That(exception1.Result, Is.EqualTo(ActResult.GameFinished));
+        Assert.That(exception1.State?.Status, Is.EqualTo(GameStatus.FinishedTimeout));
     }
 
     [Test]
@@ -278,7 +280,9 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         now += TimeSpan.FromSeconds(20);
-        Assert.That(Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth)).Result, Is.EqualTo(ActResult.GameFinished));
+        var exception1 = Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveNorth));
+        Assert.That(exception1.Result, Is.EqualTo(ActResult.GameFinished));
+        Assert.That(exception1.State?.Status, Is.EqualTo(GameStatus.FinishedTimeout));
 
         // Start training for user 2 and let it timeout
         GameStartResult? result2 = null;
@@ -287,7 +291,9 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
         now += TimeSpan.FromSeconds(70);
-        Assert.That(Assert.Throws<GameServerActException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest)).Result, Is.EqualTo(ActResult.GameFinished));
+        var exception2 = Assert.Throws<GameServerActException>(() => gameServer.Act(result2.GameId, DirectedAction.MoveWest));
+        Assert.That(exception2.Result, Is.EqualTo(ActResult.GameFinished));
+        Assert.That(exception2.State?.Status, Is.EqualTo(GameStatus.FinishedTimeout));
 
         // Wait a while
         now += TimeSpan.FromMinutes(11);
@@ -412,7 +418,9 @@ public class GameServerTests
         GameStartResult? result3 = null;
         Assert.DoesNotThrow(() => result3 = gameServer.Start("u3", null));
         // User 1 cannot act anymore
-        Assert.That(Assert.Throws<GameServerActException>(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast)).Result, Is.EqualTo(ActResult.GameFinished));
+        var exception1 = Assert.Throws<GameServerActException>(() => state = gameServer.Act(result1.GameId, DirectedAction.MoveEast));
+        Assert.That(exception1.Result, Is.EqualTo(ActResult.GameFinished));
+        Assert.That(exception1.State?.Status, Is.EqualTo(GameStatus.FinishedSuccess));
         // User 2 can still act
         Assert.DoesNotThrow(() => gameServer.Act(result2.GameId, DirectedAction.MoveEast));
     }
@@ -429,13 +437,16 @@ public class GameServerTests
         now += TimeSpan.FromSeconds(1);
         Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u2", null)).Result, Is.EqualTo(StartResult.QuestQueued));
 
-        // Start another quest for user 1, should not be queued
+        // Start another quest for user 1, should be queued
         now += TimeSpan.FromSeconds(1);
         Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", null)).Result, Is.EqualTo(StartResult.QuestQueued));
 
         // Act on user 1's initial quest should no longer be possible
         now += TimeSpan.FromSeconds(1);
-        Assert.That(Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth)).Result, Is.EqualTo(ActResult.GameFinished));
+        var exception = Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.That(exception.Result, Is.EqualTo(ActResult.GameFinished));
+        Assert.That(exception.State, Is.Not.Null);
+        Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCancelled));
     }
 
     private class DummyGenerator : IMapGenerator
