@@ -1,24 +1,18 @@
 import grpc
 import swoq_pb2
 import swoq_pb2_grpc
-import urllib.parse
-from time import sleep
 from pathlib import Path
 from datetime import datetime
 
 class ReplayFile:
-    def __init__(self, user_name:str, replays_folder:str, start_request:swoq_pb2.StartRequest, start_response:swoq_pb2.StartResponse):
-        sanitized_user_name = urllib.parse.quote(user_name)
+    def __init__(self, replays_folder:str, start_request:swoq_pb2.StartRequest, start_response:swoq_pb2.StartResponse):
         dateTimeStr = datetime.now().strftime('%Y%m%d-%H%M%S')
-        filename = Path(replays_folder) / f'{sanitized_user_name} - {dateTimeStr} - {start_response.gameId}.swoq'
+        filename = Path(replays_folder) / f'{start_request.userName} - {dateTimeStr} - {start_response.gameId}.swoq'
 
         if not filename.parent.exists():
             filename.parent.mkdir(parents=True)
 
         self.file = open(filename, 'wb')
-
-        header = swoq_pb2.ReplayHeader(userName = user_name, dateTime = datetime.now().isoformat())
-        self._write_delimited(header)
 
         self._write_delimited(start_request)
         self._write_delimited(start_response)
@@ -110,7 +104,7 @@ class GameConnection:
         self.close()
 
     def start(self, level:(int|None)=None, seed:(int|None)=None) -> Game:
-        request = swoq_pb2.StartRequest(userId=self._user_id, level=level, seed=seed)
+        request = swoq_pb2.StartRequest(userId=self._user_id, userName=self._user_name, level=level, seed=seed)
 
         response = self._game_service.Start(request)
         while response.result == swoq_pb2.START_RESULT_QUEST_QUEUED:
@@ -120,6 +114,6 @@ class GameConnection:
         if response.result != swoq_pb2.START_RESULT_OK:
             raise GameException(f'Start failed (result {swoq_pb2.StartResult.Name(response.result)})')
 
-        replay_file = ReplayFile(self._user_name, self._replays_folder, request, response) if self._replays_folder else None
+        replay_file = ReplayFile(self._replays_folder, request, response) if self._replays_folder else None
 
         return Game(self._game_service, response, replay_file)

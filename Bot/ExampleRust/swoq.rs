@@ -64,6 +64,7 @@ impl GameConnection {
         loop {
             let request = StartRequest {
                 user_id: self.user_id.clone(),
+                user_name: self.user_name.clone(),
                 level,
                 seed,
             };
@@ -74,7 +75,7 @@ impl GameConnection {
             match result {
                 StartResult::Ok => {
                     let replay_file = self.replays_folder.as_ref().and_then(|folder| {
-                        ReplayFile::new(&self.user_name, folder, &request, &response).ok()
+                        ReplayFile::new(folder, &request, &response).ok()
                     });
                     return Ok(Game::new(&mut self.client, response, replay_file));
                 }
@@ -148,7 +149,6 @@ struct ReplayFile {
 
 impl ReplayFile {
     pub fn new(
-        user_name: &str,
         replays_folder: &str,
         start_request: &StartRequest,
         start_response: &StartResponse,
@@ -163,7 +163,7 @@ impl ReplayFile {
 
         let filename = Path::new(replays_folder).join(format!(
             "{} - {} - {}.swoq",
-            user_name, date_time_str, game_id
+            start_request.user_name, date_time_str, game_id
         ));
 
         if let Some(parent) = filename.parent() {
@@ -174,14 +174,6 @@ impl ReplayFile {
 
         let file = File::create(filename)?;
         let mut replay_file = ReplayFile { file };
-
-        let header = swoq_interface::ReplayHeader {
-            user_name: user_name.to_string(),
-            date_time: now
-                .format(&format_description::well_known::Iso8601::DEFAULT)
-                .unwrap(),
-        };
-        replay_file.write_delimited_message(&header)?;
 
         replay_file.write_delimited_message(start_request)?;
         replay_file.write_delimited_message(start_response)?;

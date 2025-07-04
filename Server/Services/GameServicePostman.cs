@@ -2,9 +2,8 @@
 
 namespace Swoq.Server.Services;
 
-public class StartedEventArgs(string userName, Guid gameId, StartRequest request, StartResponse response) : EventArgs
+public class StartedEventArgs(Guid gameId, StartRequest request, StartResponse response) : EventArgs
 {
-    public string UserName { get; } = userName;
     public Guid GameId { get; } = gameId;
     public StartRequest Request { get; } = request;
     public StartResponse Response { get; } = response;
@@ -19,9 +18,9 @@ public class ActedEventArgs(Guid gameId, ActRequest request, ActResponse respons
 
 public class GameServicePostman
 {
-    public void RaiseStarted(string userName, Guid gameId, StartRequest request, StartResponse response)
+    public void RaiseStarted(Guid gameId, StartRequest request, StartResponse response)
     {
-        Started?.Invoke(this, new(userName, gameId, request, response));
+        Started?.Invoke(this, new(gameId, request, response));
     }
     public event EventHandler<StartedEventArgs>? Started;
 

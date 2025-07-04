@@ -1,7 +1,6 @@
 ﻿@page "/logout/"
 
 @using Swoq.Data
-@using Swoq.Portal.Services
 
 @inject NavigationManager NavigationManager
 
@@ -21,7 +20,7 @@
 		{
 			if (CurrentUserProvider != null)
 			{
-				await CurrentUserProvider.RemoveUserIdAsync();
+				await CurrentUserProvider.RemoveUserAsync();
 				NavigationManager.NavigateTo($"/", forceLoad: true);
 			}
 		}

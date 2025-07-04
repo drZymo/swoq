@@ -1,7 +1,5 @@
 ﻿using Google.Protobuf;
 using Microsoft.Extensions.Options;
-using Swoq.Infra;
-using Swoq.Interface;
 using Swoq.Server.Data;
 using Swoq.Server.Services;
 using System.Collections.Concurrent;
@@ -52,13 +50,8 @@ internal class ReplaySaver : IDisposable
         if (e.Request.HasLevel) return;
 
         // Register filename for this game id
-        string sanitizedUserName = Uri.EscapeDataString(e.UserName);
-        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{sanitizedUserName} - {e.GameId}.swoq");
+        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{e.Request.UserName} - {e.GameId}.swoq");
         if (!filenames.TryAdd(e.GameId, filename)) return;
-
-        // Store header
-        var header = new ReplayHeader { UserName = e.UserName, DateTime = Clock.Now.ToString("s") };
-        Enqueue(e.GameId, header);
 
         // Store start
         Enqueue(e.GameId, e.Request);

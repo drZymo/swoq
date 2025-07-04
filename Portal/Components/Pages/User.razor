@@ -2,7 +2,6 @@
 
 @using Swoq.Data
 @using System.Collections.Immutable
-@using Swoq.Portal.Services
 
 @inject ISwoqDatabase Database
 
@@ -80,40 +79,40 @@ else
 
 	private RenderFragment RenderStatisticRow(object level, int minTicks, int globalMinTicks, int deltaMin, int avgTicks, int globalAvgTicks, int deltaAvg) =>
 		@<tr>
-			<td>@level</td>
-			<td>@minTicks</td>
-			<td>
-				@globalMinTicks (
-				@if (deltaMin > 0)
+	<td>@level</td>
+	<td>@minTicks</td>
+	<td>
+		@globalMinTicks (
+		@if (deltaMin > 0)
 				{
-				<span class="text-danger">+@deltaMin</span>
+		<span class="text-danger">+@deltaMin</span>
 				}
-				else if (deltaMin < 0)
+				else if (deltaMin< 0)
 				{
-				<span class="text-success">@deltaMin</span>
-				}
-				else
-				{
-				<span class="text-muted">@deltaMin</span>
-				}
-				)
-			</td>
-			<td>@avgTicks</td>
-			<td>
-				@globalAvgTicks (
-				@if (deltaAvg > 0)
-				{
-				<span class="text-danger">+@deltaAvg</span>
-				}
-				else if (deltaAvg < 0)
-				{
-				<span class="text-success">@deltaAvg</span>
+		<span class="text-success">@deltaMin</span>
 				}
 				else
-				{
-				<span class="text-muted">@deltaAvg</span>
-				}
-				)
-			</td>
-		</tr>;
+		{
+			<span class="text-muted">@deltaMin</span>
+		}
+		)
+	</td>
+	<td>@avgTicks</td>
+	<td>
+		@globalAvgTicks (
+		@if (deltaAvg > 0)
+		{
+			<span class="text-danger">+@deltaAvg</span>
+		}
+		else if (deltaAvg < 0)
+		{
+			<span class="text-success">@deltaAvg</span>
+		}
+		else
+		{
+			<span class="text-muted">@deltaAvg</span>
+		}
+		)
+	</td>
+</tr>;
 }

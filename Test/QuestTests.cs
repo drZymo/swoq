@@ -13,6 +13,7 @@ internal class QuestTests
     private DummyGenerator mapGenerator = new();
     private SwoqDatabaseInMemory database = new();
     private string userId;
+    private string userName;
     private Quest quest;
 
     private DateTime now = DateTime.Now;
@@ -29,6 +30,7 @@ internal class QuestTests
         database.CreateUserAsync(user).Wait();
         Assert.That(user.Id, Is.Not.Null);
         userId = user.Id;
+        userName = user.Name;
 
         quest = new Quest(user, mapGenerator, database, 42);
         Assert.Multiple(() =>
@@ -160,7 +162,7 @@ internal class QuestTests
     {
         get
         {
-            var user = database.FindUserByIdAsync(userId).Result;
+            var user = database.FindUserAsync(userId, userName).Result;
             Assert.That(user, Is.Not.Null);
             return user;
         }

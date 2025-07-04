@@ -1,11 +1,11 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Windows.Input;
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
 using Swoq.ReplayViewer.Util;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
@@ -93,11 +93,10 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
                 ? new TailStream(path)
                 : new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            var header = ReplayHeader.Parser.ParseDelimitedFrom(file);
             var startRequest = StartRequest.Parser.ParseDelimitedFrom(file);
             var startResponse = StartResponse.Parser.ParseDelimitedFrom(file);
 
-            var builder = new GameObservationBuilder(startResponse.GameId, startResponse.MapHeight, startResponse.MapWidth, startResponse.VisibilityRange, header.UserName);
+            var builder = new GameObservationBuilder(startResponse.GameId, startResponse.MapHeight, startResponse.MapWidth, startResponse.VisibilityRange, startRequest.UserName);
 
             var gameState = builder.BuildNext(null, startResponse.State, startResponse.Result, Dispatcher.UIThread);
             gameStates = gameStates.Add(gameState);

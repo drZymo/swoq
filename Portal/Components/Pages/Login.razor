@@ -8,7 +8,7 @@
 
 <h1>Login</h1>
 
-<p>Please sign in with your user ID.</p>
+<p>Please sign in with your user ID and user name.</p>
 
 <p>If you do not have a user ID yet, then <NavLink href="register">register here</NavLink> first.</p>
 
@@ -21,6 +21,12 @@
 		</label>
 	</div>
 	<div>
+		<label>
+			User Name:
+			<InputText @bind-Value="LoginUserName" />
+		</label>
+	</div>
+	<div>
 		<button type="submit">Submit</button>
 	</div>
 </form>
@@ -30,6 +36,9 @@
 	[SupplyParameterFromForm]
 	public string LoginUserId { get; set; } = string.Empty;
 
+	[SupplyParameterFromForm]
+	public string LoginUserName { get; set; } = string.Empty;
+
 	[CascadingParameter]
 	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
@@ -37,7 +46,7 @@
 	{
 		if (CurrentUserProvider != null)
 		{
-			await CurrentUserProvider.SetUserIdAsync(LoginUserId);
+			await CurrentUserProvider.SetUserAsync(LoginUserId, LoginUserName);
 			NavigationManager.NavigateTo($"/user/", forceLoad: true);
 		}
 	}

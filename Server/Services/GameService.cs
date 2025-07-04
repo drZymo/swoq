@@ -15,7 +15,7 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 int? level = request.HasLevel ? request.Level : null;
                 // Seed may only be given for Training games. Quest games are always random.
                 int? seed = (request.HasLevel && request.HasSeed) ? request.Seed : null;
-                var startResult = server.Start(request.UserId, level, seed);
+                var startResult = server.Start(request.UserId, request.UserName, level, seed);
 
                 response.Result = StartResult.Ok;
                 response.GameId = startResult.GameId.ToString();
@@ -26,7 +26,7 @@ internal class GameService(ILogger<GameService> logger, IGameServer server, Game
                 response.Seed = startResult.Seed;
 
                 // Report
-                gameServicePostman.RaiseStarted(startResult.UserName, startResult.GameId, request, response);
+                gameServicePostman.RaiseStarted(startResult.GameId, request, response);
             }
             catch (GameServerStartException ex)
             {

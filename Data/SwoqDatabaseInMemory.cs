@@ -24,11 +24,8 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         users.TryAdd(newUser.Id, newUser);
     }
 
-    public async Task<User?> FindUserByIdAsync(string id) =>
-        await Task.FromResult(users.TryGetValue(id, out var u) ? u : null);
-
-    public async Task<User?> FindUserByNameAsync(string name) =>
-        await Task.Run(() => users.Values.Where(u => u.Name == name).FirstOrDefault());
+    public async Task<User?> FindUserAsync(string id, string name) =>
+        await Task.FromResult(users.TryGetValue(id, out var u) && u.Name == name ? u : null);
 
     public async Task UpdateUserAsync(User user)
     {

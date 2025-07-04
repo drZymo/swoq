@@ -41,7 +41,7 @@ public class FinalGameServerTests
     public void UnknownUser()
     {
         Assert.That(
-            Assert.Throws<GameServerStartException>(() => gameServer.Start("u4", null)).Result,
+            Assert.Throws<GameServerStartException>(() => gameServer.Start("u4", "User4", null)).Result,
             Is.EqualTo(StartResult.UnknownUser));
     }
 
@@ -49,7 +49,7 @@ public class FinalGameServerTests
     public void TrainingNotAllowed()
     {
         Assert.That(
-            Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", 0)).Result,
+            Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", "User1", 0)).Result,
             Is.EqualTo(StartResult.NotAllowed));
     }
 
@@ -57,16 +57,16 @@ public class FinalGameServerTests
     public void UserNotAllowed()
     {
         Assert.That(
-            Assert.Throws<GameServerStartException>(() => gameServer.Start("u3", null)).Result,
+            Assert.Throws<GameServerStartException>(() => gameServer.Start("u3", "User3", null)).Result,
             Is.EqualTo(StartResult.NotAllowed));
     }
 
     [Test]
     public void QuestStartsAfterAllConnected()
     {
-        using var task1 = Task.Run(() => gameServer.Start("u1", null));
+        using var task1 = Task.Run(() => gameServer.Start("u1", "User1", null));
         Thread.Sleep(100);
-        using var task2 = Task.Run(() => gameServer.Start("u2", null));
+        using var task2 = Task.Run(() => gameServer.Start("u2", "User2", null));
 
         Assert.That(task1.Wait(100), Is.True);
         Assert.That(task2.Wait(100), Is.True);
@@ -78,15 +78,15 @@ public class FinalGameServerTests
     [Test]
     public void SecondQuestStartNotAllowed()
     {
-        using var task1 = Task.Run(() => gameServer.Start("u1", null));
-        using var task2 = Task.Run(() => gameServer.Start("u2", null));
+        using var task1 = Task.Run(() => gameServer.Start("u1", "User1", null));
+        using var task2 = Task.Run(() => gameServer.Start("u2", "User2", null));
 
         Assert.That(task1.Wait(100), Is.True);
         Assert.That(task2.Wait(100), Is.True);
 
         // Another start is not allowed
         Assert.That(
-            Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", null)).Result,
+            Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", "User1", null)).Result,
             Is.EqualTo(StartResult.NotAllowed));
     }
 

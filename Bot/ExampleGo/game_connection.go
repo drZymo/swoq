@@ -36,7 +36,7 @@ func (g GameConnection) Close() error {
 func (g GameConnection) Start(level *int32, seed *int32) (*Game, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	startRequest := &swoq.StartRequest{UserId: g.userId, Level: level, Seed: seed}
+	startRequest := &swoq.StartRequest{UserId: g.userId, UserName: g.userName, Level: level, Seed: seed}
 
 	startResponse, err := g.client.Start(ctx, startRequest)
 	if err != nil {
@@ -56,7 +56,7 @@ func (g GameConnection) Start(level *int32, seed *int32) (*Game, error) {
 	var replayFile *ReplayFile = nil
 	if g.replaysFolder != "" {
 		var err error
-		replayFile, err = NewReplayFile(g.userName, g.replaysFolder, startRequest, startResponse)
+		replayFile, err = NewReplayFile(g.replaysFolder, startRequest, startResponse)
 		if err != nil {
 			return nil, err
 		}

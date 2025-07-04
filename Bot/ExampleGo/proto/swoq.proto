@@ -9,8 +9,9 @@ service GameService {
 
 message StartRequest {
     string userId = 1;
-    optional int32 level = 2;
-    optional int32 seed = 3;
+    string userName = 2;
+    optional int32 level = 3;
+    optional int32 seed = 4;
 }
 
 message StartResponse {
@@ -93,8 +94,3 @@ enum Tile {
     TILE_EXIT = 4;
 }
 
-// Used by the ReplaySaver and ReplayViewer
-message ReplayHeader {
-    string userName = 1;
-    string dateTime = 2;
-}

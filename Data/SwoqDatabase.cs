@@ -30,11 +30,8 @@ public class SwoqDatabase : ISwoqDatabase
     public void CreateUser(User newUser) =>
         users.InsertOne(newUser);
 
-    public async Task<User?> FindUserByIdAsync(string id) =>
-        await users.Find(p => p.Id == id).FirstOrDefaultAsync();
-
-    public async Task<User?> FindUserByNameAsync(string name) =>
-        await users.Find(u => u.Name == name).FirstOrDefaultAsync();
+    public async Task<User?> FindUserAsync(string id, string name) =>
+        await users.Find(u => u.Id == id && u.Name == name).FirstOrDefaultAsync();
 
     public async Task UpdateUserAsync(User user)
     {

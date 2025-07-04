@@ -1,5 +1,6 @@
 ﻿@page "/register/"
 @using Swoq.Data
+@using System.Text.RegularExpressions
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject ISwoqDatabase Database
@@ -23,16 +24,31 @@
 	</div>
 </form>
 
-<p>@ErrorMessage</p>
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="ClearError"></button>
+    </div>
+}
 
 @code {
 	[SupplyParameterFromForm]
 	public string UserName { get; set; } = string.Empty;
 
-	public string ErrorMessage { get; set; } = string.Empty;
+	public string? ErrorMessage { get; set; } = null;
+
+	private static readonly Regex usernameCheck = new Regex(@"^[A-Za-z0-9_]+$", RegexOptions.Compiled);
 
 	private void Submit()
 	{
+		ErrorMessage = null;
+		if (!usernameCheck.IsMatch(UserName))
+		{
+			ErrorMessage = $"Invalid user name. Only letters (a-z and A-Z), numbers (0-9) and underscores (_) are allowed.";
+			return;
+		}
+
 		var user = new Swoq.Data.User() { Name = UserName };
 		try
 		{
@@ -44,5 +60,10 @@
 		{
 			ErrorMessage = $"Exception: {ex}";
 		}
+	}
+
+	private void ClearError()
+	{
+		ErrorMessage = null;
 	}
 }

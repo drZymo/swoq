@@ -29,7 +29,7 @@ internal class GameConnection : IDisposable
 
     public Game Start(int? level = null, int? seed = null)
     {
-        var request = new StartRequest() { UserId = userId };
+        var request = new StartRequest() { UserId = userId, UserName = userName };
         if (level.HasValue) request.Level = level.Value;
         if (seed.HasValue) request.Seed = seed.Value;
 
@@ -45,7 +45,7 @@ internal class GameConnection : IDisposable
         }
 
         ReplayFile? replayFile = string.IsNullOrWhiteSpace(replaysFolder)
-            ? null : new ReplayFile(userName, replaysFolder, request, response);
+            ? null : new ReplayFile(replaysFolder, request, response);
 
         return new Game(client, response, replayFile);
     }

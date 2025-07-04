@@ -18,6 +18,6 @@ public interface IGameServer
     event EventHandler<GameRemovedEventArgs>? GameRemoved;
     event EventHandler<QueueUpdatedEventArgs>? QueueUpdated;
 
-    GameStartResult Start(string userId, int? level, int? seed = null);
+    GameStartResult Start(string userId, string userName, int? level, int? seed = null);
     GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null);
 }

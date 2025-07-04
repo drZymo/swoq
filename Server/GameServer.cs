@@ -33,11 +33,11 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
         remove => questQueue.Updated -= value;
     }
 
-    public GameStartResult Start(string userId, int? level, int? seed = null)
+    public GameStartResult Start(string userId, string userName, int? level, int? seed = null)
     {
         try
         {
-            var user = GetUserOrThrow(database, userId);
+            var user = GetUserOrThrow(database, userId, userName);
 
             // If seed is not given, use a random one.
             var actualSeed = seed ?? Random.Shared.Next();
@@ -72,11 +72,11 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
         }
     }
 
-    private static User GetUserOrThrow(ISwoqDatabase database, string userId)
+    private static User GetUserOrThrow(ISwoqDatabase database, string userId, string userName)
     {
         try
         {
-            return database.FindUserByIdAsync(userId).Result ?? throw new UnknownUserException();
+            return database.FindUserAsync(userId, userName).Result ?? throw new UnknownUserException();
         }
         catch
         {

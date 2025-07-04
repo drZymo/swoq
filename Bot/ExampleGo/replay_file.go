@@ -17,14 +17,14 @@ type ReplayFile struct {
 	stream *os.File
 }
 
-func NewReplayFile(userName string, replaysFolder string, request *swoq.StartRequest, response *swoq.StartResponse) (*ReplayFile, error) {
+func NewReplayFile(replaysFolder string, request *swoq.StartRequest, response *swoq.StartResponse) (*ReplayFile, error) {
 	// Determine file name
 	dateTimeStr := time.Now().Format("20060102-150405")
 	folder, err := filepath.Abs(filepath.Join(replaysFolder))
 	if err != nil {
 		return nil, err
 	}
-	filename := filepath.Join(folder, fmt.Sprintf("%s - %s - %s.swoq", userName, dateTimeStr, *response.GameId))
+	filename := filepath.Join(folder, fmt.Sprintf("%s - %s - %s.swoq", *request.userName, dateTimeStr, *response.GameId))
 	// Create directory first
 	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
 		return nil, err
@@ -32,16 +32,6 @@ func NewReplayFile(userName string, replaysFolder string, request *swoq.StartReq
 	// Create a new file, allow reading
 	stream, err := os.OpenFile(filename, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, err
-	}
-
-	// Store header
-	header := &swoq.ReplayHeader{
-		UserName: userName,
-		DateTime: time.Now().Format(time.RFC3339),
-	}
-	if err := writeDelimitedTo(header, stream); err != nil {
-		stream.Close()
 		return nil, err
 	}
 
