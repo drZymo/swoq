@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Swoq.Interface;
@@ -55,7 +56,12 @@ public static partial class ProtoReader
             }
         }
 
-        return string.Join("\n", filtered);
+        var sb = new StringBuilder();
+        foreach (var line in filtered)
+        {
+            sb.AppendLine(line);
+        }
+        return sb.ToString();
     }
 
     [GeneratedRegex(@"^\s*\}$")]
