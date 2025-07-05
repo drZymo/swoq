@@ -39,7 +39,8 @@ Finally the last, and maybe most import parameter is `state`. This structure con
 | `START_RESULT_INTERNAL_ERROR = 1` | Something unexpected went wrong on the server. Contact the administrators if it persists.                                                                                                                                                                                 |
 | `START_RESULT_UNKNOWN_USER = 2`   | The `userId` provided does not identify an existing user. Use the id that was given to you during registration. **Note**: This is NOT your user name.                                                                                                                     |
 | `START_RESULT_INVALID_LEVEL = 3`  | The level specified is not a valid value for the given user. It could be out-of-range, or the user specified with `userId` does not have a sufficiently high enough level. Check the level of your user account on the portal or in the high-score list of the dashboard. |
-| `START_RESULT_NOT_ALLOWED = 4`    | The user is not allowed to start the game. The server might have disabled certain game types or the user does not have the access rights to start a certain game                                                                                                          |
+| `START_RESULT_QUEST_QUEUED = 4`   | Another Quest game is already active, so your request to start a Quest game was queued by the server. See [Quest queueing](#quest-queueing)                                                                                                                               |
+| `START_RESULT_NOT_ALLOWED = 5`    | The user is not allowed to start the game. The server might have disabled certain game types or the user does not have the access rights to start a certain game                                                                                                          |
 
 ### Quest queueing
 
@@ -344,4 +345,3 @@ And the treasure can end up in your inventory:
 | Inventory                |                                              |
 | ------------------------ | -------------------------------------------- |
 | `INVENTORY_TREASURE = 5` | The treasure chest is now in your inventory. |
-
