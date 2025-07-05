@@ -5,28 +5,28 @@ public static class Converters
     public static string ConvertToString(this StartResult result) => result switch
     {
         StartResult.Ok => "OK",
-        StartResult.InternalError => "InternalError",
-        StartResult.UnknownUser => "NoSword",
-        StartResult.InvalidLevel => "InvalidLevel",
-        StartResult.QuestQueued => "QuestQueued",
-        StartResult.QuestAlreadyActive => "QuestAlreadyActive",
+        StartResult.InternalError => "Internal error",
+        StartResult.UnknownUser => "No sword",
+        StartResult.InvalidLevel => "Invalid level",
+        StartResult.QuestQueued => "Quest queued",
+        StartResult.NotAllowed => "Not allowed",
         _ => "Unknown",
     };
 
     public static string ConvertToString(this ActResult result) => result switch
     {
         ActResult.Ok => "OK",
-        ActResult.InternalError => "InternalError",
-        ActResult.UnknownGameId => "UnknownGameId",
-        ActResult.MoveNotAllowed => "MoveNotAllowed",
-        ActResult.UseNotAllowed => "UseNotAllowed",
-        ActResult.UnknownAction => "UnknownAction",
-        ActResult.GameFinished => "GameFinished",
-        ActResult.PlayerNotPresent => "PlayerNotPresent",
-        ActResult.Player2NotPresent => "Player2NotPresent",
-        ActResult.InventoryFull => "InventoryFull",
-        ActResult.InventoryEmpty => "InventoryEmpty",
-        ActResult.NoSword => "NoSword",
+        ActResult.InternalError => "Internal error",
+        ActResult.UnknownGameId => "Unknown game ID",
+        ActResult.MoveNotAllowed => "Move not allowed",
+        ActResult.UseNotAllowed => "Use not allowed",
+        ActResult.UnknownAction => "Unknown action",
+        ActResult.GameFinished => "Game finished",
+        ActResult.PlayerNotPresent => "Player not present",
+        ActResult.Player2NotPresent => "Player 2 not present",
+        ActResult.InventoryFull => "Inventory full",
+        ActResult.InventoryEmpty => "Inventory empty",
+        ActResult.NoSword => "No sword",
         _ => "Unknown",
     };
 

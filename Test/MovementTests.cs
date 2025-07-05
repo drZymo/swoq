@@ -22,8 +22,8 @@ internal class MovementTests : GameTestBase
         "   #....!b...#   " +
         "   #.........#   " +
         "   #.........#   " +
-        "   #.........#   " +
-        "    #########    " +
+        "   #.........X   " +
+        "    ##########   " +
         "                 " +
         "                 ");
 
@@ -41,8 +41,8 @@ internal class MovementTests : GameTestBase
         "  #....!b...#    " +
         "  #.........#    " +
         "  #.........#    " +
-        "  #.........#    " +
-        "   #########     " +
+        "  #.........X    " +
+        "   ##########    " +
         "                 " +
         "                 ");
 
@@ -255,6 +255,105 @@ internal class MovementTests : GameTestBase
         });
     }
 
+    [Test]
+    public void Player1ExitsFirst()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+            Assert.That(game.State.Player2, Is.Not.Null);
+        });
+
+        // Move to exit with player 1
+        Act(action1: DirectedAction.MoveSouth);
+        Act(action1: DirectedAction.MoveEast);
+        Act(action1: DirectedAction.MoveEast);
+        Act(action1: DirectedAction.MoveSouth);
+        Act(action1: DirectedAction.MoveSouth);
+        Act(action1: DirectedAction.MoveSouth);
+        Act(action1: DirectedAction.MoveSouth);
+        Act(action1: DirectedAction.MoveEast);
+        Act(action1: DirectedAction.MoveEast);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((11, 9)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.KeyRed));
+            Assert.That(game.State.Player1.HasSword, Is.True);
+            Assert.That(changes, Has.Count.EqualTo(4));
+            // Player moved
+            Assert.That(changes[(6, 5)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(11, 9)], Is.EqualTo((Tile.Empty, Tile.Player)));
+            // Sword picked up
+            Assert.That(changes[(7, 5)], Is.EqualTo((Tile.Sword, Tile.Empty)));
+            // Red key picked up
+            Assert.That(changes[(7, 6)], Is.EqualTo((Tile.KeyRed, Tile.Empty)));
+        });
+
+        // Move through exit
+        Act(action1: DirectedAction.MoveEast);
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1.Position, Is.EqualTo((-1, -1)));
+            Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.KeyRed));
+            Assert.That(game.State.Player1.HasSword, Is.True);
+            Assert.That(changes, Has.Count.EqualTo(1));
+            // Player moved out of game
+            Assert.That(changes[(11, 9)], Is.EqualTo((Tile.Player, Tile.Empty)));
+        });
+
+        // Another player 1 act not allowed
+        Assert.Throws<Player1NotPresentException>(() => Act(action1: DirectedAction.MoveEast));
+    }
+
+    [Test]
+    public void Player2ExitsFirst()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player1, Is.Not.Null);
+            Assert.That(game.State.Player2, Is.Not.Null);
+        });
+
+        // Move to exit with player 2
+        Act(action2: DirectedAction.MoveEast);
+        Act(action2: DirectedAction.MoveSouth);
+        Act(action2: DirectedAction.MoveSouth);
+        Act(action2: DirectedAction.MoveSouth);
+        Act(action2: DirectedAction.MoveSouth);
+        Act(action2: DirectedAction.MoveSouth);
+        Act(action2: DirectedAction.MoveEast);
+        Act(action2: DirectedAction.MoveEast);
+        var changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player2.Position, Is.EqualTo((11, 9)));
+            Assert.That(game.State.Player2.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(game.State.Player2.HasSword, Is.False);
+            Assert.That(changes, Has.Count.EqualTo(2));
+            // Player moved
+            Assert.That(changes[(6, 6)], Is.EqualTo((Tile.Player, Tile.Empty)));
+            Assert.That(changes[(11, 9)], Is.EqualTo((Tile.Empty, Tile.Player)));
+        });
+
+        // Move through exit
+        Act(action2: DirectedAction.MoveEast);
+        changes = mapCache.GetNewChanges();
+        Assert.Multiple(() =>
+        {
+            Assert.That(game.State.Player2.Position, Is.EqualTo((-1, -1)));
+            Assert.That(game.State.Player2.Inventory, Is.EqualTo(Inventory.None));
+            Assert.That(game.State.Player2.HasSword, Is.False);
+            Assert.That(changes, Has.Count.EqualTo(1));
+            // Player moved out of game
+            Assert.That(changes[(11, 9)], Is.EqualTo((Tile.Player, Tile.Empty)));
+        });
+
+        // Another player 2 act not allowed
+        Assert.Throws<Player2NotPresentException>(() => Act(action2: DirectedAction.MoveEast));
+    }
+
     protected override Map CreateGameMap()
     {
         var width = 11;
@@ -297,6 +396,9 @@ internal class MovementTests : GameTestBase
 
         // Boulder in left
         map[map.Player1.Position.y, 1] = Cell.Boulder;
+
+        // Exit bottom right
+        map[height - 2, width - 1] = Cell.Exit;
 
         return map.ToMap();
     }

@@ -126,6 +126,11 @@ internal class Game : IGame
         }
     }
 
+    public void Cancel()
+    {
+        status = GameStatus.FinishedCancelled;
+    }
+
     private void UpdateGameStatus()
     {
         if (status != GameStatus.Active) return;

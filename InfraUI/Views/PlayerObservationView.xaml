@@ -12,17 +12,13 @@
              Name="self">
     <local:GroupBox Grid.Row="1">
         <local:GroupBox.Header>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock>
-                    <Run Text="{Binding #self.Title}"/>
-                    <Run>(</Run>
-                    <Run Text="{Binding LastAction, Mode=OneWay}" />
-                    <Run>)</Run>
-                </TextBlock>
-            </StackPanel>
+            <TextBlock Text="{Binding LastAction, Mode=OneWay}" />
         </local:GroupBox.Header>
         <Grid ColumnDefinitions="auto,*,auto" RowDefinitions="auto,*,auto">
-            <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3" Source="{Binding Surroundings.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Width="272" Height="272"/>
+            <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3"
+                   Source="{Binding Surroundings.Image}"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapInterpolationMode="None"/>
 
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" IsVisible="{Binding ShowHealth, Mode=OneWay}">
                 <Image Source="icon_heart16.png" />

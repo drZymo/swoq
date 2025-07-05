@@ -35,10 +35,13 @@ internal static class Parameters
 
     public const int NrOfActiveQuests = 2;
 
+    public static readonly TimeSpan QuestPollPeriod = TimeSpan.FromSeconds(3);
+    public const int QuestPollCount = 20;
+
     public static readonly TimeSpan SessionsUpdatePeriod = TimeSpan.FromMilliseconds(250);
     public static readonly TimeSpan ScoresUpdatePeriod = TimeSpan.FromMilliseconds(500);
     public static readonly TimeSpan StatisticsUpdatePeriod = TimeSpan.FromMilliseconds(250);
 
-    public static readonly int MaxLevelTicks = 1000;
+    public const int MaxLevelTicks = 1000;
     public static readonly TimeSpan MaxLevelDuration = TimeSpan.FromSeconds(120);
 }

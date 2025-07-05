@@ -38,7 +38,7 @@ public class MapGeneratorBenchmarks
 }
 
 [InProcess]
-public class GameServerBenchmark
+public class GameServerBenchmark : IDisposable
 {
     private static readonly MapGenerator mapGenerator = new();
     private readonly SwoqDatabaseInMemory database = new();
@@ -51,6 +51,11 @@ public class GameServerBenchmark
             database.CreateUser(new User() { Id = $"u{i}", Name = $"User {i}", Level = 23 });
         }
         server = new GameServer(mapGenerator, database);
+    }
+
+    public void Dispose()
+    {
+        server.Dispose();
     }
 
     [Benchmark]
@@ -112,7 +117,8 @@ public static class Program
             }
             else if (args[0] == "game")
             {
-                new GameServerBenchmark().SingleGame();
+                using var benchmark = new GameServerBenchmark();
+                benchmark.SingleGame();
                 return;
             }
         }

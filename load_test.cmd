@@ -23,12 +23,12 @@ start Dashboard.exe
 popd
 
 pushd Bot\CompleteCSharp\bin\Release\net9.0\ 
-start FastBot.exe --no-print --no-replay --train
-start FastBot.exe --no-print --no-replay --train
-start FastBot.exe --no-print --no-replay --train
-start FastBot.exe --no-print --no-replay --train
-start FastBot.exe --no-print --no-replay --train
-start FastBot.exe --no-print --no-replay
+start FastBot.exe --no-print --train
+start FastBot.exe --no-print --train
+start FastBot.exe --no-print --train
+start FastBot.exe --no-print --train
+start FastBot.exe --no-print --train
+start FastBot.exe --no-print
 popd
 
 popd

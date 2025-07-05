@@ -79,8 +79,7 @@ impl GameConnection {
                     return Ok(Game::new(&mut self.client, response, replay_file));
                 }
                 StartResult::QuestQueued => {
-                    println!("Quest queued, waiting 2 seconds before retrying ...");
-                    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                    println!("Quest queued, retrying ...");
                 }
                 _ => {
                     return Err(Box::new(SwoqError::StartFailed { result }));

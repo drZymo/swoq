@@ -112,18 +112,12 @@ class GameConnection:
     def start(self, level:(int|None)=None, seed:(int|None)=None) -> Game:
         request = swoq_pb2.StartRequest(userId=self._user_id, level=level, seed=seed)
 
-        response:swoq_pb2.StartResponse = None
-        while True:
+        response = self._game_service.Start(request)
+        while response.result == swoq_pb2.START_RESULT_QUEST_QUEUED:
+            print('Quest queued, retrying ...')
             response = self._game_service.Start(request)
 
-            if response.result == swoq_pb2.START_RESULT_OK:
-                break
-
-            if response.result == swoq_pb2.START_RESULT_QUEST_QUEUED:
-                print('Quest queued, waiting 2 seconds before retrying ...')
-                sleep(2)
-                continue
-
+        if response.result != swoq_pb2.START_RESULT_OK:
             raise GameException(f'Start failed (result {swoq_pb2.StartResult.Name(response.result)})')
 
         replay_file = ReplayFile(self._user_name, self._replays_folder, request, response) if self._replays_folder else None

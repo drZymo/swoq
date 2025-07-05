@@ -10,4 +10,6 @@ internal interface IGame
     bool IsFinished { get; }
 
     void Act(DirectedAction? action1 = null, DirectedAction? action2 = null);
+
+    void Cancel();
 }
