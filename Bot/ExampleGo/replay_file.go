@@ -24,7 +24,7 @@ func NewReplayFile(replaysFolder string, request *swoq.StartRequest, response *s
 	if err != nil {
 		return nil, err
 	}
-	filename := filepath.Join(folder, fmt.Sprintf("%s - %s - %s.swoq", *request.userName, dateTimeStr, *response.GameId))
+	filename := filepath.Join(folder, fmt.Sprintf("%s - %s - %s.swoq", request.UserName, dateTimeStr, *response.GameId))
 	// Create directory first
 	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
 		return nil, err

@@ -12,4 +12,4 @@ coveragereport/
 Test/TestResults/
 **/Replays/
 **/.avalonia-build-tasks/
-**/env.json 
+**/.env
