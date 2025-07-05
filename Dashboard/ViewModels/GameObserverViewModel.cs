@@ -63,7 +63,6 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
     private readonly ObservableCollection<Score> scores = [];
     public ReadOnlyObservableCollection<Score> Scores { get; }
 
-
     private string statusMessage = "";
     public string StatusMessage
     {
@@ -83,6 +82,20 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         {
             eventsPerSecond = value;
             OnPropertyChanged();
+        }
+    }
+
+    public int columns = 1;
+    public int Columns
+    {
+        get => columns;
+        private set
+        {
+            if (value != columns)
+            {
+                columns = value;
+                OnPropertyChanged();
+            }
         }
     }
 
@@ -174,6 +187,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         {
             var vm = new GameObservationViewModel(gameState);
             gameObservations.Add(vm);
+            UpdateColumns();
             SelectedObservation = vm;
             return vm;
         });
@@ -238,6 +252,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
                 gameObservations.Remove(gameObservation);
                 gameObservation.Dispose();
             }
+            UpdateColumns();
 
             foreach (var session in sessionsToRemove)
             {
@@ -299,5 +314,11 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
     private void HandleStatistics(StatisticsUpdate update)
     {
         EventsPerSecond = update.EventsPerSecond;
+    }
+
+    private void UpdateColumns()
+    {
+        var count = GameObservations.Count;
+        Columns = (int)Math.Ceiling(Math.Sqrt(count));
     }
 }

@@ -81,7 +81,7 @@
                 <ItemsControl ItemsSource="{Binding GameObservations}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <UniformGrid  Columns="2" />
+                            <UniformGrid Columns="{Binding Columns}" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
