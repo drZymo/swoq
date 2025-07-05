@@ -93,4 +93,3 @@ enum Tile {
     TILE_WALL = 3;
     TILE_EXIT = 4;
 }
-

@@ -56,6 +56,12 @@ public static partial class ProtoReader
             }
         }
 
+        // Remove last empty line
+        if (string.IsNullOrWhiteSpace(filtered[^1]))
+        {
+            filtered = filtered[..^1];
+        }
+
         var sb = new StringBuilder();
         foreach (var line in filtered)
         {
