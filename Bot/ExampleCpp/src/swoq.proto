@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package Swoq.Interface;
+
+service GameService {
+    rpc Start(StartRequest) returns (StartResponse);
+    rpc Act(ActRequest) returns (ActResponse);
+}
+
+message StartRequest {
+    string userId = 1;
+    string userName = 2;
+    optional int32 level = 3;
+    optional int32 seed = 4;
+}
+
+message StartResponse {
+    StartResult result = 1;
+    optional string gameId = 2;
+    optional int32 mapWidth = 3;
+    optional int32 mapHeight = 4;
+    optional int32 visibilityRange = 5;
+    optional State state = 6;
+    optional int32 seed = 7;
+}
+
+message ActRequest {
+    string gameId = 1;
+    optional DirectedAction action = 2;
+}
+
+message ActResponse {
+    ActResult result = 1;
+    optional State state = 2;
+}
+
+enum StartResult {
+    START_RESULT_OK = 0;
+    START_RESULT_INTERNAL_ERROR = 1;
+    START_RESULT_UNKNOWN_USER = 2;
+    START_RESULT_INVALID_LEVEL = 3;
+    START_RESULT_QUEST_QUEUED = 4;
+    START_RESULT_NOT_ALLOWED = 5;
+}
+
+enum ActResult {
+    ACT_RESULT_OK = 0;
+    ACT_RESULT_INTERNAL_ERROR = 1;
+    ACT_RESULT_UNKNOWN_GAME_ID = 2;
+    ACT_RESULT_MOVE_NOT_ALLOWED = 3;
+    ACT_RESULT_UNKNOWN_ACTION = 4;
+    ACT_RESULT_GAME_FINISHED = 5;
+}
+
+message State {
+    int32 tick = 1;
+    int32 level = 2;
+    GameStatus status = 3;
+    optional PlayerState playerState = 4;
+}
+
+enum DirectedAction {
+    DIRECTED_ACTION_NONE = 0;
+    DIRECTED_ACTION_MOVE_NORTH = 1;
+    DIRECTED_ACTION_MOVE_EAST = 2;
+    DIRECTED_ACTION_MOVE_SOUTH = 3;
+    DIRECTED_ACTION_MOVE_WEST = 4;
+}
+
+enum GameStatus {
+    GAME_STATUS_ACTIVE = 0;
+    GAME_STATUS_FINISHED_SUCCESS = 1;
+    GAME_STATUS_FINISHED_TIMEOUT = 2;
+    GAME_STATUS_FINISHED_NO_PROGRESS = 3;
+    GAME_STATUS_FINISHED_PLAYER_DIED = 4;
+    GAME_STATUS_FINISHED_CANCELLED = 5;
+}
+
+message PlayerState {
+    Position position = 1;
+    repeated Tile surroundings = 2;
+}
+
+message Position {
+    int32 x = 1;
+    int32 y = 2;
+}
+
+enum Tile {
+    TILE_UNKNOWN = 0;
+    TILE_EMPTY = 1;
+    TILE_PLAYER = 2;
+    TILE_WALL = 3;
+    TILE_EXIT = 4;
+}
