@@ -1,5 +1,9 @@
 # TODO
 
+- [ ] Final bots check
+  - [ ] Synchronize README.md files.
+  - [ ] Remove all remnants of env.json
+  - [ ] Make sure .env file is not required. If it does not exist, the bot should still work.
 - [ ] Check input (like action) is in valid range of level. No use actions allowed in level < 2
 - [ ] Run duration test to check for exceptions
 - [ ] Remove two player dependency on sword drop??
