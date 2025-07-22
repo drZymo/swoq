@@ -7,6 +7,8 @@
 #include <optional>
 #include <expected>
 #include <fstream>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 namespace Swoq {
 
@@ -51,7 +53,12 @@ namespace Swoq {
             const Swoq::Interface::ActResponse& response);
 
     private:
-        std::ofstream stream_;
+        std::expected<void, std::string> write_delimited(const google::protobuf::Message& msg);
+
+    private:
+        std::ofstream m_stream;
+        google::protobuf::io::OstreamOutputStream m_zero_copy_output;
+        google::protobuf::io::CodedOutputStream m_coded_output;
     };
 
     class Game {

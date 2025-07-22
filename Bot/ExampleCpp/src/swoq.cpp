@@ -54,38 +54,6 @@ namespace Swoq {
         return std::make_unique<Game>(m_stub, start_response, std::move(replay_file));
     }
 
-
-    static std::expected<void, std::string> write_delimited(const google::protobuf::Message& msg, std::ofstream& writer) {
-        // Serialize the message
-        std::string data;
-        if (!msg.SerializeToString(&data)) {
-            return std::unexpected("Failed to serialize message");
-        }
-
-        // Write varint length
-        uint64_t size = data.size();
-        std::array<uint8_t, 10> varint_buf{};
-        int varint_len = 0;
-        do {
-            varint_buf[varint_len] = static_cast<uint8_t>((size & 0x7F) | (size >= 128 ? 0x80 : 0));
-            size >>= 7;
-            varint_len++;
-        } while (size > 0);
-
-        writer.write(std::bit_cast<const char*>(varint_buf.data()), varint_len);
-        if (writer.fail()) {
-            return std::unexpected("Failed to write varint length");
-        }
-
-        // Write serialized message
-        writer.write(data.data(), data.size());
-        if (writer.fail()) {
-            return std::unexpected("Failed to write serialized message");
-        }
-
-        return {};
-    }
-
     std::expected<std::unique_ptr<ReplayFile>, std::string> ReplayFile::create(
         std::string_view replays_folder,
         const StartRequest& request,
@@ -109,25 +77,38 @@ namespace Swoq {
             return std::unexpected("Failed to open file stream");
         }
 
-        // Store start
-        if (auto result = write_delimited(request, stream); !result) {
+        // Construct ReplayFile and write initial messages
+        auto replay_file = std::make_unique<ReplayFile>(std::move(stream));
+        if (auto result = replay_file->write_delimited(request); !result) {
             return std::unexpected(std::format("Failed to write StartRequest: {}", result.error()));
         }
-        if (auto result = write_delimited(response, stream); !result) {
+        if (auto result = replay_file->write_delimited(response); !result) {
             return std::unexpected(std::format("Failed to write StartResponse: {}", result.error()));
         }
 
-        return std::make_unique<ReplayFile>(std::move(stream));
+        return replay_file;
     }
 
-    ReplayFile::ReplayFile(std::ofstream&& stream) : stream_(std::move(stream)) {}
+    ReplayFile::ReplayFile(std::ofstream&& stream)
+        : m_stream(std::move(stream))
+        , m_zero_copy_output(&m_stream)
+        , m_coded_output(&m_zero_copy_output)
+    {}
 
     std::expected<void, std::string> ReplayFile::append(const ActRequest& request, const ActResponse& response) {
-        if (auto result = write_delimited(request, stream_); !result) {
+        if (auto result = write_delimited(request); !result) {
             return std::unexpected(std::format("Failed to write ActRequest: {}", result.error()));
         }
-        if (auto result = write_delimited(response, stream_); !result) {
+        if (auto result = write_delimited(response); !result) {
             return std::unexpected(std::format("Failed to write ActResponse: {}", result.error()));
+        }
+        return {};
+    }
+
+    std::expected<void, std::string> ReplayFile::write_delimited(const google::protobuf::Message& msg) {
+        m_coded_output.WriteVarint32(msg.ByteSizeLong());
+        if (!msg.SerializeToCodedStream(&m_coded_output)) {
+            return std::unexpected("SerializeToCodedStream failed");
         }
         return {};
     }
