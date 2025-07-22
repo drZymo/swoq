@@ -2,14 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <ranges>
-#include <format>
+#include <print>
 #include <cstdlib>
 
-std::expected<void, std::string> load_dotenv() {
+void load_dotenv() {
     std::ifstream env_file(".env");
-    if (!env_file.is_open()) {
-        return std::unexpected("Failed to open .env file");
-    }
+    if (!env_file.is_open()) return; // File not found
 
     std::string line;
     while (std::getline(env_file, line)) {
@@ -45,11 +43,10 @@ std::expected<void, std::string> load_dotenv() {
 
         // Set environment variable
         if (setenv(std::string{key}.c_str(), std::string{value}.c_str(), 1) != 0) {
-            return std::unexpected(std::format("Failed to set environment variable: {}", key));
+            // Just log and continue
+            std::println("Warning: Failed to set environment variable: {}", key);
         }
     }
-
-    return {};
 }
 
 std::optional<int> get_env_int(std::string_view name) {

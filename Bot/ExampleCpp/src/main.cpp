@@ -7,11 +7,7 @@ using namespace Swoq;
 
 int main(int /*argc*/, char** /*argv*/) {
     // Load .env file
-    auto result = load_dotenv();
-    if (!result) {
-        std::println(std::cerr, "{}", result.error());
-        return -1;
-    }
+    load_dotenv();
 
     // Create a new GameConnection instance using env variables
     auto user_id = require_env_str("SWOQ_USER_ID");
