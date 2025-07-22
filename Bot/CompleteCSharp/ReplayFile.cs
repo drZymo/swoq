@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using Swoq.Interface;
+using System.Globalization;
 
 namespace Bot;
 
@@ -10,7 +11,7 @@ internal class ReplayFile : IDisposable
     public ReplayFile(string replaysFolder, StartRequest request, StartResponse response)
     {
         // Determine file name
-        var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
         var folder = Path.GetFullPath(replaysFolder, AppContext.BaseDirectory);
         var filename = Path.Combine(folder, $"{request.UserName} - {dateTimeStr} - {response.GameId}.swoq");
         // Create directory first
