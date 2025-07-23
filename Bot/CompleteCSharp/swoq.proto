@@ -9,8 +9,9 @@ service GameService {
 
 message StartRequest {
     string userId = 1;
-    optional int32 level = 2;
-    optional int32 seed = 3;
+    string userName = 2;
+    optional int32 level = 3;
+    optional int32 seed = 4;
 }
 
 message StartResponse {
@@ -150,10 +151,4 @@ enum Inventory {
     INVENTORY_BOULDER = 4;
     // Level 22 and higher:
     INVENTORY_TREASURE = 5;
-}
-
-// Used by the ReplaySaver and ReplayViewer
-message ReplayHeader {
-    string userName = 1;
-    string dateTime = 2;
 }

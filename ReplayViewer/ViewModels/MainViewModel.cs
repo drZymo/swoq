@@ -1,10 +1,10 @@
-﻿using System.Reactive.Linq;
-using System.Windows.Input;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Swoq.InfraUI.ViewModels;
 using Swoq.ReplayViewer.Util;
+using System.Reactive.Linq;
+using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
 

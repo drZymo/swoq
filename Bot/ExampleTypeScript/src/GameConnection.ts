@@ -5,7 +5,6 @@ import * as path from "path";
 import { Game } from "./Game";
 import { GameStartResultError } from "./GameResultError";
 import {
-    ReplayHeader,
     StartRequest,
     StartResponse,
     StartResult,
@@ -31,25 +30,19 @@ export class GameConnection implements Disposable {
         }
 
         // Determine file name
-        const sanitizedUserName = encodeURIComponent(this.userName);
         const dateTimeStr = formatDate(new Date());
 
         const filename = path.join(
             this.replayFolder,
-            `${sanitizedUserName} - ${dateTimeStr} - ${response.gameId}.swoq`,
+            `${request.userName} - ${dateTimeStr} - ${response.gameId}.swoq`,
         );
 
         // Create the directory if it doesn't exist
         const directory = path.dirname(filename);
         await mkdir(directory, { recursive: true });
 
-        const header: ReplayHeader = {
-            userName: this.userName,
-            dateTime: new Date().toISOString(),
-        };
         const replayFile = await ReplayFile.create(
             filename,
-            header,
             request,
             response,
         );
@@ -75,6 +68,7 @@ export class GameConnection implements Disposable {
     public async start(level?: number): Promise<Game> {
         const request: StartRequest = {
             userId: this.userId,
+            userName: this.userName,
             level,
         };
 

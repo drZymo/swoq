@@ -29,8 +29,9 @@ def find_random_pos(player_pos, player_distances) -> tuple[int,int]|None:
 
 class GamePlayer:
 
-    def __init__(self, user_id:str, plot:bool=True, print:bool=True):
+    def __init__(self, user_id:str, user_name:str, plot:bool=True, print:bool=True):
         self.user_id = user_id
+        self.user_name = user_name
         self.plot = plot
         self.print = print
         
@@ -56,13 +57,13 @@ class GamePlayer:
 
 
     def start(self, level:int=None, seed:int=None) -> None:
-        startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level, seed=seed))
+        startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, userName=self.user_name, level=level, seed=seed))
         if self.print:
             result = swoq_pb2.StartResult.Name(startResponse.result)
             print(f'{result=}')
 
         while startResponse.result == swoq_pb2.START_RESULT_QUEST_QUEUED:
-            startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, level=level, seed=seed))
+            startResponse = self.stub.Start(swoq_pb2.StartRequest(userId=self.user_id, userName=self.user_name, level=level, seed=seed))
             if self.print:
                 result = swoq_pb2.StartResult.Name(startResponse.result)
                 print(f'{result=}')

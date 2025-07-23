@@ -11,9 +11,8 @@ service DashboardService {
 
 message QuestStarted {
     string gameId = 1;
-    string userName = 2;
-    StartRequest request = 3;
-    StartResponse response = 4;
+    StartRequest request = 2;
+    StartResponse response = 3;
 }
 
 message QuestActed {

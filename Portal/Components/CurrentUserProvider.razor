@@ -42,8 +42,10 @@ else
 		{
 			var userId = await LocalStorage.GetAsync<string>("userId");
 			if (!userId.Success || userId.Value == null) return null;
+			var userName = await LocalStorage.GetAsync<string>("userName");
+			if (!userName.Success || userName.Value == null) return null;
 
-			return await Database.FindUserByIdAsync(userId.Value);
+			return await Database.FindUserAsync(userId.Value, userName.Value);
 		}
 		catch
 		{
@@ -51,13 +53,15 @@ else
 		}
 	}
 
-	public async Task SetUserIdAsync(string userId)
+	public async Task SetUserAsync(string userId, string userName)
 	{
 		await LocalStorage.SetAsync("userId", userId);
+		await LocalStorage.SetAsync("userName", userName);
 	}
 
-	public async Task RemoveUserIdAsync()
+	public async Task RemoveUserAsync()
 	{
 		await LocalStorage.DeleteAsync("userId");
+		await LocalStorage.DeleteAsync("userName");
 	}
 }

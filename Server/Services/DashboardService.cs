@@ -84,7 +84,6 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                 QuestStarted = new QuestStarted
                 {
                     GameId = e.GameId.ToString(),
-                    UserName = e.UserName,
                     Request = e.Request,
                     Response = e.Response
                 }
@@ -98,7 +97,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         }
 
         // Send all game info to session update thread
-        gameUpdates.Enqueue(new GameAddedEntry(e.GameId, e.UserName, e.Response.State.Level, isQuest));
+        gameUpdates.Enqueue(new GameAddedEntry(e.GameId, e.Request.UserName, e.Response.State.Level, isQuest));
         gameUpdatesSemaphore.Release();
 
         // Register activity

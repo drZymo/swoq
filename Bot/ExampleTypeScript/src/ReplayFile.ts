@@ -3,7 +3,6 @@ import { FileHandle, open } from "fs/promises";
 import {
     ActRequest,
     ActResponse,
-    ReplayHeader,
     StartRequest,
     StartResponse,
 } from "./generated/swoq";
@@ -14,14 +13,12 @@ export class ReplayFile implements AsyncDisposable {
 
     public static async create(
         fileName: string,
-        header: ReplayHeader,
         startRequest: StartRequest,
         startResponse: StartResponse
     ): Promise<ReplayFile> {
         const file = await open(fileName, "a+");
         const replayFile = new ReplayFile(fileName, file);
         try {
-            await replayFile._writeDelimited(ReplayHeader.toBinary(header));
             await replayFile._writeDelimited(
                 StartRequest.toBinary(startRequest)
             );

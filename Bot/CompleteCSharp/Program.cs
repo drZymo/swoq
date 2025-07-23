@@ -1,6 +1,5 @@
 ﻿using Swoq.Interface;
 using System.Diagnostics;
-using System.Text;
 
 namespace Bot;
 
@@ -13,7 +12,7 @@ public static class Program
     private static bool train = false;
     private static bool once = false;
 
-    private static Dictionary<int, (int total, int success)> successRates = [];
+    private static readonly Dictionary<int, (int total, int success)> successRates = [];
 
     public static void Main(string[] args)
     {
@@ -107,7 +106,7 @@ public static class Program
                 successRates[level.Value] = rates;
             }
 
-            var line = string.Join(", ", successRates.OrderBy(kvp => kvp.Key).Select(kvp => $"#{kvp.Key}: {kvp.Value.success/(double)kvp.Value.total:P1}"));
+            var line = string.Join(", ", successRates.OrderBy(kvp => kvp.Key).Select(kvp => $"#{kvp.Key}: {kvp.Value.success / (double)kvp.Value.total:P1}"));
             Console.WriteLine(line);
         }
     }
