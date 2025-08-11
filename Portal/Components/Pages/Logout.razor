@@ -11,18 +11,18 @@
 <p>You are now logged out.</p>
 
 @code {
-	[CascadingParameter]
-	private CurrentUserProvider? CurrentUserProvider { get; set; }
+    [CascadingParameter]
+    private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			if (CurrentUserProvider != null)
-			{
-				await CurrentUserProvider.RemoveUserAsync();
-				NavigationManager.NavigateTo($"/", forceLoad: true);
-			}
-		}
-	}
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (CurrentUserProvider != null)
+            {
+                await CurrentUserProvider.RemoveUserAsync();
+                NavigationManager.NavigateTo($"/", forceLoad: true);
+            }
+        }
+    }
 }

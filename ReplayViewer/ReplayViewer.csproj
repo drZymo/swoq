@@ -1,50 +1,50 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>WinExe</OutputType>
-		<TargetFramework>net9.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<RootNamespace>Swoq.ReplayViewer</RootNamespace>
-		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-		<PublishSingleFile>true</PublishSingleFile>
-		<SelfContained>true</SelfContained>
-	</PropertyGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Swoq.ReplayViewer</RootNamespace>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<None Remove="App.xaml" />
-		<None Remove="MainWindow.xaml" />
-		<None Remove="ReplayView.xaml" />
-	</ItemGroup>
+    <ItemGroup>
+        <None Remove="App.xaml" />
+        <None Remove="MainWindow.xaml" />
+        <None Remove="ReplayView.xaml" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<AvaloniaResource Include="App.xaml" />
-		<AvaloniaResource Include="Views\MainWindow.xaml" />
-		<AvaloniaResource Include="Views\ReplayView.xaml" />
-	</ItemGroup>
+    <ItemGroup>
+        <AvaloniaResource Include="App.xaml" />
+        <AvaloniaResource Include="Views\MainWindow.xaml" />
+        <AvaloniaResource Include="Views\ReplayView.xaml" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.3" />
-		<PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
-		<PackageReference Include="Avalonia" Version="11.2.3" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
-		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
-		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-		<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.2" />
-		<PackageReference Include="System.Reactive" Version="6.0.1" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.3" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
+        <PackageReference Include="Avalonia" Version="11.2.3" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.2" />
+        <PackageReference Include="System.Reactive" Version="6.0.1" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\InfraUI\InfraUI.csproj" />
-		<ProjectReference Include="..\Infra\Infra.csproj" />
-		<ProjectReference Include="..\Interface\Interface.csproj" />
-	</ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\InfraUI\InfraUI.csproj" />
+        <ProjectReference Include="..\Infra\Infra.csproj" />
+        <ProjectReference Include="..\Interface\Interface.csproj" />
+    </ItemGroup>
 
-	<Target Name="ZipOutputPath" AfterTargets="Publish">
-		<Delete Files="$(OutputPath)\ReplayViewer-$(RuntimeIdentifier).zip" />
-		<ZipDirectory
-			SourceDirectory="$(OutputPath)\publish\"
-			DestinationFile="$(OutputPath)\ReplayViewer-$(RuntimeIdentifier).zip" />
-	</Target>
+    <Target Name="ZipOutputPath" AfterTargets="Publish">
+        <Delete Files="$(OutputPath)\ReplayViewer-$(RuntimeIdentifier).zip" />
+        <ZipDirectory
+            SourceDirectory="$(OutputPath)\publish\"
+            DestinationFile="$(OutputPath)\ReplayViewer-$(RuntimeIdentifier).zip" />
+    </Target>
 </Project>
