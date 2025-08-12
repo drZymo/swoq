@@ -27,6 +27,8 @@ internal class Game : IGame
     private readonly HashSet<Position> doorsToClose = [];
     private readonly HashSet<Position> doorsToOpen = [];
 
+    private readonly bool mapHasUsableItems;
+
     public Game(
         Map map,
         TimeSpan maxInactivityTime,
@@ -45,6 +47,8 @@ internal class Game : IGame
         startTime = Clock.Now;
 
         State = CreateState();
+
+        mapHasUsableItems = map.Enemies.Any() || map.Any(c => c is Cell.Boulder or Cell.DoorRedClosed or Cell.DoorGreenClosed or Cell.DoorBlueClosed);
     }
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -223,6 +227,7 @@ internal class Game : IGame
             case DirectedAction.UseEast:
             case DirectedAction.UseSouth:
             case DirectedAction.UseWest:
+                if (!mapHasUsableItems) throw new UnknownActionException();
                 Use(ref player, actionPos);
                 break;
             default:
