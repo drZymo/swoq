@@ -7,12 +7,6 @@ internal static class Parameters
     public const int PlayerVisibilityRange = 8;
     public const int EnemyVisibilityRange = 5;
 
-    public const int PlayerHealth = 5;
-    public const int EnemyHealth = 6;
-    public const int EnemyDamage = 1;
-    public const int BossHealth = 100;
-    public const int BossDamage = 100;
-
     public const int ExtraHealth = 3;
 
     public static readonly TimeSpan GameRetentionTime = TimeSpan.FromSeconds(30);
@@ -33,7 +27,7 @@ internal static class Parameters
 
     public const int MinIdleMoveDistance = 5;
 
-    public const int NrOfActiveQuests = 2;
+    public const int NrOfActiveQuests = 1;
 
     public static readonly TimeSpan QuestPollPeriod = TimeSpan.FromSeconds(3);
     public const int QuestPollCount = 20;

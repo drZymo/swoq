@@ -9,7 +9,6 @@ public class MutableCharacter
     public Inventory Inventory { get; set; } = Inventory.None;
     public bool IsBoss { get; set; } = false;
 
-    // TODO: Get from Parameters
     private const int PlayerHealth = 5;
     private const int EnemyHealth = 6;
     private const int EnemyDamage = 1;
