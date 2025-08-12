@@ -12,6 +12,7 @@ public record PlayerObservation(
 
 public record GameObservation(
     string UserName,
+    bool IsQuest,
     int Tick,
     int Level,
     GameStatus Status,

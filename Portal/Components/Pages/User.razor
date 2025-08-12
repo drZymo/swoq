@@ -7,112 +7,125 @@
 
 @if (CurrentUserProvider?.User == null)
 {
-    <PageTitle>SWOQ - User</PageTitle>
+	<PageTitle>SWOQ - User</PageTitle>
 
-    <h1>No access!</h1>
+	<h1>No access!</h1>
 
-    <p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
+	<p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
 }
 else
 {
-    <PageTitle>SWOQ - User - @CurrentUserProvider?.Name</PageTitle>
+	<PageTitle>SWOQ - User - @CurrentUserProvider?.Name</PageTitle>
 
-    <h1>Hi @CurrentUserProvider?.Name</h1>
+	<h1>Hi @CurrentUserProvider?.Name</h1>
 
-    @if (Welcome)
-    {
-        <div class="alert alert-success" role="alert">
-            Welcome. You are now a registered user with unique user ID: <b>@CurrentUserProvider?.Id</b>.
-            Remember this ID, it won't be provided again, and you will need it to play a game.
-        </div>
-    }
+	@if (Welcome)
+	{
+		<div class="alert alert-success" role="alert">
+			Welcome. You are now a registered user with unique user ID: <b>@CurrentUserProvider?.Id</b>.
+			Remember this ID, it won't be provided again, and you will need it to play a game.
+		</div>
+	}
 
-    <p>This is your personal page where you can find more information about your progress. You are currently at:</p>
-    <div class="alert alert-info text-center">
-        <span class="h3">Level @CurrentUserProvider?.Level</span>
-    </div>
-    <p>Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds.</p>
-    <p>Below is a table that shows how many ticks your bot at least and on average needed to finish each level successfully along with how much that is above or below the global minimum and average respectively.</p>
+	<p>This is your personal page where you can find more information about your progress. You are currently at:</p>
+	<div class="alert alert-info text-center">
+		<span class="h3">Level @CurrentUserProvider?.Level</span>
+	</div>
 
-    <table class="table">
-        <thead>
-            <tr><th scope="col">Level</th><th scope="col">Min ticks</th><th>Global min ticks (-)</th><th>Avg Ticks</th><th>Global avg ticks (+/-)</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var l in LevelStatistics.OrderBy(l => l.Level))
-            {
-                @RenderStatisticRow(l.Level, l.MinTicks, l.GlobalMinTicks, l.DeltaMin, l.AvgTicks, l.GlobalAvgTicks, l.DeltaAvg)
-            }
-        </tbody>
-        <tfoot>
-            @RenderStatisticRow("Total", TotalStatistics.MinTicks, TotalStatistics.GlobalMinTicks, TotalStatistics.DeltaMin, TotalStatistics.AvgTicks, TotalStatistics.GlobalAvgTicks, TotalStatistics.DeltaAvg)
-        </tfoot>
-    </table>
+	@if (CurrentUserProvider?.User.QuestFinished ?? false)
+	{
+		<div class="alert alert-success text-center" role="alert">
+			<h3>🌟 Quest completed 🌟</h3>
+			Congratulations! You successfully finished the whole quest.
+		</div>
+	}
+
+	<p>Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and @CurrentUserProvider?.User.QuestLengthSeconds seconds.</p>
+	@if (CurrentUserProvider?.User.BestQuestId != null)
+	{
+		<p>This was achieved by the game with id <strong>@CurrentUserProvider?.User.BestQuestId</strong>.</p>
+	}
+	<p>Below is a table that shows how many ticks your bot at least and on average needed to finish each level successfully along with how much that is above or below the global minimum and average respectively.</p>
+
+	<table class="table">
+		<thead>
+			<tr><th scope="col">Level</th><th scope="col">Min ticks</th><th>Global min ticks (-)</th><th>Avg Ticks</th><th>Global avg ticks (+/-)</th></tr>
+		</thead>
+		<tbody>
+			@foreach (var l in LevelStatistics.OrderBy(l => l.Level))
+			{
+				@RenderStatisticRow(l.Level, l.MinTicks, l.GlobalMinTicks, l.DeltaMin, l.AvgTicks, l.GlobalAvgTicks, l.DeltaAvg)
+			}
+		</tbody>
+		<tfoot>
+			@RenderStatisticRow("Total", TotalStatistics.MinTicks, TotalStatistics.GlobalMinTicks, TotalStatistics.DeltaMin, TotalStatistics.AvgTicks, TotalStatistics.GlobalAvgTicks, TotalStatistics.DeltaAvg)
+		</tfoot>
+	</table>
 }
 
 @code {
-    [SupplyParameterFromQuery]
-    public bool Welcome { get; set; } = false;
+	[SupplyParameterFromQuery]
+	public bool Welcome { get; set; } = false;
 
-    [CascadingParameter]
-    private CurrentUserProvider? CurrentUserProvider { get; set; }
+	[CascadingParameter]
+	private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-    private ImmutableList<UserLevelStatistic> LevelStatistics { get; set; } = ImmutableList<UserLevelStatistic>.Empty;
-    private UserLevelStatistic TotalStatistics { get; set; } = new(-1, 0, 0, 0, 0);
+	private ImmutableList<UserLevelStatistic> LevelStatistics { get; set; } = ImmutableList<UserLevelStatistic>.Empty;
+	private UserLevelStatistic TotalStatistics { get; set; } = new(-1, 0, 0, 0, 0);
 
-    protected override async Task OnParametersSetAsync()
-    {
-        var userId = CurrentUserProvider?.Id;
-        LevelStatistics = (userId != null)
-            ? await Database.GetLevelStatisticsAsync(userId)
-            : ImmutableList<UserLevelStatistic>.Empty;
+	protected override async Task OnParametersSetAsync()
+	{
+		var userId = CurrentUserProvider?.Id;
+		LevelStatistics = (userId != null)
+			? await Database.GetLevelStatisticsAsync(userId)
+			: ImmutableList<UserLevelStatistic>.Empty;
 
-        TotalStatistics = LevelStatistics.Any()
-            ? new(
-                LevelStatistics.Max(l => l.Level) + 1,
-                LevelStatistics.Sum(l => l.MinTicks),
-                LevelStatistics.Sum(l => l.GlobalMinTicks),
-                LevelStatistics.Sum(l => l.AvgTicks),
-                LevelStatistics.Sum(l => l.GlobalAvgTicks))
-            : new(-1, 0, 0, 0, 0);
-    }
+		TotalStatistics = LevelStatistics.Any()
+			? new(
+				LevelStatistics.Max(l => l.Level) + 1,
+				LevelStatistics.Sum(l => l.MinTicks),
+				LevelStatistics.Sum(l => l.GlobalMinTicks),
+				LevelStatistics.Sum(l => l.AvgTicks),
+				LevelStatistics.Sum(l => l.GlobalAvgTicks))
+			: new(-1, 0, 0, 0, 0);
+	}
 
-    private RenderFragment RenderStatisticRow(object level, int minTicks, int globalMinTicks, int deltaMin, int avgTicks, int globalAvgTicks, int deltaAvg) =>
-        @<tr>
-    <td>@level</td>
-    <td>@minTicks</td>
-    <td>
-        @globalMinTicks (
-        @if (deltaMin > 0)
-                {
-        <span class="text-danger">+@deltaMin</span>
-                }
-                else if (deltaMin< 0)
-                {
-        <span class="text-success">@deltaMin</span>
-                }
-                else
-        {
-            <span class="text-muted">@deltaMin</span>
-        }
-        )
-    </td>
-    <td>@avgTicks</td>
-    <td>
-        @globalAvgTicks (
-        @if (deltaAvg > 0)
-        {
-            <span class="text-danger">+@deltaAvg</span>
-        }
-        else if (deltaAvg < 0)
-        {
-            <span class="text-success">@deltaAvg</span>
-        }
-        else
-        {
-            <span class="text-muted">@deltaAvg</span>
-        }
-        )
-    </td>
+	private RenderFragment RenderStatisticRow(object level, int minTicks, int globalMinTicks, int deltaMin, int avgTicks, int globalAvgTicks, int deltaAvg) =>
+		@<tr>
+	<td>@level</td>
+	<td>@minTicks</td>
+	<td>
+		@globalMinTicks (
+		@if (deltaMin > 0)
+				{
+		<span class="text-danger">+@deltaMin</span>
+				}
+				else if (deltaMin< 0)
+				{
+		<span class="text-success">@deltaMin</span>
+				}
+				else
+		{
+			<span class="text-muted">@deltaMin</span>
+		}
+		)
+	</td>
+	<td>@avgTicks</td>
+	<td>
+		@globalAvgTicks (
+		@if (deltaAvg > 0)
+		{
+			<span class="text-danger">+@deltaAvg</span>
+		}
+		else if (deltaAvg < 0)
+		{
+			<span class="text-success">@deltaAvg</span>
+		}
+		else
+		{
+			<span class="text-muted">@deltaAvg</span>
+		}
+		)
+	</td>
 </tr>;
 }

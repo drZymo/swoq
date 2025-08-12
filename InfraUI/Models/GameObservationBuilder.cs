@@ -12,6 +12,7 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
     private GameObservation? previous = null;
     private bool hasSwordPickup = false;
     private bool hasEnemies = false;
+    private int initialLevel = -1;
 
     private readonly int visibilityDimension = visibilityRange * 2 + 1;
     private readonly ImmutableArray<bool> visibility = Enumerable.Repeat(true, (visibilityRange * 2 + 1) * (visibilityRange * 2 + 1)).ToImmutableArray();
@@ -33,6 +34,10 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
         if (previous == null || state.Level != previous.Level)
         {
             overviewBuilder.Reset();
+        }
+        if (initialLevel < 0)
+        {
+            initialLevel = state.Level;
         }
 
         overviewBuilder.PrepareForNextTimeStep();
@@ -75,6 +80,7 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
 
         var gameState = createDispatcher.Invoke(() => new GameObservation(
             userName,
+            state.Level != initialLevel,
             state.Tick,
             state.Level,
             state.Status,

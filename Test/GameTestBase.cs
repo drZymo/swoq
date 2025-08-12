@@ -20,7 +20,7 @@ internal abstract class GameTestBase
 
         var map = CreateGameMap();
         game = new Game(map, TimeSpan.FromSeconds(20), 2000, TimeSpan.FromSeconds(300), random);
-        mapCache = new MapCache(map.Height, map.Width, 8); // TODO: Get visiblity range
+        mapCache = new MapCache(map.Height, map.Width, Parameters.PlayerVisibilityRange);
         mapCache.AddPlayerStates(game.State.Player1, game.State.Player2);
         // Ignore changes of initial state
         mapCache.GetNewChanges();

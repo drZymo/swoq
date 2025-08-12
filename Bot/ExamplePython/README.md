@@ -34,7 +34,7 @@ Everytime you update the `swoq.proto` file, you have to regenerate these files.
 
 ## Configure environment
 
-The bot uses an `env.json` file to store the configuration of the environment. See `env-example.json` for what it should contain. Update it accordingly.
+The bot uses a `.env` file to store the configuration of the environment. See `example.env` for what it should contain. Update it accordingly.
 
 # Running
 

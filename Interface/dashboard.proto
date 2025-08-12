@@ -43,6 +43,7 @@ message Score {
     int32 level = 2;
     int32 lengthTicks = 3;
     int32 lengthSeconds = 4;
+    bool questFinished = 5;
 }
 
 message ScoresUpdate {

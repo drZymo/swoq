@@ -51,9 +51,12 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding UserName}"/>
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding UserName}"/>
+                                            <TextBlock IsVisible="{Binding QuestFinished}">🌟</TextBlock>
+                                        </StackPanel>
                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12">
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12" IsVisible="{Binding HasProgress}">
                                             <Run Text="{Binding LengthTicks}"/>
                                             <Run>ticks,</Run>
                                             <Run Text="{Binding LengthSeconds}"/>

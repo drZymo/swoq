@@ -67,12 +67,25 @@ public class Quest : IGame
                         user.Level = level;
                         user.QuestLengthTicks = ticks;
                         user.QuestLengthSeconds = lengthSeconds;
+                        user.QuestFinished = user.Level > mapGenerator.MaxLevel;
+                        user.BestQuestId = Id.ToString();
                     }
                     else if (user.Level == level)
                     {
                         // If this level was the highest level reached before, then update the duration if it improved.
-                        user.QuestLengthTicks = Math.Min(ticks, user.QuestLengthTicks);
-                        user.QuestLengthSeconds = Math.Min(lengthSeconds, user.QuestLengthSeconds);
+                        if (ticks <= user.QuestLengthTicks)
+                        {
+                            if (ticks < user.QuestLengthTicks)
+                            {
+                                user.QuestLengthTicks = ticks;
+                                user.QuestLengthSeconds = lengthSeconds;
+                            }
+                            else if (lengthSeconds < user.QuestLengthSeconds)
+                            {
+                                user.QuestLengthSeconds = lengthSeconds;
+                            }
+                            user.BestQuestId = Id.ToString();
+                        }
                     }
 
                     // Sync database

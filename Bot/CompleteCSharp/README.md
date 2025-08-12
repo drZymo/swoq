@@ -7,7 +7,7 @@ using C#.
 
 -   Install .NET 9.0 SDK (or use Visual Studio)
 -   Clone this repo
--   Copy `env-example.json` to `env.json` and edit its contents.
+-   Copy `example.env` to `.env` and edit its contents.
 -   Compile on command-line with `dotnet build` or open `Bot.sln` in Visual Studio.
 -   Start the executable from `bin\Debug\net9.0\Bot.exe` or use `dotnet run` from the command-line
 

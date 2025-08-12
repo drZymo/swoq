@@ -271,7 +271,8 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
             UserName = u.Name,
             Level = u.Level,
             LengthTicks = u.QuestLengthTicks,
-            LengthSeconds = u.QuestLengthSeconds
+            LengthSeconds = u.QuestLengthSeconds,
+            QuestFinished = u.QuestFinished,
         });
 
         // Send update

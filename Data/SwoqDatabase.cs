@@ -41,7 +41,9 @@ public class SwoqDatabase : ISwoqDatabase
         var update = Builders<User>.Update.
             Set(u => u.Level, user.Level).
             Set(u => u.QuestLengthTicks, user.QuestLengthTicks).
-            Set(u => u.QuestLengthSeconds, user.QuestLengthSeconds);
+            Set(u => u.QuestLengthSeconds, user.QuestLengthSeconds).
+            Set(u => u.QuestFinished, user.QuestFinished).
+            Set(u => u.BestQuestId, user.BestQuestId);
         await users.UpdateOneAsync(filter, update);
     }
 

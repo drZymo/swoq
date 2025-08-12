@@ -8,9 +8,8 @@ namespace Swoq.InfraUI;
 
 public static class TileSet
 {
-    // TODO: make tile size configurable, e.g. from bitmap size?
-    public const int TileWidth = 16;
-    public const int TileHeight = 16;
+    private const int NrRows = 4;
+    private const int NrColumns = 6;
 
     private static (PixelSize size, byte[] pixels) LoadBitmapPixels(Bitmap bitmap)
     {
@@ -23,19 +22,21 @@ public static class TileSet
         return (bitmap.PixelSize, pixels);
     }
 
-    public static IImmutableDictionary<Tile, byte[]> FromImageFile(Bitmap bitmap)
+    public static (IImmutableDictionary<Tile, byte[]> tiles, int tileHeight, int tileWidth) FromImageFile(Bitmap bitmap)
     {
         var (bitmapSize, bitmapPixels) = LoadBitmapPixels(bitmap);
 
-        var tileStride = TileWidth * 4;
+        var tileWidth = bitmapSize.Width / NrColumns;
+        var tileHeight = bitmapSize.Height / NrRows;
+        var tileStride = tileWidth * 4; // RGBA
 
         byte[] GetTile(int row, int column)
         {
-            byte[] tilePixels = new byte[TileHeight * TileWidth * 4];
-            for (var tileY = 0; tileY < TileHeight; tileY++)
+            byte[] tilePixels = new byte[tileHeight * tileWidth * 4];
+            for (var tileY = 0; tileY < tileHeight; tileY++)
             {
-                var bitmapX = column * TileWidth;
-                var bitmapY = row * TileHeight + tileY;
+                var bitmapX = column * tileWidth;
+                var bitmapY = row * tileHeight + tileY;
                 var bitmapIndex = (bitmapY * bitmapSize.Width + bitmapX) * 4;
                 Array.Copy(bitmapPixels, bitmapIndex, tilePixels, tileY * tileStride, tileStride);
             }
@@ -43,7 +44,7 @@ public static class TileSet
         }
 
         var tiles = ImmutableDictionary<Tile, byte[]>.Empty;
-        tiles = tiles.Add(Tile.Unknown, new byte[16 * 16 * 4]);
+        tiles = tiles.Add(Tile.Unknown, new byte[tileHeight * tileWidth * 4]);
         tiles = tiles.Add(Tile.Wall, GetTile(0, 0));
         tiles = tiles.Add(Tile.Empty, GetTile(0, 1));
         tiles = tiles.Add(Tile.Player, GetTile(0, 2));
@@ -63,6 +64,6 @@ public static class TileSet
         tiles = tiles.Add(Tile.Boulder, GetTile(3, 4));
         tiles = tiles.Add(Tile.Boss, GetTile(0, 5));
         tiles = tiles.Add(Tile.Treasure, GetTile(1, 5));
-        return tiles;
+        return (tiles, tileHeight, tileWidth);
     }
 }

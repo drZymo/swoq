@@ -12,6 +12,8 @@ namespace Swoq.InfraUI.Models;
 internal class TiledImage(int height, int width) : IDisposable
 {
     private static readonly IImmutableDictionary<Tile, byte[]> tileSet;
+    private static readonly int tileHeight;
+    private static readonly int tileWidth;
 
     static TiledImage()
     {
@@ -19,12 +21,12 @@ internal class TiledImage(int height, int width) : IDisposable
                            ?? throw new InvalidOperationException("Resource 'tiles.png' not found.");
         var bitmap = new Bitmap(stream);
 
-        tileSet = TileSet.FromImageFile(bitmap);
+        (tileSet, tileHeight, tileWidth) = TileSet.FromImageFile(bitmap);
     }
 
     private readonly Tile[,] tiles = new Tile[height, width];
     private readonly bool[,] visibility = new bool[height, width];
-    private readonly WriteableBitmap image = new(new PixelSize(width * TileSet.TileWidth, height * TileSet.TileHeight), new Vector(96, 96), PixelFormats.Bgra8888, AlphaFormat.Opaque);
+    private readonly WriteableBitmap image = new(new PixelSize(width * tileWidth, height * tileHeight), new Vector(96, 96), PixelFormats.Bgra8888, AlphaFormat.Opaque);
 
     public int Height { get; } = height;
     public int Width { get; } = width;
@@ -74,14 +76,14 @@ internal class TiledImage(int height, int width) : IDisposable
 
         private static void CopyTileToBitmap(byte[] tile, int row, int col, ILockedFramebuffer bitmapFrameBuffer, PixelSize bitmapSize)
         {
-            var bitmapX = col * TileSet.TileWidth;
-            var bitmapY = row * TileSet.TileHeight;
+            var bitmapX = col * tileWidth;
+            var bitmapY = row * tileHeight;
             var bitmapOffset = (bitmapY * bitmapSize.Width + bitmapX) * 4;
             var bitmapStride = bitmapSize.Width * 4;
 
             var tileIndex = 0;
-            var tileStride = TileSet.TileWidth * 4;
-            for (var tileY = 0; tileY < TileSet.TileHeight; tileY++)
+            var tileStride = tileWidth * 4;
+            for (var tileY = 0; tileY < tileHeight; tileY++)
             {
                 Marshal.Copy(tile, tileIndex, bitmapFrameBuffer.Address + bitmapOffset, tileStride);
                 bitmapOffset += bitmapStride;
