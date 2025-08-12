@@ -10,7 +10,7 @@
              Background="Black"
              Foreground="White"
              Name="self">
-    <Grid ColumnDefinitions="*,auto">
+    <Grid ColumnDefinitions="*,auto" IsVisible="{Binding IsLoaded}">
 
         <Grid Grid.Column="0" Background="Black" Grid.RowDefinitions="auto,*,auto">
             <TextBlock Grid.Row="0" FontSize="24" HorizontalAlignment="Center" IsVisible="{Binding #self.ShowHeader}">

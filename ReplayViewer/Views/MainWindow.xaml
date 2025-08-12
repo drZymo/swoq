@@ -16,5 +16,16 @@
             <TextBlock Grid.Column="1" VerticalAlignment="Center" TextAlignment="Left" Text="{Binding CurrentFile}"/>
         </Grid>
         <local:ReplayView Grid.Row="1" DataContext="{Binding Replay}"/>
+
+        <Border Grid.Row="1" IsVisible="{Binding HasErrorMessage}" Background="Black">
+            <Grid RowDefinitions="*,auto,*" ColumnDefinitions="*,auto,*">
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical">
+                    <TextBlock FontWeight="Bold" HorizontalAlignment="Center">🛑 Error 🛑</TextBlock>
+                    <Separator/>
+                    <TextBlock Text="{Binding ErrorMessage}" HorizontalAlignment="Center"/>
+                    <Separator/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

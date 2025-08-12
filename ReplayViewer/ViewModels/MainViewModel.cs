@@ -1,6 +1,5 @@
-﻿using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
+﻿using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Swoq.InfraUI.ViewModels;
 using Swoq.ReplayViewer.Util;
 using System.Reactive.Linq;
@@ -8,21 +7,31 @@ using System.Windows.Input;
 
 namespace Swoq.ReplayViewer.ViewModels;
 
-internal class MainViewModel : ViewModelBase, IDisposable
+internal class MainViewModel : ViewModelBase, IDisposable, IErrorReporter
 {
-    public MainViewModel()
+    private readonly IStorageProvider storageProvider;
+
+    public MainViewModel(IStorageProvider storageProvider)
     {
+        this.storageProvider = storageProvider;
+
         LoadCommand = new RelayCommand(Load);
+
+        // Start with empty replay
+        replay = new(this);
 
         // Load file given at command line, or start watch mode
         var args = Environment.GetCommandLineArgs();
         if (args.Length > 1 && (args[1] == "--watch" || args[1] == "-w"))
         {
-            if (args.Length <= 2)
+            if (args.Length > 2)
             {
-                throw new ArgumentException("Missing folder path for --watch argument.");
+                StartWatchingFolder(Path.GetFullPath(args[2]));
             }
-            StartWatchingFolder(Path.GetFullPath(args[2]));
+            else
+            {
+                ReportError("Missing folder path for --watch argument.");
+            }
         }
         else if (args.Length > 1)
         {
@@ -38,7 +47,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
         Replay.Dispose();
     }
 
-    private ReplayViewModel replay = new();
+    private ReplayViewModel replay;
     public ReplayViewModel Replay
     {
         get => replay;
@@ -70,7 +79,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
     {
         var mode = tailMode ? "Tail" : "Load";
         Console.WriteLine($"{mode} file: {path}");
-        Replay = new ReplayViewModel(path, tailMode);
+        Replay = new ReplayViewModel(this, path, tailMode);
         CurrentFile = path;
     }
 
@@ -85,36 +94,62 @@ internal class MainViewModel : ViewModelBase, IDisposable
             .ObserveOn(SynchronizationContext.Current)
             .Subscribe(
                 eventArgs => LoadFile(eventArgs.FullPath, true),
-                onError: e => Console.WriteLine($"Can't watch folder {folderPath}: {e.Message}")
+                onError: e => ReportError($"Can't watch folder {folderPath}.\n\n{e}")
             );
     }
 
     private async void Load(object? param)
     {
-        // TODO: Proper way of getting StorageProvider (inject?)
-        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
-            desktop.MainWindow?.StorageProvider is not { } provider)
-        {
-            throw new InvalidOperationException("Missing StorageProvider instance.");
-        }
+        ClearErrorMessage();
 
-        var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+        try
         {
-            Title = "Open replay file",
-            AllowMultiple = false,
-            FileTypeFilter = [new FilePickerFileType("Replay file") { Patterns = ["*.swoq"] }],
-        });
-
-        if (files.Count > 0)
-        {
-            fileWatcherSubscription?.Dispose();
-            fileWatcherSubscription = null;
-
-            var localPath = files[0].TryGetLocalPath();
-            if (localPath != null)
+            var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                LoadFile(localPath);
+                Title = "Open replay file",
+                AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType("Replay file") { Patterns = ["*.swoq"] }],
+            });
+
+            if (files.Count > 0)
+            {
+                fileWatcherSubscription?.Dispose();
+                fileWatcherSubscription = null;
+
+                var localPath = files[0].TryGetLocalPath();
+                if (localPath != null)
+                {
+                    LoadFile(localPath);
+                }
             }
         }
+        catch (Exception ex)
+        {
+            ReportError($"File loading failed.\n\n{ex}");
+        }
+    }
+
+    private string? errorMessage;
+
+    public string ErrorMessage => errorMessage ?? string.Empty;
+
+    public bool HasErrorMessage => errorMessage != null;
+
+    private void ClearErrorMessage()
+    {
+        errorMessage = null;
+        OnPropertyChanged(nameof(ErrorMessage));
+        OnPropertyChanged(nameof(HasErrorMessage));
+    }
+
+    public void ReportError(string message)
+    {
+        Console.WriteLine($"Error: {message}");
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            errorMessage = message;
+            OnPropertyChanged(nameof(ErrorMessage));
+            OnPropertyChanged(nameof(HasErrorMessage));
+        });
     }
 }
