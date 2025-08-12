@@ -9,11 +9,15 @@ public class User
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
 
-    public string Name { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
 
     public int Level { get; set; } = 0;
 
     public int QuestLengthTicks { get; set; } = int.MaxValue;
 
     public int QuestLengthSeconds { get; set; } = int.MaxValue;
+
+    public bool QuestFinished { get; set; } = false;
+
+    public string BestQuestId { get; set; } = string.Empty;
 }

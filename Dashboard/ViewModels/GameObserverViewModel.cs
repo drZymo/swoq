@@ -58,7 +58,10 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
     public ReadOnlyObservableCollection<SessionViewModel> Sessions { get; }
 
 
-    public record Score(string UserName, int Level, int LengthTicks, int LengthSeconds);
+    public record Score(string UserName, int Level, int LengthTicks, int LengthSeconds, bool QuestFinished)
+    {
+        public bool HasProgress => Level > 0;
+    }
 
     private readonly ObservableCollection<Score> scores = [];
     public ReadOnlyObservableCollection<Score> Scores { get; }
@@ -295,7 +298,7 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
     private void HandleScoresUpdate(ScoresUpdate update)
     {
         var orderedScores = update.Scores.
-            Select(s => new Score(s.UserName, s.Level, s.LengthTicks, s.LengthSeconds)).
+            Select(s => new Score(s.UserName, s.Level, s.LengthTicks, s.LengthSeconds, s.QuestFinished)).
             OrderByDescending(s => s.Level).
             ThenBy(s => s.LengthTicks).
             ThenBy(s => s.LengthSeconds).

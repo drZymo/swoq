@@ -72,6 +72,7 @@ internal class QuestTests
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.Active));
             Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
             Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel));
+            Assert.That(CurrentUser.QuestFinished, Is.False);
         });
 
         // Finish last by fist picking up treasure
@@ -85,6 +86,7 @@ internal class QuestTests
             Assert.That(quest.State.Status, Is.EqualTo(GameStatus.FinishedSuccess));
             Assert.That(quest.State.Level, Is.EqualTo(MaxLevel));
             Assert.That(CurrentUser.Level, Is.EqualTo(MaxLevel + 1));
+            Assert.That(CurrentUser.QuestFinished, Is.True);
         });
 
         // No more actions allowed
