@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "FastBot": {
-      "commandName": "Project",
-      "commandLineArgs": "--train --once"
-    }
-  }
-}
