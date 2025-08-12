@@ -9,80 +9,80 @@
 <PageTitle>SWOQ - Documentation</PageTitle>
 
 <style>
-	table {
-		margin-left: 10pt;
-		border-style: solid;
-		border-width: 1px;
-	}
+    table {
+        margin-left: 10pt;
+        border-style: solid;
+        border-width: 1px;
+    }
 
-	th {
-		background-color: rgb(243, 243, 243);
-		padding: 4pt;
-	}
+    th {
+        background-color: rgb(243, 243, 243);
+        padding: 4pt;
+    }
 
-	td {
-		padding: 4pt;
-	}
+    td {
+        padding: 4pt;
+    }
 
 </style>
 
 <div class="documentation-container">
-	@((MarkupString)(Markdown.ToHtml(GetDocumentationContent(CurrentUserProvider?.Level ?? 0), new MarkdownPipelineBuilder().UseAdvancedExtensions().Build())))
+    @((MarkupString)(Markdown.ToHtml(GetDocumentationContent(CurrentUserProvider?.Level ?? 0), new MarkdownPipelineBuilder().UseAdvancedExtensions().Build())))
 
-	<br />
-	<br />
+    <br />
+    <br />
 </div>
 
 @code {
-	public string DocumentationContent { get; set; } = string.Empty;
+    public string DocumentationContent { get; set; } = string.Empty;
 
-	[CascadingParameter]
-	private CurrentUserProvider? CurrentUserProvider { get; set; }
+    [CascadingParameter]
+    private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	private string GetDocumentationContent(int Level)
-	{
-		var levelPattern = new Regex(@"^# Level (\d+) and higher$");
+    private string GetDocumentationContent(int Level)
+    {
+        var levelPattern = new Regex(@"^# Level (\d+) and higher$");
 
-		try
-		{
-			// Read full proto file
-			var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.md");
-			var lines = File.ReadAllLines(path);
+        try
+        {
+            // Read full proto file
+            var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.md");
+            var lines = File.ReadAllLines(path);
 
-			// Filer out all lines of too high levels
-			var filtered = new List<string>();
-			bool hide = false;
-			foreach (var line in lines)
-			{
-				var filteredLine = line;
-				if (!hide)
-				{
-					// Check if line defines level
-					var match = levelPattern.Match(line);
-					if (match.Success)
-					{
-						var lineLevel = int.Parse(match.Groups[1].Value);
+            // Filer out all lines of too high levels
+            var filtered = new List<string>();
+            bool hide = false;
+            foreach (var line in lines)
+            {
+                var filteredLine = line;
+                if (!hide)
+                {
+                    // Check if line defines level
+                    var match = levelPattern.Match(line);
+                    if (match.Success)
+                    {
+                        var lineLevel = int.Parse(match.Groups[1].Value);
 
-						// Level too high, then hide from here
-						if (lineLevel > Level) hide = true;
+                        // Level too high, then hide from here
+                        if (lineLevel > Level) hide = true;
 
-						if (lineLevel == Level)
-						{
-							filteredLine = $"{filteredLine} (✨ New ✨)";
-						}
-					}
-				}
+                        if (lineLevel == Level)
+                        {
+                            filteredLine = $"{filteredLine} (✨ New ✨)";
+                        }
+                    }
+                }
 
-				if (hide) break;
+                if (hide) break;
 
-				filtered.Add(filteredLine);
-			}
+                filtered.Add(filteredLine);
+            }
 
-			return string.Join("\n", filtered);
-		}
-		catch
-		{
-			return "Could not read documentation!";
-		}
-	}
+            return string.Join("\n", filtered);
+        }
+        catch
+        {
+            return "Could not read documentation!";
+        }
+    }
 }

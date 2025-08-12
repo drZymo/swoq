@@ -1,36 +1,36 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-	<div class="sidebar">
-		<NavMenu />
-	</div>
+    <div class="sidebar">
+        <NavMenu />
+    </div>
 
-	<main>
-		<div class="top-row px-4">
-			@if (CurrentUserProvider?.User == null)
-			{
-				<NavLink class="nav-link" href="login">Login</NavLink>
-				<NavLink class="nav-link" href="register">Registration</NavLink>
-			}
-			else
-			{
-				<NavLink class="nav-link" href="logout">Logout</NavLink>
-			}
-		</div>
+    <main>
+        <div class="top-row px-4">
+            @if (CurrentUserProvider?.User == null)
+            {
+                <NavLink class="nav-link" href="login">Login</NavLink>
+                <NavLink class="nav-link" href="register">Registration</NavLink>
+            }
+            else
+            {
+                <NavLink class="nav-link" href="logout">Logout</NavLink>
+            }
+        </div>
 
-		<article class="content px-4">
-			@Body
-		</article>
-	</main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
 </div>
 
 <div id="blazor-error-ui">
-	An unhandled error has occurred.
-	<a href="" class="reload">Reload</a>
-	<a class="dismiss">🗙</a>
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
 </div>
 
 @code {
-	[CascadingParameter]
-	private CurrentUserProvider? CurrentUserProvider { get; set; }
+    [CascadingParameter]
+    private CurrentUserProvider? CurrentUserProvider { get; set; }
 }

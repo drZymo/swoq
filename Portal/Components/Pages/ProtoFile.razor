@@ -9,43 +9,43 @@
 
 @if (CurrentUserProvider?.User == null)
 {
-	<PageTitle>SWOQ -  Proto file</PageTitle>
+    <PageTitle>SWOQ -  Proto file</PageTitle>
 
-	<h1>No access!</h1>
+    <h1>No access!</h1>
 
-	<p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
+    <p>This page is only accessible for logged in users. Please <a href="login">login</a> first.</p>
 }
 else
 {
-	<PageTitle>SWOQ - Proto file - @CurrentUserProvider?.Name</PageTitle>
+    <PageTitle>SWOQ - Proto file - @CurrentUserProvider?.Name</PageTitle>
 
-	<h1>Proto file</h1>
+    <h1>Proto file</h1>
 
-	<p>This is the proto file that defines the gRPC protocol to communicate with the server. See <NavLink href="doc">Documentation</NavLink> for more information on how to use it, </p>
+    <p>This is the proto file that defines the gRPC protocol to communicate with the server. See <NavLink href="doc">Documentation</NavLink> for more information on how to use it, </p>
 
-	<pre class="code"><code class="language-protobuf">@GetFileContent(CurrentUserProvider?.Level ?? 0)</code></pre>
+    <pre class="code"><code class="language-protobuf">@GetFileContent(CurrentUserProvider?.Level ?? 0)</code></pre>
 }
 
 @code {
-	[CascadingParameter]
-	private CurrentUserProvider? CurrentUserProvider { get; set; }
+    [CascadingParameter]
+    private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		// Make sure syntax highlighting is updated after every render
-		await JSRuntime.InvokeVoidAsync("hljs.highlightAll");
-	}
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Make sure syntax highlighting is updated after every render
+        await JSRuntime.InvokeVoidAsync("hljs.highlightAll");
+    }
 
-	string GetFileContent(int level)
-	{
-		try
-		{
-			var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.proto");
-			return ProtoReader.ReadProtoFileForLevel(path, level);
-		}
-		catch
-		{
-			return "Proto file could not be loaded!";
-		}
-	}
+    string GetFileContent(int level)
+    {
+        try
+        {
+            var path = Path.Combine(webHostEnvironment.WebRootPath, "swoq.proto");
+            return ProtoReader.ReadProtoFileForLevel(path, level);
+        }
+        catch
+        {
+            return "Proto file could not be loaded!";
+        }
+    }
 }

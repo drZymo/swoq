@@ -4,64 +4,64 @@
 
 @if (isLoaded)
 {
-	<CascadingValue Value="this">
-		@ChildContent
-	</CascadingValue>
+    <CascadingValue Value="this">
+        @ChildContent
+    </CascadingValue>
 }
 else
 {
-	<p>Loading...</p>
+    <p>Loading...</p>
 }
 
 @code {
-	private bool isLoaded;
+    private bool isLoaded;
 
-	[Parameter]
-	public RenderFragment? ChildContent { get; set; }
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
-	public Swoq.Data.User? User { get; set; } = null;
+    public Swoq.Data.User? User { get; set; } = null;
 
-	public string? Id => User?.Id;
-	public string? Name => User?.Name;
-	public int? Level => User?.Level;
+    public string? Id => User?.Id;
+    public string? Name => User?.Name;
+    public int? Level => User?.Level;
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			isLoaded = false;
-			User = await LoadCurrentUserAsync();
-			isLoaded = true;
-			StateHasChanged();
-		}
-	}
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isLoaded = false;
+            User = await LoadCurrentUserAsync();
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
 
-	private async Task<Swoq.Data.User?> LoadCurrentUserAsync()
-	{
-		try
-		{
-			var userId = await LocalStorage.GetAsync<string>("userId");
-			if (!userId.Success || userId.Value == null) return null;
-			var userName = await LocalStorage.GetAsync<string>("userName");
-			if (!userName.Success || userName.Value == null) return null;
+    private async Task<Swoq.Data.User?> LoadCurrentUserAsync()
+    {
+        try
+        {
+            var userId = await LocalStorage.GetAsync<string>("userId");
+            if (!userId.Success || userId.Value == null) return null;
+            var userName = await LocalStorage.GetAsync<string>("userName");
+            if (!userName.Success || userName.Value == null) return null;
 
-			return await Database.FindUserAsync(userId.Value, userName.Value);
-		}
-		catch
-		{
-			return null;
-		}
-	}
+            return await Database.FindUserAsync(userId.Value, userName.Value);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
-	public async Task SetUserAsync(string userId, string userName)
-	{
-		await LocalStorage.SetAsync("userId", userId);
-		await LocalStorage.SetAsync("userName", userName);
-	}
+    public async Task SetUserAsync(string userId, string userName)
+    {
+        await LocalStorage.SetAsync("userId", userId);
+        await LocalStorage.SetAsync("userName", userName);
+    }
 
-	public async Task RemoveUserAsync()
-	{
-		await LocalStorage.DeleteAsync("userId");
-		await LocalStorage.DeleteAsync("userName");
-	}
+    public async Task RemoveUserAsync()
+    {
+        await LocalStorage.DeleteAsync("userId");
+        await LocalStorage.DeleteAsync("userName");
+    }
 }
