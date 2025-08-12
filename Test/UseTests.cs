@@ -354,7 +354,28 @@ internal class UseTests : GameTestBase
         Assert.Throws<UseNotAllowedException>(() => Act(action2: DirectedAction.UseWest));
     }
 
-    protected override Map CreateGameMap()
+    [Test]
+    public void UseOnSimpleMapsNotAllowed()
+    {
+        var map = CreateMap(true);
+        Reset(Random.Shared, map);
+
+        // Standard actions are allowed
+        Act(DirectedAction.None);
+        Act(DirectedAction.MoveNorth);
+        Act(DirectedAction.MoveEast);
+        Act(DirectedAction.MoveSouth);
+        Act(DirectedAction.MoveWest);
+        // Use is not allowed
+        Assert.Throws<UnknownActionException>(() => Act(DirectedAction.UseNorth));
+        Assert.Throws<UnknownActionException>(() => Act(DirectedAction.UseEast));
+        Assert.Throws<UnknownActionException>(() => Act(DirectedAction.UseSouth));
+        Assert.Throws<UnknownActionException>(() => Act(DirectedAction.UseWest));
+    }
+
+    protected override Map CreateGameMap() => CreateMap(false);
+
+    private static Map CreateMap(bool simple )
     {
         var width = 11;
         var height = 13;
@@ -380,30 +401,34 @@ internal class UseTests : GameTestBase
 
         // Two players in center
         map.Player1.Position = map.Pos((height - 1) / 2, (width - 1) / 2);
-        map.Player2.Position = map.Pos((height - 1) / 2, (width - 1) / 2 + 1);
 
-        // Swords near players
-        map[map.Player1.Position.y + 1, map.Player1.Position.x] = Cell.Sword;
-        map[map.Player2.Position.y - 1, map.Player2.Position.x] = Cell.Sword;
+        if (!simple)
+        {
+            map.Player2.Position = map.Pos((height - 1) / 2, (width - 1) / 2 + 1);
 
-        // One enemy in top (in wall)
-        map.Enemy1.Position = map.Pos(0, (width - 1) / 2);
-        map[map.Enemy1.Position] = Cell.Empty;
+            // Swords near players
+            map[map.Player1.Position.y + 1, map.Player1.Position.x] = Cell.Sword;
+            map[map.Player2.Position.y - 1, map.Player2.Position.x] = Cell.Sword;
 
-        // Boulder in left
-        map[map.Player1.Position.y, 1] = Cell.Boulder;
+            // One enemy in top (in wall)
+            map.Enemy1.Position = map.Pos(0, (width - 1) / 2);
+            map[map.Enemy1.Position] = Cell.Empty;
 
-        // A key near player 2
-        map[map.Player2.Position.y + 1, map.Player2.Position.x] = Cell.KeyRed;
+            // Boulder in left
+            map[map.Player1.Position.y, 1] = Cell.Boulder;
 
-        // A door on the right
-        map[map.Player2.Position.y, width - 2] = Cell.DoorRedClosed;
+            // A key near player 2
+            map[map.Player2.Position.y + 1, map.Player2.Position.x] = Cell.KeyRed;
+
+            // A door on the right
+            map[map.Player2.Position.y, width - 2] = Cell.DoorRedClosed;
+
+            // Health below player 2
+            map[height - 2, map.Player2.Position.x] = Cell.Health;
+        }
 
         // Exit bottom right
         map[height - 2, width - 2] = Cell.Exit;
-
-        // Health below player 2
-        map[height - 2, map.Player2.Position.x] = Cell.Health;
 
         return map.ToMap();
     }

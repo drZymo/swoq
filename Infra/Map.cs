@@ -1,5 +1,6 @@
 ﻿namespace Swoq.Infra;
 
+using System.Collections;
 using System.Collections.Immutable;
 
 public class Map(
@@ -12,7 +13,7 @@ public class Map(
     Player? player2,
     Enemy? enemy1,
     Enemy? enemy2,
-    Enemy? enemy3)
+    Enemy? enemy3) : IEnumerable<Cell>
 {
     public static readonly Map Empty = new(-1, 0, 0, [], false, null, null, null, null, null);
 
@@ -110,4 +111,8 @@ public class Map(
             if (Enemy3 != null) yield return Enemy3;
         }
     }
+
+    public IEnumerator<Cell> GetEnumerator() => cells.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)cells).GetEnumerator();
 }
