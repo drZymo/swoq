@@ -56,7 +56,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     {
         null => "",
         GameStatus.Active => "",
-        GameStatus.FinishedSuccess => "🌟 Quest completed! 🌟",
+        GameStatus.FinishedSuccess => IsQuest ? "🌟 Quest completed 🌟" : "❕ Training completed ❕",
         GameStatus.FinishedTimeout => "🛑 Timeout 🛑",
         GameStatus.FinishedNoProgress => "🛑 No progress 🛑",
         GameStatus.FinishedPlayerDied => "🛑 Player died 🛑",
@@ -69,6 +69,8 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public TiledImageViewModel Overview { get; } = new();
     public PlayerObservationViewModel Player1 { get; } = new();
     public PlayerObservationViewModel Player2 { get; } = new();
+
+    private bool IsQuest => Current?.IsQuest ?? false;
 
     public void Reset()
     {
