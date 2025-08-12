@@ -930,8 +930,6 @@ internal class Game : IGame
 
     #region State
 
-    // TODO: Move to separate class?
-
     private PlayerState GetPlayerState(Player player)
     {
         const int visibilityRange = Parameters.PlayerVisibilityRange;
