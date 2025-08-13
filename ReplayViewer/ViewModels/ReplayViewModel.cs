@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+using Avalonia.Threading;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
@@ -125,6 +125,7 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
         catch (Exception error)
         {
             // Keep game states loaded so far
+            Console.WriteLine($"Failed to load replay file: {path}\n{error}");
             if (gameStates.Count == 0)
             {
                 reporter.ReportError($"Failed to load replay file: {path}\n\n{error}");
