@@ -12,7 +12,7 @@
     <Grid RowDefinitions="*,auto">
         <infraui:GameObservationView DataContext="{Binding Current}"/>
 
-        <Grid Grid.Row="1" Margin="8">
+        <Grid Grid.Row="1" Margin="8" IsEnabled="{Binding Current.IsLoaded}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto" MinWidth="140"/>

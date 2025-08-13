@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+using Avalonia.Threading;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
 using Swoq.Interface;
@@ -14,18 +14,20 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
     private static readonly TimeSpan FrameDelay = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan TailModeFrameDelay = TimeSpan.FromMilliseconds(20);
 
+    private readonly IErrorReporter reporter;
+    private bool tailMode = false;
     private DispatcherTimer? playTimer = null;
     private DispatcherTimer? tailTimer = null;
-    private bool tailMode = false;
 
     private IImmutableList<GameObservation> gameStates = ImmutableList<GameObservation>.Empty;
 
-    public ReplayViewModel()
+    public ReplayViewModel(IErrorReporter reporter)
     {
+        this.reporter = reporter;
         PlayPauseCommand = new RelayCommand(PlayPause);
     }
 
-    public ReplayViewModel(string path, bool tailMode = false) : this()
+    public ReplayViewModel(IErrorReporter reporter, string path, bool tailMode = false) : this(reporter)
     {
         IsLoading = !tailMode;
         this.tailMode = tailMode;
@@ -55,6 +57,7 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
         }
     }
 
+    public event Action? Loaded;
 
     private int tick = 0;
     public int Tick
@@ -89,6 +92,7 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
         try
         {
             var sw = Stopwatch.StartNew();
+
             using Stream file = tailMode
                 ? new TailStream(path)
                 : new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -120,9 +124,12 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
         }
         catch (Exception error)
         {
-            // TODO: MessageBox.Show($"Failed to load replay file\n\n{path}");
             // Keep game states loaded so far
             Console.WriteLine($"Failed to load replay file: {path}\n{error}");
+            if (gameStates.Count == 0)
+            {
+                reporter.ReportError($"Failed to load replay file: {path}\n\n{error}");
+            }
         }
         finally
         {
@@ -142,6 +149,7 @@ internal class ReplayViewModel : ViewModelBase, IDisposable
                     OnTickChanged();
                 }
                 IsLoading = false;
+                Loaded?.Invoke();
             });
         }
     }
