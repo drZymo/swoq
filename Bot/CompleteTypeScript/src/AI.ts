@@ -44,9 +44,9 @@ export class AI {
         const startTick = this.game.state.tick;
         performance.mark("start");
         console.log(
-            `Start state: tick=${state.tick}, level=${state.level}, status=${
+            `Start state: tick=${state.tick}, level=${state.level}, seed=${this.game.seed}, status=${
                 GameStatus[state.status]
-            }`
+            }`,
         );
 
         const level = state.level;
@@ -70,10 +70,12 @@ export class AI {
                     : "ERRORED";
             console.log(
                 `Level ${level} ${result}: ${playMeasurement.duration.toFixed(
-                    2
+                    2,
                 )}ms, ${ticks} ticks, ${(
                     playMeasurement.duration / ticks
-                ).toFixed(2)}ms/tick, total ${this.game.state.tick} ticks`
+                ).toFixed(
+                    2,
+                )}ms/tick, total ${this.game.state.tick} ticks, seed ${this.game.seed}`,
             );
             console.log(this.stats);
         }
@@ -87,13 +89,13 @@ export class AI {
                     this.grid,
                     playerState,
                     this.game.visibilityRange,
-                    1
+                    1,
                 );
                 this.stats.player1 = this.player1.stats;
             } else {
                 this.player1.updateState(
                     playerState,
-                    this.game.visibilityRange
+                    this.game.visibilityRange,
                 );
             }
         } else {
@@ -107,13 +109,13 @@ export class AI {
                     this.grid,
                     playerState2,
                     this.game.visibilityRange,
-                    2
+                    2,
                 );
                 this.stats.player2 = this.player2.stats;
             } else {
                 this.player2.updateState(
                     playerState2,
-                    this.game.visibilityRange
+                    this.game.visibilityRange,
                 );
             }
         } else {
@@ -121,17 +123,17 @@ export class AI {
         }
         this.grid.setPlayerPositions(
             this.player1?.position,
-            this.player2?.position
+            this.player2?.position,
         );
 
         console.log("Player 1: ", this.player1?.toString());
         console.log("Player 2: ", this.player2?.toString());
-        console.log(this.grid.toString());
+        // console.log(this.grid.toString());
     }
 
     private async _act(
         action1: DirectedAction | undefined,
-        action2: DirectedAction | undefined
+        action2: DirectedAction | undefined,
     ): Promise<void> {
         const state = await this.game.act(action1, action2);
         console.log(
@@ -139,7 +141,7 @@ export class AI {
                 action2 ? DirectedAction[action2] : undefined
             }) state: tick=${state.tick}, level=${state.level}, status=${
                 GameStatus[state.status]
-            }`
+            }`,
         );
     }
 
@@ -225,19 +227,19 @@ export class AI {
         try {
             await this._act(
                 this.player1 ? action1 : undefined,
-                this.player2 ? action2 : undefined
+                this.player2 ? action2 : undefined,
             );
         } catch (err) {
             console.log(
                 `Act(${action1 ? DirectedAction[action1] : undefined},${
                     action2 ? DirectedAction[action2] : undefined
                 }) failed:`,
-                err instanceof Error ? err.message : err
+                err instanceof Error ? err.message : err,
             );
             this.stats.actFailed++;
             await this._act(
                 this.player1?.tryRandomWalk(),
-                this.player2?.tryRandomWalk()
+                this.player2?.tryRandomWalk(),
             );
         }
     }

@@ -23,33 +23,39 @@ async function main(): Promise<void> {
     const level = process.env.SWOQ_LEVEL
         ? parseInt(process.env.SWOQ_LEVEL)
         : undefined;
+    let seed: number | undefined;
     if (level === undefined) {
         console.log("Starting quest...");
     } else {
-        console.log(`Starting training for level ${level}...`);
+        seed = process.env.SWOQ_SEED
+            ? parseInt(process.env.SWOQ_SEED)
+            : undefined;
+        console.log(
+            `Starting training for level ${level} (seed ${seed ?? "random"})...`,
+        );
     }
-    await using game = await gameConnection.start(level);
+    await using game = await gameConnection.start(level, seed);
     await play(game);
 }
 
 async function play(game: Game): Promise<void> {
     let state = game.state;
     console.log(
-        `Start state: tick=${state.tick}, level=${state.level}, status=${
+        `Start state: tick=${state.tick}, level=${state.level}, seed=${game.seed}, status=${
             GameStatus[state.status]
-        }`
+        }`,
     );
 
     let moveEast = true;
     while (state.status == GameStatus.ACTIVE) {
-        const action = moveEast ? DirectedAction.MOVE_EAST : DirectedAction.MOVE_SOUTH;
-        state = await game.act(
-            action
-        );
+        const action = moveEast
+            ? DirectedAction.MOVE_EAST
+            : DirectedAction.MOVE_SOUTH;
+        state = await game.act(action);
         console.log(
             `Act(${DirectedAction[action]}): tick=${state.tick}, level=${state.level}, status=${
                 GameStatus[state.status]
-            }`
+            }`,
         );
         moveEast = !moveEast;
     }
