@@ -6,6 +6,8 @@ internal static class DotEnv
 {
     public static void Load()
     {
+        if (!File.Exists(".env")) return;
+
         foreach (var line in File.ReadAllLines(".env"))
         {
             // Split off comments

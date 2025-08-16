@@ -36,6 +36,6 @@ internal static class Parameters
     public static readonly TimeSpan ScoresUpdatePeriod = TimeSpan.FromMilliseconds(500);
     public static readonly TimeSpan StatisticsUpdatePeriod = TimeSpan.FromMilliseconds(250);
 
-    public const int MaxLevelTicks = 1000;
+    public const int MaxLevelTicks = 10000;
     public static readonly TimeSpan MaxLevelDuration = TimeSpan.FromSeconds(120);
 }

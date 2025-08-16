@@ -16,7 +16,7 @@ internal class Game(GameService.GameServiceClient client, StartResponse response
     public State State { get; private set; } = response.State;
     public int? Seed { get; } = response.HasSeed ? response.Seed : null;
 
-    public void Act(DirectedAction action1, DirectedAction action2)
+    public ActResult Act(DirectedAction action1, DirectedAction action2)
     {
         var request = new ActRequest() { GameId = GameId, Action = action1, Action2 = action2 };
 
@@ -24,11 +24,17 @@ internal class Game(GameService.GameServiceClient client, StartResponse response
 
         replayFile?.Append(request, response);
 
-        if (response.Result != ActResult.Ok)
+        //if (response.Result != ActResult.Ok)
+        //{
+        //    var status = response.State?.Status;
+        //    throw new GameException($"Act failed (result {response.Result}, status {status})");
+        //}
+
+        if (response.State != null)
         {
-            throw new GameException($"Act failed (result {response.Result})");
+            State = response.State;
         }
 
-        State = response.State;
+        return response.Result;
     }
 }

@@ -1,120 +1,9 @@
-﻿using Swoq.Interface;
+﻿using Bot;
+using Swoq.Interface;
 using System.Diagnostics;
 using System.Text;
 using PosIndex = int;
 
-internal struct Player(int mapHeight, int mapWidth, Dictionary<Tile, HashSet<PosIndex>> tilePositions)
-{
-    public PosIndex pos = -1;
-    public int x = -1;
-    public int y = -1;
-    public Inventory inventory = Inventory.None;
-    public int health = -1;
-    public bool hasSword = false;
-
-    public readonly int[] distances = new int[mapHeight * mapWidth];
-    public readonly PosIndex[] paths = new PosIndex[mapHeight * mapWidth];
-
-    public DirectedAction action = DirectedAction.None;
-    public DirectedAction nextAction = DirectedAction.None;
-
-    public PosIndex targetPlatePosition = -1;
-    public bool remainOnPlate = false;
-    public int remainOnPlateCounter = 0;
-    private Inventory remainOnPlateInventory = Inventory.None;
-    private int remainOnPlateHealth = -1;
-    private bool remainOnPlateHasSword = false;
-
-    public void SyncFromState(PlayerState? state)
-    {
-        x = state?.Position.X ?? -1;
-        y = state?.Position.Y ?? -1;
-        pos = y * mapWidth + x;
-        inventory = state?.Inventory ?? Inventory.None;
-        health = state?.Health ?? -1;
-        hasSword = state?.HasSword ?? false;
-    }
-
-    public readonly bool IsPresent => pos >= 0;
-
-    public readonly bool CanAct => action == DirectedAction.None && !remainOnPlate && remainOnPlateCounter <= 0;
-
-    public readonly bool CanMoveNorth => y > 0 &&
-      tilePositions.TryGetValue(Tile.Empty, out var emptyPositions) &&
-      emptyPositions.Contains(pos - mapWidth);
-
-    public readonly bool CanMoveSouth => y < mapHeight - 1 &&
-            tilePositions.TryGetValue(Tile.Empty, out var emptyPositions) &&
-            emptyPositions.Contains(pos + mapWidth);
-
-    public readonly bool CanMoveEast => x < mapWidth - 1 &&
-            tilePositions.TryGetValue(Tile.Empty, out var emptyPositions) &&
-            emptyPositions.Contains(pos + 1);
-
-    public readonly bool CanMoveWest => x > 0 &&
-            tilePositions.TryGetValue(Tile.Empty, out var emptyPositions) &&
-            emptyPositions.Contains(pos - 1);
-
-    public readonly bool CanReach(Tile tile)
-    {
-        var paths = this.paths;
-        return tilePositions.TryGetValue(tile, out var positions) && positions.Any(p => paths[p] >= 0);
-    }
-
-    public void UpdateRemainOnPlate(ref Player other)
-    {
-        if (targetPlatePosition >= 0 && pos == targetPlatePosition)
-        {
-            remainOnPlate = true;
-            remainOnPlateInventory = other.inventory;
-            remainOnPlateHealth = other.health;
-            remainOnPlateHasSword = other.hasSword;
-        }
-
-        if (remainOnPlate)
-        {
-            if (other.inventory != remainOnPlateInventory ||
-                other.health != remainOnPlateHealth ||
-                other.hasSword != remainOnPlateHasSword)
-            {
-                remainOnPlate = false;
-                remainOnPlateCounter = 20; // Wait a few ticks after release before really moving
-            }
-        }
-        else if (remainOnPlateCounter > 0)
-        {
-            remainOnPlateCounter--;
-        }
-
-        targetPlatePosition = -1;
-    }
-
-    public readonly PosIndex NextPosition => action switch
-    {
-        DirectedAction.MoveNorth => pos - mapWidth,
-        DirectedAction.MoveEast => pos + 1,
-        DirectedAction.MoveSouth => pos + mapWidth,
-        DirectedAction.MoveWest => pos - 1,
-        _ => pos
-    };
-
-    public readonly bool CanReachExit => CanReach(Tile.Exit);
-
-    public void Reset()
-    {
-        SyncFromState(null);
-
-        action = DirectedAction.None;
-        nextAction = DirectedAction.None;
-
-        targetPlatePosition = -1;
-        remainOnPlate = false;
-        remainOnPlateCounter = 0;
-        remainOnPlateInventory = Inventory.None;
-        remainOnPlateHealth = -1;
-        remainOnPlateHasSword = false;
-    }
-}
 
 internal class ActionPlanner
 {
@@ -133,9 +22,14 @@ internal class ActionPlanner
     private readonly List<PosIndex> keyPickupPositions = [];
     private readonly Dictionary<PosIndex, int> platesWithBoulders = [];
 
+    private readonly HashSet<PosIndex> enemyPositions = [];
+
     private int level21State = 0;
     private int level22State = 0;
-    private PosIndex bossPos = -1;
+    private PosIndex lastBossPos = -1;
+    private PosIndex initialBossPos = -1;
+
+    private const int BossDistance = 5;
 
     public ActionPlanner(int mapHeight, int mapWidth, int visibilityRange)
     {
@@ -152,11 +46,26 @@ internal class ActionPlanner
     {
         UpdateState(state);
 
-        UpdateRemainOnPlate();
+        UpdatePlayers();
         StorePlateDoorPositions();
+        StoreEnemyPositions();
 
         // Gather some information
-        var canBothReachExit = (!player1.IsPresent || player1.CanReachExit) && (!player2.IsPresent || player2.CanReachExit);
+        var canBothReachExit = false;
+        if (player1.IsPresent && player2.IsPresent)
+        {
+            // Player1 can reach exit and player2 can reach player1 or vice versa
+            canBothReachExit = (player1.CanReachExit && AdjacentPositions([player1.pos]).Any(p => player2.CanReach(p))) ||
+                 (player2.CanReachExit && AdjacentPositions([player2.pos]).Any(p => player1.CanReach(p)));
+        }
+        else if (player1.IsPresent)
+        {
+            canBothReachExit = player1.CanReachExit;
+        }
+        else if (player2.IsPresent)
+        {
+            canBothReachExit = player2.CanReachExit;
+        }
 
         // Find plate positions
         var platePositions = new HashSet<PosIndex>();
@@ -182,7 +91,6 @@ internal class ActionPlanner
         {
             SetTile(player1.pos, Tile.Player);
         }
-
         // Recompute paths after movement of player 1
         ComputePaths(ref player2);
 
@@ -203,6 +111,17 @@ internal class ActionPlanner
                 Debug.WriteLine($"{step} {player.action}");
                 prevAction = player.action;
             }
+        }
+
+        // Check if current target can still be reached
+        if (player.targetPlatePosition >= 0 && player.targetPlatePosition != player.pos && !player.CanReach(player.targetPlatePosition))
+        {
+            player.targetPlatePosition = -1;
+            player.remainOnPlateCounter = -1;
+        }
+        if (player.targetPosition >= 0 && player.targetPosition != player.pos && !player.CanReach(player.targetPosition))
+        {
+            player.targetPosition = -1;
         }
 
         if (level == 22)
@@ -246,7 +165,7 @@ internal class ActionPlanner
         Print("boulder on plate", ref player);
 
         // Only player 1 will stand on plates
-        if (player.pos == player1.pos)
+        if (player.pos == player1.pos && level != 20)
         {
             MoveToPlate(ref player, platePositions);
             Print("move to plate", ref player);
@@ -258,11 +177,17 @@ internal class ActionPlanner
         PickupBoulder(ref player);
         Print("pickup boulder", ref player);
 
+        WalkToEnemy(ref player);
+        Print("to enemy", ref player);
+
+        DesperateAttack(ref player);
+        Print("desparate attack", ref player);
+
         WalkRandom(ref player);
         Print("random", ref player);
     }
 
-    private void UpdateRemainOnPlate()
+    private void UpdatePlayers()
     {
         foreach (var pos in platesWithBoulders.Keys)
         {
@@ -277,18 +202,18 @@ internal class ActionPlanner
             }
         }
 
-        player1.UpdateRemainOnPlate(ref player2);
-        player2.UpdateRemainOnPlate(ref player1);
+        player1.Update(ref player2);
+        player2.Update(ref player1);
 
         // Step off plate when enemy can be crushed
         if (tilePositions.TryGetValue(Tile.Enemy, out var enemyPositions))
         {
             if (enemyPositions.Any(p => plateDoorPositions.Contains(p)))
             {
-                player1.remainOnPlate = false;
-                player1.remainOnPlateCounter = 0;
-                player2.remainOnPlate = false;
-                player2.remainOnPlateCounter = 0;
+                player1.targetPlatePosition = -1;
+                player1.remainOnPlateCounter = -1;
+                player2.targetPlatePosition = -1;
+                player2.remainOnPlateCounter = -1;
             }
         }
     }
@@ -318,6 +243,17 @@ internal class ActionPlanner
         }
     }
 
+    private void StoreEnemyPositions()
+    {
+        if (tilePositions.TryGetValue(Tile.Enemy, out var ep))
+        {
+            foreach (var p in ep)
+            {
+                enemyPositions.Add(p);
+            }
+        }
+    }
+
     private void HandleLevel20(ref Player player, ref Player other, HashSet<int> platePositions)
     {
         if (level != 20) return;
@@ -328,9 +264,21 @@ internal class ActionPlanner
         }
         else
         {
-            player.remainOnPlate = false;
-            player.remainOnPlateCounter = 0;
+            // Step of plate when other player is outside start area
             player.targetPlatePosition = -1;
+            player.remainOnPlateCounter = -1;
+        }
+
+        // Prevent going back to the start and trip the pressure plate accidentally
+        if ((player1.x >= 8 || player1.y >= 11) && (player2.x >= 8 || player2.y >= 11))
+        {
+            for (var y = 0; y < 11; y++)
+            {
+                for (var x = 0; x < 8; x++)
+                {
+                    SetTile(y * mapWidth + x, Tile.Wall);
+                }
+            }
         }
     }
 
@@ -338,9 +286,26 @@ internal class ActionPlanner
     {
         if (level != 21) return;
 
+        Debug.WriteLine($"level21 {level21State}");
+
+        // Prevent going to the enemy area when not ready yet
+        if (level21State < 8)
+        {
+            for (var y = mapHeight - 18; y < mapHeight; y++)
+            {
+                for (var x = mapWidth - 11; x < mapWidth; x++)
+                {
+                    SetTile(y * mapWidth + x, Tile.Wall);
+                }
+            }
+        }
+
         if (level21State == 0) // Find boulder and plates
         {
-            if (platePositions.Count == 2 && tilePositions.ContainsKey(Tile.Boulder))
+            Explore(ref player);
+
+            // Completely explore first
+            if (player.action == DirectedAction.None && platePositions.Count == 2 && tilePositions.ContainsKey(Tile.Boulder))
             {
                 level21State = 1;
             }
@@ -348,7 +313,7 @@ internal class ActionPlanner
         }
         if (level21State == 1) // Move player1 to plate and player2 to boulder
         {
-            if (player1.remainOnPlate && player2.inventory == Inventory.Boulder)
+            if (player1.remainOnPlateCounter >= 0 && player2.inventory == Inventory.Boulder)
             {
                 level21State = 2;
             }
@@ -393,9 +358,11 @@ internal class ActionPlanner
             if (player2.hasSword && DistanceBetween(player1.pos, player2.pos) < 5)
             {
                 level21State = 4;
-                player1.remainOnPlate = false;
-                player1.remainOnPlateCounter = 0;
-                player1.action = MoveToClosest(AdjacentPositions([player2.pos]), ref player1);
+                player1.targetPlatePosition = -1;
+                player1.remainOnPlateCounter = -1;
+                // Move out of the way for player 2 to step on the plate
+                var awayPos = AdjacentPositions([player1.pos]).OrderByDescending(p => DistanceBetween(p, player2.pos)).First();
+                player1.action = MoveTo(awayPos, ref player1);
             }
             if (player.pos == player2.pos)
             {
@@ -415,7 +382,7 @@ internal class ActionPlanner
         }
         if (level21State == 4) // swap places
         {
-            if (player2.remainOnPlate)
+            if (player2.remainOnPlateCounter >= 0)
             {
                 level21State = 5;
             }
@@ -429,16 +396,24 @@ internal class ActionPlanner
         }
         if (level21State == 5) // player 1 pick sword
         {
+            // player 2 stays on plate
             if (player.pos == player2.pos)
             {
-                player.remainOnPlateCounter = 100; // stay on plate
+                if (player.remainOnPlateCounter >= 0)
+                {
+                    player.remainOnPlateCounter = 100;
+                }
+                else
+                {
+                    MoveToPlate(ref player, platePositions);
+                }
             }
 
             if (player1.hasSword && DistanceBetween(player1.pos, player2.pos) < 5)
             {
                 level21State = 6;
-                player2.remainOnPlate = false;
-                player2.remainOnPlateCounter = 0;
+                player2.targetPlatePosition = -1;
+                player2.remainOnPlateCounter = -1;
                 player2.action = MoveToClosest(AdjacentPositions([player1.pos]), ref player2);
             }
             if (player.pos == player1.pos)
@@ -465,6 +440,10 @@ internal class ActionPlanner
             {
                 level21State = 7;
             }
+            else
+            {
+                WalkRandom(ref player);
+            }
         }
         if (level21State == 7) // move closer
         {
@@ -475,19 +454,19 @@ internal class ActionPlanner
             else
             {
                 level21State = 8;
+                // Open up enemy area for explorarion
+                for (var y = mapHeight - 18; y < mapHeight; y++)
+                {
+                    for (var x = mapWidth - 11; x < mapWidth; x++)
+                    {
+                        SetTile(y * mapWidth + x, Tile.Unknown);
+                    }
+                }
             }
         }
         if (level21State == 8) // explore and attack
         {
-            // Stay close together
-            if (HasTiles(Tile.Enemy) && DistanceBetween(player.pos, other.pos) > 3)
-            {
-                player.action = MoveToClosest(AdjacentPositions([other.pos]), ref player);
-            }
-            else
-            {
-                Attack(ref player);
-            }
+            Attack(ref player);
         }
 
         MoveToExit(ref player, canBothReachExit);
@@ -504,89 +483,151 @@ internal class ActionPlanner
     {
         if (level != 22) return;
 
-        if (!tilePositions.TryGetValue(Tile.Boss, out var bossPositions))
+        Debug.WriteLine($"level22 {level22State}");
+
+        if (tilePositions.TryGetValue(Tile.Boss, out var bossPositions))
         {
-            bossPositions = [];
+            lastBossPos = bossPositions.First();
+            if (initialBossPos == -1)
+            {
+                initialBossPos = lastBossPos;
+            }
         }
 
-        if (bossPos < 0 && bossPositions.Count > 0)
+        // Avoid moving to close to the boss
+        if (initialBossPos >= 0 && level22State < 1)
         {
-            bossPos = bossPositions.First();
+            var bossY = initialBossPos / mapWidth;
+            var bossX = initialBossPos % mapWidth;
+            for (var y = bossY - BossDistance; y <= bossY + BossDistance; y++)
+            {
+                if (y < 0 || y >= mapHeight) continue;
+                for (var x = bossX - BossDistance; x <= bossX + BossDistance; x++)
+                {
+                    if (x < 0 || x >= mapWidth) continue;
+                    var p = y * mapWidth + x;
+                    if (p == initialBossPos) continue;
+
+                    SetTile(p, Tile.Wall);
+                }
+            }
         }
+
 
         if (level22State == 0) // move to plate
         {
-            if (other.remainOnPlate)
+            // First explore everything before stepping on plate
+            Explore(ref player);
+            Debug.WriteLine($"Explore {player.action}");
+            // Done exploring?
+            if (player.action == DirectedAction.None)
             {
-                if (plateDoorPositions.Contains(player.pos))
+                // Is this the player that is on the plate?
+                if (player.remainOnPlateCounter >= 0)
                 {
-                    level22State = 1;
+                    // Stay there
+                    player.remainOnPlateCounter = 100;
                 }
-                else
+                else if (other.remainOnPlateCounter >= 0)
                 {
+                    // If the other player is on the plate
+                    // Move to the door about to be opened
                     player.action = MoveToClosest(plateDoorPositions, ref player);
                     if (player.action == DirectedAction.None)
                     {
                         player.action = MoveToClosest(AdjacentPositions(plateDoorPositions), ref player);
                     }
                 }
+
+                // If other player is on the plate, and this player is at the door, then proceed to next phase
+                if (other.remainOnPlateCounter >= 0 && plateDoorPositions.Contains(player.pos))
+                {
+                    level22State = 1;
+                }
+
+                MoveToPlate(ref player, platePositions);
             }
-            MoveToPlate(ref player, platePositions);
         }
         if (level22State == 1) // move toward boss
         {
-            if (other.remainOnPlate)
+            // Is this the player on the plate?
+            if (player.remainOnPlateCounter >= 0)
             {
-                foreach (var bossPos in bossPositions)
-                {
-                    if (DistanceBetween(player.pos, bossPos) > 5)
-                    {
-                        player.action = MoveToClosest(AdjacentPositions([bossPos]), ref player);
-                    }
-                    else
-                    {
-                        level22State = 2;
-                        break;
-                    }
-                }
-            }
-        }
-        if (level22State == 2) // move to plate with boss
-        {
-            if (other.remainOnPlate)
-            {
-                foreach (var bossPos in bossPositions)
-                {
-                    if (DistanceBetween(player.pos, bossPos) < 4)
-                    {
-                        player.action = MoveToClosest(AdjacentPositions([other.pos]), ref player);
-                    }
-                }
-            }
-            else if (player.remainOnPlate)
-            {
-                // crush
-                foreach (var pos in bossPositions)
-                {
-                    if (plateDoorPositions.Contains(pos))
-                    {
-                        player.action = DirectedAction.MoveWest;
-                        other.remainOnPlate = false;
-                        other.remainOnPlateCounter = 0;
-                        level22State = 3;
-                    }
-                }
-            }
-        }
-        if (level22State == 3) // look at initial boss pos
-        {
-            if (player.pos != bossPos)
-            {
-                player.action = MoveTo(bossPos, ref player);
+                // Remain there
+                player.remainOnPlateCounter = 100;
             }
             else
             {
-                level22State = 4;
+                // No, this is the player to lure the boss
+                if (DistanceBetween(player.pos, lastBossPos) > 4)
+                {
+                    player.action = MoveToClosest(AdjacentPositions([lastBossPos]), ref player);
+                }
+                else
+                {
+                    level22State = 2;
+                }
+            }
+        }
+        if (level22State == 2 || level22State == 3) // move to plate with boss
+        {
+            // Is this the player on the plate?
+            if (player.remainOnPlateCounter >= 0)
+            {
+                // Remain there
+                player.remainOnPlateCounter = 100;
+                // Unless we can crush the boss
+                if (plateDoorPositions.Contains(lastBossPos))
+                {
+                    player.action = DirectedAction.MoveWest;
+                    player.targetPlatePosition = -1;
+                    player.remainOnPlateCounter = -1;
+
+                    // Reset the whole boss area to make sure the treasure is explored
+                    var bossY = initialBossPos / mapWidth;
+                    var bossX = initialBossPos % mapWidth;
+                    for (var y = bossY - BossDistance; y <= bossY + BossDistance; y++)
+                    {
+                        if (y < 0 || y >= mapHeight) continue;
+                        for (var x = bossX - BossDistance; x <= bossX + BossDistance; x++)
+                        {
+                            if (x < 0 || x >= mapWidth) continue;
+                            var p = y * mapWidth + x;
+
+                            SetTile(p, Tile.Unknown);
+                        }
+                    }
+                    foreach (var p in plateDoorPositions)
+                    {
+                        SetTile(p, Tile.Wall);
+                    }
+
+                    level22State = 4;
+                    return;
+                }
+            }
+            else
+            {
+                // No, this is the player to lure the boss
+                if (DistanceBetween(player.pos, lastBossPos) < 3)
+                {
+                    // Boss is following;
+                    if (level22State == 2)
+                    {
+                        // move to door 
+                        player.action = MoveToClosest(plateDoorPositions, ref player);
+                    }
+                    else if (level22State == 3)
+                    {
+                        // move to other 
+                        player.action = MoveToClosest(AdjacentPositions([other.pos]), ref player);
+                    }
+                }
+
+                if (level22State == 2 && plateDoorPositions.Contains(player.pos))
+                {
+                    level22State = 3;
+                }
             }
         }
         if (level22State == 4) // pick key for exit
@@ -726,26 +767,49 @@ internal class ActionPlanner
     {
         if (!player.CanAct) return;
 
+        if (!player.hasSword) return; // Do we have a sword?
         if (!tilePositions.TryGetValue(Tile.Enemy, out var enemies)) return; // Are there enemies to attack?
 
-        // Do we have a sword and enough health?
-        var canAttack = player.hasSword && player.health > 1;
-        if (canAttack)
+        // Only attack if we have enough health
+        if (player.health > 1)
         {
             player.action = UseClosest(enemies, ref player, out _);
         }
-        else
+        else if (level > 12 && level != 20)
         {
-            // Are we close to an enemy?
-            var distances = player.distances;
-            var closestAdjacentEnemyPos = AdjacentPositions(enemies).OrderBy(p => distances[p]).First();
-            var distanceToEnemy = distances[closestAdjacentEnemyPos];
-            if (distanceToEnemy > 0) return;
-
-            // Find empty position with largest distance
-            var runAwayPos = tilePositions[Tile.Empty].OrderByDescending(p => DistanceBetween(p, closestAdjacentEnemyPos)).First();
-            player.action = MoveTo(runAwayPos, ref player);
+            MoveAwayFromEnemies(ref player);
         }
+    }
+
+    private bool Player1CanReachPlayer2()
+    {
+        if (!player1.IsPresent) return false;
+        if (!player2.IsPresent) return false;
+
+        return AdjacentPositions([player2.pos]).Any(p => player1.CanReach(p));
+    }
+
+    private void MoveAwayFromEnemies(ref Player player)
+    {
+        if (!player.CanAct) return;
+
+        // Are there enemies to run away from
+        if (!tilePositions.TryGetValue(Tile.Enemy, out var enemies)) return;
+
+        // Compute distance to enemies for each poitn around player
+        var runAwayPos = AdjacentPositions([player.pos]).OrderByDescending(p => enemies.Min(e => DistanceBetween(p, e)));
+        if (!runAwayPos.Any()) return;
+
+        player.action = MoveTo(runAwayPos.First(), ref player);
+    }
+
+    private void DesperateAttack(ref Player player)
+    {
+        if (!player.CanAct) return;
+        if (!player.hasSword) return; // Do we have a sword?
+        if (!tilePositions.TryGetValue(Tile.Enemy, out var enemies)) return; // Are there enemies to attack?
+
+        player.action = UseClosest(enemies, ref player, out _);
     }
 
     private void PickupBoulder(ref Player player)
@@ -781,11 +845,14 @@ internal class ActionPlanner
         // No plates to stand on before level 9
         if (level < 9) return;
 
-        int closestPlate = FindClosesPositionFromPlayer(platePositions, ref player);
-        if (closestPlate >= 0)
+        if (player.targetPlatePosition < 0)
         {
-            player.action = MoveTo(closestPlate, ref player);
-            if (player.action != DirectedAction.None) player.targetPlatePosition = closestPlate;
+            player.targetPlatePosition = FindClosesPositionFromPlayer(platePositions, ref player);
+        }
+
+        if (player.targetPlatePosition >= 0)
+        {
+            player.action = MoveTo(player.targetPlatePosition, ref player);
         }
     }
 
@@ -819,17 +886,52 @@ internal class ActionPlanner
         }
     }
 
+    private void WalkToEnemy(ref Player player)
+    {
+        if (!player.CanAct) return;
+
+        // Pick a new target if available
+        if (player.targetPosition < 0)
+        {
+            player.targetPosition = (enemyPositions.Count > 0)
+                ? enemyPositions.PickOne()
+                : -1;
+
+            Debug.WriteLine($"WalkToEnemy: target position {player.targetPosition}");
+        }
+
+        // Move to target if set
+        if (player.targetPosition >= 0)
+        {
+            player.action = MoveTo(player.targetPosition, ref player);
+        }
+    }
+
     private void WalkRandom(ref Player player)
     {
         if (!player.CanAct) return;
 
-        if (tilePositions.TryGetValue(Tile.Empty, out var emptyPositions))
+        // Pick a new target if available
+        if (player.targetPosition < 0)
         {
-            var randomPos = emptyPositions.OrderBy(_ => Random.Shared.Next()).First();
-            player.action = MoveTo(randomPos, ref player);
+            if (tilePositions.TryGetValue(Tile.Empty, out var emptyPositions))
+            {
+                var plyr = player;
+                var reachable = emptyPositions.Where(p => plyr.CanReach(p));
+                if (reachable.Any())
+                {
+                    player.targetPosition = reachable.PickOne();
+                    Debug.WriteLine($"WalkRandom: target position {player.targetPosition}");
+                }
+            }
+        }
+
+        // Move to target if set
+        if (player.targetPosition >= 0)
+        {
+            player.action = MoveTo(player.targetPosition, ref player);
         }
     }
-
 
     private DirectedAction MoveTo(PosIndex toPos, ref Player player)
     {
@@ -953,9 +1055,11 @@ internal class ActionPlanner
             platesWithBoulders.Clear();
             player1.Reset();
             player2.Reset();
+            enemyPositions.Clear();
             level21State = 0;
             level22State = 0;
-            bossPos = -1;
+            lastBossPos = -1;
+            initialBossPos = -1;
             Console.WriteLine($"Entered level {state.Level}");
         }
         level = state.Level;
@@ -969,14 +1073,25 @@ internal class ActionPlanner
         Debug.WriteLine($"health: {player1.health} / {player2.health}");
         Debug.WriteLine($"hasSword: {player1.hasSword} / {player2.hasSword}");
         Debug.WriteLine($"nextAction: {player1.nextAction} / {player2.nextAction}");
+        Debug.WriteLine($"targetPlatePosition: {player1.targetPlatePosition} / {player2.targetPlatePosition}");
+        Debug.WriteLine($"remainOnPlateCounter: {player1.remainOnPlateCounter} / {player2.remainOnPlateCounter}");
+        Debug.WriteLine($"targetPosition: {player1.targetPosition} / {player2.targetPosition}");
 
         if (state.PlayerState != null) CopyPlayerStateToMap(state.PlayerState);
         if (state.Player2State != null) CopyPlayerStateToMap(state.Player2State);
+        // Manually set player positions
+        foreach (var p in tilePositions[Tile.Player])
+        {
+            SetTile(p, Tile.Empty);
+        }
+        if (player1.IsPresent) SetTile(player1.pos, Tile.Player);
+        if (player2.IsPresent) SetTile(player2.pos, Tile.Player);
 
         // Update locations where keys can be picked up.
         // This information this used by ComputePaths
         UpdateKeyPickups();
 
+        // Compute paths as if other player is not there
         ComputePaths(ref player1);
         ComputePaths(ref player2);
     }
@@ -1104,15 +1219,15 @@ internal class ActionPlanner
     private bool IsWall(PosIndex pos, Inventory inventory, bool hasSword, bool canPickupKeys)
     {
         // Avoid moving to close to the boss
-        if (level == 22 && bossPos >= 0 && level22State < 1)
+        if (level == 22 && lastBossPos >= 0 && level22State < 1)
         {
-            if (DistanceBetween(pos, bossPos) < 6) return true;
-        }
-        // Avoid moving to close to the enemy
-        if (level == 21 && level21State < 8 && tilePositions.TryGetValue(Tile.Enemy, out var enemies))
-        {
-            var distanceToEnemy = enemies.Min(e => DistanceBetween(pos, e));
-            if (distanceToEnemy < 6) return true;
+            var bossY = lastBossPos / mapWidth;
+            var bossX = lastBossPos % mapWidth;
+            var posY = pos / mapWidth;
+            var posX = pos % mapWidth;
+            var dy = bossY - posY;
+            var dx = bossX - posX;
+            if (Math.Abs(dy) <= BossDistance && Math.Abs(dx) <= BossDistance) return true;
         }
 
         var tile = map[pos];
@@ -1132,6 +1247,10 @@ internal class ActionPlanner
             Tile.KeyGreen => inventory != Inventory.None || !canPickupKeys,
             Tile.KeyBlue => inventory != Inventory.None || !canPickupKeys,
             Tile.Treasure => inventory != Inventory.None || level22State < 6,
+            // Prevent accidental step on plate
+            Tile.PressurePlateRed => level22State > 3,
+            Tile.PressurePlateGreen => level22State > 3,
+            Tile.PressurePlateBlue => level22State > 3,
             _ => false,
         };
     }
@@ -1186,7 +1305,7 @@ internal class ActionPlanner
             $"inventory: {player1.inventory} / {player2.inventory},  " +
             $"health: {player1.health} / {player2.health},  " +
             $"hasSword: {player1.hasSword} / {player2.hasSword},  " +
-            $"remainOnPlate: {player1.remainOnPlate} / {player2.remainOnPlate}        ");
+            $"remainOnPlateCounter: {player1.remainOnPlateCounter} / {player2.remainOnPlateCounter}        ");
         if (level == 22)
         {
             Console.WriteLine($"level 22: {level22State}        ");

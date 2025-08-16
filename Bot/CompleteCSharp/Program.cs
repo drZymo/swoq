@@ -5,8 +5,8 @@ namespace Bot;
 
 public static class Program
 {
-    private const int MinLevel = 21;
-    private const int MaxLevel = 21;
+    private const int MinLevel = 0;
+    private const int MaxLevel = 22;
 
     private static bool print = true;
     private static bool train = false;
@@ -81,7 +81,8 @@ public static class Program
                 }
 
                 // Act and get new state
-                game.Act(action1, action2);
+                var result = game.Act(action1, action2);
+                if (result != ActResult.Ok) break;
             }
         }
         finally
@@ -106,8 +107,9 @@ public static class Program
                 successRates[level.Value] = rates;
             }
 
+            var totalSuccessRate = successRates.Values.Aggregate(1.0, (a, tpl) => a * (tpl.success / (double)tpl.total));
             var line = string.Join(", ", successRates.OrderBy(kvp => kvp.Key).Select(kvp => $"#{kvp.Key}: {kvp.Value.success / (double)kvp.Value.total:P1}"));
-            Console.WriteLine(line);
+            Console.WriteLine($"{line}, ({totalSuccessRate:P1})");
         }
     }
 }
