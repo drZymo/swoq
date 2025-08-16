@@ -17,6 +17,7 @@ export class Game implements AsyncDisposable {
     public readonly mapWidth: number;
     public readonly mapHeight: number;
     public readonly visibilityRange: number;
+    public readonly seed: number | undefined;
     public state: State;
 
     constructor(
@@ -40,6 +41,7 @@ export class Game implements AsyncDisposable {
         this.visibilityRange = response.visibilityRange;
         this.state = response.state;
         this.replayFile = replayFile;
+        this.seed = response.seed;
     }
 
     public async act(

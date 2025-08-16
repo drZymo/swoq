@@ -4,14 +4,10 @@ import { mkdir } from "fs/promises";
 import * as path from "path";
 import { Game } from "./Game";
 import { GameStartResultError } from "./GameResultError";
-import {
-    StartRequest,
-    StartResponse,
-    StartResult,
-} from "./generated/swoq";
+import { StartRequest, StartResponse, StartResult } from "./generated/swoq";
 import { GameServiceClient, IGameServiceClient } from "./generated/swoq.client";
 import { ReplayFile } from "./ReplayFile";
-import { formatDate, sleep } from "./util";
+import { formatDate } from "./util";
 
 export class GameConnection implements Disposable {
     private readonly transport: GrpcTransport;
@@ -41,11 +37,7 @@ export class GameConnection implements Disposable {
         const directory = path.dirname(filename);
         await mkdir(directory, { recursive: true });
 
-        const replayFile = await ReplayFile.create(
-            filename,
-            request,
-            response,
-        );
+        const replayFile = await ReplayFile.create(filename, request, response);
         return replayFile;
     }
 
@@ -65,11 +57,12 @@ export class GameConnection implements Disposable {
         this.client = new GameServiceClient(this.transport);
     }
 
-    public async start(level?: number): Promise<Game> {
+    public async start(level?: number, seed?: number): Promise<Game> {
         const request: StartRequest = {
             userId: this.userId,
             userName: this.userName,
             level,
+            seed,
         };
 
         let response: StartResponse;

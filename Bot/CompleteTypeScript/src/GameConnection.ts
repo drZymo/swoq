@@ -65,11 +65,12 @@ export class GameConnection implements Disposable {
         this.client = new GameServiceClient(this.transport);
     }
 
-    public async start(level?: number): Promise<Game> {
+    public async start(level?: number, seed?: number): Promise<Game> {
         const request: StartRequest = {
             userId: this.userId,
             userName: this.userName,
             level,
+            seed
         };
 
         let response: StartResponse;

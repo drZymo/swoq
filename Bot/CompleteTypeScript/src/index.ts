@@ -24,12 +24,18 @@ async function main(): Promise<void> {
     const level = process.env.SWOQ_LEVEL
         ? parseInt(process.env.SWOQ_LEVEL)
         : undefined;
+    let seed: number | undefined;
     if (level === undefined) {
         console.log("Starting quest...");
     } else {
-        console.log(`Starting training for level ${level}...`);
+        seed = process.env.SWOQ_SEED
+            ? parseInt(process.env.SWOQ_SEED)
+            : undefined;
+        console.log(
+            `Starting training for level ${level} (seed ${seed ?? "random"})...`,
+        );
     }
-    await using game = await gameConnection.start(level);
+    await using game = await gameConnection.start(level, seed);
     await play(game);
 }
 
