@@ -1,4 +1,4 @@
-﻿using Swoq.Data;
+using Swoq.Data;
 using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Concurrent;
@@ -141,7 +141,7 @@ internal class GameServer(IMapGenerator mapGenerator, ISwoqDatabase database, in
         // Check if user can play this level
         if (level < 0 || level > user.Level || level > mapGenerator.MaxLevel) throw new InvalidLevelException();
 
-        var random = new Random(seed);
+        var random = new Random(seed + level);
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         var reporter = new UserStatisticsReporter(user, database);
 
