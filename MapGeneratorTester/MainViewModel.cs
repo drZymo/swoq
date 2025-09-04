@@ -10,7 +10,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
 
     public MainViewModel()
     {
-        var random = new Random(seed ?? Random.Shared.Next());
+        var random = new Random((seed ?? Random.Shared.Next()) + Level);
         Overview.TileMap = mapGenerator.Generate(Level, Height, Width, random).ToOverview();
         Generate = new RelayCommand(HandleGenerate);
     }
@@ -105,7 +105,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
         Status = "Generating ...";
         try
         {
-            var random = new Random(seed ?? Random.Shared.Next());
+            var random = new Random((seed ?? Random.Shared.Next()) + Level);
             Overview.TileMap = mapGenerator.Generate(Level, Height, Width, random).ToOverview();
             Status = "";
         }

@@ -1,4 +1,4 @@
-﻿using Swoq.Data;
+using Swoq.Data;
 using Swoq.Infra;
 using Swoq.Interface;
 
@@ -114,7 +114,7 @@ public class Quest : IGame
     private Game NewGame()
     {
         // Use the same seed for every level in this quest
-        var random = new Random(seed);
+        var random = new Random(seed + level);
 
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         return new Game(map,
