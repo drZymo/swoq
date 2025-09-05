@@ -208,10 +208,7 @@ internal class GameServer : GameServerBase, IDisposable
                                 // Stop any active quests of this user
                                 if (activeQuests.Remove(begin.User.Id, out var activeQuest))
                                 {
-                                    if (games.TryGetValue(activeQuest.Id, out var game))
-                                    {
-                                        game.Cancel();
-                                    }
+                                    activeQuest.Cancel();
                                 }
 
                                 // Update entry in queue
