@@ -9,7 +9,6 @@ public class Quest : IGame
     private readonly User user;
     private readonly IMapGenerator mapGenerator;
     private readonly ISwoqDatabase database;
-    private readonly int seed;
     private readonly UserStatisticsReporter reporter;
 
     private readonly DateTime startTime = Clock.Now;
@@ -22,7 +21,7 @@ public class Quest : IGame
         this.user = user;
         this.mapGenerator = mapGenerator;
         this.database = database;
-        this.seed = seed;
+        Seed = seed;
         this.reporter = new(user, database);
 
         currentGame = NewGame();
@@ -30,6 +29,7 @@ public class Quest : IGame
     }
 
     public Guid Id { get; } = Guid.NewGuid();
+    public int Seed { get; }
     public GameState State { get; private set; }
     public DateTime LastActionTime => currentGame.LastActionTime;
     public bool IsFinished => State.Status != GameStatus.Active || TimedOut;
@@ -114,7 +114,7 @@ public class Quest : IGame
     private Game NewGame()
     {
         // Use the same seed for every level in this quest
-        var random = new Random(seed + level);
+        var random = new Random(Seed + level);
 
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
         return new Game(map,

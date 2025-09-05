@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.Interface;
 using Swoq.Server;
 using static Swoq.Test.TestUtils;
@@ -375,7 +375,7 @@ internal class UseTests : GameTestBase
 
     protected override Map CreateGameMap() => CreateMap(false);
 
-    private static Map CreateMap(bool simple )
+    private static Map CreateMap(bool simple)
     {
         var width = 11;
         var height = 13;
