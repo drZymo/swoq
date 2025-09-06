@@ -161,7 +161,6 @@ internal class GameServer : GameServerBase, IDisposable
         queueManagerThread.Join();
     }
 
-
     private abstract record QueueRequest(User User);
     private record QueueWaitBeginRequest(User User, ManualResetEventSlim WaitEvent) : QueueRequest(User);
     private record QueueWaitEndRequest(User User, TaskCompletionSource<Quest?> CompletionSource) : QueueRequest(User);
@@ -192,6 +191,20 @@ internal class GameServer : GameServerBase, IDisposable
             OnQueueUpdated(queuedUsers);
         }
 
+        void Enqueue(QueueEntry entry)
+        {
+            entries.Add(entry.UserId, entry);
+            queue.Add(entry.UserId);
+            SendQueueUpdate();
+        }
+
+        void RemoveFromQueue(string userId)
+        {
+            queue.Remove(userId);
+            entries.Remove(userId);
+            SendQueueUpdate();
+        }
+
         try
         {
             while (!cancel.IsCancellationRequested)
@@ -220,12 +233,9 @@ internal class GameServer : GameServerBase, IDisposable
                                 }
                                 else
                                 {
+                                    // Add to the end of queue
                                     entry = new QueueEntry(begin.User.Id, begin.User.Name, begin.WaitEvent, Clock.Now);
-
-                                    // Add the end of queue
-                                    entries.Add(entry.UserId, entry);
-                                    queue.Add(entry.UserId);
-                                    SendQueueUpdate();
+                                    Enqueue(entry);
                                 }
                             }
                             break;
@@ -248,10 +258,7 @@ internal class GameServer : GameServerBase, IDisposable
                                         quest = new Quest(end.User, mapGenerator, database, seed);
                                         activeQuests.Add(entry.UserId, quest);
 
-                                        // Remove from queue
-                                        queue.RemoveAt(0);
-                                        entries.Remove(entry.UserId);
-                                        SendQueueUpdate();
+                                        RemoveFromQueue(entry.UserId);
                                     }
                                 }
                                 // Notify result
@@ -266,9 +273,7 @@ internal class GameServer : GameServerBase, IDisposable
                 var staleEntries = entries.Values.Where(e => (now - e.LastUpdateTime) > Parameters.MaxQuestInactivityTime).ToList();
                 foreach (var entry in staleEntries)
                 {
-                    entries.Remove(entry.UserId);
-                    queue.Remove(entry.UserId);
-                    SendQueueUpdate();
+                    RemoveFromQueue(entry.UserId);
                 }
 
                 // Remove finished active quests
@@ -291,9 +296,8 @@ internal class GameServer : GameServerBase, IDisposable
                     else
                     {
                         // Inconsistency, should not happen.
-                        // Just drop the first user in the queue and try next entry.
-                        queue.RemoveAt(0);
-                        SendQueueUpdate();
+                        // Just drop this user from the queue and try next entry.
+                        RemoveFromQueue(firstUserId);
                     }
                 }
             }
@@ -328,7 +332,7 @@ internal class GameServer : GameServerBase, IDisposable
         Debug.Assert(user.Id != null);
 
         // Start waiting to be at the top
-        ManualResetEventSlim waitEvent = new();
+        using ManualResetEventSlim waitEvent = new();
         SendQueueRequest(new QueueWaitBeginRequest(user, waitEvent));
         waitEvent.Wait(queueWaitTime);
 
@@ -338,17 +342,20 @@ internal class GameServer : GameServerBase, IDisposable
         var quest = result.Task.Result;
         return quest ?? throw new QuestQueuedException();
     }
-
 }
 
 internal class FinalGameServer : GameServerBase, IDisposable
 {
     private readonly HashSet<string> finalUserIds;
-    private readonly ConcurrentBag<string> startedUserIds = [];
+    private readonly int finalSeed;
+
+    private readonly Barrier questConnectBarrier;
     private readonly Barrier questStartBarrier;
 
-    private readonly int finalSeed;
     private readonly bool countdownEnabled;
+    private readonly Task countdownTask;
+
+    private readonly ConcurrentBag<string> startedUserIds = [];
 
     public FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IConfiguration config, int? finalSeed = null) : base(mapGenerator, database)
     {
@@ -356,13 +363,22 @@ internal class FinalGameServer : GameServerBase, IDisposable
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToHashSet();
         this.finalSeed = finalSeed ?? Random.Shared.Next();
-        countdownEnabled = config["countdown"] != "no";
 
-        questStartBarrier = new(finalUserIds.Count);
+        // Add 1 to include the countdown task
+        questConnectBarrier = new(finalUserIds.Count + 1);
+        questStartBarrier = new(finalUserIds.Count + 1);
+
+        countdownEnabled = config["countdown"] != "no";
+        countdownTask = Task.Run(Countdown);
     }
 
     public void Dispose()
     {
+        questConnectBarrier.Dispose();
+        questStartBarrier.Dispose();
+
+        countdownTask.Wait();
+        countdownTask.Dispose();
     }
 
     protected override Game StartTraining(User user, int level, ref int seed)
@@ -387,22 +403,49 @@ internal class FinalGameServer : GameServerBase, IDisposable
         }
         startedUserIds.Add(user.Id);
 
-        // Signal and wait until all started
-        questStartBarrier.SignalAndWait();
-
-        if (countdownEnabled)
+        try
         {
-            // Show count down
-            for (var i = 5; i > 0; i--)
-            {
-                Console.WriteLine($"Quest starting for {user.Name} in {i} ...");
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-            }
-            Console.WriteLine($"Quest starting for {user.Name} ...");
+            // Signal and wait until all connected
+            questConnectBarrier.SignalAndWait();
+
+            // Signal and wait until the countdown is finished
+            questStartBarrier.SignalAndWait();
+        }
+        catch (ObjectDisposedException)
+        {
+            // When disposing, barriers are disposed first.
+            // Just consume it and tell the user a quest cannot be started.
+            throw new NotAllowedException();
         }
 
         // Start quest (use the same seed for all users)
         var quest = new Quest(user, mapGenerator, database, finalSeed);
         return quest;
+    }
+
+    private void Countdown()
+    {
+        try
+        {
+            questConnectBarrier.SignalAndWait();
+
+            if (countdownEnabled)
+            {
+                // Show count down
+                for (var i = 5; i > 0; i--)
+                {
+                    Console.WriteLine($"Final round starting in {i} ...");
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                }
+                Console.WriteLine($"Final round starting ...");
+            }
+
+            questStartBarrier.SignalAndWait();
+        }
+        catch (ObjectDisposedException)
+        {
+            // When disposing, barriers are disposed first, just ignore this exception and return
+            return;
+        }
     }
 }
