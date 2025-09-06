@@ -54,6 +54,11 @@ message StatisticsUpdate {
     float eventsPerSecond = 1;
 }
 
+message QuestStatusChanged {
+    string gameId = 1;
+    GameStatus status = 2;
+}
+
 message Update {
     optional QuestStarted questStarted = 1;
     optional QuestActed questActed = 2;
@@ -61,4 +66,5 @@ message Update {
     optional SessionsUpdate sessionsUpdate = 4;
     optional ScoresUpdate scoresUpdate = 5;
     optional StatisticsUpdate statisticsUpdate = 6;
+    optional QuestStatusChanged questStatusChanged = 7;
 }

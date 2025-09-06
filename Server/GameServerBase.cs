@@ -25,8 +25,8 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
     protected readonly ConcurrentDictionary<Guid, IGame> games = new();
 
     public event EventHandler<GameRemovedEventArgs>? GameRemoved;
-
     public event EventHandler<QueueUpdatedEventArgs>? QueueUpdated;
+    public event EventHandler<GameStatusChangedEventArgs>? GameStatusChanged;
 
     public GameStartResult Start(string userId, string userName, int? level, int? seed = null)
     {
@@ -127,12 +127,13 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
     {
         if (games.TryRemove(gameId, out var game))
         {
-            GameRemoved?.Invoke(this, new GameRemovedEventArgs(gameId));
+            OnGameRemoved(gameId);
         }
     }
 
-    protected void OnQueueUpdated(IImmutableList<string> queuedUsers)
-    {
-        QueueUpdated?.Invoke(this, new QueueUpdatedEventArgs(queuedUsers));
-    }
+    protected void OnGameRemoved(Guid gameId) => GameRemoved?.Invoke(this, new GameRemovedEventArgs(gameId));
+
+    protected void OnQueueUpdated(IImmutableList<string> queuedUsers) => QueueUpdated?.Invoke(this, new QueueUpdatedEventArgs(queuedUsers));
+
+    protected void OnGameStatusChanged(Guid gameId, GameStatus status) => GameStatusChanged?.Invoke(this, new GameStatusChangedEventArgs(gameId, status));
 }

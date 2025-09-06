@@ -39,6 +39,7 @@ internal class QueueManager : IDisposable
     }
 
     public event EventHandler<QueueUpdatedEventArgs>? QueueUpdated;
+    public event EventHandler<GameStatusChangedEventArgs>? GameStatusChanged;
 
     public Quest? TryStartQuest(User user)
     {
@@ -117,7 +118,11 @@ internal class QueueManager : IDisposable
         // Stop any active quests of this user
         if (activeQuests.Remove(begin.User.Id, out var activeQuest))
         {
-            activeQuest.Cancel();
+            if (!activeQuest.IsFinished)
+            {
+                activeQuest.Cancel();
+                OnGameStatusChanged(activeQuest);
+            }
         }
 
         // Update entry in queue
@@ -175,7 +180,10 @@ internal class QueueManager : IDisposable
         var finishedUserIds = activeQuests.Where(kvp => kvp.Value.IsFinished).Select(kvp => kvp.Key).ToList();
         foreach (var userId in finishedUserIds)
         {
-            activeQuests.Remove(userId);
+            if (activeQuests.Remove(userId, out var quest))
+            {
+                OnGameStatusChanged(quest);
+            }
         }
     }
 
@@ -218,5 +226,10 @@ internal class QueueManager : IDisposable
     {
         var queuedUsers = queue.Select(id => entries.GetValueOrDefault(id, QueueEntry.None).UserName).ToImmutableArray();
         QueueUpdated?.Invoke(this, new QueueUpdatedEventArgs(queuedUsers));
+    }
+
+    protected void OnGameStatusChanged(Quest quest)
+    {
+        GameStatusChanged?.Invoke(this, new GameStatusChangedEventArgs(quest.Id, quest.State.Status));
     }
 }

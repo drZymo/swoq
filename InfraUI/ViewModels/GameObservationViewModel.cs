@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.InfraUI.Models;
 using Swoq.Interface;
 
@@ -60,6 +60,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
         GameStatus.FinishedTimeout => "🛑 Timeout 🛑",
         GameStatus.FinishedNoProgress => "🛑 No progress 🛑",
         GameStatus.FinishedPlayerDied => "🛑 Player died 🛑",
+        GameStatus.FinishedCancelled => "🛑 Game canceled 🛑",
         GameStatus.FinishedPlayer2Died => "🛑 Player 2 died 🛑",
         _ => throw new NotImplementedException(),
     };

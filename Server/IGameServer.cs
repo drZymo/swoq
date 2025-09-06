@@ -1,4 +1,4 @@
-﻿using Swoq.Interface;
+using Swoq.Interface;
 using System.Collections.Immutable;
 
 namespace Swoq.Server;
@@ -13,10 +13,17 @@ public class QueueUpdatedEventArgs(IImmutableList<string> queuedUsers) : EventAr
     public IImmutableList<string> QueuedUsers { get; } = queuedUsers;
 }
 
+public class GameStatusChangedEventArgs(Guid gameId, GameStatus status) : EventArgs
+{
+    public Guid GameId { get; } = gameId;
+    public GameStatus Status { get; } = status;
+}
+
 public interface IGameServer
 {
     event EventHandler<GameRemovedEventArgs>? GameRemoved;
     event EventHandler<QueueUpdatedEventArgs>? QueueUpdated;
+    event EventHandler<GameStatusChangedEventArgs>? GameStatusChanged;
 
     GameStartResult Start(string userId, string userName, int? level, int? seed = null);
     GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null);
