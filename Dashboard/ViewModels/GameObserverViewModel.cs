@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+using Avalonia.Threading;
 using Grpc.Net.Client;
 using Swoq.InfraUI.Models;
 using Swoq.InfraUI.ViewModels;
@@ -19,7 +19,8 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
 
     public GameObserverViewModel()
     {
-        GameObservations = new(gameObservations);
+        ActiveQuests = new(activeQuests);
+        InactiveQuests = new(inactiveQuests);
 
         QueueUsers = new(queuedUsers);
         Sessions = new(sessions);
@@ -35,20 +36,11 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         getUpdatesThread.Join();
     }
 
-    private readonly ObservableCollection<GameObservationViewModel> gameObservations = [];
-    public ReadOnlyObservableCollection<GameObservationViewModel> GameObservations { get; private set; }
+    private readonly ObservableCollection<GameObservationViewModel> activeQuests = [];
+    public ReadOnlyObservableCollection<GameObservationViewModel> ActiveQuests { get; private set; }
 
-    private GameObservationViewModel? selectedObservation = null;
-    public GameObservationViewModel? SelectedObservation
-    {
-        get => selectedObservation;
-        private set
-        {
-            selectedObservation = value;
-            OnPropertyChanged();
-        }
-    }
-
+    private readonly ObservableCollection<GameObservationViewModel> inactiveQuests = [];
+    public ReadOnlyObservableCollection<GameObservationViewModel> InactiveQuests { get; private set; }
 
     private readonly ObservableCollection<string> queuedUsers = [];
     public ReadOnlyObservableCollection<string> QueueUsers { get; }
@@ -154,6 +146,11 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
                     {
                         HandleStatistics(message.StatisticsUpdate);
                     }
+
+                    if (message.QuestStatusChanged != null)
+                    {
+                        HandleQuestStatusChanged(message.QuestStatusChanged);
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -189,9 +186,8 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         GameObservationViewModel viewModel = Dispatcher.UIThread.Invoke(() =>
         {
             var vm = new GameObservationViewModel(gameState);
-            gameObservations.Add(vm);
+            activeQuests.Add(vm);
             UpdateColumns();
-            SelectedObservation = vm;
             return vm;
         });
 
@@ -203,7 +199,11 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         if (quests.TryGetValue(update.GameId, out var questData))
         {
             var gameState = questData.Builder.BuildNext(update.Request, update.Response.State, update.Response.Result, Dispatcher.UIThread);
-            Dispatcher.UIThread.Invoke(() => { questData.ViewModel.SetGameObservation(gameState); });
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                questData.ViewModel.SetGameObservation(gameState);
+            });
+            MakeInactiveIfFinished(questData.ViewModel);
         }
     }
 
@@ -252,7 +252,8 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         {
             foreach (var gameObservation in gameObservationsToRemove)
             {
-                gameObservations.Remove(gameObservation);
+                activeQuests.Remove(gameObservation);
+                inactiveQuests.Remove(gameObservation);
                 gameObservation.Dispose();
             }
             UpdateColumns();
@@ -319,9 +320,33 @@ internal class GameObserverViewModel : ViewModelBase, IDisposable
         EventsPerSecond = update.EventsPerSecond;
     }
 
+    private void HandleQuestStatusChanged(QuestStatusChanged update)
+    {
+        if (quests.TryGetValue(update.GameId, out var questData))
+        {
+            var gameState = questData.Builder.SetGameStatus(update.Status, Dispatcher.UIThread);
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                questData.ViewModel.SetGameObservation(gameState);
+            });
+            MakeInactiveIfFinished(questData.ViewModel);
+        }
+    }
+
     private void UpdateColumns()
     {
-        var count = GameObservations.Count;
+        var count = ActiveQuests.Count;
         Columns = (int)Math.Ceiling(Math.Sqrt(count));
+    }
+
+    private void MakeInactiveIfFinished(GameObservationViewModel gameObservation)
+    {
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            if (gameObservation.IsFinished && activeQuests.Remove(gameObservation))
+            {
+                inactiveQuests.Insert(0, gameObservation);
+            }
+        });
     }
 }

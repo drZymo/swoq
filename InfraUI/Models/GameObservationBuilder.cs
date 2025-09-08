@@ -1,7 +1,8 @@
-﻿using Avalonia.Threading;
+using Avalonia.Threading;
 using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Swoq.InfraUI.Models;
 
@@ -90,6 +91,25 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
             overview,
             player1State,
             player2State));
+        previous = gameState;
+        return gameState;
+    }
+
+    public GameObservation SetGameStatus(GameStatus gameStatus, Dispatcher createDispatcher)
+    {
+        Debug.Assert(previous != null);
+        var gameState = createDispatcher.Invoke(() => new GameObservation(
+            userName,
+            previous.Level != initialLevel,
+            previous.Tick,
+            previous.Level,
+            gameStatus,
+            previous.ActionResult,
+            previous.HasEnemies,
+            previous.HasSwordPickup,
+            previous.Overview,
+            previous.Player1,
+            previous.Player2));
         previous = gameState;
         return gameState;
     }

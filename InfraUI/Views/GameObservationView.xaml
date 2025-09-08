@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -22,7 +22,7 @@
             <Image Grid.Row="1" Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
         </Grid>
 
-        <Grid Grid.Column="1" RowDefinitions="auto,*,*">
+        <Grid Grid.Column="1" RowDefinitions="auto,*,*" IsVisible="{Binding #self.ShowSidePanels}">
             <local:GroupBox Grid.Row="0" Header="Game">
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
@@ -44,7 +44,7 @@
         </Grid>
 
         <Grid Grid.Column="0" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,auto,*" IsVisible="{Binding IsFinished}">
-            <Panel Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.75" Background="Black" />
+            <Panel Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.50" Background="Black" />
             <TextBlock Grid.Row="1" Grid.Column="1" FontSize="18" HorizontalAlignment="Center" Text="Game finished"/>
             <TextBlock Grid.Row="2" Grid.Column="1" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Text="{Binding FinishedResult}"/>
         </Grid>

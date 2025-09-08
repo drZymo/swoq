@@ -12,10 +12,12 @@ internal class GameServer : GameServerBase, IDisposable
     {
         queueManager = new(mapGenerator, database, maxNrActiveQuests, queueWaitTime);
         queueManager.QueueUpdated += OnQueueManagerQueueUpdated;
+        queueManager.GameStatusChanged += OnQueueManagerGameStatusChanged;
     }
 
     public void Dispose()
     {
+        queueManager.GameStatusChanged -= OnQueueManagerGameStatusChanged;
         queueManager.QueueUpdated -= OnQueueManagerQueueUpdated;
         queueManager.Dispose();
     }
@@ -54,4 +56,5 @@ internal class GameServer : GameServerBase, IDisposable
     }
 
     private void OnQueueManagerQueueUpdated(object? sender, QueueUpdatedEventArgs args) => OnQueueUpdated(args.QueuedUsers);
+    private void OnQueueManagerGameStatusChanged(object? sender, GameStatusChangedEventArgs args) => OnGameStatusChanged(args.GameId, args.Status);
 }

@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Swoq.Data;
 using Swoq.Infra;
@@ -35,6 +35,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         this.gameServicePostman.Acted += OnActed;
         this.gameServer.QueueUpdated += OnQueueUpdated;
         this.gameServer.GameRemoved += OnGameRemoved;
+        this.gameServer.GameStatusChanged += OnGameStatusChanged;
 
         sessionMonitorThread = new Thread(new ThreadStart(SessionMonitorThread));
         sessionMonitorThread.Start();
@@ -45,6 +46,7 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         cancellationTokenSource.Cancel();
         sessionMonitorThread.Join();
 
+        gameServer.GameStatusChanged -= OnGameStatusChanged;
         gameServer.GameRemoved -= OnGameRemoved;
         gameServer.QueueUpdated -= OnQueueUpdated;
         gameServicePostman.Acted -= OnActed;
@@ -152,10 +154,33 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
         gameUpdatesSemaphore.Release();
     }
 
+    private void OnGameStatusChanged(object? sender, GameStatusChangedEventArgs e)
+    {
+        // Send quest actions directly to dashboard
+        if (activeQuests.ContainsKey(e.GameId))
+        {
+            var update = new Update
+            {
+                QuestStatusChanged = new QuestStatusChanged
+                {
+                    GameId = e.GameId.ToString(),
+                    Status = e.Status
+                },
+            };
+
+            updates.Enqueue(update);
+            updatesCount.Release();
+        }
+
+        gameUpdates.Enqueue(new GameStatusChangedEntry(e.GameId, e.Status));
+        gameUpdatesSemaphore.Release();
+    }
+
     private abstract record GameUpdateEntry(Guid GameId);
     private record GameAddedEntry(Guid GameId, string UserName, int Level, bool IsQuest) : GameUpdateEntry(GameId);
     private record GameUpdatedEntry(Guid GameId, int Level, bool IsFinished) : GameUpdateEntry(GameId);
     private record GameRemovedEntry(Guid GameId) : GameUpdateEntry(GameId);
+    private record GameStatusChangedEntry(Guid GameId, GameStatus Status) : GameUpdateEntry(GameId);
 
     private readonly SemaphoreSlim gameUpdatesSemaphore = new(0);
     private readonly ConcurrentQueue<GameUpdateEntry> gameUpdates = new();
@@ -214,6 +239,15 @@ internal class DashboardService : Interface.DashboardService.DashboardServiceBas
                                 if (sessions.TryGetValue(e.GameId, out var session))
                                 {
                                     session = session with { Level = e.Level, IsActive = true, IsFinished = e.IsFinished };
+                                    sessions = sessions.SetItem(session.GameId, session);
+                                }
+                            }
+                            break;
+                        case GameStatusChangedEntry e:
+                            {
+                                if (sessions.TryGetValue(e.GameId, out var session))
+                                {
+                                    session = session with { IsFinished = e.Status != GameStatus.Active };
                                     sessions = sessions.SetItem(session.GameId, session);
                                 }
                             }
