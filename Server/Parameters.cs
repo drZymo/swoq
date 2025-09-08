@@ -1,4 +1,4 @@
-﻿namespace Swoq.Server;
+namespace Swoq.Server;
 
 internal static class Parameters
 {
@@ -27,10 +27,20 @@ internal static class Parameters
 
     public const int MinIdleMoveDistance = 5;
 
+    /// <summary>
+    /// How many quests can be active at the same time.
+    /// </summary>
     public const int NrOfActiveQuests = 1;
 
-    public static readonly TimeSpan QuestPollPeriod = TimeSpan.FromSeconds(3);
-    public const int QuestPollCount = 20;
+    /// <summary>
+    /// Period between sanity checks of the queue
+    /// </summary>
+    public static readonly TimeSpan QueuePollPeriod = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>
+    /// How long does the quest start function wait for the queue before returning "quest queued"
+    /// </summary>
+    public static readonly TimeSpan QueueWaitTime = TimeSpan.FromSeconds(3);
 
     public static readonly TimeSpan SessionsUpdatePeriod = TimeSpan.FromMilliseconds(250);
     public static readonly TimeSpan ScoresUpdatePeriod = TimeSpan.FromMilliseconds(500);

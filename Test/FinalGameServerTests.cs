@@ -68,8 +68,8 @@ public class FinalGameServerTests
         Thread.Sleep(100);
         using var task2 = Task.Run(() => gameServer.Start("u2", "User2", null));
 
-        Assert.That(task1.Wait(100), Is.True);
-        Assert.That(task2.Wait(100), Is.True);
+        Assert.That(task1.Wait(1000), Is.True);
+        Assert.That(task2.Wait(1000), Is.True);
 
         // All games should have the same seed
         Assert.That(task1.Result.Seed, Is.EqualTo(task2.Result.Seed));
@@ -81,8 +81,8 @@ public class FinalGameServerTests
         using var task1 = Task.Run(() => gameServer.Start("u1", "User1", null));
         using var task2 = Task.Run(() => gameServer.Start("u2", "User2", null));
 
-        Assert.That(task1.Wait(100), Is.True);
-        Assert.That(task2.Wait(100), Is.True);
+        Assert.That(task1.Wait(1000), Is.True);
+        Assert.That(task2.Wait(1000), Is.True);
 
         // Another start is not allowed
         Assert.That(

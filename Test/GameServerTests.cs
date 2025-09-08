@@ -24,7 +24,7 @@ public class GameServerTests
         database.CreateUser(new User { Id = "u1", Name = "User1", Level = 1 });
         database.CreateUser(new User { Id = "u2", Name = "User2", Level = 1 });
         database.CreateUser(new User { Id = "u3", Name = "User3", Level = 1 });
-        gameServer = new GameServer(mapGenerator, database, 1, 2, TimeSpan.FromMilliseconds(10));
+        gameServer = new GameServer(mapGenerator, database, 1, TimeSpan.FromMilliseconds(10));
     }
 
     [TearDown]
@@ -110,7 +110,7 @@ public class GameServerTests
         // Check user has been in the queue
         Assert.Multiple(() =>
         {
-            Assert.That(queueUpdates.Count, Is.EqualTo(2));
+            Assert.That(queueUpdates, Has.Count.EqualTo(2));
             Assert.That(queueUpdates[0], Is.EqualTo(["User1"]));
             Assert.That(queueUpdates[1], Is.Empty);
         });
@@ -123,7 +123,7 @@ public class GameServerTests
         // Should be in the queue
         Assert.Multiple(() =>
         {
-            Assert.That(queueUpdates.Count, Is.EqualTo(1));
+            Assert.That(queueUpdates, Has.Count.EqualTo(1));
             Assert.That(queueUpdates[0], Is.EqualTo(["User2"]));
         });
         queueUpdates = [];
@@ -141,7 +141,7 @@ public class GameServerTests
     {
         // Create new server with 2 quests active
         gameServer.Dispose();
-        gameServer = new GameServer(mapGenerator, database, 2, 2, TimeSpan.FromMilliseconds(10));
+        gameServer = new GameServer(mapGenerator, database, 2, TimeSpan.FromMilliseconds(10));
 
         // Start quest for user 1
         GameStartResult? result1 = null;
@@ -218,7 +218,7 @@ public class GameServerTests
         // Check queue has changed
         Assert.Multiple(() =>
         {
-            Assert.That(queueUpdates.Count, Is.EqualTo(4));
+            Assert.That(queueUpdates, Has.Count.EqualTo(4));
             Assert.That(queueUpdates[0], Is.EqualTo(["User1"]));
             Assert.That(queueUpdates[1], Is.Empty);
             Assert.That(queueUpdates[2], Is.EqualTo(["User2"]));
@@ -240,7 +240,7 @@ public class GameServerTests
         // User 2 should be removed from the queue
         Assert.Multiple(() =>
         {
-            Assert.That(queueUpdates.Count, Is.EqualTo(1));
+            Assert.That(queueUpdates, Has.Count.EqualTo(1));
             Assert.That(queueUpdates[0], Is.EqualTo(["User3"]));
         });
         queueUpdates = [];
@@ -262,7 +262,7 @@ public class GameServerTests
         // Queue should be empty
         Assert.Multiple(() =>
         {
-            Assert.That(queueUpdates.Count, Is.EqualTo(1));
+            Assert.That(queueUpdates, Has.Count.EqualTo(1));
             Assert.That(queueUpdates[0], Is.Empty);
         });
     }
@@ -316,7 +316,7 @@ public class GameServerTests
     {
         // Create new server with 2 quests active
         gameServer.Dispose();
-        gameServer = new GameServer(mapGenerator, database, 2, 2, TimeSpan.FromMilliseconds(10));
+        gameServer = new GameServer(mapGenerator, database, 2, TimeSpan.FromMilliseconds(10));
 
         // Start quest for user 1
         GameStartResult? result1 = null;
@@ -347,7 +347,7 @@ public class GameServerTests
     {
         // Create new server with 2 quests active
         gameServer.Dispose();
-        gameServer = new GameServer(mapGenerator, database, 2, 2, TimeSpan.FromMilliseconds(10));
+        gameServer = new GameServer(mapGenerator, database, 2, TimeSpan.FromMilliseconds(10));
 
         // Start quest for user 1
         GameStartResult? result1 = null;
@@ -428,18 +428,29 @@ public class GameServerTests
     [Test]
     public void ActiveUserQuestStoppedOnSecondStart()
     {
+        IImmutableList<string> queuedUsers = ImmutableList<string>.Empty;
+
+        void OnQueueUpdated(object? sender, QueueUpdatedEventArgs e)
+        {
+            queuedUsers = e.QueuedUsers;
+        }
+        gameServer.QueueUpdated += OnQueueUpdated;
+
         // Start quest for user 1
         GameStartResult? result1 = null;
         Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", "User1", null));
         Assert.That(result1, Is.Not.Null);
+        Assert.That(queuedUsers, Is.Empty);
 
         // Start quest for user 2, should be queued
         now += TimeSpan.FromSeconds(1);
         Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u2", "User2", null)).Result, Is.EqualTo(StartResult.QuestQueued));
+        Assert.That(queuedUsers, Is.EqualTo(["User2"]));
 
-        // Start another quest for user 1, should be queued
+        // Start another quest for user 1, should cancel the first and be queued
         now += TimeSpan.FromSeconds(1);
         Assert.That(Assert.Throws<GameServerStartException>(() => gameServer.Start("u1", "User1", null)).Result, Is.EqualTo(StartResult.QuestQueued));
+        Assert.That(queuedUsers, Is.EqualTo(["User2", "User1"]));
 
         // Act on user 1's initial quest should no longer be possible
         now += TimeSpan.FromSeconds(1);
@@ -447,6 +458,99 @@ public class GameServerTests
         Assert.That(exception.Result, Is.EqualTo(ActResult.GameFinished));
         Assert.That(exception.State, Is.Not.Null);
         Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCancelled));
+
+        gameServer.QueueUpdated -= OnQueueUpdated;
+    }
+
+    [Test]
+    public void QueuedUserIsImmediatelyUnqueuedWhenActiveQuestIsCanceled()
+    {
+        // Extra long delay so second quest start waits until it is dequeued
+        using var gameServer = new GameServer(mapGenerator, database, 1, TimeSpan.FromSeconds(5));
+
+        List<IImmutableList<string>> queueUpdates = [];
+        SemaphoreSlim queueUpdated = new(0);
+
+        void OnQueueUpdated(object? sender, QueueUpdatedEventArgs e)
+        {
+            lock (queueUpdates)
+            {
+                queueUpdates.Add(e.QueuedUsers);
+                queueUpdated.Release();
+            }
+        }
+        gameServer.QueueUpdated += OnQueueUpdated;
+
+        void FinishGame(Guid gameId)
+        {
+            GameState? state = null;
+            for (var i = 0; i < 4; i++)
+            {
+                now += TimeSpan.FromSeconds(1);
+                state = gameServer.Act(gameId, DirectedAction.MoveSouth);
+                now += TimeSpan.FromSeconds(1);
+                state = gameServer.Act(gameId, DirectedAction.MoveEast);
+            }
+            Assert.That(state, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(state.Level, Is.EqualTo(1));
+                Assert.That(state.Status, Is.EqualTo(GameStatus.FinishedSuccess));
+            });
+        }
+
+        // Start quest for user 1
+        GameStartResult? result1 = null;
+        Assert.DoesNotThrow(() => result1 = gameServer.Start("u1", "User1", null));
+        Assert.That(result1, Is.Not.Null);
+
+        queueUpdated.Wait(); // game queued
+        queueUpdated.Wait(); // game started (dequeued)
+        Assert.That(queueUpdates, Has.Count.EqualTo(2));
+        Assert.That(queueUpdates[0], Is.EqualTo(["User1"]));
+        Assert.That(queueUpdates[1], Is.Empty);
+
+        // Start quest for user 2 in a separate thread
+        using var second = Task.Run(() =>
+        {
+            GameStartResult? result2 = null;
+            Assert.DoesNotThrow(() => result2 = gameServer.Start("u2", "User2", null));
+            Assert.That(result2, Is.Not.Null);
+            return result2.GameId;
+        });
+
+        // Wait for second user to be queued
+        queueUpdated.Wait(); // game queued
+        Assert.That(queueUpdates, Has.Count.EqualTo(3));
+        Assert.That(queueUpdates[2], Is.EqualTo(["User2"]));
+
+        // Start another quest for user 1, should cancel the first one and be queued
+        using var third = Task.Run(() =>
+        {
+            GameStartResult? result3 = null;
+            Assert.DoesNotThrow(() => result3 = gameServer.Start("u1", "User1", null));
+            Assert.That(result3, Is.Not.Null);
+            return result3.GameId;
+        });
+
+        // Wait for game to be queued
+        queueUpdated.Wait(); // new game for user 1 is queueud
+        queueUpdated.Wait(); // first game of user 1 is canceled, game of user 2 is started
+        Assert.That(queueUpdates, Has.Count.EqualTo(5));
+        Assert.That(queueUpdates[3], Is.EqualTo(["User2", "User1"]));
+        Assert.That(queueUpdates[4], Is.EqualTo(["User1"]));
+
+        // Act on user 1's initial quest should no longer be possible
+        var exception = Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
+        Assert.That(exception.Result, Is.EqualTo(ActResult.GameFinished));
+        Assert.That(exception.State, Is.Not.Null);
+        Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCancelled));
+
+        // Finish queued quests
+        FinishGame(second.Result);
+        FinishGame(third.Result);
+
+        gameServer.QueueUpdated -= OnQueueUpdated;
     }
 
     private class DummyGenerator : IMapGenerator
