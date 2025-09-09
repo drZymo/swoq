@@ -9,7 +9,7 @@
         x:Class="Swoq.Dashboard.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         mc:Ignorable="d"
-        Title="Swoq Quest Dashboard" Height="800" Width="1000"
+        Title="Swoq Quest Dashboard" Height="1080" Width="1920"
         Closed="Window_Closed"
         KeyDown="Window_KeyDown"
         FontSize="20"
@@ -90,7 +90,11 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="infravm:GameObservationViewModel">
-                            <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true"/>
+                            <Viewbox>
+                                <Border Width="1920" Height="1060" Margin="4"> <!-- leave some room for status bar -->
+                                    <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true"/>
+                                </Border>
+                            </Viewbox>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
