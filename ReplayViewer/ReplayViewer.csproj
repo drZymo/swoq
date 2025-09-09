@@ -9,6 +9,7 @@
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
+        <ApplicationIcon>player.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +22,10 @@
         <AvaloniaResource Include="App.xaml" />
         <AvaloniaResource Include="Views\MainWindow.xaml" />
         <AvaloniaResource Include="Views\ReplayView.xaml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="player.ico" />
     </ItemGroup>
 
     <ItemGroup>
