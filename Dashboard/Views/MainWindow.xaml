@@ -81,7 +81,7 @@
                     </ItemsControl>
                     <Canvas>
                         <Button Canvas.Top="0" Canvas.Right="0" Click="OnMaximizeClicked">
-                            <Image Source="maximize.png" Width="32" Height="32"/>
+                            <Image Source="maximize.png" Width="16" Height="16"/>
                         </Button>
                     </Canvas>
                 </Grid>
