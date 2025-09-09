@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.Interface;
 using Swoq.Server;
 using static Swoq.Test.TestUtils;
@@ -479,6 +479,19 @@ internal class InactivityTests : GameTestBase
         Assert.That(game.IsFinished, Is.True);
         Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveSouth));
         Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedNoProgress));
+    }
+
+    [Test]
+    public void GameTimesOutAfterNoActions()
+    {
+        // Move once, then stop responding
+        Act(DirectedAction.MoveWest);
+        now += TimeSpan.FromSeconds(21);
+
+        // Game should be finished now
+        Assert.That(game.IsFinished, Is.True);
+        Assert.That(game.State.Status, Is.EqualTo(GameStatus.FinishedTimeout));
+        Assert.Throws<GameFinishedException>(() => Act(DirectedAction.MoveSouth));
     }
 
     private void WalkCircle(bool small = false)

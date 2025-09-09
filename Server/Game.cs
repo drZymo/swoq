@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -23,6 +23,7 @@ internal class Game : IGame
     private GameStatus status = GameStatus.Active;
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
+    private GameState state;
 
     private readonly HashSet<Position> doorsToClose = [];
     private readonly HashSet<Position> doorsToOpen = [];
@@ -46,19 +47,27 @@ internal class Game : IGame
 
         startTime = Clock.Now;
 
-        State = CreateState();
+        state = CreateState();
 
         mapHasUsableItems = map.Enemies.Any() || map.Any(c => c is Cell.Boulder or Cell.DoorRedClosed or Cell.DoorGreenClosed or Cell.DoorBlueClosed);
     }
 
     public Guid Id { get; } = Guid.NewGuid();
-    public GameState State { get; private set; }
+
+    public GameState State
+    {
+        get
+        {
+            ProcessTimeOuts();
+            return state;
+        }
+    }
+
     public DateTime LastActionTime { get; private set; } = Clock.Now;
-    public bool IsFinished => status != GameStatus.Active || TimedOut || NoProgress;
 
-    private bool TimedOut => (Clock.Now - LastActionTime) > maxInactivityTime;
+    public bool IsFinished => State.IsFinished;
 
-    private bool NoProgress => (ticks >= maxLevelTicks) || (Clock.Now - startTime) >= maxLevelDuration;
+    public event EventHandler? StatusChanged;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
@@ -68,8 +77,6 @@ internal class Game : IGame
         try
         {
             // Pre condition checks
-            if (status == GameStatus.Active && TimedOut) status = GameStatus.FinishedTimeout;
-            if (status == GameStatus.Active && NoProgress) status = GameStatus.FinishedNoProgress;
             if (IsFinished) throw new GameFinishedException();
 
             // As long as game is not finished one of the two players should be active
@@ -126,13 +133,40 @@ internal class Game : IGame
         finally
         {
             // Always update state at the end
-            State = CreateState();
+            state = CreateState();
         }
+    }
+
+    private void ChangeStatus(GameStatus status)
+    {
+        // Can only change from Active to Finished
+        if (this.status != GameStatus.Active) return;
+
+        this.status = status;
+        state = state with { Status = status };
+        StatusChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void Cancel()
     {
-        status = GameStatus.FinishedCancelled;
+        ChangeStatus(GameStatus.FinishedCancelled);
+    }
+
+    private void ProcessTimeOuts()
+    {
+        if (status != GameStatus.Active) return;
+
+        if ((Clock.Now - LastActionTime) > maxInactivityTime)
+        {
+            ChangeStatus(GameStatus.FinishedTimeout);
+            return;
+        }
+
+        if ((ticks >= maxLevelTicks) || (Clock.Now - startTime) >= maxLevelDuration)
+        {
+            ChangeStatus(GameStatus.FinishedNoProgress);
+            return;
+        }
     }
 
     private void UpdateGameStatus()
@@ -142,12 +176,12 @@ internal class Game : IGame
         // Check if one of the players has died
         if (map.Player1 != null && !map.Player1.IsAlive)
         {
-            status = GameStatus.FinishedPlayerDied;
+            ChangeStatus(GameStatus.FinishedPlayerDied);
             return;
         }
         if (map.Player2 != null && !map.Player2.IsAlive)
         {
-            status = GameStatus.FinishedPlayer2Died;
+            ChangeStatus(GameStatus.FinishedPlayer2Died);
             return;
         }
 
@@ -155,7 +189,7 @@ internal class Game : IGame
         if ((map.Player1 == null || (!map.Player1.IsPresent && map.Player1.IsAlive)) &&
             (map.Player2 == null || (!map.Player2.IsPresent && map.Player2.IsAlive)))
         {
-            status = GameStatus.FinishedSuccess;
+            ChangeStatus(GameStatus.FinishedSuccess);
             // Report that game is finished
             reporter?.GameFinishedSuccessfully(Id, map.Level, ticks);
             return;
@@ -164,7 +198,7 @@ internal class Game : IGame
         // Time since last change was too long ago
         if ((ticks - lastChangeTick) > Parameters.MaxNoProgressTicks)
         {
-            status = GameStatus.FinishedNoProgress;
+            ChangeStatus(GameStatus.FinishedNoProgress);
             return;
         }
 
@@ -175,7 +209,7 @@ internal class Game : IGame
             var player2Active = IsPlayerActive(map.Player2, player2Positions);
             if (!player1Active && !player2Active)
             {
-                status = GameStatus.FinishedNoProgress;
+                ChangeStatus(GameStatus.FinishedNoProgress);
                 return;
             }
         }

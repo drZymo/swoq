@@ -17,12 +17,30 @@ public class GameServerActException(ActResult result, GameState? state, Exceptio
     public GameState? State { get; } = state;
 }
 
-internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase database) : IGameServer
+internal abstract class GameServerBase : IGameServer, IDisposable
 {
-    protected readonly IMapGenerator mapGenerator = mapGenerator;
-    protected readonly ISwoqDatabase database = database;
+    protected readonly IMapGenerator mapGenerator;
+    protected readonly ISwoqDatabase database;
 
     protected readonly ConcurrentDictionary<Guid, IGame> games = new();
+
+    private readonly CancellationTokenSource cancellation = new();
+    private readonly Thread cleanupThread;
+
+    public GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase database)
+    {
+        this.mapGenerator = mapGenerator;
+        this.database = database;
+
+        cleanupThread = new Thread(new ThreadStart(CleanupThread));
+        cleanupThread.Start();
+    }
+
+    public virtual void Dispose()
+    {
+        cancellation.Cancel();
+        cleanupThread.Join();
+    }
 
     public event EventHandler<GameRemovedEventArgs>? GameRemoved;
     public event EventHandler<QueueUpdatedEventArgs>? QueueUpdated;
@@ -36,9 +54,6 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
 
             // If seed is not given, use a random one.
             var actualSeed = seed ?? Random.Shared.Next();
-
-            // Cleanup
-            CleanupOldGames();
 
             // Create a new game
             IGame game;
@@ -59,6 +74,7 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
             {
                 throw new InvalidOperationException("Game could not be added");
             }
+            game.StatusChanged += OnGameStatusChanged;
 
             return new GameStartResult(user.Name, game.Id, game.State, actualSeed);
         }
@@ -109,25 +125,35 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
         }
     }
 
-    private void CleanupOldGames()
+    private void CleanupThread()
     {
-        // Remove games that have been finished for a while from the game list
-        var now = Clock.Now;
-        var idsToRemove = games.Values.
-            Where(g => g.IsFinished && (now - g.LastActionTime) > Parameters.GameRetentionTime).
-            Select(g => g.Id).
-            ToList();
-        foreach (var id in idsToRemove)
+        try
         {
-            RemoveGame(id);
-        }
-    }
+            while (!cancellation.IsCancellationRequested)
+            {
+                Thread.Sleep(TimeSpan.FromMilliseconds(50));
 
-    protected void RemoveGame(Guid gameId)
-    {
-        if (games.TryRemove(gameId, out var game))
+                // Remove games that have been finished for a while from the game list
+                // Checking IsFinished could trigger a StatusChanged event.
+                var now = Clock.Now;
+                var idsToRemove = games.Values.
+                    Where(g => g.IsFinished).
+                    Where(g => (now - g.LastActionTime) > Parameters.GameRetentionTime).
+                    Select(g => g.Id).
+                    ToList();
+                foreach (var gameId in idsToRemove)
+                {
+                    if (games.TryRemove(gameId, out var game))
+                    {
+                        game.StatusChanged -= OnGameStatusChanged;
+                        OnGameRemoved(gameId);
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException)
         {
-            OnGameRemoved(gameId);
+            // Exit gracefully
         }
     }
 
@@ -135,5 +161,11 @@ internal abstract class GameServerBase(IMapGenerator mapGenerator, ISwoqDatabase
 
     protected void OnQueueUpdated(IImmutableList<string> queuedUsers) => QueueUpdated?.Invoke(this, new QueueUpdatedEventArgs(queuedUsers));
 
-    protected void OnGameStatusChanged(Guid gameId, GameStatus status) => GameStatusChanged?.Invoke(this, new GameStatusChangedEventArgs(gameId, status));
+    private void OnGameStatusChanged(object? sender, EventArgs args)
+    {
+        var game = sender as IGame;
+        if (game == null) return;
+
+        GameStatusChanged?.Invoke(this, new GameStatusChangedEventArgs(game.Id, game.State.Status));
+    }
 }

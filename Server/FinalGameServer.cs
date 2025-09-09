@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Swoq.Server;
 
-internal class FinalGameServer : GameServerBase, IDisposable
+internal class FinalGameServer : GameServerBase
 {
     private readonly HashSet<string> finalUserIds;
     private readonly int finalSeed;
@@ -35,7 +35,7 @@ internal class FinalGameServer : GameServerBase, IDisposable
         countdownTask = Task.Run(Countdown);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         cancellation.Cancel();
         countdownTask.Wait();
@@ -43,6 +43,8 @@ internal class FinalGameServer : GameServerBase, IDisposable
         countdownTask.Dispose();
         questConnectBarrier.Dispose();
         questStartBarrier.Dispose();
+
+        base.Dispose();
     }
 
     protected override Game StartTraining(User user, int level, ref int seed)

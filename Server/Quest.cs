@@ -15,6 +15,7 @@ public class Quest : IGame
     private int ticks = 0;
     private int level = 0;
     private Game currentGame;
+    private GameState state;
 
     public Quest(User user, IMapGenerator mapGenerator, ISwoqDatabase database, int seed)
     {
@@ -25,23 +26,28 @@ public class Quest : IGame
         this.reporter = new(user, database);
 
         currentGame = NewGame();
-        State = currentGame.State with { Tick = ticks };
+        state = currentGame.State with { Tick = ticks };
     }
 
     public Guid Id { get; } = Guid.NewGuid();
     public int Seed { get; }
-    public GameState State { get; private set; }
-    public DateTime LastActionTime => currentGame.LastActionTime;
-    public bool IsFinished => State.Status != GameStatus.Active || TimedOut;
+    public GameState State
+    {
+        get
+        {
+            ProcessTimeOuts();
+            return state;
+        }
+    }
 
-    private bool TimedOut => (Clock.Now - LastActionTime) > Parameters.MaxQuestInactivityTime;
+    public DateTime LastActionTime => currentGame.LastActionTime;
+
+    public bool IsFinished => State.IsFinished;
+
+    public event EventHandler? StatusChanged;
 
     public void Act(DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
-        if (State.Status == GameStatus.Active && TimedOut)
-        {
-            State = State with { Status = GameStatus.FinishedTimeout };
-        }
         if (IsFinished) throw new GameFinishedException();
 
         try
@@ -56,41 +62,7 @@ public class Quest : IGame
             {
                 level++;
 
-                // Update user stats
-                var lengthSeconds = (int)Math.Round((LastActionTime - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
-                if (user.Level <= level)
-                {
-                    if (user.Level < level)
-                    {
-                        // If this level was not reached before,
-                        // unlock the level and remember the length.
-                        user.Level = level;
-                        user.QuestLengthTicks = ticks;
-                        user.QuestLengthSeconds = lengthSeconds;
-                        user.QuestFinished = user.Level > mapGenerator.MaxLevel;
-                        user.BestQuestId = Id.ToString();
-                    }
-                    else if (user.Level == level)
-                    {
-                        // If this level was the highest level reached before, then update the duration if it improved.
-                        if (ticks <= user.QuestLengthTicks)
-                        {
-                            if (ticks < user.QuestLengthTicks)
-                            {
-                                user.QuestLengthTicks = ticks;
-                                user.QuestLengthSeconds = lengthSeconds;
-                            }
-                            else if (lengthSeconds < user.QuestLengthSeconds)
-                            {
-                                user.QuestLengthSeconds = lengthSeconds;
-                            }
-                            user.BestQuestId = Id.ToString();
-                        }
-                    }
-
-                    // Sync database
-                    database.UpdateUserAsync(user);
-                }
+                UpdateUserStatistics();
 
                 // Create a new game if this was not the last level
                 if (level <= mapGenerator.MaxLevel)
@@ -101,14 +73,25 @@ public class Quest : IGame
         }
         finally
         {
-            State = currentGame.State with { Tick = ticks };
+            SynchronizeState();
         }
     }
 
     public void Cancel()
     {
         currentGame.Cancel();
-        State = currentGame.State with { Tick = ticks, Status = GameStatus.FinishedCancelled };
+        SynchronizeState();
+    }
+
+    private void ProcessTimeOuts()
+    {
+        if (state.Status != GameStatus.Active) return;
+
+        if ((Clock.Now - LastActionTime) > Parameters.MaxQuestInactivityTime)
+        {
+            state = state with { Status = GameStatus.FinishedTimeout };
+            StatusChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private Game NewGame()
@@ -123,5 +106,52 @@ public class Quest : IGame
                         Parameters.MaxLevelDuration,
                         random,
                         reporter);
+    }
+
+    private void SynchronizeState()
+    {
+        state = currentGame.State with { Tick = ticks };
+        if (state.Status != GameStatus.Active)
+        {
+            StatusChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void UpdateUserStatistics()
+    {
+        var lengthSeconds = (int)Math.Round((LastActionTime - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
+        if (user.Level <= level)
+        {
+            if (user.Level < level)
+            {
+                // If this level was not reached before,
+                // unlock the level and remember the length.
+                user.Level = level;
+                user.QuestLengthTicks = ticks;
+                user.QuestLengthSeconds = lengthSeconds;
+                user.QuestFinished = user.Level > mapGenerator.MaxLevel;
+                user.BestQuestId = Id.ToString();
+            }
+            else if (user.Level == level)
+            {
+                // If this level was the highest level reached before, then update the duration if it improved.
+                if (ticks <= user.QuestLengthTicks)
+                {
+                    if (ticks < user.QuestLengthTicks)
+                    {
+                        user.QuestLengthTicks = ticks;
+                        user.QuestLengthSeconds = lengthSeconds;
+                    }
+                    else if (lengthSeconds < user.QuestLengthSeconds)
+                    {
+                        user.QuestLengthSeconds = lengthSeconds;
+                    }
+                    user.BestQuestId = Id.ToString();
+                }
+            }
+
+            // Sync database
+            database.UpdateUserAsync(user);
+        }
     }
 }
