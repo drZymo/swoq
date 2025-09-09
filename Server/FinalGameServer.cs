@@ -8,7 +8,7 @@ namespace Swoq.Server;
 
 internal class FinalGameServer : GameServerBase
 {
-    private readonly HashSet<string> finalUserIds;
+    private readonly ImmutableHashSet<string> finalUserIds = [];
     private readonly int finalSeed;
 
     private readonly CancellationTokenSource cancellation = new();
@@ -20,19 +20,25 @@ internal class FinalGameServer : GameServerBase
 
     private readonly ConcurrentBag<string> startedUserIds = [];
 
-    public FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IConfiguration config, int? finalSeed = null) : base(mapGenerator, database)
+    public FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IImmutableSet<string> finalUserNames, int? finalSeed = null, bool countdownEnabled = true) : base(mapGenerator, database)
     {
-        finalUserIds = (config["final"] ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToHashSet();
+        this.finalUserIds = ToUserIds(database, finalUserNames);
         this.finalSeed = finalSeed ?? Random.Shared.Next();
 
         // Add 1 to include the countdown task
-        questConnectBarrier = new(finalUserIds.Count + 1);
-        questStartBarrier = new(finalUserIds.Count + 1);
+        questConnectBarrier = new(this.finalUserIds.Count + 1);
+        questStartBarrier = new(this.finalUserIds.Count + 1);
 
-        countdownEnabled = config["countdown"] != "no";
+        this.countdownEnabled = countdownEnabled;
         countdownTask = Task.Run(Countdown);
+    }
+
+    private static ImmutableHashSet<string> ToUserIds(ISwoqDatabase database, IImmutableSet<string> userNames)
+    {
+        var allUsers = database.GetAllUsers().Result;
+        return userNames.
+            Select(name => allUsers.SingleOrDefault(u => u.Name == name)?.Id ?? throw new InvalidOperationException($"User {name} does not exist")).
+            ToImmutableHashSet();
     }
 
     public override void Dispose()
@@ -92,6 +98,8 @@ internal class FinalGameServer : GameServerBase
     {
         try
         {
+            Console.WriteLine($"{ConsoleColors.BrightYellow}Waiting for players ...{ConsoleColors.Reset}");
+
             questConnectBarrier.SignalAndWait(cancellation.Token);
 
             if (countdownEnabled)
@@ -99,10 +107,10 @@ internal class FinalGameServer : GameServerBase
                 // Show count down
                 for (var i = 5; i > 0; i--)
                 {
-                    Console.WriteLine($"Final round starting in {i} ...");
+                    Console.WriteLine($"{ConsoleColors.BrightYellow}Final round starting in {i} ...{ConsoleColors.Reset}");
                     Thread.Sleep(TimeSpan.FromSeconds(1));
                 }
-                Console.WriteLine($"Final round starting ...");
+                Console.WriteLine($"{ConsoleColors.BrightYellow}Final round starting ...{ConsoleColors.Reset}");
             }
 
             questStartBarrier.SignalAndWait(cancellation.Token);
