@@ -573,7 +573,7 @@ internal class MapGeneratorImpl
         var infrontFirstTunnelDoor = map.Pos(firstTunnelDoorY, middle - 1); // left side
 
         // Place a pressure plate in the left (only rooms in left can reach position in front of door)
-        var platePos = ClaimRandomPositionInAvailableRoomFarthestFrom([map.Player1.Position, infrontFirstTunnelDoor]);
+        var platePos = ClaimRandomPositionInRoomFarthestFrom(roomsLeft, [map.Player1.Position, infrontFirstTunnelDoor]);
         map[platePos] = ToPressurePlate(firstTunnelKeyColor);
 
         // Create another tunnel with a random door
@@ -582,7 +582,7 @@ internal class MapGeneratorImpl
         var infrontSecondTunnelDoor = map.Pos(secondTunnelDoorY, middle + 1); // right side
 
         // Place key in right (only rooms in right can reach position in front of door).
-        var keyPos = ClaimRandomPositionInAvailableRoomFarthestFrom([infrontSecondTunnelDoor]);
+        var keyPos = ClaimRandomPositionInRoomFarthestFrom(roomsRight, [infrontSecondTunnelDoor]);
         map[keyPos] = ToKey(secondTunnelKeyColor);
 
         // Put exit key on room in the left close to the start
