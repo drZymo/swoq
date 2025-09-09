@@ -104,7 +104,7 @@ internal abstract class GameServerBase : IGameServer, IDisposable
 
     protected abstract Quest StartQuest(User user);
 
-    public GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
+    public virtual GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
     {
         // Try to find game
         if (!games.TryGetValue(gameId, out var game)) throw new GameServerActException(ActResult.UnknownGameId, null);

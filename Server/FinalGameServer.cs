@@ -1,5 +1,6 @@
 using Swoq.Data;
 using Swoq.Infra;
+using Swoq.Interface;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -16,9 +17,10 @@ internal class FinalGameServer : GameServerBase
     private readonly Barrier questStartBarrier;
 
     private readonly bool countdownEnabled;
-    private readonly Task countdownTask;
+    private readonly Task coordinatorThread;
 
     private readonly ConcurrentBag<string> startedUserIds = [];
+    private readonly ConcurrentDictionary<Guid, SemaphoreSlim> tickers = [];
 
     public FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IImmutableSet<string> finalUserNames, int? finalSeed = null, bool countdownEnabled = true) : base(mapGenerator, database)
     {
@@ -30,23 +32,15 @@ internal class FinalGameServer : GameServerBase
         questStartBarrier = new(this.finalUserIds.Count + 1);
 
         this.countdownEnabled = countdownEnabled;
-        countdownTask = Task.Run(Countdown);
-    }
-
-    private static ImmutableHashSet<string> ToUserIds(ISwoqDatabase database, IImmutableSet<string> userNames)
-    {
-        var allUsers = database.GetAllUsers().Result;
-        return userNames.
-            Select(name => allUsers.SingleOrDefault(u => u.Name == name)?.Id ?? throw new InvalidOperationException($"User {name} does not exist")).
-            ToImmutableHashSet();
+        coordinatorThread = Task.Run(CoordinatorThread);
     }
 
     public override void Dispose()
     {
         cancellation.Cancel();
-        countdownTask.Wait();
+        coordinatorThread.Wait();
 
-        countdownTask.Dispose();
+        coordinatorThread.Dispose();
         questConnectBarrier.Dispose();
         questStartBarrier.Dispose();
 
@@ -84,7 +78,10 @@ internal class FinalGameServer : GameServerBase
             questStartBarrier.SignalAndWait(cancellation.Token);
 
             // Start quest (use the same seed for all users)
+            var ticker = new SemaphoreSlim(0);
             var quest = new Quest(user, mapGenerator, database, finalSeed);
+            tickers.AddOrUpdate(quest.Id, ticker, (k, v) => ticker);
+
             return quest;
         }
         catch (OperationCanceledException)
@@ -94,14 +91,26 @@ internal class FinalGameServer : GameServerBase
         }
     }
 
-    private void Countdown()
+    public override GameState Act(Guid gameId, DirectedAction? action1 = null, DirectedAction? action2 = null)
+    {
+        // Wait for next tick
+        if (tickers.TryGetValue(gameId, out var ticker))
+        {
+            ticker.Wait();
+        }
+        return base.Act(gameId, action1, action2);
+    }
+
+    private void CoordinatorThread()
     {
         try
         {
             Console.WriteLine($"{ConsoleColors.BrightYellow}Waiting for players ...{ConsoleColors.Reset}");
 
+            // Wait until all connected
             questConnectBarrier.SignalAndWait(cancellation.Token);
 
+            // Start count down
             if (countdownEnabled)
             {
                 // Show count down
@@ -113,11 +122,32 @@ internal class FinalGameServer : GameServerBase
                 Console.WriteLine($"{ConsoleColors.BrightYellow}Final round starting ...{ConsoleColors.Reset}");
             }
 
+            // Signal countdown finished, so games are started
             questStartBarrier.SignalAndWait(cancellation.Token);
+
+            // Increment all tickers periodically
+            var delayUs = 1000000 / Parameters.FinalTickRate;
+            while (!cancellation.IsCancellationRequested)
+            {
+                Thread.Sleep(TimeSpan.FromMicroseconds(delayUs));
+                foreach (var ticker in tickers.Values)
+                {
+                    ticker.Release();
+                }
+            }
+
         }
         catch (OperationCanceledException)
         {
             // Exit gracefully
         }
+    }
+
+    private static ImmutableHashSet<string> ToUserIds(ISwoqDatabase database, IImmutableSet<string> userNames)
+    {
+        var allUsers = database.GetAllUsers().Result;
+        return userNames.
+            Select(name => allUsers.SingleOrDefault(u => u.Name == name)?.Id ?? throw new InvalidOperationException($"User {name} does not exist")).
+            ToImmutableHashSet();
     }
 }

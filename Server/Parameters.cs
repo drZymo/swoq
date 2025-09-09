@@ -48,4 +48,9 @@ internal static class Parameters
 
     public const int MaxLevelTicks = 10000;
     public static readonly TimeSpan MaxLevelDuration = TimeSpan.FromSeconds(120);
+
+    /// <summary>
+    /// The maximum ticks per second allowed during final mode
+    /// </summary>
+    public const int FinalTickRate = 30;
 }
