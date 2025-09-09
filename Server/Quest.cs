@@ -120,6 +120,8 @@ public class Quest : IGame
     private void UpdateUserStatistics()
     {
         var lengthSeconds = (int)Math.Round((LastActionTime - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
+        Console.WriteLine($"{ConsoleColors.BrightBlue}User {user.Name} reached level {level} in {ticks} ticks and {lengthSeconds} seconds. (game {Id}){ConsoleColors.Reset}");
+
         if (user.Level <= level)
         {
             if (user.Level < level)
