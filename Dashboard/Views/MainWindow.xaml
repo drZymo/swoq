@@ -12,129 +12,135 @@
         Title="Swoq Quest Dashboard" Height="1080" Width="1920"
         Closed="Window_Closed"
         KeyDown="Window_KeyDown"
-        FontSize="20"
+        FontSize="16"
         Foreground="White"
         Background="Black">
     <Window.Resources>
         <converters:BoolToGridLengthConverter x:Key="gridConverter" />
     </Window.Resources>
-    <Grid RowDefinitions="*,auto">
-        <Grid Name="MainGrid" Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="{Binding Maximize, Converter={StaticResource gridConverter}, ConverterParameter=200}"/>
-                <ColumnDefinition Width="{Binding Maximize, Converter={StaticResource gridConverter}, ConverterParameter=200}"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="{Binding Maximize, Converter={StaticResource gridConverter}, ConverterParameter=320}"/>
-            </Grid.ColumnDefinitions>
+    <Viewbox>
+        <Grid RowDefinitions="*,auto" Width="1920" Height="1080">
+            <Grid Name="MainGrid" Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{Binding Maximize, Converter={StaticResource gridConverter}, ConverterParameter=230}"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="{Binding Maximize, Converter={StaticResource gridConverter}, ConverterParameter=230}"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="{Binding Maximize, Converter={StaticResource gridConverter}, ConverterParameter=235}"/>
+                </Grid.RowDefinitions>
 
-            <Grid Grid.Column="0" RowDefinitions="auto,*"  DataContext="{Binding GameObserver}">
-                <infraui:GroupBox Grid.Row="0" Header="Queue">
-                    <ItemsControl ItemsSource="{Binding QueueUsers}">
+                <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" RowDefinitions="auto,*"  DataContext="{Binding GameObserver}">
+                    <infraui:GroupBox Grid.Row="0" Header="Queue">
+                        <ItemsControl ItemsSource="{Binding QueueUsers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </infraui:GroupBox>
+
+                    <infraui:GroupBox Grid.Row="1" Header="Sessions">
+                        <ScrollViewer>
+                            <ItemsControl ItemsSource="{Binding Sessions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                                                <TextBlock  Foreground="{Binding TextColor}" Text="{Binding UserName}"/>
+                                                <TextBlock  Foreground="{Binding TextColor}" IsVisible="{Binding IsFinished}">✓</TextBlock>
+                                            </StackPanel>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right" Foreground="{Binding TextColor}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </infraui:GroupBox>
+                </Grid>
+
+                <Grid Grid.Row="0" Grid.Column="1" DataContext="{Binding GameObserver}">
+                    <ItemsControl ItemsSource="{Binding ActiveQuests}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="{Binding Columns}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"/>
+                            <DataTemplate DataType="infravm:GameObservationViewModel">
+                                <Viewbox>
+                                    <Border Width="1920" Height="1060" Margin="4">
+                                        <!-- leave some room for status bar -->
+                                        <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true"/>
+                                    </Border>
+                                </Viewbox>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </infraui:GroupBox>
+                    <Canvas>
+                        <Button Canvas.Top="0" Canvas.Right="0" Click="OnMaximizeClicked">
+                            <Image Source="maximize.png" Width="32" Height="32"/>
+                        </Button>
+                    </Canvas>
+                </Grid>
 
-                <infraui:GroupBox Grid.Row="1" Header="Sessions">
+                <infraui:GroupBox Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Header="Highscores" DataContext="{Binding GameObserver}">
                     <ScrollViewer>
-                        <ItemsControl ItemsSource="{Binding Sessions}">
+                        <ItemsControl ItemsSource="{Binding Scores}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
                                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                                            <TextBlock  Foreground="{Binding TextColor}" Text="{Binding UserName}"/>
-                                            <TextBlock  Foreground="{Binding TextColor}" IsVisible="{Binding IsFinished}">✓</TextBlock>
+                                            <TextBlock Text="{Binding UserName}"/>
+                                            <TextBlock IsVisible="{Binding QuestFinished}">🌟</TextBlock>
                                         </StackPanel>
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right" Foreground="{Binding TextColor}"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="10" IsVisible="{Binding HasProgress}">
+                                            <Run Text="{Binding LengthTicks}"/>
+                                            <Run>ticks,</Run>
+                                            <Run Text="{Binding LengthSeconds}"/>
+                                            <Run>sec.</Run>
+                                        </TextBlock>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
                 </infraui:GroupBox>
+
+                <Grid Grid.Row="1" Grid.Column="1" DataContext="{Binding GameObserver}">
+                    <infraui:GroupBox Header="Previous quests">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding InactiveQuests}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="infravm:GameObservationViewModel">
+                                        <Viewbox Width="240" Height="180">
+                                            <Border Width="480" Height="360" Margin="4">
+                                                <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true" ShowSidePanels="false" />
+                                            </Border>
+                                        </Viewbox>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </infraui:GroupBox>
+                </Grid>
             </Grid>
 
-            <infraui:GroupBox Grid.Column="1" Header="Highscores" DataContext="{Binding GameObserver}">
-                <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding Scores}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid RowDefinitions="auto,auto" ColumnDefinitions="3*,1*">
-                                    <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                                        <TextBlock Text="{Binding UserName}"/>
-                                        <TextBlock IsVisible="{Binding QuestFinished}">🌟</TextBlock>
-                                    </StackPanel>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}" TextAlignment="Right"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Right" FontSize="12" IsVisible="{Binding HasProgress}">
-                                        <Run Text="{Binding LengthTicks}"/>
-                                        <Run>ticks,</Run>
-                                        <Run Text="{Binding LengthSeconds}"/>
-                                        <Run>sec.</Run>
-                                    </TextBlock>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </infraui:GroupBox>
-
-            <Grid Grid.Column="2" DataContext="{Binding GameObserver}">
-                <ItemsControl ItemsSource="{Binding ActiveQuests}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="{Binding Columns}" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="infravm:GameObservationViewModel">
-                            <Viewbox>
-                                <Border Width="1920" Height="1060" Margin="4"> <!-- leave some room for status bar -->
-                                    <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true"/>
-                                </Border>
-                            </Viewbox>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Canvas>
-                    <Button Canvas.Top="0" Canvas.Right="0" Click="OnMaximizeClicked">
-                        <Image Source="maximize.png" Width="32" Height="32"/>
-                    </Button>
-                </Canvas>
-            </Grid>
-
-            <Grid Grid.Column="3" DataContext="{Binding GameObserver}">
-                <infraui:GroupBox Grid.Row="0" Header="Previous quests">
-                    <ScrollViewer>
-                        <ItemsControl ItemsSource="{Binding InactiveQuests}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Vertical" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="infravm:GameObservationViewModel">
-                                    <Viewbox Width="320" Height="240">
-                                        <Border Width="480" Height="360" Margin="4">
-                                            <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true" ShowSidePanels="false" />
-                                        </Border>
-                                    </Viewbox>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </infraui:GroupBox>
+            <Grid Grid.Row="1" ColumnDefinitions="*,auto" DataContext="{Binding GameObserver}">
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
+                <TextBlock Grid.Column="1" FontSize="12" Foreground="Gray">
+                    <Run>Events per second: </Run>
+                    <Run Text="{Binding EventsPerSecond, StringFormat={}{0:0.0}}"/>
+                </TextBlock>
             </Grid>
         </Grid>
-
-        <Grid Grid.Row="1" ColumnDefinitions="*,auto" DataContext="{Binding GameObserver}">
-            <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"/>
-            <TextBlock Grid.Column="1" FontSize="12" Foreground="Gray">
-                <Run>Events per second: </Run>
-                <Run Text="{Binding EventsPerSecond, StringFormat={}{0:0.0}}"/>
-            </TextBlock>
-        </Grid>
-    </Grid>
+    </Viewbox>
 </Window>
