@@ -11,15 +11,17 @@ public class ReplayController(IConfiguration config) : ControllerBase
     [HttpGet("{gameId}")]
     public IActionResult GetReplay(string gameId)
     {
-        if (string.IsNullOrEmpty(_folderPath)) return NotFound();
-        if (!Directory.Exists(_folderPath)) return NotFound();
+        if (string.IsNullOrEmpty(_folderPath) || !Directory.Exists(_folderPath)) return NotFound();
 
         var filePath = Directory.GetFiles(_folderPath, $"*{gameId}*.swoq").FirstOrDefault();
-        if (filePath == null || !System.IO.File.Exists(filePath)) return NotFound();
+        if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath)) return NotFound();
 
-        var fileName = Path.GetFileName(filePath);
+        // Prevent downloading recently updated files,
+        // they might be still in use.
+        var info = new FileInfo(filePath);
+        if (DateTime.UtcNow - info.LastWriteTimeUtc < TimeSpan.FromSeconds(10)) return NotFound();
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        return File(stream, "application/octet-stream", fileName);
+        return File(stream, "application/octet-stream", info.Name);
     }
 }
