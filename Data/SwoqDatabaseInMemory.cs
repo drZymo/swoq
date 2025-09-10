@@ -59,8 +59,9 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         });
     }
 
-    public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count) =>
+    public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count, string? userId) =>
         await Task.FromResult(questHistory.Values.
+            Where(q => userId == null || q.UserId == userId).
             GroupBy(q => q.GameId).
             Select(g => g.OrderByDescending(q => q.Timestamp).First()).
             OrderByDescending(q => q.Timestamp).

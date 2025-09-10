@@ -23,5 +23,5 @@ public interface ISwoqDatabase
     Task<IImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId);
 
     Task AddQuestProgressAsync(QuestProgress progress);
-    Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count);
+    Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count, string? userId);
 }

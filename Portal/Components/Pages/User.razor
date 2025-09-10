@@ -47,6 +47,10 @@ else
 
         <p>This was achieved by the game with id <strong>@CurrentUserProvider?.User.BestQuestId</strong>.</p>
 
+		<QuestHistory Count="10" UserId="@CurrentUserProvider?.User.Id" />
+
+		<h2>Statistics</h2>
+
         <p>Below is a table that shows how many ticks your bot at least and on average needed to finish each level successfully
             along with how much that is above or below the global minimum and average respectively.</p>
 

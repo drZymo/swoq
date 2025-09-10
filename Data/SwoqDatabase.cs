@@ -90,10 +90,10 @@ public class SwoqDatabase : ISwoqDatabase
         await questHistory.InsertOneAsync(progress);
     }
 
-    public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count)
+    public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count, string? userId)
     {
         var sort = Builders<QuestProgress>.Sort.Descending(q => q.Timestamp);
-        var progresses = await questHistory.Find(_ => true).Sort(sort).ToListAsync();
+        var progresses = await questHistory.Find(q => userId == null || q.UserId == userId).Sort(sort).ToListAsync();
 
         // Group by GameId and select the newest entry for each GameId
         var latestByGameId = progresses
