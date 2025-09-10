@@ -1,4 +1,4 @@
-﻿@page "/register/"
+@page "/register/"
 @using Swoq.Data
 @using System.Text.RegularExpressions
 @inject ILogger<Register> Logger
@@ -12,16 +12,16 @@
 <p>Register a new user.</p>
 
 <form method="post" @onsubmit="Submit" @formname="register-plain-form">
-	<AntiforgeryToken />
-	<div>
-		<label>
-			User name:
-			<InputText @bind-Value="UserName" />
-		</label>
-	</div>
-	<div>
-		<button type="submit">Submit</button>
-	</div>
+    <AntiforgeryToken />
+    <div>
+        <label>
+            User name:
+            <InputText @bind-Value="UserName" />
+        </label>
+    </div>
+    <div>
+        <button type="submit">Submit</button>
+    </div>
 </form>
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -33,43 +33,43 @@
 }
 
 @code {
-	[SupplyParameterFromForm]
-	public string UserName { get; set; } = string.Empty;
+    [SupplyParameterFromForm]
+    public string UserName { get; set; } = string.Empty;
 
-	public string? ErrorMessage { get; set; } = null;
+    public string? ErrorMessage { get; set; } = null;
 
-	private static readonly Regex usernameCheck = new Regex(@"^[A-Za-z0-9_]+$", RegexOptions.Compiled);
+    private static readonly Regex usernameCheck = new Regex(@"^[A-Za-z0-9_]+$", RegexOptions.Compiled);
 
-	[CascadingParameter]
-	private CurrentUserProvider? CurrentUserProvider { get; set; }
+    [CascadingParameter]
+    private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-	private async void Submit()
-	{
-		ErrorMessage = null;
-		if (!usernameCheck.IsMatch(UserName))
-		{
-			ErrorMessage = $"Invalid user name. Only letters (a-z and A-Z), numbers (0-9) and underscores (_) are allowed.";
-			return;
-		}
+    private async void Submit()
+    {
+        ErrorMessage = null;
+        if (!usernameCheck.IsMatch(UserName))
+        {
+            ErrorMessage = $"Invalid user name. Only letters (a-z and A-Z), numbers (0-9) and underscores (_) are allowed.";
+            return;
+        }
 
-		var user = new Swoq.Data.User() { Name = UserName };
-		try
-		{
-			Database.CreateUser(user);
-			if (!string.IsNullOrEmpty(user.Id) && CurrentUserProvider != null)
-			{
-				await CurrentUserProvider.SetUserAsync(user.Id, user.Name);
-				NavigationManager.NavigateTo($"/user/?welcome=true", forceLoad: true);
-			}
-		}
-		catch (Exception ex) when (ex is not NavigationException)
-		{
-			ErrorMessage = $"Exception: {ex}";
-		}
-	}
+        var user = new Swoq.Data.User() { Name = UserName };
+        try
+        {
+            Database.CreateUser(user);
+            if (!string.IsNullOrEmpty(user.Id) && CurrentUserProvider != null)
+            {
+                await CurrentUserProvider.SetUserAsync(user.Id, user.Name);
+                NavigationManager.NavigateTo($"/user/?welcome=true", forceLoad: true);
+            }
+        }
+        catch (Exception ex) when (ex is not NavigationException)
+        {
+            ErrorMessage = $"Exception: {ex}";
+        }
+    }
 
-	private void ClearError()
-	{
-		ErrorMessage = null;
-	}
+    private void ClearError()
+    {
+        ErrorMessage = null;
+    }
 }
