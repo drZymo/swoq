@@ -110,7 +110,8 @@ internal class ReplaySaver : IDisposable
             }
 
             // Append serialized message to the end
-            using var file = File.OpenWrite(filename);
+            using var file = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+
             file.Seek(0, SeekOrigin.End);
             message.WriteDelimitedTo(file);
         }

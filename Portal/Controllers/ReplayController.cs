@@ -19,7 +19,7 @@ public class ReplayController(IConfiguration config) : ControllerBase
 
         var fileName = Path.GetFileName(filePath);
 
-        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         return File(stream, "application/octet-stream", fileName);
     }
 }
