@@ -1,8 +1,8 @@
-using Microsoft.Extensions.Configuration;
 using Swoq.Data;
 using Swoq.Infra;
 using Swoq.Interface;
 using Swoq.Server;
+using System.Collections.Immutable;
 
 namespace Swoq.Test;
 
@@ -12,7 +12,6 @@ public class FinalGameServerTests
 
     private DummyGenerator mapGenerator;
     private SwoqDatabaseInMemory database;
-    private IConfiguration configuration;
     private FinalGameServer gameServer;
 
     [SetUp]
@@ -22,13 +21,11 @@ public class FinalGameServerTests
 
         mapGenerator = new();
         database = new();
-        configuration = new ConfigurationBuilder()
-            .AddCommandLine(["--final", "u1,u2", "--countdown", "no"])
-            .Build();
         database.CreateUser(new User { Id = "u1", Name = "User1", Level = 1 });
         database.CreateUser(new User { Id = "u2", Name = "User2", Level = 1 });
         database.CreateUser(new User { Id = "u3", Name = "User3", Level = 1 });
-        gameServer = new FinalGameServer(mapGenerator, database, configuration, finalSeed: 42);
+        ImmutableHashSet<string> userIds = ["User1", "User2"];
+        gameServer = new FinalGameServer(mapGenerator, database, userIds, finalSeed: 42, countdownEnabled: false);
     }
 
     [TearDown]

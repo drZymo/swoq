@@ -1,4 +1,4 @@
-﻿using Swoq.Interface;
+using Swoq.Interface;
 
 namespace Swoq.Server;
 
@@ -12,4 +12,6 @@ internal interface IGame
     void Act(DirectedAction? action1 = null, DirectedAction? action2 = null);
 
     void Cancel();
+
+    event EventHandler StatusChanged;
 }

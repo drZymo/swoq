@@ -10,19 +10,16 @@
              Background="Black"
              Foreground="White"
              Name="self">
-    <Grid ColumnDefinitions="*,auto" IsVisible="{Binding IsLoaded}">
+    <Grid Grid.RowDefinitions="auto,*" ColumnDefinitions="*,auto" IsVisible="{Binding IsLoaded}">
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" FontSize="24" HorizontalAlignment="Center" IsVisible="{Binding #self.ShowHeader}">
+            <Run Text="{Binding UserName, Mode=OneWay}" />
+            <Run> - Level </Run>
+            <Run Text="{Binding Level, Mode=OneWay}" />
+        </TextBlock>
 
-        <Grid Grid.Column="0" Background="Black" Grid.RowDefinitions="auto,*,auto">
-            <TextBlock Grid.Row="0" FontSize="24" HorizontalAlignment="Center" IsVisible="{Binding #self.ShowHeader}">
-                <Run Text="{Binding UserName, Mode=OneWay}" />
-                <Run> - Level </Run>
-                <Run Text="{Binding Level, Mode=OneWay}" />
-            </TextBlock>
+        <Image Grid.Row="1" Grid.Column="0" Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
 
-            <Image Grid.Row="1" Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
-        </Grid>
-
-        <Grid Grid.Column="1" RowDefinitions="auto,*,*" IsVisible="{Binding #self.ShowSidePanels}">
+        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="auto,*,*" IsVisible="{Binding #self.ShowSidePanels}">
             <local:GroupBox Grid.Row="0" Header="Game">
                 <StackPanel Orientation="Vertical">
                     <TextBlock>
@@ -43,7 +40,7 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.Column="0" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,auto,*" IsVisible="{Binding IsFinished}">
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,auto,*" IsVisible="{Binding IsFinished}">
             <Panel Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.50" Background="Black" />
             <TextBlock Grid.Row="1" Grid.Column="1" FontSize="18" HorizontalAlignment="Center" Text="Game finished"/>
             <TextBlock Grid.Row="2" Grid.Column="1" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Text="{Binding FinishedResult}"/>

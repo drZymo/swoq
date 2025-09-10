@@ -7,6 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Swoq.Dashboard</RootNamespace>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <ApplicationIcon>boss.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +23,10 @@
 
     <ItemGroup>
       <AvaloniaResource Include="Views\maximize.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="boss.ico" />
     </ItemGroup>
 
     <ItemGroup>

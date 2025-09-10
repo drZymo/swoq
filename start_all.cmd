@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 )
 
 pushd Server\bin\Release\net9.0\win-x64\publish\
-start Server.exe
+start Server.exe %1
 popd
 
 pushd Portal\bin\Release\net9.0\win-x64\publish\

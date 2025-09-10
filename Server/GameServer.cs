@@ -3,7 +3,7 @@ using Swoq.Infra;
 
 namespace Swoq.Server;
 
-internal class GameServer : GameServerBase, IDisposable
+internal class GameServer : GameServerBase
 {
     private readonly QueueManager queueManager;
 
@@ -12,14 +12,14 @@ internal class GameServer : GameServerBase, IDisposable
     {
         queueManager = new(mapGenerator, database, maxNrActiveQuests, queueWaitTime);
         queueManager.QueueUpdated += OnQueueManagerQueueUpdated;
-        queueManager.GameStatusChanged += OnQueueManagerGameStatusChanged;
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        queueManager.GameStatusChanged -= OnQueueManagerGameStatusChanged;
         queueManager.QueueUpdated -= OnQueueManagerQueueUpdated;
         queueManager.Dispose();
+
+        base.Dispose();
     }
 
     protected override Game StartTraining(User user, int level, ref int seed)
@@ -56,5 +56,4 @@ internal class GameServer : GameServerBase, IDisposable
     }
 
     private void OnQueueManagerQueueUpdated(object? sender, QueueUpdatedEventArgs args) => OnQueueUpdated(args.QueuedUsers);
-    private void OnQueueManagerGameStatusChanged(object? sender, GameStatusChangedEventArgs args) => OnGameStatusChanged(args.GameId, args.Status);
 }
