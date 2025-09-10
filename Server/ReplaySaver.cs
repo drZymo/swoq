@@ -1,4 +1,4 @@
-﻿using Google.Protobuf;
+using Google.Protobuf;
 using Microsoft.Extensions.Options;
 using Swoq.Server.Data;
 using Swoq.Server.Services;
@@ -13,19 +13,21 @@ internal class ReplaySaver : IDisposable
 {
     private readonly GameServicePostman gameServicePostman;
     private readonly ILogger<ReplaySaver> logger;
-    private readonly ReplayStorageSettings replayStorageSettings;
+    private readonly string replaysFolder;
 
     public ReplaySaver(GameServicePostman gameServicePostman, ILogger<ReplaySaver> logger, IOptions<ReplayStorageSettings> replayStorageSettings)
     {
         this.gameServicePostman = gameServicePostman;
         this.logger = logger;
-        this.replayStorageSettings = replayStorageSettings.Value;
+        this.replaysFolder = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Value.Folder);
 
         handleMessagesThread = new Thread(new ThreadStart(HandleMessages));
         handleMessagesThread.Start();
 
         this.gameServicePostman.Started += OnGameStarted;
         this.gameServicePostman.Acted += OnGameActed;
+
+        logger.LogInformation("Replays are saved to {Folder}", replaysFolder);
     }
 
     public void Dispose()
@@ -52,7 +54,7 @@ internal class ReplaySaver : IDisposable
 
         // Register filename for this game id
         var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-        string filename = Path.Combine(AppContext.BaseDirectory, replayStorageSettings.Folder, $"{e.Request.UserName} - {dateTimeStr} - {e.GameId}.swoq");
+        string filename = Path.Combine(replaysFolder, $"{e.Request.UserName} - {dateTimeStr} - {e.GameId}.swoq");
         if (!filenames.TryAdd(e.GameId, filename)) return;
 
         // Store start

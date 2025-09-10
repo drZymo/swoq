@@ -2,6 +2,8 @@
 
 pushd %~dp0
 
+set ReplayStorage__Folder=%~dp0Replays\
+
 dotnet restore --locked-mode
 if %errorlevel% neq 0 (
     popd
