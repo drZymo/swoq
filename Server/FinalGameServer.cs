@@ -71,6 +71,8 @@ internal class FinalGameServer : GameServerBase
             }
             startedUserIds.Add(user.Id);
 
+            Console.WriteLine($"{ConsoleColors.BrightGreen}User {user.Name} connected{ConsoleColors.Reset}");
+
             // Signal and wait until all connected
             questConnectBarrier.SignalAndWait(cancellation.Token);
 
