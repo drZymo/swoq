@@ -142,13 +142,13 @@
         "resolved": "6.0.0",
         "contentHash": "/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg=="
       },
-      "infra": {
+      "Swoq.Infra": {
         "type": "Project",
         "dependencies": {
-          "Interface": "[1.0.0, )"
+          "Swoq.Interface": "[1.0.0, )"
         }
       },
-      "interface": {
+      "Swoq.Interface": {
         "type": "Project",
         "dependencies": {
           "Grpc.AspNetCore": "[2.67.0, )"

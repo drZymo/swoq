@@ -382,22 +382,22 @@
           "System.IO.Pipelines": "8.0.0"
         }
       },
-      "infra": {
+      "Swoq.Infra": {
         "type": "Project",
         "dependencies": {
-          "Interface": "[1.0.0, )"
+          "Swoq.Interface": "[1.0.0, )"
         }
       },
-      "infraui": {
+      "Swoq.InfraUI": {
         "type": "Project",
         "dependencies": {
           "Avalonia": "[11.2.3, )",
           "Avalonia.Diagnostics": "[11.2.2, )",
-          "Infra": "[1.0.0, )",
-          "Interface": "[1.0.0, )"
+          "Swoq.Infra": "[1.0.0, )",
+          "Swoq.Interface": "[1.0.0, )"
         }
       },
-      "interface": {
+      "Swoq.Interface": {
         "type": "Project",
         "dependencies": {
           "Grpc.AspNetCore": "[2.67.0, )"
