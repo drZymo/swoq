@@ -25,7 +25,7 @@ public class FinalGameServerTests
         database.CreateUser(new User { Id = "u2", Name = "User2", Level = 1 });
         database.CreateUser(new User { Id = "u3", Name = "User3", Level = 1 });
         ImmutableHashSet<string> userIds = ["User1", "User2"];
-        gameServer = new FinalGameServer(mapGenerator, database, userIds, finalSeed: 42, countdownEnabled: false);
+        gameServer = new FinalGameServer(mapGenerator, database, null, userIds, finalSeed: 42, countdownEnabled: false);
     }
 
     [TearDown]

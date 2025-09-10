@@ -9,6 +9,7 @@ namespace Swoq.Server;
 
 internal class FinalGameServer : GameServerBase
 {
+    private readonly ILogger? logger;
     private readonly ImmutableHashSet<string> finalUserIds = [];
     private readonly int finalSeed;
 
@@ -22,9 +23,10 @@ internal class FinalGameServer : GameServerBase
     private readonly ConcurrentBag<string> startedUserIds = [];
     private readonly ConcurrentDictionary<Guid, SemaphoreSlim> tickers = [];
 
-    public FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, IImmutableSet<string> finalUserNames, int? finalSeed = null, bool countdownEnabled = true) : base(mapGenerator, database)
+    public FinalGameServer(IMapGenerator mapGenerator, ISwoqDatabase database, ILogger<FinalGameServer>? logger, IImmutableSet<string> finalUserNames, int? finalSeed = null, bool countdownEnabled = true) : base(mapGenerator, database)
     {
         this.finalUserIds = ToUserIds(database, finalUserNames);
+        this.logger = logger;
         this.finalSeed = finalSeed ?? Random.Shared.Next();
 
         // Add 1 to include the countdown task
@@ -71,7 +73,7 @@ internal class FinalGameServer : GameServerBase
             }
             startedUserIds.Add(user.Id);
 
-            Console.WriteLine($"{ConsoleColors.BrightGreen}User {user.Name} connected{ConsoleColors.Reset}");
+            logger?.LogInformation("User {Name} connected", user.Name);
 
             // Signal and wait until all connected
             questConnectBarrier.SignalAndWait(cancellation.Token);
@@ -107,7 +109,7 @@ internal class FinalGameServer : GameServerBase
     {
         try
         {
-            Console.WriteLine($"{ConsoleColors.BrightYellow}Waiting for players ...{ConsoleColors.Reset}");
+            logger?.LogWarning("Waiting for players!");
 
             // Wait until all connected
             questConnectBarrier.SignalAndWait(cancellation.Token);
@@ -118,10 +120,10 @@ internal class FinalGameServer : GameServerBase
                 // Show count down
                 for (var i = 5; i > 0; i--)
                 {
-                    Console.WriteLine($"{ConsoleColors.BrightYellow}Final round starting in {i} ...{ConsoleColors.Reset}");
+                    logger?.LogCritical("Final round starting in {Remaining} ...", i);
                     Thread.Sleep(TimeSpan.FromSeconds(1));
                 }
-                Console.WriteLine($"{ConsoleColors.BrightYellow}Final round starting ...{ConsoleColors.Reset}");
+                logger?.LogCritical("Final round starting !");
             }
 
             // Signal countdown finished, so games are started

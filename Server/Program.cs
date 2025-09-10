@@ -29,7 +29,7 @@ if (args.Contains("--final"))
         userNames = userNames.Add(line);
     }
 
-    builder.Services.AddSingleton<IGameServer, FinalGameServer>(sp => new FinalGameServer(sp.GetRequiredService<IMapGenerator>(), sp.GetRequiredService<ISwoqDatabase>(), userNames));
+    builder.Services.AddSingleton<IGameServer, FinalGameServer>(sp => new FinalGameServer(sp.GetRequiredService<IMapGenerator>(), sp.GetRequiredService<ISwoqDatabase>(), sp.GetRequiredService<ILogger<FinalGameServer>>(), userNames));
 }
 else
 {
