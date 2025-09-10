@@ -528,7 +528,7 @@ public class GameServerTests
         var exception = Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         Assert.That(exception.Result, Is.EqualTo(ActResult.GameFinished));
         Assert.That(exception.State, Is.Not.Null);
-        Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCancelled));
+        Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCanceled));
     }
 
     [Test]
@@ -599,13 +599,13 @@ public class GameServerTests
         // An update should have been sent that the game was canceled
         Assert.That(gameStatusChanges, Has.Count.EqualTo(1));
         Assert.That(gameStatusChanges[0].GameId, Is.EqualTo(result1.GameId));
-        Assert.That(gameStatusChanges[0].Status, Is.EqualTo(GameStatus.FinishedCancelled));
+        Assert.That(gameStatusChanges[0].Status, Is.EqualTo(GameStatus.FinishedCanceled));
 
         // Act on user 1's initial quest should no longer be possible
         var exception = Assert.Throws<GameServerActException>(() => gameServer.Act(result1.GameId, DirectedAction.MoveSouth));
         Assert.That(exception.Result, Is.EqualTo(ActResult.GameFinished));
         Assert.That(exception.State, Is.Not.Null);
-        Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCancelled));
+        Assert.That(exception.State.Status, Is.EqualTo(GameStatus.FinishedCanceled));
 
         // Finish queued quests
         FinishGame(second.Result);

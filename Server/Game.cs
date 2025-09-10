@@ -149,7 +149,7 @@ internal class Game : IGame
 
     public void Cancel()
     {
-        ChangeStatus(GameStatus.FinishedCancelled);
+        ChangeStatus(GameStatus.FinishedCanceled);
     }
 
     private void ProcessTimeOuts()

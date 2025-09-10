@@ -60,7 +60,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
         GameStatus.FinishedTimeout => "🛑 Timeout 🛑",
         GameStatus.FinishedNoProgress => "🛑 No progress 🛑",
         GameStatus.FinishedPlayerDied => "🛑 Player died 🛑",
-        GameStatus.FinishedCancelled => "🛑 Game canceled 🛑",
+        GameStatus.FinishedCanceled => "🛑 Game canceled 🛑",
         GameStatus.FinishedPlayer2Died => "🛑 Player 2 died 🛑",
         _ => throw new NotImplementedException(),
     };

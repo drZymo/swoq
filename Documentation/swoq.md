@@ -46,7 +46,7 @@ Finally the last, and maybe most import parameter is `state`. This structure con
 
 If you start a Quest game and there is already another Quest game active by another user, your start request will be queued. The server will wait a minute before responding back. If your spot in the queue becomes available the quest will be started and you will get a `START_RESULT_OK` response. If in this period your spot did not become available, you will received a `START_RESULT_QUEST_QUEUED` response, and you have to keep your spot in the queue active by sending another Quest start request. The server will then again wait another minute for your spot to become available. If you do not request another start, your spot in the queue will eventually be given to the next user in the queue.
 
-If you have a Quest active  and you send another start request, then your previous active Quest will be cancelled and your new request will be placed at the end of the queue.
+If you have a Quest active  and you send another start request, then your previous active Quest will be canceled and your new request will be placed at the end of the queue.
 
 ## `Act`
 
@@ -142,7 +142,7 @@ This value describes the status of the game. Whether or not it is finished, but 
 | `GAME_STATUS_FINISHED_TIMEOUT = 2`     | The time since the last action was too long ago and the game has been terminated by the server.      |
 | `GAME_STATUS_FINISHED_NO_PROGRESS = 3` | The server did not detect any notable changes while playing for a long time and terminated the game. |
 | `GAME_STATUS_FINISHED_PLAYER_DIED = 4` | The last action resulted in the player's death, causing the game to end.                             |
-| `GAME_STATUS_FINISHED_CANCELLED = 5`   | The game was cancelled by another request. This can happen if you start a new quest while a quest is still active. |
+| `GAME_STATUS_FINISHED_CANCELED = 5`   | The game was canceled by another request. This can happen if you start a new quest while a quest is still active. |
 
 # Level 2 and higher
 
