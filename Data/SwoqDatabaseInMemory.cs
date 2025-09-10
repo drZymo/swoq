@@ -15,13 +15,13 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     public async Task CreateUserAsync(User newUser) =>
         await Task.Run(() =>
         {
-            newUser.Id ??= Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(newUser.Id)) newUser.Id = Guid.NewGuid().ToString();
             users.TryAdd(newUser.Id, newUser);
         });
 
     public void CreateUser(User newUser)
     {
-        newUser.Id ??= Guid.NewGuid().ToString();
+        if (string.IsNullOrEmpty(newUser.Id)) newUser.Id = Guid.NewGuid().ToString();
         users.TryAdd(newUser.Id, newUser);
     }
 
@@ -40,7 +40,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     {
         await Task.Run(() =>
         {
-            stat.Id ??= Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(stat.Id)) stat.Id = Guid.NewGuid().ToString();
             levelStatistics.TryAdd(stat.Id, stat);
         });
     }
@@ -54,7 +54,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
     {
         await Task.Run(() =>
         {
-            progress.Id ??= Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(progress.Id)) progress.Id = Guid.NewGuid().ToString();
             questHistory.TryAdd(progress.Id, progress);
         });
     }
