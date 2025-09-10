@@ -11,25 +11,29 @@
              Foreground="White"
              Name="self">
     <Grid Grid.RowDefinitions="auto,*" ColumnDefinitions="*,auto" IsVisible="{Binding IsLoaded}">
-        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" FontSize="24" HorizontalAlignment="Center" IsVisible="{Binding #self.ShowHeader}">
+        <SelectableTextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" FontSize="24" HorizontalAlignment="Center" IsVisible="{Binding #self.ShowHeader}">
             <Run Text="{Binding UserName, Mode=OneWay}" />
             <Run> - Level </Run>
             <Run Text="{Binding Level, Mode=OneWay}" />
-        </TextBlock>
+        </SelectableTextBlock>
 
         <Image Grid.Row="1" Grid.Column="0" Source="{Binding Overview.Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
 
         <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="auto,*,*" IsVisible="{Binding #self.ShowSidePanels}">
             <local:GroupBox Grid.Row="0" Header="Game">
                 <StackPanel Orientation="Vertical">
-                    <TextBlock>
+                    <SelectableTextBlock>
+                        <Run>Seed:</Run>
+                        <Run Text="{Binding Seed, Mode=OneWay}" />
+                    </SelectableTextBlock>
+                    <SelectableTextBlock>
                         <Run>Tick:</Run>
                         <Run Text="{Binding Tick, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock>
+                    </SelectableTextBlock>
+                    <SelectableTextBlock>
                         <Run>Result:</Run>
                         <Run Text="{Binding ActionResult, Mode=OneWay}" />
-                    </TextBlock>
+                    </SelectableTextBlock>
                 </StackPanel>
             </local:GroupBox>
 

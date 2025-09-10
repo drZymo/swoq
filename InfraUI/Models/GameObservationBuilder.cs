@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Swoq.InfraUI.Models;
 
-public class GameObservationBuilder(string id, int height, int width, int visibilityRange, string userName)
+public class GameObservationBuilder(string id, int seed, int height, int width, int visibilityRange, string userName)
 {
     private readonly OverviewBuilder overviewBuilder = new(height, width, visibilityRange);
     private readonly string userName = userName;
@@ -17,6 +17,8 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
 
     private readonly int visibilityDimension = visibilityRange * 2 + 1;
     private readonly ImmutableArray<bool> visibility = Enumerable.Repeat(true, (visibilityRange * 2 + 1) * (visibilityRange * 2 + 1)).ToImmutableArray();
+
+    private readonly ImmutableArray<Tile> emptySurroundings = Enumerable.Repeat(Tile.Unknown, (visibilityRange * 2 + 1) * (visibilityRange * 2 + 1)).ToImmutableArray();
 
     public string GameId { get; } = id;
 
@@ -55,33 +57,13 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
             hasEnemies = true;
         }
 
-        PlayerObservation? player1State = null;
-        if (state.PlayerState != null)
-        {
-            var action1 = request != null
-                ? GetPlayerAction(request.HasAction ? request.Action : null)
-                : "Start";
-            var surroundings = state.PlayerState.Surroundings.Count == visibilityDimension * visibilityDimension ?
-                new TileMap(visibilityDimension, visibilityDimension, [.. state.PlayerState.Surroundings], visibility) :
-                TileMap.Empty;
-            player1State = new PlayerObservation(action1, state.PlayerState.Health, state.PlayerState.Inventory, state.PlayerState.HasSword, surroundings);
-        }
-
-        PlayerObservation? player2State = null;
-        if (state.Player2State != null)
-        {
-            var action2 = request != null
-                ? GetPlayerAction(request.HasAction2 ? request.Action2 : null)
-                : "Start";
-            var surroundings = state.Player2State.Surroundings.Count == visibilityDimension * visibilityDimension ?
-                new TileMap(visibilityDimension, visibilityDimension, [.. state.Player2State.Surroundings], visibility) :
-                TileMap.Empty;
-            player2State = new PlayerObservation(action2, state.Player2State.Health, state.Player2State.Inventory, state.Player2State.HasSword, surroundings);
-        }
+        PlayerObservation? player1State = CreatePlayerObservation((request?.HasAction ?? false) ? request.Action : null, state.PlayerState);
+        PlayerObservation? player2State = CreatePlayerObservation((request?.HasAction2 ?? false) ? request.Action2 : null, state.Player2State);
 
         var gameState = createDispatcher.Invoke(() => new GameObservation(
             userName,
             state.Level != initialLevel,
+            seed,
             state.Tick,
             state.Level,
             state.Status,
@@ -101,6 +83,7 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
         var gameState = createDispatcher.Invoke(() => new GameObservation(
             userName,
             previous.Level != initialLevel,
+            seed,
             previous.Tick,
             previous.Level,
             gameStatus,
@@ -112,6 +95,24 @@ public class GameObservationBuilder(string id, int height, int width, int visibi
             previous.Player2));
         previous = gameState;
         return gameState;
+    }
+
+    private PlayerObservation? CreatePlayerObservation(DirectedAction? action, PlayerState? playerState)
+    {
+        if (playerState == null) return null;
+
+        var lastAction = action.HasValue
+            ? GetPlayerAction(action.Value)
+            : "Start";
+
+        ImmutableArray<Tile> playerSurroundings = [.. playerState.Surroundings];
+        if (playerSurroundings.Length != visibilityDimension * visibilityDimension)
+        {
+            playerSurroundings = emptySurroundings;
+        }
+        var surroundings = new TileMap(visibilityDimension, visibilityDimension, playerSurroundings, visibility);
+
+        return new PlayerObservation(lastAction, playerState.Health, playerState.Inventory, playerState.HasSword, surroundings);
     }
 
     private static string GetPlayerAction(DirectedAction? action)
