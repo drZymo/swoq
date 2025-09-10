@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.Interface;
 
 namespace Swoq.InfraUI.Models;
@@ -13,6 +13,7 @@ public record PlayerObservation(
 public record GameObservation(
     string UserName,
     bool IsQuest,
+    int Seed,
     int Tick,
     int Level,
     GameStatus Status,

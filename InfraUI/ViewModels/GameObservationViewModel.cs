@@ -18,6 +18,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
             OnPropertyChanged(nameof(IsLoaded));
 
             OnPropertyChanged(nameof(UserName));
+            OnPropertyChanged(nameof(Seed));
             OnPropertyChanged(nameof(Tick));
             OnPropertyChanged(nameof(Level));
             OnPropertyChanged(nameof(ActionResult));
@@ -48,6 +49,7 @@ public class GameObservationViewModel(GameObservation? observation = null) : Vie
     public bool IsLoaded => Current != null;
 
     public string UserName => Current?.UserName ?? "Unknown";
+    public int Seed => Current?.Seed ?? -1;
     public int Tick => Current?.Tick ?? -1;
     public int Level => Current?.Level ?? -1;
     public string ActionResult => Current?.ActionResult ?? "Unknown";

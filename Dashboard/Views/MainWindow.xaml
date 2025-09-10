@@ -71,7 +71,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="infravm:GameObservationViewModel">
                                 <Viewbox>
-                                    <Border Width="1920" Height="1060" Margin="4">
+                                    <Border Width="1920" Height="1060">
                                         <!-- leave some room for status bar -->
                                         <infraui:GameObservationView DataContext="{Binding}" ShowHeader="true"/>
                                     </Border>
