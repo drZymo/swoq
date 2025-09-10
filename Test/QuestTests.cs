@@ -28,7 +28,7 @@ internal class QuestTests
 
         var user = new User() { Level = 0, Name = "McFly" };
         database.CreateUserAsync(user).Wait();
-        Assert.That(user.Id, Is.Not.Null);
+        Assert.That(user.Id, Is.Not.Empty);
         userId = user.Id;
         userName = user.Name;
 

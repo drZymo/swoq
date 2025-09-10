@@ -3,7 +3,6 @@ using Swoq.Infra;
 using Swoq.Interface;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace Swoq.Server;
 
@@ -59,8 +58,6 @@ internal class FinalGameServer : GameServerBase
     {
         try
         {
-            Debug.Assert(user.Id != null);
-
             // Check that user is in the list of allowed final users
             if (!finalUserIds.Contains(user.Id))
             {
@@ -83,7 +80,8 @@ internal class FinalGameServer : GameServerBase
 
             // Start quest (use the same seed for all users)
             var ticker = new SemaphoreSlim(0);
-            var quest = new Quest(user, mapGenerator, database, finalSeed);
+            var reporter = new UserStatisticsReporter(user.Id, database);
+            var quest = new Quest(user, mapGenerator, database, finalSeed, reporter);
             tickers.AddOrUpdate(quest.Id, ticker, (k, v) => ticker);
 
             return quest;

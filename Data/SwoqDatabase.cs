@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System.Collections.Immutable;
 
@@ -8,6 +8,7 @@ public class SwoqDatabase : ISwoqDatabase
 {
     private readonly IMongoCollection<User> users;
     private readonly IMongoCollection<LevelStatistic> levelStatistics;
+    private readonly IMongoCollection<QuestProgress> questHistory;
 
     public SwoqDatabase(IOptions<SwoqDatabaseSettings> swoqDatabaseSettings)
     {
@@ -22,6 +23,9 @@ public class SwoqDatabase : ISwoqDatabase
 
         levelStatistics = mongoDatabase.GetCollection<LevelStatistic>(
             swoqDatabaseSettings.Value.LevelStatisticsCollectionName);
+
+        questHistory = mongoDatabase.GetCollection<QuestProgress>(
+            swoqDatabaseSettings.Value.QuestHistoryCollectionName);
     }
 
     public async Task CreateUserAsync(User newUser) =>
@@ -35,7 +39,6 @@ public class SwoqDatabase : ISwoqDatabase
 
     public async Task UpdateUserAsync(User user)
     {
-        if (user.Id == null) return;
         var filter = Builders<User>.Filter.
             Eq(u => u.Id, user.Id);
         var update = Builders<User>.Update.
@@ -59,7 +62,7 @@ public class SwoqDatabase : ISwoqDatabase
         await levelStatistics.InsertOneAsync(stat);
     }
 
-    public async Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
+    public async Task<IImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
     {
         var globalPipeLine = new EmptyPipelineDefinition<LevelStatistic>().
             Group(l => l.Level, g => new ValueTuple<int, int, double>(g.Key, g.Min(l => l.Ticks), g.Average(l => l.Ticks)));
@@ -79,6 +82,33 @@ public class SwoqDatabase : ISwoqDatabase
                 globalMin[kvp.Key].Item1,
                 (int)Math.Round(kvp.Value.Item2, MidpointRounding.AwayFromZero),
                 (int)Math.Round(globalMin[kvp.Key].Item2, MidpointRounding.AwayFromZero))).
-            ToImmutableList();
+            ToImmutableArray();
+    }
+
+    public async Task AddQuestProgressAsync(QuestProgress progress)
+    {
+        await questHistory.InsertOneAsync(progress);
+    }
+
+    public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count)
+    {
+        var sort = Builders<QuestProgress>.Sort.Descending(q => q.Timestamp);
+        var progresses = await questHistory.Find(_ => true).Sort(sort).ToListAsync();
+
+        // Group by GameId and select the newest entry for each GameId
+        var latestByGameId = progresses
+            .GroupBy(q => q.GameId)
+            .Select(g => g.OrderByDescending(q => q.Timestamp).First())
+            .Take(count)
+            .ToList();
+
+        // Find corresponding users
+        var userIds = latestByGameId.Select(q => q.UserId).ToHashSet();
+        var users = (await this.users.Find(u => userIds.Contains(u.Id)).ToListAsync())
+            .ToDictionary(u => u.Id, u => u);
+
+        return latestByGameId
+            .Select(q => new UserQuestProgress(users.TryGetValue(q.UserId, out var user) ? user.Name : "<unknown user>", q.GameId, q.Level, q.Ticks, q.Seconds, q.Timestamp))
+            .ToImmutableArray();
     }
 }

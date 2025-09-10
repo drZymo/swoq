@@ -1,4 +1,4 @@
-﻿namespace Swoq.Data;
+namespace Swoq.Data;
 
 public class SwoqDatabaseSettings
 {
@@ -6,4 +6,5 @@ public class SwoqDatabaseSettings
     public string DatabaseName { get; set; } = null!;
     public string UsersCollectionName { get; set; } = null!;
     public string LevelStatisticsCollectionName { get; set; } = null!;
+    public string QuestHistoryCollectionName { get; set; } = null!;
 }

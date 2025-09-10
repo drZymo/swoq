@@ -113,7 +113,6 @@ internal class QueueManager : IDisposable
     }
     private void HandleQueueWaitBegin(QueueWaitBeginRequest begin)
     {
-        Debug.Assert(begin.User.Id != null);
         // Stop any active quests of this user
         if (activeQuests.Remove(begin.User.Id, out var activeQuest))
         {
@@ -140,7 +139,6 @@ internal class QueueManager : IDisposable
 
     private void HandleQueueWaitEnd(QueueWaitEndRequest end)
     {
-        Debug.Assert(end.User.Id != null);
         Quest? quest = null;
         if (entries.TryGetValue(end.User.Id, out var entry))
         {
@@ -153,7 +151,8 @@ internal class QueueManager : IDisposable
             {
                 // Start a new game
                 var seed = Random.Shared.Next();
-                quest = new Quest(end.User, mapGenerator, database, seed);
+                var reporter = new UserStatisticsReporter(entry.UserId, database);
+                quest = new Quest(end.User, mapGenerator, database, seed, reporter);
                 activeQuests.Add(entry.UserId, quest);
 
                 RemoveFromQueue(entry.UserId);

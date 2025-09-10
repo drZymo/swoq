@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace Swoq.Data;
 
@@ -7,6 +7,8 @@ public record UserLevelStatistic(int Level, int MinTicks, int GlobalMinTicks, in
     public int DeltaMin => MinTicks - GlobalMinTicks;
     public int DeltaAvg => AvgTicks - GlobalAvgTicks;
 }
+
+public record UserQuestProgress(string UserName, string GameId, int Level, int LengthTicks, int LengthSeconds, DateTime Timestamp);
 
 public interface ISwoqDatabase
 {
@@ -18,5 +20,8 @@ public interface ISwoqDatabase
     Task<IImmutableList<User>> GetAllUsers();
 
     Task AddLevelStatisticAsync(LevelStatistic stat);
-    Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId);
+    Task<IImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId);
+
+    Task AddQuestProgressAsync(QuestProgress progress);
+    Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count);
 }

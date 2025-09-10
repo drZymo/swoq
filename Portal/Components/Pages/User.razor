@@ -1,4 +1,4 @@
-﻿@page "/user/"
+@page "/user/"
 
 @using Swoq.Data
 @using System.Collections.Immutable
@@ -86,7 +86,7 @@ else
     [CascadingParameter]
     private CurrentUserProvider? CurrentUserProvider { get; set; }
 
-    private ImmutableList<UserLevelStatistic> LevelStatistics { get; set; } = ImmutableList<UserLevelStatistic>.Empty;
+    private IImmutableList<UserLevelStatistic> LevelStatistics { get; set; } = ImmutableList<UserLevelStatistic>.Empty;
     private UserLevelStatistic TotalStatistics { get; set; } = new(-1, 0, 0, 0, 0);
 
     protected override async Task OnParametersSetAsync()

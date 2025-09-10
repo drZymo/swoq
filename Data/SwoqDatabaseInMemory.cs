@@ -7,6 +7,7 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
 {
     private readonly ConcurrentDictionary<string, User> users = new();
     private readonly ConcurrentDictionary<string, LevelStatistic> levelStatistics = new();
+    private readonly ConcurrentDictionary<string, QuestProgress> questHistory = new();
 
     public SwoqDatabaseInMemory()
     { }
@@ -29,7 +30,6 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
 
     public async Task UpdateUserAsync(User user)
     {
-        if (user.Id == null) return;
         await Task.Run(() => users.AddOrUpdate(user.Id, user, (_, _) => user));
     }
 
@@ -45,8 +45,26 @@ public class SwoqDatabaseInMemory : ISwoqDatabase
         });
     }
 
-    public Task<ImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
+    public Task<IImmutableList<UserLevelStatistic>> GetLevelStatisticsAsync(string userId)
     {
         throw new NotImplementedException();
     }
+
+    public async Task AddQuestProgressAsync(QuestProgress progress)
+    {
+        await Task.Run(() =>
+        {
+            progress.Id ??= Guid.NewGuid().ToString();
+            questHistory.TryAdd(progress.Id, progress);
+        });
+    }
+
+    public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count) =>
+        await Task.FromResult(questHistory.Values.
+            GroupBy(q => q.GameId).
+            Select(g => g.OrderByDescending(q => q.Timestamp).First()).
+            OrderByDescending(q => q.Timestamp).
+            Take(count).
+            Select(q => new UserQuestProgress(users[q.UserId].Name, q.GameId, q.Level, q.Ticks, q.Seconds, q.Timestamp)).
+            ToImmutableArray());
 }

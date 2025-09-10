@@ -1,17 +1,30 @@
-﻿using Swoq.Data;
+using Swoq.Data;
 
 namespace Swoq.Server;
 
-class UserStatisticsReporter(User user, ISwoqDatabase database) : IStatisticsReporter
+class UserStatisticsReporter(string userId, ISwoqDatabase database) : IStatisticsReporter
 {
-    public void GameFinishedSuccessfully(Guid gameId, int level, int ticks)
+    public async void GameFinishedSuccessfully(Guid gameId, int level, int ticks)
     {
         var stat = new LevelStatistic
         {
-            UserId = user.Id ?? "",
+            UserId = userId ?? "",
             Level = level,
             Ticks = ticks,
         };
-        database.AddLevelStatisticAsync(stat);
+        await database.AddLevelStatisticAsync(stat);
+    }
+
+    public async void QuestLevelReached(Guid gameId, int level, int ticks, int lengthSeconds)
+    {
+        var progress = new QuestProgress
+        {
+            UserId = userId ?? "",
+            GameId = gameId.ToString(),
+            Level = level,
+            Ticks = ticks,
+            Seconds = lengthSeconds,
+        };
+        await database.AddQuestProgressAsync(progress);
     }
 }
