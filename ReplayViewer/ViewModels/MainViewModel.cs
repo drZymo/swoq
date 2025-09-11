@@ -1,4 +1,4 @@
-﻿using Avalonia.Platform.Storage;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Swoq.InfraUI.ViewModels;
 using Swoq.ReplayViewer.Util;
@@ -35,7 +35,7 @@ internal class MainViewModel : ViewModelBase, IDisposable, IErrorReporter
         }
         else if (args.Length > 1)
         {
-            Task.Run(() => LoadFile(args[1]));
+            LoadFile(args[1]);
         }
     }
 
@@ -77,10 +77,13 @@ internal class MainViewModel : ViewModelBase, IDisposable, IErrorReporter
 
     public void LoadFile(string path, bool tailMode = false)
     {
-        var mode = tailMode ? "Tail" : "Load";
-        Console.WriteLine($"{mode} file: {path}");
-        Replay = new ReplayViewModel(this, path, tailMode);
-        CurrentFile = path;
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            var mode = tailMode ? "Tail" : "Load";
+            Console.WriteLine($"{mode} file: {path}");
+            Replay = new ReplayViewModel(this, path, tailMode);
+            CurrentFile = path;
+        });
     }
 
     private void StartWatchingFolder(string folderPath)
