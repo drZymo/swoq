@@ -23,7 +23,7 @@
                     <td>@history.Timestamp.ToShortDateString() @history.Timestamp.ToLongTimeString()</td>
                     <td>@history.UserName</td>
                     <td>
-                        <a href="/api/replays/@history.GameId" onclick="event.preventDefault(); window.location.href='/api/replays/@history.GameId';">@history.GameId</a>
+                        <a href="/api/replays/@history.GameId" download>@history.GameId</a>
                     </td>
                     <td>@history.Level</td>
                     <td>@history.LengthTicks</td>

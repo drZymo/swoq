@@ -16,12 +16,12 @@ public class ReplayController(IConfiguration config) : ControllerBase
         var filePath = Directory.GetFiles(_folderPath, $"*{gameId}*.swoq").FirstOrDefault();
         if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath)) return NotFound();
 
-        // Prevent downloading recently updated files,
-        // they might be still in use.
-        var info = new FileInfo(filePath);
-        if (DateTime.UtcNow - info.LastWriteTimeUtc < TimeSpan.FromSeconds(10)) return NotFound();
+        var fileName = Path.GetFileName(filePath);
 
-        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        return File(stream, "application/octet-stream", info.Name);
+        using var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var contents = new byte[stream.Length];
+        stream.ReadExactly(contents);
+
+        return File(contents, "application/octet-stream", fileName);
     }
 }

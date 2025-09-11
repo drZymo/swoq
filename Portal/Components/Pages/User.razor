@@ -45,7 +45,7 @@ else
         <p>Which you reached in <strong>@CurrentUserProvider?.User.QuestLengthTicks ticks</strong> and
             @CurrentUserProvider?.User.QuestLengthSeconds seconds.</p>
 
-        <p>This was achieved by the game with id <a href="/api/replays/@CurrentUserProvider?.User.BestQuestId">@CurrentUserProvider?.User.BestQuestId</a>.</p>
+        <p>This was achieved by the game with id <a href="/api/replays/@CurrentUserProvider?.User.BestQuestId" download>@CurrentUserProvider?.User.BestQuestId</a>.</p>
 
         <QuestHistory Count="10" UserId="@CurrentUserProvider?.User.Id" />
 
