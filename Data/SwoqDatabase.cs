@@ -92,23 +92,37 @@ public class SwoqDatabase : ISwoqDatabase
 
     public async Task<IImmutableList<UserQuestProgress>> GetLatestQuestHistory(int count, string? userId)
     {
+        var filter = string.IsNullOrEmpty(userId)
+            ? Builders<QuestProgress>.Filter.Empty
+            : Builders<QuestProgress>.Filter.Eq(q => q.UserId, userId);
         var sort = Builders<QuestProgress>.Sort.Descending(q => q.Timestamp);
-        var progresses = await questHistory.Find(q => userId == null || q.UserId == userId).Sort(sort).ToListAsync();
 
         // Group by GameId and select the newest entry for each GameId
-        var latestByGameId = progresses
-            .GroupBy(q => q.GameId)
-            .Select(g => g.OrderByDescending(q => q.Timestamp).First())
-            .Take(count)
-            .ToList();
+        var latestByGameId = await questHistory.Aggregate().
+            Match(filter).
+            Sort(sort).
+            Group(q => q.GameId, g => new QuestProgress
+            {
+                UserId = g.First().UserId,
+                GameId = g.Key,
+                Level = g.First().Level,
+                Ticks = g.First().Ticks,
+                Seconds = g.First().Seconds,
+                Timestamp = g.First().Timestamp,
+            }).
+            Sort(sort).
+            Limit(count).ToListAsync();
 
         // Find corresponding users
         var userIds = latestByGameId.Select(q => q.UserId).ToHashSet();
         var users = (await this.users.Find(u => userIds.Contains(u.Id)).ToListAsync())
             .ToDictionary(u => u.Id, u => u);
 
+        // Combine
         return latestByGameId
-            .Select(q => new UserQuestProgress(users.TryGetValue(q.UserId, out var user) ? user.Name : "<unknown user>", q.GameId, q.Level, q.Ticks, q.Seconds, q.Timestamp))
+            .Select(q => new UserQuestProgress(
+                users.TryGetValue(q.UserId, out var user) ? user.Name : "<unknown user>",
+                q.GameId, q.Level, q.Ticks, q.Seconds, q.Timestamp))
             .ToImmutableArray();
     }
 }
