@@ -9,5 +9,5 @@ public static class Clock
 
     private static Func<DateTime>? now = null;
 
-    public static DateTime Now => now?.Invoke() ?? DateTime.Now;
+    public static DateTime Now => now?.Invoke() ?? DateTime.UtcNow;
 }
