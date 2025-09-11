@@ -1,4 +1,4 @@
-﻿namespace Swoq.Infra;
+namespace Swoq.Infra;
 
 using System.Collections;
 using System.Collections.Immutable;
@@ -38,6 +38,10 @@ public class Map(
     public Cell this[int index] => cells[index];
 
     public Position Pos(int y, int x) => new(y, x, y * Width + x);
+
+    // Cached positions for faster lookup
+    public Position Player1Position { get; } = player1?.Position ?? Position.Invalid;
+    public Position Player2Position { get; } = player2?.Position ?? Position.Invalid;
 
     public Map Set(int y, int x, Cell cell)
     {
@@ -90,25 +94,25 @@ public class Map(
         return new Map(Level, Height, Width, cells, IsFinal, player1, player2, enemy1, enemy2, enemy3);
     }
 
-    public IEnumerable<GameCharacter> AllCharacters
+    public IEnumerable<GameCharacter> AllPresentCharacters
     {
         get
         {
-            if (Player1 != null) yield return Player1;
-            if (Player2 != null) yield return Player2;
-            if (Enemy1 != null) yield return Enemy1;
-            if (Enemy2 != null) yield return Enemy2;
-            if (Enemy3 != null) yield return Enemy3;
+            if (Player1 != null && Player1.IsPresent) yield return Player1;
+            if (Player2 != null && Player2.IsPresent) yield return Player2;
+            if (Enemy1 != null && Enemy1.IsPresent) yield return Enemy1;
+            if (Enemy2 != null && Enemy2.IsPresent) yield return Enemy2;
+            if (Enemy3 != null && Enemy3.IsPresent) yield return Enemy3;
         }
     }
 
-    public IEnumerable<Enemy> Enemies
+    public IEnumerable<Enemy> PresentEnemies
     {
         get
         {
-            if (Enemy1 != null) yield return Enemy1;
-            if (Enemy2 != null) yield return Enemy2;
-            if (Enemy3 != null) yield return Enemy3;
+            if (Enemy1 != null && Enemy1.IsPresent) yield return Enemy1;
+            if (Enemy2 != null && Enemy2.IsPresent) yield return Enemy2;
+            if (Enemy3 != null && Enemy3.IsPresent) yield return Enemy3;
         }
     }
 

@@ -1,70 +1,32 @@
-﻿namespace Swoq.Infra;
+namespace Swoq.Infra;
 
 public static class CellExtensions
 {
-    public static bool CanWalkOn(this Cell cell)
-    {
-        switch (cell)
-        {
-            case Cell.Empty:
-            case Cell.Exit:
-            case Cell.DoorRedOpen:
-            case Cell.DoorGreenOpen:
-            case Cell.DoorBlueOpen:
-            case Cell.KeyRed:
-            case Cell.KeyGreen:
-            case Cell.KeyBlue:
-            case Cell.PressurePlateRed:
-            case Cell.PressurePlateGreen:
-            case Cell.PressurePlateBlue:
-            case Cell.Sword:
-            case Cell.Health:
-            case Cell.Treasure:
-                return true;
+    private static readonly HashSet<Cell> WalkableCells = [
+        Cell.Empty,
+        Cell.Exit,
+        Cell.DoorRedOpen,
+        Cell.DoorGreenOpen,
+        Cell.DoorBlueOpen,
+        Cell.KeyRed,
+        Cell.KeyGreen,
+        Cell.KeyBlue,
+        Cell.PressurePlateRed,
+        Cell.PressurePlateGreen,
+        Cell.PressurePlateBlue,
+        Cell.Sword,
+        Cell.Health,
+        Cell.Treasure,
+    ];
 
-            case Cell.Wall:
-            case Cell.DoorRedClosed:
-            case Cell.DoorGreenClosed:
-            case Cell.DoorBlueClosed:
-            case Cell.Boulder:
-            case Cell.PressurePlateRedWithBoulder:
-            case Cell.PressurePlateGreenWithBoulder:
-            case Cell.PressurePlateBlueWithBoulder:
-                return false;
-        }
-        return false;
-    }
+    private static readonly HashSet<Cell> EmptyCells = [
+        Cell.Empty,
+        Cell.DoorRedOpen,
+        Cell.DoorGreenOpen,
+        Cell.DoorBlueOpen,
+    ];
 
-    public static bool IsEmpty(this Cell cell)
-    {
-        switch (cell)
-        {
-            case Cell.Empty:
-            case Cell.DoorRedOpen:
-            case Cell.DoorGreenOpen:
-            case Cell.DoorBlueOpen:
-                return true;
+    public static bool CanWalkOn(this Cell cell) => WalkableCells.Contains(cell);
 
-            case Cell.Exit:
-            case Cell.KeyRed:
-            case Cell.KeyGreen:
-            case Cell.KeyBlue:
-            case Cell.PressurePlateRed:
-            case Cell.PressurePlateGreen:
-            case Cell.PressurePlateBlue:
-            case Cell.Sword:
-            case Cell.Health:
-            case Cell.Treasure:
-            case Cell.Wall:
-            case Cell.DoorRedClosed:
-            case Cell.DoorGreenClosed:
-            case Cell.DoorBlueClosed:
-            case Cell.Boulder:
-            case Cell.PressurePlateRedWithBoulder:
-            case Cell.PressurePlateGreenWithBoulder:
-            case Cell.PressurePlateBlueWithBoulder:
-                return false;
-        }
-        return false;
-    }
+    public static bool IsEmpty(this Cell cell) => EmptyCells.Contains(cell);
 }

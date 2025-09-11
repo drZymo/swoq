@@ -23,12 +23,17 @@ internal class Game : IGame
     private GameStatus status = GameStatus.Active;
     private ImmutableList<Position> player1Positions = [];
     private ImmutableList<Position> player2Positions = [];
+    private readonly Tile[] player1Surroundings;
+    private readonly Tile[] player2Surroundings;
     private GameState state;
 
     private readonly HashSet<Position> doorsToClose = [];
     private readonly HashSet<Position> doorsToOpen = [];
 
     private readonly bool mapHasUsableItems;
+
+    private const int VisibilityRange = Parameters.PlayerVisibilityRange;
+    private const int SurroundingsSize = VisibilityRange * 2 + 1;
 
     public Game(
         Map map,
@@ -45,11 +50,14 @@ internal class Game : IGame
         this.random = random;
         this.reporter = reporter;
 
+        player1Surroundings = new Tile[SurroundingsSize * SurroundingsSize];
+        player2Surroundings = new Tile[SurroundingsSize * SurroundingsSize];
+
         startTime = Clock.Now;
 
         state = CreateState();
 
-        mapHasUsableItems = map.Enemies.Any() || map.Any(c => c is Cell.Boulder or Cell.DoorRedClosed or Cell.DoorGreenClosed or Cell.DoorBlueClosed);
+        mapHasUsableItems = map.PresentEnemies.Any() || map.Any(c => c is Cell.Boulder or Cell.DoorRedClosed or Cell.DoorGreenClosed or Cell.DoorBlueClosed);
     }
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -105,7 +113,7 @@ internal class Game : IGame
             ProcessDoors();
 
             // Process enemies using previous positions of players
-            foreach (var enemy in map.Enemies)
+            foreach (var enemy in map.PresentEnemies)
             {
                 ProcessEnemy(enemy, prevState.map.Player1, prevState.map.Player2);
             }
@@ -218,8 +226,8 @@ internal class Game : IGame
     private GameState CreateState()
     {
         Debug.Assert(map.Player1 != null || map.Player2 != null);
-        PlayerState? player1State = map.Player1 != null ? GetPlayerState(map.Player1) : null;
-        PlayerState? player2State = map.Player2 != null ? GetPlayerState(map.Player2) : null;
+        PlayerState? player1State = map.Player1 != null ? GetPlayerState(map.Player1, player1Surroundings) : null;
+        PlayerState? player2State = map.Player2 != null ? GetPlayerState(map.Player2, player2Surroundings) : null;
         return new GameState(ticks, map.Level, status, player1State, player2State);
     }
 
@@ -486,7 +494,7 @@ internal class Game : IGame
 
     private bool TryUseOnEnemyOrPlayer(Player player, Position usePos)
     {
-        foreach (var character in GetPresentCharacters())
+        foreach (var character in map.AllPresentCharacters)
         {
             if (usePos.Equals(character.Position))
             {
@@ -624,7 +632,7 @@ internal class Game : IGame
 
     private void KillCharacterAtPosition(Position pos)
     {
-        foreach (var character in GetPresentCharacters())
+        foreach (var character in map.AllPresentCharacters)
         {
             if (pos.Equals(character.Position))
             {
@@ -798,7 +806,7 @@ internal class Game : IGame
         if (position.y < 0 || position.y >= map.Height) return false;
 
         // Check collisions with players and enemies.
-        foreach (var character in GetPresentCharacters())
+        foreach (var character in map.AllPresentCharacters)
         {
             if (position.Equals(character.Position)) return false;
         }
@@ -824,7 +832,7 @@ internal class Game : IGame
             map = map.SetCharacter(player2);
         }
 
-        foreach (var enemy in map.Enemies)
+        foreach (var enemy in map.PresentEnemies)
         {
             var newEnemy = enemy;
             CleanupDeadCharacter(ref newEnemy);
@@ -886,7 +894,7 @@ internal class Game : IGame
     {
         return !pos.IsValid ||
             map[pos] != Cell.Empty ||
-            GetPresentCharacters().Any(c => c.Position.Equals(pos));
+            map.AllPresentCharacters.Any(c => c.Position.Equals(pos));
     }
 
     private Position FindEmptyPosAround(Position pos)
@@ -915,14 +923,14 @@ internal class Game : IGame
     private double DistanceToAnyPlayer(Position p)
     {
         double distance = double.PositiveInfinity;
-        if (map.Player1 != null && map.Player1.IsPresent)
+        if (map.Player1Position.IsValid)
         {
-            var d1 = map.Player1.Position.DistanceTo(p);
+            var d1 = map.Player1Position.DistanceTo(p);
             if (d1 < distance) distance = d1;
         }
-        if (map.Player2 != null && map.Player2.IsPresent)
+        if (map.Player2Position.IsValid)
         {
-            var d2 = map.Player2.Position.DistanceTo(p);
+            var d2 = map.Player2Position.DistanceTo(p);
             if (d2 < distance) distance = d2;
         }
         return distance;
@@ -959,39 +967,25 @@ internal class Game : IGame
         return true;
     }
 
-    private IEnumerable<GameCharacter> GetPresentCharacters()
-    {
-        foreach (var character in map.AllCharacters.Where(c => c.IsPresent))
-        {
-            yield return character;
-        }
-    }
-
     #region State
 
-    private PlayerState GetPlayerState(Player player)
+    private PlayerState GetPlayerState(Player player, Tile[] surroundings)
     {
-        const int visibilityRange = Parameters.PlayerVisibilityRange;
-
-        Tile[] surroundings = [];
-
         if (player.IsPresent)
         {
-            var width = visibilityRange * 2 + 1;
-            var height = visibilityRange * 2 + 1;
-
-            surroundings = new Tile[height * width];
-
-            var top = player.Position.y - visibilityRange;
-            var left = player.Position.x - visibilityRange;
-            for (var y = 0; y < height; y++)
+            var top = player.Position.y - VisibilityRange;
+            var left = player.Position.x - VisibilityRange;
+            for (var y = 0; y < SurroundingsSize; y++)
             {
-                for (var x = 0; x < width; x++)
+                for (var x = 0; x < SurroundingsSize; x++)
                 {
-                    surroundings[y * width + x] =
-                        map.ToVisibleTile(map.Pos(top + y, left + x), player.Position, visibilityRange);
+                    surroundings[y * SurroundingsSize + x] = map.ToVisibleTile(map.Pos(top + y, left + x), player.Position, VisibilityRange);
                 }
             }
+        }
+        else
+        {
+            Array.Fill(surroundings, Tile.Unknown);
         }
 
         return new PlayerState((player.Position.y, player.Position.x), player.Health, player.Inventory, player.HasSword, surroundings);
