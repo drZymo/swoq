@@ -1,4 +1,4 @@
-﻿using Swoq.Interface;
+using Swoq.Interface;
 using System.Diagnostics;
 
 namespace Bot;
@@ -51,9 +51,14 @@ public static class Program
                 int? seed = DotEnv.GetEnvironmentVariableInt("SWOQ_SEED");
                 PlayGame(connection, level, seed);
             }
+            catch (GameException ex)
+            {
+                Console.WriteLine($"Ignored GameException: {ex}");
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception: {ex}");
+                break;
             }
         } while (!once);
     }

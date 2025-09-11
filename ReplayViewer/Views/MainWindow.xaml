@@ -20,7 +20,7 @@
         <Border Grid.Row="1" IsVisible="{Binding HasErrorMessage}" Background="Black">
             <Grid RowDefinitions="*,auto,*" ColumnDefinitions="*,auto,*">
                 <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical">
-                    <TextBlock FontWeight="Bold" HorizontalAlignment="Center">🛑 Error 🛑</TextBlock>
+                    <TextBlock HorizontalAlignment="Center">🛑 Error 🛑</TextBlock>
                     <Separator/>
                     <SelectableTextBlock Text="{Binding ErrorMessage}" HorizontalAlignment="Center"/>
                     <Separator/>

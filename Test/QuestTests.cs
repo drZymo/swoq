@@ -16,7 +16,7 @@ internal class QuestTests
     private string userName;
     private Quest quest;
 
-    private DateTime now = DateTime.Now;
+    private DateTime now = DateTime.UtcNow;
 
     [SetUp]
     public void SetUp()

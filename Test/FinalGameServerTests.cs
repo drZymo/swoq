@@ -8,7 +8,7 @@ namespace Swoq.Test;
 
 public class FinalGameServerTests
 {
-    private readonly DateTime now = DateTime.Now;
+    private readonly DateTime now = DateTime.UtcNow;
 
     private DummyGenerator mapGenerator;
     private SwoqDatabaseInMemory database;

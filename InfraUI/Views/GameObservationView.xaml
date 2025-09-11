@@ -47,7 +47,7 @@
         <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,auto,*" RowDefinitions="*,auto,auto,*" IsVisible="{Binding IsFinished}">
             <Panel Grid.Row="0" Grid.RowSpan="4" Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.50" Background="Black" />
             <TextBlock Grid.Row="1" Grid.Column="1" FontSize="18" HorizontalAlignment="Center" Text="Game finished"/>
-            <TextBlock Grid.Row="2" Grid.Column="1" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Text="{Binding FinishedResult}"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" FontSize="24" HorizontalAlignment="Center" Text="{Binding FinishedResult}"/>
         </Grid>
     </Grid>
 </UserControl>

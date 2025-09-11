@@ -27,7 +27,7 @@ internal class InactivityTests : GameTestBase
         "                 " +
         "                 ");
 
-    private DateTime now = DateTime.Now;
+    private DateTime now = DateTime.UtcNow;
 
     [SetUp]
     public override void SetUp()

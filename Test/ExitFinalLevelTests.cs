@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.Interface;
 using Swoq.Server;
 using static Swoq.Test.TestUtils;
@@ -133,7 +133,7 @@ internal class ExitFinalLevelTests : GameTestBase
             Assert.That(game.State.Player1.Position, Is.EqualTo((-1, -1))); // Player is now off the map
             Assert.That(game.State.Player1.Inventory, Is.EqualTo(Inventory.Treasure)); // Inventory unchanged
             Assert.That(game.State.Player1.Health, Is.EqualTo(5)); // Health has not changed
-            Assert.That(game.State.Player1.Surroundings, Is.Empty); // No more surroundings
+            Assert.That(game.State.Player1.Surroundings, Has.All.EqualTo(Tile.Unknown)); // No more surroundings
             Assert.That(changes, Is.Empty); // No more map updates
         });
 
