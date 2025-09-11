@@ -12,7 +12,6 @@ builder.Services.AddGrpc();
 builder.Services.Configure<SwoqDatabaseSettings>(builder.Configuration.GetSection("SwoqDatabase"));
 builder.Services.Configure<ReplayStorageSettings>(builder.Configuration.GetSection("ReplayStorage"));
 builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabase>();
-//builder.Services.AddSingleton<ISwoqDatabase, SwoqDatabaseInMemory>();
 builder.Services.AddSingleton<IMapGenerator, MapGenerator>();
 builder.Services.AddSingleton<GameServicePostman>();
 builder.Services.AddSingleton<ReplaySaver>();
@@ -29,7 +28,7 @@ if (args.Contains("--final"))
         userNames = userNames.Add(line);
     }
 
-    builder.Services.AddSingleton<IGameServer, FinalGameServer>(sp => new FinalGameServer(sp.GetRequiredService<IMapGenerator>(), sp.GetRequiredService<ISwoqDatabase>(), userNames));
+    builder.Services.AddSingleton<IGameServer, FinalGameServer>(sp => new FinalGameServer(sp.GetRequiredService<IMapGenerator>(), sp.GetRequiredService<ISwoqDatabase>(), sp.GetRequiredService<ILogger<FinalGameServer>>(), userNames));
 }
 else
 {

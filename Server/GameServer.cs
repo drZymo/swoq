@@ -29,7 +29,7 @@ internal class GameServer : GameServerBase
 
         var random = new Random(seed + level);
         var map = mapGenerator.Generate(level, Parameters.MapHeight, Parameters.MapWidth, random);
-        var reporter = new UserStatisticsReporter(user, database);
+        var reporter = new UserStatisticsReporter(user.Id, database);
 
         // Create new training game
         return new Game(

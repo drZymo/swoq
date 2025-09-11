@@ -1,47 +1,47 @@
-﻿@using Swoq.Data
+@using Swoq.Data
 @inject ISwoqDatabase Database
 
 <h2>High scores</h2>
 
 <div class="row">
-	<table class="arrowes-table table-striped">
-		<thead>
-			<tr>
-				<th>User</th>
-				<th>Level</th>
-				<th>Length (ticks)</th>
-				<th>Length (seconds)</th>
-			</tr>
-		</thead>
+    <table class="table table-striped table-sm">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">User</th>
+                <th scope="col">Level</th>
+                <th scope="col">Length (ticks)</th>
+                <th scope="col">Length (seconds)</th>
+            </tr>
+        </thead>
 
-		<tbody>
-			@foreach (var score in Scores)
-			{
-				<tr>
-					<td>@score.UserName @(score.QuestFinished ? "🌟" : "")</td>
-					<td>@score.Level</td>
-					<td>@(score.Level > 0 ? score.LengthTicks : "-")</td>
-					<td>@(score.Level > 0 ? score.LengthSeconds : "-")</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+        <tbody>
+            @foreach (var score in Scores)
+            {
+                <tr>
+                    <td>@score.UserName @(score.QuestFinished ? "🌟" : "")</td>
+                    <td>@score.Level</td>
+                    <td>@(score.Level > 0 ? score.LengthTicks : "-")</td>
+                    <td>@(score.Level > 0 ? score.LengthSeconds : "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 
 
 @code {
 
-	[Parameter]
-	public IEnumerable<Score> Scores { get; set; } = [];
+    [Parameter]
+    public IEnumerable<Score> Scores { get; set; } = [];
 
-	protected override async Task OnInitializedAsync()
-	{
-		var users = await Database.GetAllUsers();
+    protected override async Task OnInitializedAsync()
+    {
+        var users = await Database.GetAllUsers();
 
-		Scores = users.Select(u => new Score(u.Name, u.Level, u.QuestLengthTicks, u.QuestLengthSeconds, u.QuestFinished)).
-			OrderByDescending(s => s.Level).
-			ThenBy(s => s.LengthTicks).
-			ThenBy(s => s.LengthSeconds).
-			ToList();
-	}
+        Scores = users.Select(u => new Score(u.Name, u.Level, u.QuestLengthTicks, u.QuestLengthSeconds, u.QuestFinished)).
+            OrderByDescending(s => s.Level).
+            ThenBy(s => s.LengthTicks).
+            ThenBy(s => s.LengthSeconds).
+            ToList();
+    }
 }

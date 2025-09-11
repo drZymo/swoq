@@ -9,7 +9,7 @@ public class Quest : IGame
     private readonly User user;
     private readonly IMapGenerator mapGenerator;
     private readonly ISwoqDatabase database;
-    private readonly UserStatisticsReporter reporter;
+    private readonly IStatisticsReporter? reporter;
 
     private readonly DateTime startTime = Clock.Now;
     private int ticks = 0;
@@ -17,13 +17,13 @@ public class Quest : IGame
     private Game currentGame;
     private GameState state;
 
-    public Quest(User user, IMapGenerator mapGenerator, ISwoqDatabase database, int seed)
+    public Quest(User user, IMapGenerator mapGenerator, ISwoqDatabase database, int seed, IStatisticsReporter? reporter = null)
     {
         this.user = user;
         this.mapGenerator = mapGenerator;
         this.database = database;
+        this.reporter = reporter;
         Seed = seed;
-        this.reporter = new(user, database);
 
         currentGame = NewGame();
         state = currentGame.State with { Tick = ticks };
@@ -120,7 +120,8 @@ public class Quest : IGame
     private void UpdateUserStatistics()
     {
         var lengthSeconds = (int)Math.Round((LastActionTime - startTime).TotalSeconds, MidpointRounding.AwayFromZero);
-        Console.WriteLine($"{ConsoleColors.BrightBlue}User {user.Name} reached level {level} in {ticks} ticks and {lengthSeconds} seconds. (game {Id}){ConsoleColors.Reset}");
+
+        reporter?.QuestLevelReached(Id, level, ticks, lengthSeconds);
 
         if (user.Level <= level)
         {

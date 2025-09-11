@@ -2,6 +2,12 @@
 
 pushd %~dp0
 
+set ReplayStorage__Folder=%~dp0Replays\
+
+taskkill /f /im Swoq.Server.exe
+taskkill /f /im Swoq.Portal.exe
+taskkill /f /im Swoq.Dashboard.exe
+
 dotnet restore --locked-mode
 if %errorlevel% neq 0 (
     popd
@@ -15,15 +21,15 @@ if %errorlevel% neq 0 (
 )
 
 pushd Server\bin\Release\net9.0\win-x64\publish\
-start Server.exe %1
+start Swoq.Server.exe %1
 popd
 
 pushd Portal\bin\Release\net9.0\win-x64\publish\
-start Portal.exe
+start Swoq.Portal.exe
 popd
 
 pushd Dashboard\bin\Release\net9.0\win-x64\publish\
-start Dashboard.exe
+start Swoq.Dashboard.exe
 popd
 
 popd

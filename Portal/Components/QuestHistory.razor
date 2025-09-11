@@ -1,0 +1,50 @@
+@using Swoq.Data
+@inject ISwoqDatabase Database
+
+<h2>Last @Count quests</h2>
+
+<div class="row">
+    <table class="table table-striped table-sm">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">When</th>
+                <th scope="col">User</th>
+                <th scope="col">GameId</th>
+                <th scope="col">Level</th>
+                <th scope="col">Length (ticks)</th>
+                <th scope="col">Length (seconds)</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var history in History)
+            {
+                <tr>
+                    <td>@history.Timestamp.ToShortDateString() @history.Timestamp.ToLongTimeString()</td>
+                    <td>@history.UserName</td>
+                    <td>
+                        <a href="/api/replays/@history.GameId" download>@history.GameId</a>
+                    </td>
+                    <td>@history.Level</td>
+                    <td>@history.LengthTicks</td>
+                    <td>@history.LengthSeconds</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public int Count { get; set; } = 20;
+
+    [Parameter]
+    public string? UserId { get; set; } = null;
+
+    public IEnumerable<UserQuestProgress> History { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        History = await Database.GetLatestQuestHistory(Count, UserId);
+    }
+}
