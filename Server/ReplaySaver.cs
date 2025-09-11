@@ -37,12 +37,18 @@ internal class ReplaySaver : IDisposable
 
         cancel.Cancel();
         handleMessagesThread.Join();
+
+        if (previousStream != null)
+        {
+            previousStream.Dispose();
+            previousStream = null;
+        }
     }
 
     private readonly CancellationTokenSource cancel = new();
     private readonly Thread handleMessagesThread;
 
-    private readonly ConcurrentDictionary<Guid, string> filenames = new();
+    private readonly ConcurrentDictionary<Guid, string> filePaths = new();
 
     private readonly SemaphoreSlim messagesSemaphore = new(0);
     private readonly ConcurrentQueue<Message> messages = new();
@@ -55,7 +61,7 @@ internal class ReplaySaver : IDisposable
         // Register filename for this game id
         var dateTimeStr = DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
         string filename = Path.Combine(replaysFolder, $"{e.Request.UserName} - {dateTimeStr} - {e.GameId}.swoq");
-        if (!filenames.TryAdd(e.GameId, filename)) return;
+        if (!filePaths.TryAdd(e.GameId, filename)) return;
 
         // Store start
         Enqueue(e.GameId, e.Request);
@@ -65,7 +71,7 @@ internal class ReplaySaver : IDisposable
     private void OnGameActed(object? sender, ActedEventArgs e)
     {
         // Only save messages of registered games
-        if (!filenames.ContainsKey(e.GameId)) return;
+        if (!filePaths.ContainsKey(e.GameId)) return;
 
         // Store it
         Enqueue(e.GameId, e.Request);
@@ -95,25 +101,50 @@ internal class ReplaySaver : IDisposable
         catch (OperationCanceledException) { return; }
     }
 
+    private string? previousFilePath = null;
+    private FileStream? previousStream = null;
+
     private void WriteMessage(Guid gameId, IMessage message)
     {
         try
         {
             // Is this a registered game
-            if (!filenames.TryGetValue(gameId, out var filename)) return;
+            if (!filePaths.TryGetValue(gameId, out var filePath)) return;
 
             // Create dir if needed
-            var dir = Path.GetDirectoryName(filename);
+            var dir = Path.GetDirectoryName(filePath);
             if (dir != null)
             {
                 Directory.CreateDirectory(dir);
             }
 
-            // Append serialized message to the end
-            using var file = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
 
-            file.Seek(0, SeekOrigin.End);
-            message.WriteDelimitedTo(file);
+            // Append serialized message to the end
+            FileStream stream;
+            if (previousFilePath != null && previousStream != null)
+            {
+                if (previousFilePath != filePath)
+                {
+                    previousFilePath = null;
+                    previousStream.Dispose();
+                    previousStream = null;
+
+                    stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+                }
+                else
+                {
+                    stream = previousStream;
+                }
+            }
+            else
+            {
+                stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+            }
+            stream.Seek(0, SeekOrigin.End);
+            message.WriteDelimitedTo(stream);
+
+            previousFilePath = filePath;
+            previousStream = stream;
         }
         catch (Exception ex)
         {
