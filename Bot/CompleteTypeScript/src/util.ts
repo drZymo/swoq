@@ -31,3 +31,7 @@ type Entries<T> = {
 export function objectEntries<T extends object>(obj: T): Entries<T> {
     return Object.entries(obj) as any;
 }
+
+export function isDefined<T>(x: T | undefined): x is T {
+    return x !== undefined;
+}

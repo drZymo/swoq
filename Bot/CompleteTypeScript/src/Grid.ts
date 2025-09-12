@@ -21,6 +21,7 @@ export class Grid {
     public readonly tiles: Tile[][];
     public exitPosition?: Position;
     public doorPositions: Partial<Record<Color, Position[]>> = {};
+    public doorsUnlocked: Partial<Record<Color, boolean>> = {};
     public pressurePlatePositions: Partial<Record<Color, Position[]>> = {};
     public tilePositions: Partial<Record<Tile, Position[]>> = {};
     public player1Position: Position | undefined;
@@ -85,7 +86,7 @@ export class Grid {
         x: number,
         y: number,
         tile: Tile,
-        updatingInternal: boolean = false
+        updatingInternal: boolean = false,
     ): void {
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
             return;
@@ -103,7 +104,7 @@ export class Grid {
         }
         this.tilePositions[prevTile] = removePosition(
             this.tilePositions[prevTile],
-            pos
+            pos,
         );
 
         // Special handling for unknown tiles: only add/remove boundary nodes in the unknown tile list
@@ -138,6 +139,10 @@ export class Grid {
                         for (const door of doors) {
                             this._setTile(door.x, door.y, Tile.EMPTY, true);
                         }
+                        if (!this.pressurePlatePositions[color]) {
+                            // Door with a key, so definitely unlocked
+                            this.doorsUnlocked[color] = true;
+                        }
                     }
                     break;
             }
@@ -156,7 +161,7 @@ export class Grid {
                     const color = TILE_TO_COLOR[tile]!;
                     this.doorPositions[color] = addPosition(
                         this.doorPositions[color],
-                        pos
+                        pos,
                     );
                 }
                 break;
@@ -167,7 +172,7 @@ export class Grid {
                     const color = TILE_TO_COLOR[tile]!;
                     this.pressurePlatePositions[color] = addPosition(
                         this.pressurePlatePositions[color],
-                        pos
+                        pos,
                     );
                 }
                 break;
@@ -177,7 +182,7 @@ export class Grid {
     public updateSurroundings(
         position: Position,
         surroundings: Tile[],
-        visibilityRange: number
+        visibilityRange: number,
     ): void {
         const x = position.x;
         const y = position.y;
@@ -196,7 +201,7 @@ export class Grid {
 
     public setPlayerPositions(
         pos1: Position | undefined,
-        pos2: Position | undefined
+        pos2: Position | undefined,
     ): void {
         // We won't receive further updates, so mark players
         // as empty when they disappeared (i.e. exited).
@@ -212,7 +217,7 @@ export class Grid {
 
     public toString(): string {
         const rows = this.tiles.map((row) =>
-            row.map((tile) => TILE_CHARS[tile] ?? "?")
+            row.map((tile) => TILE_CHARS[tile] ?? "?"),
         );
         if (this.player1Position) {
             rows[this.player1Position.y][this.player1Position.x] = "1";

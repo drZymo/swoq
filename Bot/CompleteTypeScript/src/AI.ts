@@ -1,8 +1,11 @@
+import { inspect } from "node:util";
 import { Game } from "./Game";
 import { DirectedAction, GameStatus } from "./generated/swoq";
 import { Grid } from "./Grid";
-import { Player, PlayerStats, PlayerStepSettings } from "./Player";
-import { isMoveAction, samePos, targetPosition } from "./position";
+import { Player, PlayerIndex, PlayerStats, PlayerStepSettings } from "./Player";
+import { isMoveAction, posToString, samePos, targetPosition } from "./position";
+import { Color, COLORS } from "./tile";
+import { isDefined, objectEntries } from "./util";
 
 interface AIStats {
     /**
@@ -18,9 +21,17 @@ interface AIStats {
      */
     huggingBroken: number;
 
+    /**
+     * Number of times one of the player was prevented from moving
+     * to not move to the same target location.
+     */
+    preventedPlayerCollision: number;
+
     player1?: PlayerStats;
     player2?: PlayerStats;
 }
+
+export type AIGoal = DoorGoal;
 
 export class AI {
     public game: Game;
@@ -32,7 +43,9 @@ export class AI {
         actFailed: 0,
         hugging: 0,
         huggingBroken: 0,
+        preventedPlayerCollision: 0,
     };
+    public goal: AIGoal | undefined;
 
     public constructor(game: Game) {
         this.game = game;
@@ -150,20 +163,117 @@ export class AI {
             // Only allow the player to exit if the other can also leave
             allowExit: !!(
                 this.grid.exitPosition &&
-                (this.player2?.canReach(this.grid.exitPosition) ?? true)
+                (this.player2?.canReach(this.grid.exitPosition, true) ?? true)
             ),
+            canTryStepOnPressurePlate: !this.player2,
         };
         const player2Settings: PlayerStepSettings = {
             allowExit: !!(
                 this.grid.exitPosition &&
-                (this.player1?.canReach(this.grid.exitPosition) ?? true)
+                (this.player1?.canReach(this.grid.exitPosition, true) ?? true)
             ),
+            canTryStepOnPressurePlate: false,
         };
-        let action1 = this.player1?.step(player1Settings);
-        let action2 = this.player2?.step(player2Settings);
+
+        // Prevent walking through exit in level 15 when still on pressure plate,
+        // because that will block the exit path for the player behind that door.
+        const level = this.game.state.level;
+        if (level === 15) {
+            if (player1Settings.allowExit && player2Settings.allowExit) {
+                const doors = objectEntries(this.grid.doorPositions).filter(
+                    isDefined,
+                );
+                const doorsWithoutPressurePlates = doors.filter(
+                    ([color, positions]) =>
+                        this.grid.pressurePlatePositions[color] === undefined,
+                );
+                const unlockedDoors = doorsWithoutPressurePlates.filter(
+                    ([color, positions]) => !this.grid.doorsUnlocked[color],
+                );
+                console.log(
+                    "unlockedDoors",
+                    inspect(unlockedDoors, { depth: null }),
+                );
+                if (
+                    (this.player1?.onPressurePlateTile !== undefined ||
+                        this.player2?.onPressurePlateTile !== undefined) &&
+                    unlockedDoors.length > 0
+                ) {
+                    console.log(
+                        "Prevent level 15 exit, still on pressure plate",
+                    );
+                    player1Settings.allowExit = false;
+                    player2Settings.allowExit = false;
+                }
+            }
+        }
+
+        // TODO Ugly hack to get playerSettings to show up in toString()
+        if (this.player1) {
+            this.player1.settings = player1Settings;
+        }
+        if (this.player2) {
+            this.player2.settings = player2Settings;
+        }
+        let action1: DirectedAction | undefined;
+        let action2: DirectedAction | undefined;
+
+        action1 = this.player1?.step(player1Settings);
+        action2 = this.player2?.step(player2Settings);
+
+        // Forget goal when reached
+        if (this.goal) {
+            if (!this.player1 || !this.player2) {
+                this.goal = undefined;
+            } else {
+                const doorPlayer =
+                    this.goal.doorPlayer === PlayerIndex.Player1
+                        ? this.player1
+                        : this.player2;
+                if (doorPlayer.onDoorTile === this.goal.color) {
+                    console.log("Door goal reached.");
+                    this.goal = undefined;
+                }
+            }
+        }
+
+        // If one of the players has nothing 'urgent' to do,
+        // let's see if we can plan a coordinated action.
+        if ((!action1 || !action2) && this.player1 && this.player2) {
+            if (!this.goal) {
+                console.log(
+                    "Players have nothing to do and we don't have a goal yet, looking for a goal...",
+                );
+                this.goal = this._planCoordinatedGoal();
+                if (this.goal) {
+                    console.log("New goal set:", this.goal);
+                }
+            }
+            if (this.goal) {
+                const ctx: GameContext = {
+                    grid: this.grid,
+                    player1: this.player1,
+                    player2: this.player2,
+                };
+                const actions = getDoorGoalActions(ctx, this.goal);
+                if (!actions) {
+                    // TODO unset goal here?
+                }
+                if (actions) {
+                    console.log(
+                        `Goal actions: ${DirectedAction[actions[0]]}, ${
+                            DirectedAction[actions[1]]
+                        }`,
+                    );
+                    action1 ??= actions[0];
+                    action2 ??= actions[1];
+                }
+            }
+        }
 
         // If there seems nothing to do, but we saw an enemy before,
         // try to attack it (even if we didn't dare so before).
+        // It probably has some loot (key) that we need.
         if (!action1 && !action2) {
             action1 = this.player1?.trySlayEnemy(true);
             action2 = this.player2?.trySlayEnemy(true);
@@ -185,8 +295,50 @@ export class AI {
             throw new Error(`Nothing to do`);
         }
 
-        // Sanity checks
+        // Check whether door goal is still active
+
+        // Keep stepping on the plate as long as the door goal is active
+        if (this.goal) {
+            const platePlayer =
+                this.goal.doorPlayer === PlayerIndex.Player1
+                    ? this.player2!
+                    : this.player1!;
+            if (platePlayer.onPressurePlateTile === this.goal.color) {
+                if (this.goal.doorPlayer === PlayerIndex.Player1) {
+                    console.log("Player 2 waiting for door to be reached");
+                    action2 = isMoveAction(action2)
+                        ? DirectedAction.NONE
+                        : action2;
+                } else {
+                    console.log("Player 1 waiting for door to be reached");
+                    action1 = isMoveAction(action1)
+                        ? DirectedAction.NONE
+                        : action1;
+                }
+            }
+        }
+
+        // --- Sanity checks ---
+
         // TODO Never (accidentally) walk into exit with boulder
+
+        // Never step off of pressure plate if other player is still on it.
+        if (this.player1 && this.player2) {
+            const p1pt = this.player1.onPressurePlateTile;
+            if (p1pt && p1pt == this.player2.onDoorTile) {
+                console.log(
+                    `Waiting for player 2 to leave ${Color[p1pt]} door...`,
+                );
+                action1 = DirectedAction.NONE;
+            }
+            const p2pt = this.player2.onPressurePlateTile;
+            if (p2pt && p2pt == this.player1.onDoorTile) {
+                console.log(
+                    `Waiting for player 1 to leave ${Color[p2pt]} door...`,
+                );
+                action2 = DirectedAction.NONE;
+            }
+        }
 
         // Prevent move into each-other
         if (
@@ -198,18 +350,22 @@ export class AI {
             const target1 = targetPosition(this.player1.position, action1);
             const target2 = targetPosition(this.player2.position, action2);
             if (samePos(target1, target2)) {
+                this.stats.preventedPlayerCollision++;
+                console.log("Preventing player collision");
                 action2 = DirectedAction.NONE;
             }
         }
 
         // If players are too close and trying to walk in
-        // opposite direction, they're
+        // opposite direction, they will likely bump into each
+        // other and both start moving 'left and right'.
+        // Let's call this hugging, and prevent it.
         if (
             this.player1 &&
             this.player2 &&
             isMoveAction(action1) &&
             isMoveAction(action2) &&
-            this.player1?.dijkstra.getDistance(this.player2.position) === 1
+            this.player1.dijkstra.getDistance(this.player2.position) === 1
         ) {
             this.hugging++;
             this.stats.hugging++;
@@ -237,10 +393,166 @@ export class AI {
                 err instanceof Error ? err.message : err,
             );
             this.stats.actFailed++;
+            // TODO Random walk like this might cause exact same problem,
+            // probably do something a little smarter.
             await this._act(
                 this.player1?.tryRandomWalk(),
                 this.player2?.tryRandomWalk(),
             );
         }
     }
+
+    private _planCoordinatedActions():
+        | [DirectedAction, DirectedAction]
+        | undefined {
+        if (!this.player1 || !this.player2) {
+            return undefined;
+        }
+        const steps = [getCoordinatedDoorActions];
+        const ctx: GameContext = {
+            grid: this.grid,
+            player1: this.player1,
+            player2: this.player2,
+        };
+        for (const step of steps) {
+            const actions = step(ctx);
+            if (actions) {
+                return actions;
+            }
+        }
+    }
+
+    private _planCoordinatedGoal(): AIGoal | undefined {
+        if (!this.player1 || !this.player2) {
+            return undefined;
+        }
+        const steps = [getCoordinatedDoorGoals];
+        const ctx: GameContext = {
+            grid: this.grid,
+            player1: this.player1,
+            player2: this.player2,
+        };
+        for (const step of steps) {
+            const goal = step(ctx);
+            if (goal) {
+                return goal;
+            }
+        }
+    }
+}
+
+interface GameContext {
+    grid: Grid;
+    player1: Player;
+    player2: Player;
+}
+
+interface DoorGoal {
+    doorPlayer: PlayerIndex;
+    color: Color;
+}
+
+function getCoordinatedDoorGoals(ctx: GameContext): DoorGoal | undefined {
+    for (const color of COLORS) {
+        const goal = getCoordinatedDoorGoal(ctx, color);
+        if (goal) {
+            return goal;
+        }
+    }
+    return undefined;
+}
+
+function getCoordinatedDoorActions(
+    ctx: GameContext,
+): [DirectedAction, DirectedAction] | undefined {
+    for (const color of COLORS) {
+        const goal = getCoordinatedDoorGoal(ctx, color);
+        if (!goal) {
+            continue;
+        }
+        const actions = getDoorGoalActions(ctx, goal);
+        if (!actions) {
+            continue;
+        }
+        return actions;
+    }
+    return undefined;
+}
+
+function getCoordinatedDoorGoal(
+    { grid, player1, player2 }: GameContext,
+    color: Color,
+): DoorGoal | undefined {
+    const doors = grid.doorPositions[color];
+    const plates = grid.pressurePlatePositions[color];
+    if (!doors || !plates) {
+        return undefined;
+    }
+    const p1d = player1.getClosestPosition(doors);
+    const p1p = player1.getClosestPosition(plates);
+    const p2d = player2.getClosestPosition(doors);
+    const p2p = player2.getClosestPosition(plates);
+
+    let doorPlayer: PlayerIndex;
+    if (p1d && p2d && p1p && p2p) {
+        // Both can reach all, determine most efficient route
+        const option1Worst = Math.max(
+            player1.dijkstra.getDistance(p1d)!,
+            player2.dijkstra.getDistance(p2p)!,
+        );
+        const option2Worst = Math.max(
+            player2.dijkstra.getDistance(p2d)!,
+            player1.dijkstra.getDistance(p1p)!,
+        );
+        if (option1Worst <= option2Worst) {
+            doorPlayer = PlayerIndex.Player1;
+        } else {
+            doorPlayer = PlayerIndex.Player2;
+        }
+    } else if (p1d && p2p) {
+        doorPlayer = PlayerIndex.Player1;
+    } else if (p2d && p1p) {
+        doorPlayer = PlayerIndex.Player2;
+    } else {
+        return undefined;
+    }
+    return { doorPlayer, color };
+}
+
+function getDoorGoalActions(
+    { grid, player1, player2 }: GameContext,
+    goal: DoorGoal,
+): [DirectedAction, DirectedAction] | undefined {
+    const doors = grid.doorPositions[goal.color];
+    const plates = grid.pressurePlatePositions[goal.color];
+    if (!doors || !plates) {
+        // Can't happen: wouldn't have been able to generate a goal
+        throw new Error("No doors or plates found");
+    }
+    const [p1Goals, p2Goals] =
+        goal.doorPlayer === PlayerIndex.Player1
+            ? [doors, plates]
+            : [plates, doors];
+    const [p1Pos, p2Pos] = [
+        player1.getClosestPosition(p1Goals),
+        player2.getClosestPosition(p2Goals),
+    ];
+    if (!p1Pos || !p2Pos) {
+        // At least one of the players can't reach goal anymore
+        return undefined;
+    }
+    const [p1Act, p2Act] = [
+        player1.tryNavigateTo(p1Pos),
+        player2.tryNavigateTo(p2Pos),
+    ];
+    if (!p1Act && !p2Act) {
+        // Both players have reached their goal
+        return undefined;
+    }
+    console.log(
+        `Door goal: ${PlayerIndex[goal.doorPlayer]} opening ${
+            Color[goal.color]
+        }. P1 -> ${posToString(p1Pos)}, P2 -> ${posToString(p2Pos)}`,
+    );
+    return [p1Act ?? DirectedAction.NONE, p2Act ?? DirectedAction.NONE];
 }
