@@ -11,6 +11,7 @@
                 <th scope="col">Level</th>
                 <th scope="col">Length (ticks)</th>
                 <th scope="col">Length (seconds)</th>
+                <th scope="col"></th>
             </tr>
         </thead>
 
@@ -18,10 +19,11 @@
             @foreach (var score in Scores)
             {
                 <tr>
-                    <td>@score.UserName @(score.QuestFinished ? "🌟" : "")</td>
+                    <td>@score.Name @(score.QuestFinished ? "🌟" : "")</td>
                     <td>@score.Level</td>
-                    <td>@(score.Level > 0 ? score.LengthTicks : "-")</td>
-                    <td>@(score.Level > 0 ? score.LengthSeconds : "-")</td>
+                    <td>@(score.Level > 0 ? score.QuestLengthTicks : "-")</td>
+                    <td>@(score.Level > 0 ? score.QuestLengthSeconds : "-")</td>
+                    <td><a href="/api/replays/@score.BestQuestId" download>replay</a></td>
                 </tr>
             }
         </tbody>
@@ -32,16 +34,16 @@
 @code {
 
     [Parameter]
-    public IEnumerable<Score> Scores { get; set; } = [];
+    public IEnumerable<User> Scores { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
         var users = await Database.GetAllUsers();
 
-        Scores = users.Select(u => new Score(u.Name, u.Level, u.QuestLengthTicks, u.QuestLengthSeconds, u.QuestFinished)).
+        Scores = users.
             OrderByDescending(s => s.Level).
-            ThenBy(s => s.LengthTicks).
-            ThenBy(s => s.LengthSeconds).
+            ThenBy(s => s.QuestLengthTicks).
+            ThenBy(s => s.QuestLengthSeconds).
             ToList();
     }
 }
