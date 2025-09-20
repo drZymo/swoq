@@ -61,6 +61,12 @@ export interface PlayerStepSettings {
      * allow this.
      */
     canTryStepOnPressurePlate: boolean;
+
+    /**
+     * Whether to avoid the bottom-right area of the map, where lots
+     * of enemies lurk, as long as we can't find them.
+     */
+    avoidDangerZone: boolean;
 }
 
 export enum PlayerIndex {
@@ -127,6 +133,7 @@ export class Player {
             this.settings?.canTryStepOnPressurePlate
                 ? "canTryStepOnPressurePlate"
                 : undefined,
+            this.settings?.avoidDangerZone ? "avoidDangerZone" : undefined,
             this.focus ? `focus=${PlayerFocus[this.focus]}` : undefined,
         ].filter((e) => !!e);
         return `Player(${elems.join(", ")})`;
@@ -203,14 +210,24 @@ export class Player {
     }
 
     public getClosestUnknown(): Position | undefined {
-        const onlyUnknowns = this.grid.tilePositions[Tile.UNKNOWN] ?? [];
+        let onlyUnknowns = this.grid.tilePositions[Tile.UNKNOWN] ?? [];
+        if (this.settings?.avoidDangerZone) {
+            // Enemies lurk in the bottom right area
+            onlyUnknowns = onlyUnknowns.filter(
+                (pos) =>
+                    !(
+                        pos.x >= this.grid.width - 11 &&
+                        pos.y >= this.grid.height - 18
+                    ),
+            );
+        }
         const boulderUnknowns =
             this.grid.tilePositions[Tile.BOULDER]?.filter(
                 (pos) =>
                     this.grid.getAllNeighborsOfType(pos, Tile.UNKNOWN).length >
                     0,
             ) ?? [];
-        this.log("boulderUnknowns", boulderUnknowns);
+        //this.log("boulderUnknowns", boulderUnknowns);
         if (onlyUnknowns.length === 0 && boulderUnknowns.length === 0) {
             return undefined;
         }
@@ -220,6 +237,9 @@ export class Player {
     }
 
     public getClosestPosition(positions: Position[]): Position | undefined {
+        if (positions.length === 0) {
+            return undefined;
+        }
         const d = this.dijkstra;
         const cands = positions.map((pos): [Position, number] => [
             pos,
@@ -369,13 +389,24 @@ export class Player {
             return this.navigateAndUse(plate);
         }
         // Need to pick up boulder first
+        let boulders = this.grid.tilePositions[Tile.BOULDER] ?? [];
+        // Don't consider boulders that are already placed on a pressure plate
+        // (because most likely we put them before)
+        const pressurePlates = Object.values(
+            this.grid.pressurePlatePositions,
+        ).flat();
+        boulders = boulders.filter(
+            (pos) => !pressurePlates.some((p) => samePos(p, pos)),
+        );
         // TODO Compute more optimal path (boulder closest to plate)
-        const boulder = this.getClosestTile(Tile.BOULDER);
+        const boulder = this.getClosestPosition(boulders);
         if (!boulder) {
             if (canTryStepOnPressurePlate) {
                 return this._tryOpenDoorWithPressurePlate(plate, color);
             } else {
-                this.log(`Don't see a boulder to pick up for pressure plate.`);
+                this.log(
+                    `Don't see a boulder to pick up for pressure ${Color[color]} plate.`,
+                );
                 return undefined;
             }
         }

@@ -1,10 +1,9 @@
-import { inspect } from "node:util";
 import { Game } from "./Game";
-import { DirectedAction, GameStatus } from "./generated/swoq";
+import { DirectedAction, GameStatus, Tile } from "./generated/swoq";
 import { Grid } from "./Grid";
 import { Player, PlayerIndex, PlayerStats, PlayerStepSettings } from "./Player";
 import { isMoveAction, posToString, samePos, targetPosition } from "./position";
-import { Color, COLORS } from "./tile";
+import { Color, COLOR_TO_PLATE_TILE, COLORS } from "./tile";
 import { isDefined, objectEntries } from "./util";
 
 interface AIStats {
@@ -159,6 +158,7 @@ export class AI {
     }
 
     private async _step(): Promise<void> {
+        const level = this.game.state.level;
         const player1Settings: PlayerStepSettings = {
             // Only allow the player to exit if the other can also leave
             allowExit: !!(
@@ -166,18 +166,23 @@ export class AI {
                 (this.player2?.canReach(this.grid.exitPosition, true) ?? true)
             ),
             canTryStepOnPressurePlate: !this.player2,
+            avoidDangerZone:
+                level === 21 &&
+                (!this.player1?.hasSword || !this.player2?.hasSword),
         };
         const player2Settings: PlayerStepSettings = {
             allowExit: !!(
                 this.grid.exitPosition &&
                 (this.player1?.canReach(this.grid.exitPosition, true) ?? true)
             ),
-            canTryStepOnPressurePlate: false,
+            canTryStepOnPressurePlate: level === 21,
+            avoidDangerZone:
+                level === 21 &&
+                (!this.player1?.hasSword || !this.player2?.hasSword),
         };
 
         // Prevent walking through exit in level 15 when still on pressure plate,
         // because that will block the exit path for the player behind that door.
-        const level = this.game.state.level;
         if (level === 15) {
             if (player1Settings.allowExit && player2Settings.allowExit) {
                 const doors = objectEntries(this.grid.doorPositions).filter(
@@ -190,17 +195,13 @@ export class AI {
                 const unlockedDoors = doorsWithoutPressurePlates.filter(
                     ([color, positions]) => !this.grid.doorsUnlocked[color],
                 );
-                console.log(
-                    "unlockedDoors",
-                    inspect(unlockedDoors, { depth: null }),
-                );
                 if (
                     (this.player1?.onPressurePlateTile !== undefined ||
                         this.player2?.onPressurePlateTile !== undefined) &&
                     unlockedDoors.length > 0
                 ) {
                     console.log(
-                        "Prevent level 15 exit, still on pressure plate",
+                        "Prevent level 15 exit, still on pressure plate, still locked 'normal' doors",
                     );
                     player1Settings.allowExit = false;
                     player2Settings.allowExit = false;
@@ -215,11 +216,17 @@ export class AI {
         if (this.player2) {
             this.player2.settings = player2Settings;
         }
+
         let action1: DirectedAction | undefined;
         let action2: DirectedAction | undefined;
 
         action1 = this.player1?.step(player1Settings);
         action2 = this.player2?.step(player2Settings);
+        console.log(
+            "Step actions: ",
+            DirectedAction[action1 ?? DirectedAction.NONE],
+            DirectedAction[action2 ?? DirectedAction.NONE],
+        );
 
         // Forget goal when reached
         if (this.goal) {
@@ -264,6 +271,9 @@ export class AI {
                         `Goal actions: ${DirectedAction[actions[0]]}, ${
                             DirectedAction[actions[1]]
                         }`,
+                        "was:",
+                        DirectedAction[action1 ?? DirectedAction.NONE],
+                        DirectedAction[action2 ?? DirectedAction.NONE],
                     );
                     action1 ??= actions[0];
                     action2 ??= actions[1];
@@ -322,21 +332,71 @@ export class AI {
 
         // TODO Never (accidentally) walk into exit with boulder
 
-        // Never step off of pressure plate if other player is still on it.
+        // Never step off of pressure plate if other player is still on its door.
         if (this.player1 && this.player2) {
             const p1pt = this.player1.onPressurePlateTile;
-            if (p1pt && p1pt == this.player2.onDoorTile) {
+            if (p1pt !== undefined && p1pt == this.player2.onDoorTile) {
                 console.log(
                     `Waiting for player 2 to leave ${Color[p1pt]} door...`,
                 );
                 action1 = DirectedAction.NONE;
             }
             const p2pt = this.player2.onPressurePlateTile;
-            if (p2pt && p2pt == this.player1.onDoorTile) {
+            if (p2pt !== undefined && p2pt == this.player1.onDoorTile) {
                 console.log(
                     `Waiting for player 1 to leave ${Color[p2pt]} door...`,
                 );
                 action2 = DirectedAction.NONE;
+            }
+        }
+
+        // In level 21, make sure to fetch both swords, i.e. keep stepping on
+        // pressure plate until sword-fetching-player steps out of the small
+        // room.
+        if (level === 21 && this.player1 && this.player2) {
+            const p1pt = this.player1.onPressurePlateTile;
+            if (p1pt !== undefined) {
+                // Player 1 on plate, player 2 fetching sword.
+                if (!this.player2.hasSword) {
+                    console.log(`Waiting for player 2 to pick up sword`);
+                    action1 = DirectedAction.NONE;
+                } else {
+                    const closestSword = this.player2.getClosestTile(
+                        Tile.SWORD,
+                    );
+                    const distance =
+                        (closestSword &&
+                            this.player2.dijkstra.getDistance(closestSword)) ||
+                        Infinity;
+                    if (distance < 5) {
+                        console.log(
+                            `Waiting for player 2 to clear sword pickup area`,
+                        );
+                        action1 = DirectedAction.NONE;
+                    }
+                }
+            }
+            const p2pt = this.player2.onPressurePlateTile;
+            if (p2pt !== undefined) {
+                // Player 2 on plate, player 1 fetching sword.
+                if (!this.player1.hasSword) {
+                    console.log(`Waiting for player 1 to pick up sword`);
+                    action2 = DirectedAction.NONE;
+                } else {
+                    const closestSword = this.player1.getClosestTile(
+                        Tile.SWORD,
+                    );
+                    const distance =
+                        (closestSword &&
+                            this.player1.dijkstra.getDistance(closestSword)) ||
+                        Infinity;
+                    if (distance < 5) {
+                        console.log(
+                            `Waiting for player 1 to clear sword pickup area`,
+                        );
+                        action2 = DirectedAction.NONE;
+                    }
+                }
             }
         }
 
@@ -375,6 +435,17 @@ export class AI {
             }
         } else {
             this.hugging = 0;
+        }
+
+        if (Math.random() < 0.05) {
+            const enemyPos = this.player2?.getClosestTile(Tile.ENEMY);
+            const dist =
+                enemyPos && this.player2?.dijkstra.getDistance(enemyPos);
+            // Don't drop action if close to enemy
+            if (!dist || dist > 5) {
+                console.log("Drop player 2 action to break potential hugging");
+                action2 = DirectedAction.NONE;
+            }
         }
 
         action1 ??= DirectedAction.NONE;
@@ -485,6 +556,12 @@ function getCoordinatedDoorGoal(
 ): DoorGoal | undefined {
     const doors = grid.doorPositions[color];
     const plates = grid.pressurePlatePositions[color];
+    if (
+        plates?.some((pos) => grid.getTile(pos) !== COLOR_TO_PLATE_TILE[color])
+    ) {
+        // No need to open this door, it's already unlocked
+        return undefined;
+    }
     if (!doors || !plates) {
         return undefined;
     }
