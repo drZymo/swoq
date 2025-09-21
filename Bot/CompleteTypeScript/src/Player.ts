@@ -8,21 +8,36 @@ import {
 } from "./generated/swoq";
 import { Grid } from "./Grid";
 import { COLOR_TO_KEY_INVENTORY } from "./inventory";
-import { getPathDirection, moveToUse, posToString } from "./position";
+import { getPathDirection, moveToUse, posToString, samePos } from "./position";
 import {
     Color,
     COLOR_TO_DOOR_TILE,
     COLOR_TO_KEY_TILE,
     COLOR_TO_PLATE_TILE,
+    COLORS,
     isWalkable,
 } from "./tile";
 
+/**
+ * Short-term focus of the player.
+ */
 export enum PlayerFocus {
     // Picked up a boulder to peek behind it, need to put it back down ASAP
     BoulderExplore = 1,
-    // Started fighting the enemy, so don't back down now
-    Fighting = 2,
 }
+
+/**
+ * Long(er) term coordinated target of the player set by external AI.
+ */
+export enum PlayerTargetType {
+    NavigateAndUse,
+    NavigateTo,
+}
+
+export type PlayerTarget = {
+    type: PlayerTargetType.NavigateAndUse | PlayerTargetType.NavigateTo;
+    target: Position;
+};
 
 export interface PlayerStats {
     randomTargets: number;
@@ -30,7 +45,33 @@ export interface PlayerStats {
 }
 
 export interface PlayerStepSettings {
+    /**
+     * Whether the player is allowed to exit the game.
+     * For multi-player, make it wait for the other player,
+     * as it may still be needed to unblock an obstacle.
+     */
     allowExit: boolean;
+
+    /**
+     * Whether the player is allowed to try and use a pressure
+     * plate by stepping on it, to open a door.
+     *
+     * This is only sensible in the first few levels. In later
+     * levels, we want explicit coordination from the AI to
+     * allow this.
+     */
+    canTryStepOnPressurePlate: boolean;
+
+    /**
+     * Whether to avoid the bottom-right area of the map, where lots
+     * of enemies lurk, as long as we can't find them.
+     */
+    avoidDangerZone: boolean;
+}
+
+export enum PlayerIndex {
+    Player1 = 0,
+    Player2 = 1,
 }
 
 export class Player {
@@ -39,6 +80,7 @@ export class Player {
     position!: Position;
     waiting: boolean = false;
     focus?: PlayerFocus;
+    target?: PlayerTarget;
     startedAttack: boolean = false;
     randomTarget: Position | undefined;
     index: 1 | 2;
@@ -46,14 +88,16 @@ export class Player {
         randomActs: 0,
         randomTargets: 0,
     };
+    settings?: PlayerStepSettings; // TODO: Remove, ugly hack just to show them in toString
 
     private _dijkstraInstance: Dijkstra | undefined;
+    private _dijkstraLTInstance: Dijkstra | undefined;
 
     constructor(
         grid: Grid,
         playerState: PlayerState,
         visibilityRange: number,
-        index: 1 | 2
+        index: 1 | 2,
     ) {
         this.grid = grid;
         this.state = playerState;
@@ -69,12 +113,13 @@ export class Player {
         }
         this.position = playerState.position!;
         this._dijkstraInstance = undefined;
+        this._dijkstraLTInstance = undefined;
         this.waiting = false;
 
         this.grid.updateSurroundings(
             this.position,
             this.state.surroundings,
-            visibilityRange
+            visibilityRange,
         );
     }
 
@@ -84,6 +129,11 @@ export class Player {
             `inventory=${Inventory[this.state.inventory ?? Inventory.NONE]}`,
             `health=${this.state.health}`,
             this.state.hasSword ? `has_sword` : undefined,
+            this.settings?.allowExit ? "allowExit" : undefined,
+            this.settings?.canTryStepOnPressurePlate
+                ? "canTryStepOnPressurePlate"
+                : undefined,
+            this.settings?.avoidDangerZone ? "avoidDangerZone" : undefined,
             this.focus ? `focus=${PlayerFocus[this.focus]}` : undefined,
         ].filter((e) => !!e);
         return `Player(${elems.join(", ")})`;
@@ -107,14 +157,42 @@ export class Player {
                         return false;
                     }
                     return isWalkable(tile);
-                }
+                },
             );
         }
         return this._dijkstraInstance;
     }
 
-    public canReach(pos: Position): boolean {
-        return this.dijkstra.getDistance(pos) !== undefined;
+    public get dijkstraLongterm(): Dijkstra {
+        if (!this._dijkstraLTInstance) {
+            this._dijkstraLTInstance = new Dijkstra(
+                this.grid,
+                this.position,
+                (pos) => {
+                    const tile = this.grid.getTile(pos);
+                    if (tile === Tile.SWORD && this.hasSword) {
+                        // Prevent RESULT_INVENTORY_FULL error when walking over
+                        // another sword
+                        // TODO Perhaps do the same for keys?
+                        return false;
+                    }
+                    if (tile === Tile.PLAYER) {
+                        // Player is 'walkable' for long-term planning,
+                        // to prevent getting stuck when one player blocks
+                        // the door for the other. In this case, the blocking
+                        // player will just walk through the door.
+                        return true;
+                    }
+                    return isWalkable(tile);
+                },
+            );
+        }
+        return this._dijkstraLTInstance;
+    }
+
+    public canReach(pos: Position, longTerm: boolean = false): boolean {
+        const dijkstra = longTerm ? this.dijkstraLongterm : this.dijkstra;
+        return dijkstra.getDistance(pos) !== undefined;
     }
 
     public getClosestTile(tile: Tile): Position | undefined {
@@ -132,14 +210,24 @@ export class Player {
     }
 
     public getClosestUnknown(): Position | undefined {
-        const onlyUnknowns = this.grid.tilePositions[Tile.UNKNOWN] ?? [];
+        let onlyUnknowns = this.grid.tilePositions[Tile.UNKNOWN] ?? [];
+        if (this.settings?.avoidDangerZone) {
+            // Enemies lurk in the bottom right area
+            onlyUnknowns = onlyUnknowns.filter(
+                (pos) =>
+                    !(
+                        pos.x >= this.grid.width - 11 &&
+                        pos.y >= this.grid.height - 18
+                    ),
+            );
+        }
         const boulderUnknowns =
             this.grid.tilePositions[Tile.BOULDER]?.filter(
                 (pos) =>
                     this.grid.getAllNeighborsOfType(pos, Tile.UNKNOWN).length >
-                    0
+                    0,
             ) ?? [];
-        this.log("boulderUnknowns", boulderUnknowns);
+        //this.log("boulderUnknowns", boulderUnknowns);
         if (onlyUnknowns.length === 0 && boulderUnknowns.length === 0) {
             return undefined;
         }
@@ -149,6 +237,9 @@ export class Player {
     }
 
     public getClosestPosition(positions: Position[]): Position | undefined {
+        if (positions.length === 0) {
+            return undefined;
+        }
         const d = this.dijkstra;
         const cands = positions.map((pos): [Position, number] => [
             pos,
@@ -180,6 +271,18 @@ export class Player {
         return getPathDirection(path);
     }
 
+    public tryNavigateTo(pos: Position): DirectedAction | undefined {
+        const path = this.dijkstra.getPath(pos);
+        if (path.length == 2) {
+            // The last element may not be reachable yet, so wait here
+            const target = path[1];
+            if (!this.grid.isWalkable(target)) {
+                return DirectedAction.NONE;
+            }
+        }
+        return getPathDirection(path);
+    }
+
     public navigateToTile(tile: Tile): DirectedAction | undefined {
         const pos = this.getClosestTile(tile);
         if (!pos) {
@@ -197,7 +300,7 @@ export class Player {
             () => this.tryPickupSword(),
             () => this.tryPickupHealth(),
             () => (settings.allowExit ? this.tryWalkToExit() : undefined),
-            () => this.tryOpenDoors(),
+            () => this.tryOpenDoors(settings.canTryStepOnPressurePlate),
             // TODO Tweak moment of enemy slaying? Is it always necessary to slay it?
             () => this.trySlayEnemy(),
             // TODO Try to explore away from the other player
@@ -226,18 +329,26 @@ export class Player {
         return this.navigateToTile(Tile.HEALTH);
     }
 
-    public tryOpenDoors(): DirectedAction | undefined {
+    public tryOpenDoors(
+        canTryStepOnPressurePlate: boolean,
+    ): DirectedAction | undefined {
         return (
-            this.tryOpenDoor(Color.Red) ||
-            this.tryOpenDoor(Color.Green) ||
-            this.tryOpenDoor(Color.Blue)
+            this.tryOpenDoor(Color.Red, canTryStepOnPressurePlate) ||
+            this.tryOpenDoor(Color.Green, canTryStepOnPressurePlate) ||
+            this.tryOpenDoor(Color.Blue, canTryStepOnPressurePlate)
         );
     }
 
-    public tryOpenDoor(color: Color): DirectedAction | undefined {
+    public tryOpenDoor(
+        color: Color,
+        canTryStepOnPressurePlate: boolean,
+    ): DirectedAction | undefined {
         return (
             this.tryOpenDoorWithKeys(color) ??
-            this.tryOpenDoorWithPressurePlateAndBoulder(color)
+            this.tryOpenDoorWithPressurePlateAndBoulder(
+                color,
+                canTryStepOnPressurePlate,
+            )
         );
     }
 
@@ -262,7 +373,8 @@ export class Player {
     }
 
     public tryOpenDoorWithPressurePlateAndBoulder(
-        color: Color
+        color: Color,
+        canTryStepOnPressurePlate: boolean,
     ): DirectedAction | undefined {
         // Try to open the door if we have the key
         const door = this.getClosestTile(COLOR_TO_DOOR_TILE[color]);
@@ -277,14 +389,30 @@ export class Player {
             return this.navigateAndUse(plate);
         }
         // Need to pick up boulder first
+        let boulders = this.grid.tilePositions[Tile.BOULDER] ?? [];
+        // Don't consider boulders that are already placed on a pressure plate
+        // (because most likely we put them before)
+        const pressurePlates = Object.values(
+            this.grid.pressurePlatePositions,
+        ).flat();
+        boulders = boulders.filter(
+            (pos) => !pressurePlates.some((p) => samePos(p, pos)),
+        );
         // TODO Compute more optimal path (boulder closest to plate)
-        const boulder = this.getClosestTile(Tile.BOULDER);
+        const boulder = this.getClosestPosition(boulders);
         if (!boulder) {
-            return this._tryOpenDoorWithPressurePlate(plate, color);
+            if (canTryStepOnPressurePlate) {
+                return this._tryOpenDoorWithPressurePlate(plate, color);
+            } else {
+                this.log(
+                    `Don't see a boulder to pick up for pressure ${Color[color]} plate.`,
+                );
+                return undefined;
+            }
         }
         if (!!this.state.inventory) {
             this.log(
-                "WARNING: Can't pick up boulder for pressure plate, already have inventory"
+                "WARNING: Can't pick up boulder for pressure plate, already have inventory",
             );
             return undefined;
         }
@@ -292,14 +420,14 @@ export class Player {
             `Picking up boulder at`,
             boulder,
             `for ${Color[color]} pressure plate at`,
-            plate
+            plate,
         );
         return this.navigateAndUse(boulder);
     }
 
     private _tryOpenDoorWithPressurePlate(
         plate: Position,
-        color: Color
+        color: Color,
     ): DirectedAction | undefined {
         this.log(`Opening ${Color[color]} door with pressure plate at`, plate);
         return this.navigateTo(plate);
@@ -344,6 +472,26 @@ export class Player {
         return !!this.state.hasSword;
     }
 
+    public get onDoorTile(): Color | undefined {
+        // TODO Optimize? Note: can't just look at tile, because
+        // that will 'disappear' when the door opens.
+        return COLORS.find((color) =>
+            this.grid.doorPositions[color]?.some((pos) =>
+                samePos(this.position, pos),
+            ),
+        );
+    }
+
+    public get onPressurePlateTile(): Color | undefined {
+        // TODO Optimize? Note: can't just look at tile, because
+        // that will 'disappear' when a player steps on it.
+        return COLORS.find((color) =>
+            this.grid.pressurePlatePositions[color]?.some((pos) =>
+                samePos(this.position, pos),
+            ),
+        );
+    }
+
     public tryWalkToExit(): DirectedAction | undefined {
         if (!this.grid.exitPosition) {
             this.log("No exit found yet");
@@ -367,14 +515,14 @@ export class Player {
     public dropBoulder(): DirectedAction | undefined {
         const dropLocation = this.grid.getAllNeighborsOfType(
             this.position,
-            Tile.EMPTY
+            Tile.EMPTY,
         )[0];
         if (!dropLocation) {
             // TODO: find better options further away if necessary
             this.log(
                 `WARNING: Can't drop boulder near ${posToString(
-                    this.position
-                )}: no empty spots!`
+                    this.position,
+                )}: no empty spots!`,
             );
             return undefined;
         }
@@ -382,7 +530,7 @@ export class Player {
     }
 
     public trySlayEnemy(
-        desperate: boolean = false
+        desperate: boolean = false,
     ): DirectedAction | undefined {
         if (!this.hasSword) {
             return undefined;

@@ -2,7 +2,7 @@ import { DirectedAction, Position } from "./generated/swoq";
 
 export function getDirection(
     fromPosition: Position,
-    toPosition: Position
+    toPosition: Position,
 ): DirectedAction {
     const dx = toPosition.x - fromPosition.x;
     const dy = toPosition.y - fromPosition.y;
@@ -21,7 +21,7 @@ export function getDirection(
 
 export function targetPosition(
     fromPosition: Position,
-    action: DirectedAction
+    action: DirectedAction,
 ): Position {
     let delta;
     switch (action) {
@@ -60,7 +60,7 @@ export type UseAction =
     | DirectedAction.USE_SOUTH;
 
 export function isMoveAction(
-    action: DirectedAction | undefined
+    action: DirectedAction | undefined,
 ): action is MoveAction {
     switch (action) {
         case DirectedAction.MOVE_EAST:
@@ -74,7 +74,7 @@ export function isMoveAction(
 }
 
 export function isUseAction(
-    action: DirectedAction | undefined
+    action: DirectedAction | undefined,
 ): action is UseAction {
     switch (action) {
         case DirectedAction.USE_EAST:
@@ -106,7 +106,7 @@ export function moveToUse(move: DirectedAction): DirectedAction {
             return DirectedAction.USE_SOUTH;
         default:
             throw new Error(
-                `can't convert Action ${DirectedAction[move]} to Use`
+                `can't convert Action ${DirectedAction[move]} to Use`,
             );
     }
 }
@@ -125,7 +125,7 @@ export function hasPosition(list: Position[], pos: Position): boolean {
 
 export function addPosition(
     list: Position[] | undefined,
-    pos: Position
+    pos: Position,
 ): Position[] {
     if (!list) {
         return [pos];
@@ -138,7 +138,7 @@ export function addPosition(
 
 export function removePosition(
     list: Position[] | undefined,
-    pos: Position
+    pos: Position,
 ): Position[] | undefined {
     if (!list) {
         return undefined;

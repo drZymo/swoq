@@ -47,6 +47,8 @@ export enum Color {
     Blue,
 }
 
+export const COLORS = [Color.Red, Color.Green, Color.Blue];
+
 export const COLOR_TO_DOOR_TILE: Record<Color, Tile> = {
     [Color.Red]: Tile.DOOR_RED,
     [Color.Green]: Tile.DOOR_GREEN,
