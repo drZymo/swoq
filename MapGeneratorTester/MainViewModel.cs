@@ -1,4 +1,4 @@
-﻿using Swoq.Infra;
+using Swoq.Infra;
 using Swoq.InfraUI.ViewModels;
 using System.Windows.Input;
 
@@ -54,7 +54,7 @@ internal class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private int height = 38;
+    private int height = 48;
     public int Height
     {
         get => height;
