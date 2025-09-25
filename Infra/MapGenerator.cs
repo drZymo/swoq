@@ -1328,7 +1328,9 @@ internal class MapGeneratorImpl
         }
         // And walls for exit tunnel
         SetIfEmpty(exitPosition.y - 1, exitPosition.x - 1, Cell.Wall);
+        SetIfEmpty(exitPosition.y - 1, exitPosition.x, Cell.Wall);
         SetIfEmpty(exitPosition.y + 1, exitPosition.x - 1, Cell.Wall);
+        SetIfEmpty(exitPosition.y + 1, exitPosition.x, Cell.Wall);
 
         return (keyColor, doorPos);
     }
